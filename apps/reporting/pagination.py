@@ -191,7 +191,13 @@ def roster_row_px(row):
 
 
 def sheet_budget_px(
-    *, first, last, closing_px=CLOSING_PX, first_top=FIRST_SHEET_ROW_TOP_PX
+    *,
+    first,
+    last,
+    closing_px=CLOSING_PX,
+    first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Cuántos píxeles de filas caben en una hoja de la sección.
 
@@ -201,8 +207,8 @@ def sheet_budget_px(
     apretado. `first_top` deja que otra sección —el anexo, `LV-248`— declare dónde
     empieza su primera fila.
     """
-    top = first_top if first else CONTINUATION_ROW_TOP_PX
-    available = FOOTER_TOP_PX - top - (closing_px if last else 0) - SAFETY_PX
+    top = first_top if first else continuation_top
+    available = FOOTER_TOP_PX - top - (closing_px if last else 0) - safety
     return max(ROW_BASE_PX, available)
 
 
@@ -212,6 +218,8 @@ def paginate(
     closing_px=CLOSING_PX,
     estimate=row_px,
     first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Reparte `rows` en hojas, devolviendo una lista de listas.
 
@@ -230,7 +238,9 @@ def paginate(
     if not rows:
         return [[]]
     for sheets in range(1, len(rows) + 1):
-        packed = _pack(rows, sheets, closing_px, estimate, first_top)
+        packed = _pack(
+            rows, sheets, closing_px, estimate, first_top, continuation_top, safety
+        )
         if packed is not None:
             return packed
     # Inalcanzable: con `sheets == len(rows)` cada hoja lleva una fila, y
@@ -240,7 +250,15 @@ def paginate(
     return [rows]
 
 
-def _pack(rows, sheets, closing_px, estimate, first_top):
+def _pack(
+    rows,
+    sheets,
+    closing_px,
+    estimate,
+    first_top,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
+):
     """Intenta meter `rows` en exactamente `sheets` hojas. `None` si no entran."""
     out, index = [], 0
     for sheet in range(sheets):
@@ -249,6 +267,8 @@ def _pack(rows, sheets, closing_px, estimate, first_top):
             last=sheet == sheets - 1,
             closing_px=closing_px,
             first_top=first_top,
+            continuation_top=continuation_top,
+            safety=safety,
         )
         chunk = []
         while index < len(rows):
@@ -286,6 +306,8 @@ def sheets_for(
     closing_px=CLOSING_PX,
     estimate=row_px,
     first_top=FIRST_SHEET_ROW_TOP_PX,
+    continuation_top=CONTINUATION_ROW_TOP_PX,
+    safety=SAFETY_PX,
 ):
     """Las hojas de la sección, cada una con lo que la plantilla necesita saber.
 
@@ -295,7 +317,12 @@ def sheets_for(
     un informe termina con dos hojas numeradas igual.
     """
     chunks = paginate(
-        rows, closing_px=closing_px, estimate=estimate, first_top=first_top
+        rows,
+        closing_px=closing_px,
+        estimate=estimate,
+        first_top=first_top,
+        continuation_top=continuation_top,
+        safety=safety,
     )
     return [
         {
@@ -305,3 +332,99 @@ def sheets_for(
         }
         for index, chunk in enumerate(chunks)
     ]
+
+
+# == LV-378 · El reparto del diseño 2 ==========================================
+#
+# La sección 2 del diseño 2 reparte **faenas**, no permisos: la unidad que no se parte
+# es el bloque de una faena (cabecera, sublíneas y folios). Las constantes salen de
+# **medir en el navegador** el informe renderizado (Edge, el caso ficticio de
+# `v2_case.py` con once faenas; `getBoundingClientRect` sobre cada bloque), **no** de
+# la propuesta del diseño, que daba 440 y 78:
+#
+# | | medido | usado |
+# |---|---|---|
+# | Tira de vencimientos: arriba de ella (cabecera, título, rótulo de dos líneas, leyenda) | 224,9 | 225 |
+# | Separación entre bloques | 6 (faena) / 11 (sección) | |
+# | Primera faena en una hoja de continuación | 224,9 | 225 |
+# | Faena de una línea, una línea de folios (alto + 6 de margen) | 67,5 + 6 = 73,6 | 74 |
+# | Línea de folios de más | 15,6 | 16 |
+# | Faena con sublíneas: cabecera, y por cada sublínea | 38,5 / 62,5 | 39 / 63 |
+# | Bloque «sin operación»: título (28,3 + bordes) y fila de dos renglones | 30,3 / 43 | 31 / 44 |
+# | Bloque «en trámite»: fila | 25,5 | 26 |
+# | Bloque «vencidos sin cerrar»: fila | 27,5 | 28 |
+# | Observación del período: rótulo + caja, y cada renglón de texto | 42 / 17,25 | 42 / 18 |
+# | Pie | 1059,9 | `FOOTER_TOP_PX` |
+#
+# ⚠️ Sigue siendo una estimación: el ancho real de cada texto decide cuántos folios
+# caben en un renglón. `V2_FOLIOS_PER_LINE` se fija en **4** —con el N° DGAC entre
+# paréntesis cada folio ocupa unos 22 caracteres— y no en los 6 que caben sin él:
+# equivocarse por exceso deja un hueco, por defecto recorta. Lo contienen el margen de
+# una hoja (`V2_SAFETY_PX`), el total declarado en el rótulo de cada hoja y la
+# invariante I8 (`invariants.py`).
+V2_STRIP_TOP_PX = 225
+V2_SECTION_GAP_PX = 11
+V2_CONTINUATION_TOP_PX = 225
+V2_GROUP_BASE_PX = 74
+V2_FOLIO_LINE_PX = 16
+V2_FOLIOS_PER_LINE = 4
+V2_MULTI_HEAD_PX = 39
+V2_LINE_PX = 63
+V2_BLOCK_TITLE_PX = 31
+V2_OUTSIDE_ROW_PX = 44
+V2_AWAITING_ROW_PX = 26
+V2_LAPSED_ROW_PX = 28
+V2_OBSERVATION_BASE_PX = 42
+V2_OBSERVATION_LINE_PX = 18
+#: Caracteres por renglón de la observación (11,5 px en 690 px de ancho útil menos relleno).
+V2_OBSERVATION_CHARS = 90
+V2_SAFETY_PX = 30
+
+
+def _folio_lines(count):
+    return max(1, -(-count // V2_FOLIOS_PER_LINE))
+
+
+def v2_first_top_px(strip_height):
+    """Dónde cae la primera faena en la primera hoja: arriba de la tira, la tira (su
+    alto varía con las filas de rótulos que pida) y la separación."""
+    return V2_STRIP_TOP_PX + strip_height + V2_SECTION_GAP_PX
+
+
+def group_px(group):
+    """El alto estimado del bloque de una faena del diseño 2.
+
+    Una faena de una sola línea (todos sus permisos con la misma vigencia, aeronaves
+    y operadores) cuesta lo de base más las líneas de folios que pasen de una. Una
+    faena con sublíneas cuesta su cabecera más, por cada sublínea, su cuerpo y sus
+    propias líneas de folios de más.
+    """
+    lines = group["lines"]
+    if len(lines) == 1:
+        extra = _folio_lines(len(lines[0]["folios"])) - 1
+        return V2_GROUP_BASE_PX + V2_FOLIO_LINE_PX * extra
+    cost = V2_MULTI_HEAD_PX
+    for line in lines:
+        extra = _folio_lines(len(line["folios"])) - 1
+        cost += V2_LINE_PX + V2_FOLIO_LINE_PX * extra
+    return cost
+
+
+def observation_px(note=""):
+    """Alto de la observación del período: su rótulo y su caja, que crece con el texto."""
+    lines = max(2, -(-len(note or "") // V2_OBSERVATION_CHARS))
+    return V2_OBSERVATION_BASE_PX + V2_OBSERVATION_LINE_PX * lines + V2_SECTION_GAP_PX
+
+
+def closing_px_v2(groups, note=""):
+    """Lo que cierra la sección 2 v2 en su última hoja: los bloques de debajo y la
+    observación del período. Cada bloque cuesta su título, sus filas y la separación."""
+    cost = observation_px(note)
+    for rows, per_row in (
+        (groups["outside"], V2_OUTSIDE_ROW_PX),
+        (groups["awaiting"], V2_AWAITING_ROW_PX),
+        (groups["lapsed"], V2_LAPSED_ROW_PX),
+    ):
+        if rows:
+            cost += V2_BLOCK_TITLE_PX + per_row * len(rows) + V2_SECTION_GAP_PX
+    return cost

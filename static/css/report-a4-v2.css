@@ -1,0 +1,169 @@
+/* LV-378 · Informe mensual v2: las hojas rediseñadas (permisos, y en el PR 3 el
+ * resumen, la cobertura y el anexo).
+ *
+ * ⚠️ **Se carga SOLO con `payload.meta.layout == 2`** y **`report-a4.css` no se
+ * toca.** Los informes congelados se vuelven a dibujar desde su payload con los
+ * estilos de hoy: si esto viviera en `report-a4.css`, agosto y septiembre cambiarían
+ * al imprimirse y ningún test de HTML lo vería (el snapshot compara marcado, no
+ * estilos). Todas las clases de este archivo llevan el prefijo `rpt2-`, y ninguna
+ * redefine una de la hoja base.
+ *
+ * Reglas del diseño (aprobadas, ver MASTER_PLAN `LV-378`):
+ *
+ * - **Letra mínima de 8,5 pt = 11,3 px** en toda clase `rpt2-*`. La hoja mide 794 px
+ *   = 210 mm, así que 1 px = 0,75 pt: las tablas de la hoja base (9 px = 6,75 pt) se
+ *   leían bajo lo que un papel firmado debería. Un test lo vigila.
+ * - **La banda se dice con símbolo + palabra + color**: ✕ Crítico (≤30 días),
+ *   ▲ Por vencer (31–60), ● Vigente (>60), los mismos del panel. Con sólo color, en
+ *   blanco y negro el 2, el 33 y el 76 se ven iguales.
+ * - **Tintas, no el ámbar de marca.** El relleno de texto usa `#8a5a08` (5:1 sobre
+ *   blanco); `#b8791a` sobre el carril gris da 2,99:1 y no se usa para nada que
+ *   deba leerse. Todos los pares texto/fondo y marca/fondo están calculados en
+ *   `test_lv378_permits_v2.py` con `contrast.py` (texto ≥4,5; marcas ≥3).
+ */
+
+.rpt-doc {
+  --rpt2-crit-ink: #b23b34;
+  --rpt2-crit-bg: #f7e2e0;
+  --rpt2-warn-ink: #8a5a08;
+  --rpt2-warn-bg: #fbf0d9;
+  --rpt2-ok-ink: #0b6a52;
+  --rpt2-ok-bg: #dcefe6;
+  --rpt2-ink: #0f1b2d;
+  --rpt2-muted: #52606d;
+  --rpt2-navy: #124384;
+  --rpt2-rule: #d7dee6;
+  --rpt2-hair: #e4eaf0;
+  --rpt2-wash: #f4f7fa;
+}
+
+.rpt2-body { padding-top: 20px; }
+.rpt2-body > * { margin-bottom: 11px; }
+.rpt2-body > :last-child { margin-bottom: 0; }
+
+.rpt2-label {
+  color: var(--rpt2-navy);
+  font-size: 11.5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rpt2-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 5px;
+  color: var(--rpt2-muted);
+  font-size: 11.5px;
+}
+.rpt2-legend b { font-weight: bold; }
+.rpt2-sym-critical { color: var(--rpt2-crit-ink); }
+.rpt2-sym-warning { color: var(--rpt2-warn-ink); }
+.rpt2-sym-nominal { color: var(--rpt2-ok-ink); }
+
+/* -- la tira de vencimientos (SVG de servidor) -------------------------------- */
+
+.rpt2-strip { display: block; max-width: 100%; height: auto; }
+.rpt2-zone-critical { fill: var(--rpt2-crit-bg); }
+.rpt2-zone-warning { fill: var(--rpt2-warn-bg); }
+.rpt2-zone-nominal { fill: var(--rpt2-ok-bg); }
+.rpt2-tick { stroke: var(--rpt2-muted); stroke-width: 1; }
+.rpt2-lead { stroke: var(--rpt2-muted); stroke-width: 1; stroke-dasharray: 2 2; }
+.rpt2-axis { fill: var(--rpt2-muted); font-size: 11.5px; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+/* El halo blanco tapa la guía punteada de otra marca que pase por detrás del rótulo. */
+.rpt2-label-svg {
+  fill: var(--rpt2-ink);
+  font-size: 11.5px;
+  font-weight: bold;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+.rpt2-beyond { fill: var(--rpt2-ok-ink); font-size: 11.5px; font-weight: bold; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+.rpt2-mark-critical { stroke: var(--rpt2-crit-ink); stroke-width: 2.2; fill: none; }
+.rpt2-mark-warning { fill: var(--rpt2-warn-ink); stroke: none; }
+.rpt2-mark-nominal { fill: var(--rpt2-ok-ink); stroke: none; }
+
+/* -- una faena por bloque ----------------------------------------------------- */
+
+.rpt2-grp {
+  border: 1px solid var(--rpt2-rule);
+  border-left-width: 4px;
+  padding: 6px 10px 7px;
+  margin-bottom: 6px;
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.rpt2-grp-critical { border-left-color: var(--rpt2-crit-ink); }
+.rpt2-grp-warning { border-left-color: var(--rpt2-warn-ink); }
+.rpt2-grp-nominal { border-left-color: var(--rpt2-ok-ink); }
+.rpt2-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.rpt2-cc { flex: 0 0 auto; width: 214px; font-size: 12.5px; }
+.rpt2-cc strong { color: var(--rpt2-navy); }
+.rpt2-main { flex: 1 1 auto; min-width: 0; }
+.rpt2-sub { color: var(--rpt2-muted); margin-top: 2px; }
+.rpt2-folios { color: var(--rpt2-muted); margin-top: 2px; word-spacing: 1px; }
+.rpt2-line { margin-top: 5px; padding-top: 4px; border-top: 1px dotted var(--rpt2-rule); }
+.rpt2-line-main { display: flex; gap: 14px; align-items: baseline; }
+
+.rpt2-chip {
+  flex: 0 0 auto;
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 2px;
+  font-size: 11.5px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.rpt2-chip-critical { background: var(--rpt2-crit-bg); color: var(--rpt2-crit-ink); }
+.rpt2-chip-warning { background: var(--rpt2-warn-bg); color: var(--rpt2-warn-ink); }
+.rpt2-chip-nominal { background: var(--rpt2-ok-bg); color: var(--rpt2-ok-ink); }
+
+/* -- los bloques que cierran la sección -------------------------------------- */
+
+.rpt2-block { border: 1px solid var(--rpt2-rule); }
+.rpt2-block-title {
+  background: var(--rpt2-wash);
+  border-bottom: 1px solid var(--rpt2-rule);
+  padding: 5px 10px;
+  color: var(--rpt2-navy);
+  font-size: 11.5px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rpt2-block-title-bad { color: var(--rpt2-crit-ink); }
+.rpt2-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--rpt2-hair);
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+.rpt2-row:last-child { border-bottom: none; }
+.rpt2-row-cc { flex: 0 0 auto; width: 214px; }
+.rpt2-row-cc strong { color: var(--rpt2-navy); }
+.rpt2-row-main { flex: 1 1 auto; min-width: 0; }
+.rpt2-row-note { color: var(--rpt2-muted); }
+.rpt2-state-wait { color: var(--rpt2-warn-ink); font-weight: bold; white-space: nowrap; }
+.rpt2-dash { color: var(--rpt2-muted); }
+
+.rpt2-note {
+  border: 1px solid var(--rpt2-rule);
+  border-left: 3px solid #00a7bc;
+  background: var(--rpt2-wash);
+  padding: 8px 12px;
+  color: var(--rpt2-ink);
+  font-size: 11.5px;
+  line-height: 1.5;
+}

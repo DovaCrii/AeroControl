@@ -21,6 +21,8 @@ Cada violación es un código (`I1`…`I8`) y sus datos; el texto, traducido, lo
 
 from django.utils.translation import gettext as _
 
+from apps.reporting.groups import permit_groups
+
 #: Número del diseño que declara las llaves que estas invariantes leen.
 LAYOUT = 2
 
@@ -124,15 +126,27 @@ def violations(payload):
             "I7", key="concentration", kpi=", ".join(sorted(named - covered)), rows=0
         )
 
-    # I8: el anexo «permiso a permiso» lista vigentes + en trámite + vencidos sin
-    # cerrar: ninguna fila de más ni de menos. (La suma de los grupos de la sección 2
-    # se suma a esta comprobación en `groups.py`.)
+    # I8: ninguna fila de más ni de menos. Cada permiso es vigente, está en trámite o es
+    # un aprobado vencido sin cerrar (y el anexo «permiso a permiso» lista las tres
+    # cosas); y la suma de los grupos de la sección 2 —vigentes de faenas con
+    # operación más los de las sin operación, con **todos sus folios**— da el total.
+    # Es la comprobación que contiene el recorte silencioso de una hoja: el cuerpo es
+    # `overflow: hidden`, y el total declarado en el rótulo sólo sirve si es cierto.
     lapsed = [
         row
         for row in permits
         if not row.get("in_force") and row.get("status") == "approved"
     ]
-    if len(in_force) + len(awaiting) + len(lapsed) != len(permits):
+    grouped = permit_groups(payload)
+    folios = sum(len(group["folios"]) for group in grouped["operating"]) + sum(
+        len(group["folios"]) for group in grouped["outside"]
+    )
+    if (
+        len(in_force) + len(awaiting) + len(lapsed) != len(permits)
+        or grouped["operating_in_force"] != operating
+        or grouped["outside_in_force"] != len(in_force) - operating
+        or folios != len(in_force)
+    ):
         broken("I8", permits=len(permits))
 
     return found

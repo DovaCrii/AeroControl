@@ -23,6 +23,7 @@ Vencen en 30 días (con operación): 7; en 60 días (con operación): 8.
 """
 
 from datetime import date, datetime, time, timedelta
+from itertools import count
 
 from django.utils import timezone
 
@@ -33,9 +34,14 @@ PERIOD = date(2026, 10, 1)
 CUTOFF = date(2026, 10, 26)
 
 
+#: N° DGAC ficticios y distintos para cada permiso aprobado (los de trámite no lo tienen).
+_dgac = count(7001)
+
+
 def _permit(centre, *, status="approved", start=None, end=None, operators=(), tails=()):
     permit = FlightPermission.objects.create(
         cost_center=centre,
+        permission_number="" if status == "requested" else str(next(_dgac)),
         purpose="photogrammetry",
         status=status,
         location="Sector ficticio",
@@ -98,13 +104,15 @@ def make_case():
     three = _operator("P903", "Operador Tres", south)
     four = _operator("P904", "Operador Cuatro", ground)
 
+    # Siete permisos con la misma vigencia, aeronave y operador: una sola línea.
+    shared_tail = _aircraft("RPA-9001", north)
     for _n in range(7):
         _permit(
             north,
             start=date(2026, 8, 28),
             end=CUTOFF + timedelta(days=28),
             operators=[one],
-            tails=[_aircraft(f"RPA-90{_n}", north)],
+            tails=[shared_tail],
         )
     _permit(
         south,
