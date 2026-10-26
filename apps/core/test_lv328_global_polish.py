@@ -175,6 +175,13 @@ def test_stylesheet_weight_guard():
     Visual v3 (LV-367: tarjetas del Entorno con niveles propios, banda e infografía del centelleo, y el
     resumen plegable de Cumplimiento con la tabla simple; ~2 KB netos porque Cumplimiento retiró las
     reglas de los anillos) lo sube a 250 KB.
+    LV-376 (fase 0) mudó el CSS de Cumplimiento (~10,5 KB) a `static/css/compliance.css`, que tiene su
+    propio guardián (`test_lv376_compliance_css.py`): el techo de las hojas globales queda holgado.
     """
-    total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
+    # En bytes con salto LF: `stat().st_size` cuenta los CRLF que el checkout de Windows (`autocrlf`)
+    # agrega, y el mismo árbol pesaba 255.573 B ahí y 249.611 B en el CI (LF).
+    total = sum(
+        len((STATIC / name).read_bytes().replace(b"\r\n", b"\n"))
+        for name in ("app.css", "identity.css")
+    )
     assert total < 250 * 1024

@@ -36,14 +36,14 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css \
   --pair sev-nominal-text:sev-nominal-bg
 ```
 
-Pares de «Cumplimiento» (`LV-359`, tokens `--id-cx-*` de `identity.css`; pasar los dos CSS):
+Pares de «Cumplimiento» (`LV-359`, tokens `--id-cx-*` de `compliance.css` desde LV-376; pasar los tres CSS):
 
 ```bash
-python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css \
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css \
   --pair id-cx-ink:id-cx-heat-1 --pair id-cx-ink:id-cx-heat-2 \
   --pair id-cx-ink:id-cx-heat-3 --pair id-cx-ink:id-cx-heat-4 \
   --pair ac-text-muted:ac-surface
-python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css --min 3 \
   --pair id-cx-edge:ac-surface --pair sev-critical-text:id-cx-track --pair sev-warning-text:id-cx-track \
   --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
 ```

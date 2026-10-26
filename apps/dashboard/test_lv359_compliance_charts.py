@@ -24,6 +24,7 @@ from apps.core.models import OperationalTenant
 from apps.core.test_lv315_identity_foundation import (
     APP,
     IDENTITY,
+    ROOT,
     _contrast,
     _resolve,
     _theme_tokens as _light_and_partial_dark,
@@ -46,6 +47,9 @@ from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.reporting.models import ReportRun
+
+# LV-376 (fase 0): el CSS de Cumplimiento vive en su propia hoja, cargada después de `identity.css`.
+COMPLIANCE = (ROOT / "static" / "css" / "compliance.css").read_text(encoding="utf-8")
 
 URL = "dashboard-compliance"
 HX = {"HTTP_HX_REQUEST": "true"}
@@ -71,8 +75,12 @@ def _theme_tokens(theme):
     par oscuro se mediría contra un color que no existe.
     """
     tokens = _light_and_partial_dark(theme)
+    for block in re.findall(r"(?m)^:root\s*\{([^}]*)\}", COMPLIANCE):
+        tokens.update(
+            {k: v.strip() for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", block)}
+        )
     if theme == "dark":
-        for css in (APP, IDENTITY):
+        for css in (APP, IDENTITY, COMPLIANCE):
             for block in re.findall(
                 r'(?m)^\[data-theme="dark"\](?:,\s*\[data-bs-theme="dark"\])?\s*\{([^}]*)\}',
                 css,
@@ -595,7 +603,9 @@ class TestContrast:
 
     def test_fills_use_sev_text_never_sev_border(self):
         """Rellenos con `--sev-*-text`: el borde (1,58–1,81:1) no se distingue del fondo."""
-        rules = re.findall(r"(?m)^\.id-cx-(?:seg|bar|spark)[^{]*\{([^}]*)\}", IDENTITY)
+        rules = re.findall(
+            r"(?m)^\.id-cx-(?:seg|bar|spark)[^{]*\{([^}]*)\}", COMPLIANCE
+        )
         assert rules
         for body in rules:
             assert "-border" not in body, body
@@ -604,9 +614,7 @@ class TestContrast:
             )
 
     def test_the_section_has_no_animation_and_no_new_prefix(self):
-        start = IDENTITY.index("/* D3: «Cumplimiento»")
-        end = IDENTITY.index("/* == E: pulido global == */")
-        block = IDENTITY[start:end]
+        block = COMPLIANCE
         assert not re.search(
             r"\banimation(-[a-z]+)?\s*:|@keyframes|transition\s*:", block
         )

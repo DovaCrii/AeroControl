@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Cumplimiento: su CSS en un archivo propio (`LV-376`, fase 0).** Las reglas de la sección «Cumplimiento» (~10,5 KB) pasan de `identity.css` a `static/css/compliance.css`, que se carga sólo en la página completa y en el panel con hueco de Cumplimiento; el resultado visual es idéntico (estilos computados iguales a 1024 y 429 px, claro y oscuro) y se borran las reglas muertas. El guardián de peso de las hojas globales mide ahora en bytes con salto LF (Windows daba 255.573 B y el CI 249.611 B para el mismo árbol) y `compliance.css` tiene el suyo. Sin migración; lleva estáticos.
 - **Informe con corte anticipado (`LV-375`).** Se puede emitir el informe del mes en curso con corte hoy y un motivo (permiso `reporting.issue_early_reportrun`, sólo Administrator); el 1 del mes siguiente se emite solo la revisión de cierre que lo reemplaza, sin `--force`. El papel lo declara en el pie y en la nota de estado; la portada no cambia. Lleva migración (sólo el permiso); sin estáticos.
 
 - **Red de seguridad de los informes (`LV-355`, F0).** Prueba de instantánea del informe mensual a la DGAC y del Dato Ejecutivo: el HTML normalizado de un informe congelado de datos ficticios (`apps/reporting/snapshots/`) falla ante cualquier cambio de salida, y los presupuestos de consultas del Reporte de vigencia y del mensual en vista previa quedan fijados en lo que cuestan hoy (sin optimizar). Solo pruebas; el A4 no cambia. Sin migración ni estáticos.

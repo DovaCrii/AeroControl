@@ -15,7 +15,7 @@ import pytest
 from django.urls import reverse
 from django.utils import translation
 
-from apps.core.test_lv315_identity_foundation import IDENTITY
+from apps.core.test_lv315_identity_foundation import ROOT
 from apps.core.testing import login_as as _login_as
 from apps.dashboard import compliance_section as section
 from apps.dashboard.compliance_section import (
@@ -293,7 +293,10 @@ class TestTheSummary:
             '<div class="id-cx-lv-wrap">\n      <table class="id-cx-lv">'
             in html.replace("\r\n", "\n")
         )
-        assert re.search(r"(?m)^\.id-cx-lv-wrap \{ overflow-x: auto; \}", IDENTITY)
+        compliance = (ROOT / "static" / "css" / "compliance.css").read_text(
+            encoding="utf-8"
+        )
+        assert re.search(r"(?m)^\.id-cx-lv-wrap \{ overflow-x: auto; \}", compliance)
 
     @pytest.mark.django_db
     def test_a_category_without_expiries_is_one_line_not_a_row_of_zeros(self, db):
