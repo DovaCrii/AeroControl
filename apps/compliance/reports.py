@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.compliance.digest import HORIZON_DAYS
 from apps.compliance.kpis import operational_kpis, permit_counts
 from apps.compliance.models import Alert, Document
+from apps.core.tenancy import scope_queryset_to_visible_tenants, visible_tenant_ids
 from apps.registry.models import Aircraft, CostCenter, Operator
 
 
@@ -459,9 +460,16 @@ def _vigencia_bucket_counts(queryset, date_field, today, boundaries):
 OPEN_ALERTS_LIMIT = 200
 
 
-def _open_alerts(cost_center, today):
+def _scoped_alerts(queryset, user):
+    """Las alertas de las empresas de `user` (la de una alerta es la de su regla); sin `user`, todas."""
+    if user is None:
+        return queryset
+    return scope_queryset_to_visible_tenants(queryset, user, "alert_rule__tenant_id")
+
+
+def _open_alerts(cost_center, today, user=None):
     alerts = list(
-        Alert.objects.filter(is_active=True, is_resolved=False)
+        _scoped_alerts(Alert.objects.filter(is_active=True, is_resolved=False), user)
         .select_related("alert_rule", "content_type")
         .order_by("triggered_at")[:OPEN_ALERTS_LIMIT]
     )
@@ -503,13 +511,16 @@ def _open_alerts(cost_center, today):
     return rows
 
 
-def _resolution_stats(start, end):
+def _resolution_stats(start, end, user=None):
     """Average alert -> resolution time for alerts resolved in the period."""
-    resolved = Alert.objects.filter(
-        is_active=True,
-        is_resolved=True,
-        resolved_at__date__gte=start,
-        resolved_at__date__lte=end,
+    resolved = _scoped_alerts(
+        Alert.objects.filter(
+            is_active=True,
+            is_resolved=True,
+            resolved_at__date__gte=start,
+            resolved_at__date__lte=end,
+        ),
+        user,
     ).only("triggered_at", "resolved_at")
     days = [
         (alert.resolved_at - alert.triggered_at).total_seconds() / 86400
@@ -521,8 +532,15 @@ def _resolution_stats(start, end):
     }
 
 
-def build_compliance_report(start=None, end=None, cost_center=None, doc_type=None):
+def build_compliance_report(
+    start=None, end=None, cost_center=None, doc_type=None, user=None
+):
     """Return the KPI structure for a period.
+
+    `user` (LV-372, F-08): quien mira. Con él, **todo** el informe se acota a las empresas de esa
+    persona: faenas, alertas, mantenciones, permisos y los KPI operacionales. Sin él (los jobs, el
+    correo ejecutivo y los snapshots, que corren sin sesión) el informe es el de toda la
+    organización, como siempre.
 
     `start`/`end` bound the resolution statistics; the expiry counters are
     always relative to today, because "expiring in 7 days" only means anything
@@ -538,6 +556,8 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
     start = start or (end - timedelta(days=30))
 
     centers = CostCenter.objects.filter(is_active=True).order_by("code")
+    if user is not None:
+        centers = scope_queryset_to_visible_tenants(centers, user)
     if cost_center:
         centers = centers.filter(pk=cost_center.pk)
 
@@ -560,14 +580,14 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         },
         "by_cost_center": rows,
         "totals": totals,
-        "open_alerts": _open_alerts(cost_center, today),
-        "resolution": _resolution_stats(start, end),
+        "open_alerts": _open_alerts(cost_center, today, user),
+        "resolution": _resolution_stats(start, end, user),
         # LV-8f: maintenance still needing planning is an open compliance gap.
-        "incomplete_maintenance": _incomplete_maintenance_count(cost_center),
+        "incomplete_maintenance": _incomplete_maintenance_count(cost_center, user),
         # R7.7: the two operational KPIs derivable without Deliverable (R7.4)
         # or NonConformity (R7.6). Fleet-wide on purpose -- availability is a
         # property of the fleet, not of a cost center's slice of it.
-        "operational_kpis": operational_kpis(start, end),
+        "operational_kpis": operational_kpis(start, end, user),
         # LV-201: los permisos vigentes, atrasados y esperando a la DGAC, con la
         # **misma función que dibuja el panel** (`kpis.permit_counts`). El pedido
         # del usuario nombraba las dos pantallas, y dos cálculos separados de la
@@ -575,26 +595,42 @@ def build_compliance_report(start=None, end=None, cost_center=None, doc_type=Non
         # mira dejan de coincidir. A diferencia de `operational_kpis`, éste **sí**
         # respeta el filtro por faena: un permiso pertenece a una, y la pregunta
         # "cuántos tengo vigentes" se hace por faena.
-        "permits": permit_counts(today, cost_center),
+        "permits": permit_counts(today, cost_center, user),
     }
 
 
-def latest_snapshot_before(day, cost_center=None):
+def latest_snapshot_before(day, cost_center=None, user=None):
     """R7.7: the most recent `ComplianceSnapshot` strictly before `day`.
 
     `None` when no history has been recorded yet -- a fresh install, or one
     where `snapshot_compliance` has never run. Callers must degrade instead of
     failing: an empty history is the normal state on day one.
     """
+    from apps.core.models import OperationalTenant
+
     from .models import ComplianceSnapshot
 
-    return (
-        ComplianceSnapshot.objects.filter(
-            date__lt=day, cost_center=cost_center, is_active=True
-        )
-        .order_by("-date")
-        .first()
+    queryset = ComplianceSnapshot.objects.filter(
+        date__lt=day, cost_center=cost_center, is_active=True
     )
+    if user is not None and not user.is_superuser:
+        # LV-372 (F-08). La fila consolidada (`cost_center=None`) la escribe `snapshot_compliance`
+        # **sumando todas las empresas** bajo el tenant por defecto: para quien no ve todas, esa
+        # suma incluye lo de otra empresa. Sólo se usa si la persona ve todas las empresas
+        # activas (hoy, la instalación de una sola); si no, el informe cae a recalcular el
+        # periodo anterior, que es el camino de siempre sin historial. Las filas por faena no
+        # tienen el problema: la faena ya viene acotada. Cerrarlo del todo es que el comando
+        # escriba una fila consolidada **por empresa** (pendiente anotado en `MASTER_PLAN.md`).
+        if cost_center is None:
+            if len(visible_tenant_ids(user)) < (
+                OperationalTenant.objects.filter(is_active=True).count()
+            ):
+                return None
+        else:
+            queryset = scope_queryset_to_visible_tenants(
+                queryset, user, "cost_center__tenant_id"
+            )
+    return queryset.order_by("-date").first()
 
 
 def totals_from_snapshot(snapshot):
@@ -672,7 +708,7 @@ def compare_periods(current, previous):
     return comparison
 
 
-def _incomplete_maintenance_count(cost_center):
+def _incomplete_maintenance_count(cost_center, user=None):
     """LV-8e/8f: maintenance flagged 'to be defined' or missing a scheduled
     date, and not yet completed. A cross-app read, scoped by cost center via
     the aircraft when one is selected."""
@@ -681,6 +717,10 @@ def _incomplete_maintenance_count(cost_center):
     queryset = MaintenanceRecord.objects.filter(
         is_active=True, status__in=["pending", "in_progress"]
     ).filter(Q(maintenance_type="to_be_defined") | Q(scheduled_date__isnull=True))
+    if user is not None:
+        queryset = scope_queryset_to_visible_tenants(
+            queryset, user, "aircraft__tenant_id"
+        )
     if cost_center is not None:
         queryset = queryset.filter(aircraft__cost_center=cost_center)
     return queryset.count()

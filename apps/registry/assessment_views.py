@@ -30,6 +30,8 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
 )
 
+from apps.core.tenancy import scope_queryset_to_tenant
+
 from . import assessments
 from .models import KnowledgeAssessment
 
@@ -149,7 +151,11 @@ class KnowledgeAssessmentDetail(ModelViewPermissionRequiredMixin, DetailView):
     def get_queryset(self):
         # Cada quien ve lo suyo; ver el historial ajeno exige el permiso de
         # lectura sobre operadores, que es el que tiene quien supervisa.
-        queryset = super().get_queryset().select_related("operator", "taken_by_user")
+        queryset = scope_queryset_to_tenant(
+            super().get_queryset().select_related("operator", "taken_by_user"),
+            self.request.user,
+            "operator__tenant_id",  # LV-372 (F-08): el intento es de la empresa de su operador
+        )
         if self.request.user.has_perm("registry.view_operator"):
             return queryset
         operator = getattr(self.request.user, "operator_profile", None)

@@ -455,7 +455,14 @@ def permit_status_by_cost_center(today, user=None, lazy_scope=False):
     return rows
 
 
-def on_time_execution(start, end):
+def _scope(queryset, user, path):
+    """Acota a las empresas de `user` (LV-372); sin `user`, no toca nada (jobs, correo ejecutivo)."""
+    if user is None:
+        return queryset
+    return scope_queryset_to_visible_tenants(queryset, user, path)
+
+
+def on_time_execution(start, end, user=None):
     """Percentage of committed work that was flown inside its own window.
 
     Measured over the **approved permits whose validity ended within the
@@ -490,6 +497,7 @@ def on_time_execution(start, end):
         valid_until__gte=start,
         valid_until__lte=end,
     )
+    permits = _scope(permits, user, "cost_center__tenant_id")
     total = permits.count()
     if not total:
         return {
@@ -507,7 +515,7 @@ def on_time_execution(start, end):
     }
 
 
-def survey_accuracy(start, end):
+def survey_accuracy(start, end, user=None):
     """Share of assessed deliverables that met the contract's criteria.
 
     This is the guide's "precision achieved vs. required", aggregated. Only
@@ -524,6 +532,7 @@ def survey_accuracy(start, end):
         validated_at__date__gte=start,
         validated_at__date__lte=end,
     ).select_related("cost_center")
+    candidates = _scope(candidates, user, "cost_center__tenant_id")
     for deliverable in candidates:
         verdict = deliverable.meets_acceptance_criteria
         if verdict is None:
@@ -535,7 +544,7 @@ def survey_accuracy(start, end):
     return {"total": assessed, "met": met, "pct": round(met * 100 / assessed, 1)}
 
 
-def reflight_rate(start, end):
+def reflight_rate(start, end, user=None):
     """Reflights as a share of the flights actually flown in the period.
 
     Denominator is flights, not deliverables: a reflight is a flight that had
@@ -547,14 +556,21 @@ def reflight_rate(start, end):
     from apps.compliance.models import NonConformity
     from apps.operations.models import FlightRecord
 
-    flights = FlightRecord.objects.filter(
-        is_active=True, actual_date__gte=start, actual_date__lte=end
+    flights = _scope(
+        FlightRecord.objects.filter(
+            is_active=True, actual_date__gte=start, actual_date__lte=end
+        ),
+        user,
+        "permission__cost_center__tenant_id",
     ).count()
-    reflights = NonConformity.objects.filter(
-        is_active=True,
-        source=NonConformity.SOURCE_REFLIGHT,
-        detected_on__gte=start,
-        detected_on__lte=end,
+    reflights = _scope_nonconformities(
+        NonConformity.objects.filter(
+            is_active=True,
+            source=NonConformity.SOURCE_REFLIGHT,
+            detected_on__gte=start,
+            detected_on__lte=end,
+        ),
+        user,
     ).count()
     if not flights:
         return {"flights": 0, "reflights": reflights, "pct": None}
@@ -565,7 +581,17 @@ def reflight_rate(start, end):
     }
 
 
-def incident_free_flight_hours():
+def _scope_nonconformities(queryset, user):
+    """Una no conformidad es de la empresa de su faena; una sin faena no se atribuye a nadie y
+    cuenta para todas (ocultarla cambiaría lo que hoy se ve con una sola empresa)."""
+    if user is None:
+        return queryset
+    return scope_queryset_to_visible_tenants(
+        queryset, user, "cost_center__tenant_id", include_unowned=True
+    )
+
+
+def incident_free_flight_hours(user=None):
     """Flight hours accumulated since the last recorded incident.
 
     A running counter, not a percentage -- the "N days without an accident"
@@ -578,13 +604,20 @@ def incident_free_flight_hours():
     from apps.operations.selectors import format_duration
 
     last_incident = (
-        NonConformity.objects.filter(
-            is_active=True, source=NonConformity.SOURCE_INCIDENT
+        _scope_nonconformities(
+            NonConformity.objects.filter(
+                is_active=True, source=NonConformity.SOURCE_INCIDENT
+            ),
+            user,
         )
         .order_by("-detected_on")
         .first()
     )
-    records = FlightRecord.objects.filter(is_active=True)
+    records = _scope(
+        FlightRecord.objects.filter(is_active=True),
+        user,
+        "permission__cost_center__tenant_id",
+    )
     if last_incident is not None:
         records = records.filter(actual_date__gt=last_incident.detected_on)
     total = sum((record.duration for record in records), timedelta())
@@ -595,7 +628,7 @@ def incident_free_flight_hours():
     }
 
 
-def operational_kpis(start, end):
+def operational_kpis(start, end, user=None):
     """Both KPIs, shaped for the report template and the executive email.
 
     `pct is None` means "nothing to measure in this period" -- an empty fleet,
@@ -603,11 +636,11 @@ def operational_kpis(start, end):
     read as total failure where the honest answer is that the question does not
     apply.
     """
-    availability = fleet_availability()
-    execution = on_time_execution(start, end)
-    accuracy = survey_accuracy(start, end)
-    reflights = reflight_rate(start, end)
-    incident_free = incident_free_flight_hours()
+    availability = fleet_availability(user)
+    execution = on_time_execution(start, end, user)
+    accuracy = survey_accuracy(start, end, user)
+    reflights = reflight_rate(start, end, user)
+    incident_free = incident_free_flight_hours(user)
     return [
         {
             "code": "fleet_availability",

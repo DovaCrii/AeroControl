@@ -36,10 +36,13 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SaveAndAddAnotherMixin,
     SearchMixin,
+    TenantScopedChoicesMixin,
     TenantScopedQuerysetMixin,
     filter_options,
 )
 from apps.core.tenancy import (
+    scope_form_choices,
+    scope_queryset_for_model,
     scope_queryset_to_tenant,
     scope_queryset_to_visible_tenants,
 )
@@ -199,6 +202,22 @@ def uploaded_file_cleanup():
         raise
 
 
+# LV-372 (F-08): de qué empresa es cada cosa. Entregables y no conformidades cuelgan de su centro de
+# costo (en la no conformidad es opcional: una sin faena no se puede atribuir y se sigue viendo).
+COST_CENTER_TENANT_PATH = "cost_center__tenant_id"
+
+
+def scoped_or_404(request, queryset, path, pk, *, include_unowned=False, **filters):
+    """`queryset` acotado a las empresas de la persona y la fila `pk`; la de otra empresa es 404."""
+    return get_object_or_404(
+        scope_queryset_to_visible_tenants(
+            queryset, request.user, path, include_unowned=include_unowned
+        ),
+        pk=pk,
+        **filters,
+    )
+
+
 class ComplianceList(
     CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
 ):
@@ -233,6 +252,7 @@ class DeliverableList(ComplianceList):
     model = Deliverable
     template_name = "compliance/deliverable_list.html"
     search_fields = ["title", "cost_center__code", "cost_center__name"]
+    tenant_scope = COST_CENTER_TENANT_PATH
     # UX-07. "Aceptación" no está: `meets_acceptance_criteria` se **deriva** de
     # comparar las métricas contra los umbrales congelados, así que no hay
     # columna que ordenar, y ordenar por algo parecido daría un orden que no
@@ -258,8 +278,11 @@ class DeliverableList(ComplianceList):
         return context
 
 
-class DeliverableDetail(ModelViewPermissionRequiredMixin, DetailView):
+class DeliverableDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = Deliverable
+    tenant_path = COST_CENTER_TENANT_PATH
     template_name = "compliance/deliverable_detail.html"
     context_object_name = "deliverable"
 
@@ -278,8 +301,11 @@ class DeliverableCreate(ComplianceCreate):
     form_class = DeliverableForm
 
 
-class DeliverableUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+class DeliverableUpdate(
+    TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
+):
     model = Deliverable
+    tenant_path = COST_CENTER_TENANT_PATH
     form_class = DeliverableForm
     permission_action = "change"
     template_name = "generic/form.html"
@@ -302,7 +328,13 @@ class DeliverableValidate(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        deliverable = scoped_or_404(
+            request,
+            Deliverable.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            is_active=True,
+        )
         if deliverable.status != Deliverable.STATUS_DRAFT:
             messages.error(request, _("Only a draft deliverable can be validated."))
             return redirect(deliverable)
@@ -326,7 +358,13 @@ class DeliverableRelease(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        deliverable = scoped_or_404(
+            request,
+            Deliverable.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            is_active=True,
+        )
         if deliverable.status != Deliverable.STATUS_VALIDATED:
             messages.error(request, _("Only a validated deliverable can be released."))
             return redirect(deliverable)
@@ -379,7 +417,13 @@ class DeliverableReject(ModelPermissionRequiredMixin, View):
 
     @transaction.atomic
     def post(self, request, pk):
-        deliverable = get_object_or_404(Deliverable, pk=pk, is_active=True)
+        deliverable = scoped_or_404(
+            request,
+            Deliverable.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            is_active=True,
+        )
         if deliverable.status == Deliverable.STATUS_RELEASED:
             messages.error(request, _("A released deliverable cannot be rejected."))
             return redirect(deliverable)
@@ -416,6 +460,8 @@ class NonConformityList(ComplianceList):
     model = NonConformity
     template_name = "compliance/nonconformity_list.html"
     search_fields = ["title", "description", "root_cause"]
+    tenant_scope = COST_CENTER_TENANT_PATH
+    tenant_scope_include_unowned = True
     # UX-07. "Eficacia" no está: la celda dibuja cuatro cosas distintas según el
     # caso, y no hay una columna cuyo orden reproduzca esa secuencia.
     sortable_columns = {
@@ -451,8 +497,12 @@ class NonConformityList(ComplianceList):
         return context
 
 
-class NonConformityDetail(ModelViewPermissionRequiredMixin, DetailView):
+class NonConformityDetail(
+    TenantScopedQuerysetMixin, ModelViewPermissionRequiredMixin, DetailView
+):
     model = NonConformity
+    tenant_path = COST_CENTER_TENANT_PATH
+    tenant_include_unowned = True
     template_name = "compliance/nonconformity_detail.html"
     context_object_name = "finding"
 
@@ -470,8 +520,12 @@ class NonConformityCreate(ComplianceCreate):
     form_class = NonConformityForm
 
 
-class NonConformityUpdate(HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView):
+class NonConformityUpdate(
+    TenantScopedQuerysetMixin, HtmxFormMixin, ModelPermissionRequiredMixin, UpdateView
+):
     model = NonConformity
+    tenant_path = COST_CENTER_TENANT_PATH
+    tenant_include_unowned = True
     form_class = NonConformityForm
     permission_action = "change"
     template_name = "generic/form.html"
@@ -489,7 +543,14 @@ class NonConformityClose(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        finding = scoped_or_404(
+            request,
+            NonConformity.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            include_unowned=True,
+            is_active=True,
+        )
         if not finding.close(user=request.user):
             messages.error(
                 request,
@@ -509,7 +570,14 @@ class NonConformityReopen(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        finding = scoped_or_404(
+            request,
+            NonConformity.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            include_unowned=True,
+            is_active=True,
+        )
         finding.reopen()
         set_audit_context(request, finding, action="non_conformity_reopened")
         messages.success(request, _("Non-conformity reopened."))
@@ -523,7 +591,14 @@ class NonConformityVerifyEffectiveness(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        finding = get_object_or_404(NonConformity, pk=pk, is_active=True)
+        finding = scoped_or_404(
+            request,
+            NonConformity.objects.all(),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            include_unowned=True,
+            is_active=True,
+        )
         note = (request.POST.get("note") or "").strip()
         if not finding.verify_effectiveness(user=request.user, note=note):
             messages.error(
@@ -541,6 +616,7 @@ class DocumentList(ComplianceList):
     model = Document
     template_name = "compliance/document_list.html"
     search_fields = ["title"]
+    tenant_scope = "tenant_id"
     htmx_template_name = "compliance/_document_rows.html"
     # UX-07. "Entidad" queda fuera: es la relación genérica del documento, así
     # que no hay columna por la cual ordenar. Ordenar por vencimiento sí es la
@@ -929,7 +1005,13 @@ class DocumentAttachExisting(ModelPermissionRequiredMixin, View):
             return None, ""
         object_id = request.GET.get("object_id") or request.POST.get("object_id")
         try:
-            entity = model._default_manager.filter(pk=object_id, is_active=True).first()
+            entity = (
+                scope_queryset_for_model(
+                    model._default_manager.filter(is_active=True), request.user
+                )
+                .filter(pk=object_id)
+                .first()
+            )
         except (ValueError, ValidationError):
             return None, ""
         code = (request.GET.get("doc_type") or request.POST.get("doc_type") or "")[:100]
@@ -1000,7 +1082,9 @@ class DocumentEntityOptions(ModelPermissionRequiredMixin, View):
             content_type_id = int(request.GET.get("entity_type", ""))
         except (TypeError, ValueError):
             return HttpResponseBadRequest()
-        form = DocumentForm(data={"entity_type": content_type_id})
+        form = scope_form_choices(
+            DocumentForm(data={"entity_type": content_type_id}), request.user
+        )
         if not form.fields["entity_type"].queryset.filter(pk=content_type_id).exists():
             return HttpResponseBadRequest()
         return render(request, "compliance/_document_object_field.html", {"form": form})
@@ -1119,7 +1203,9 @@ class DocumentPreview(ModelPermissionRequiredMixin, View):
         return response
 
 
-class DocumentBulkUpload(ModelPermissionRequiredMixin, FormView):
+class DocumentBulkUpload(
+    TenantScopedChoicesMixin, ModelPermissionRequiredMixin, FormView
+):
     """LV-86: several documents onto one record in a single action.
 
     Requires `add_document`, like the single upload it batches.
@@ -1190,7 +1276,7 @@ class DocumentBulkUpload(ModelPermissionRequiredMixin, FormView):
         return document_home_url(self.created[0])
 
 
-class DocumentReplace(ModelPermissionRequiredMixin, FormView):
+class DocumentReplace(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, FormView):
     model = Document
     permission_action = "change"
     form_class = DocumentForm
@@ -1671,7 +1757,17 @@ class AssignOwner(ModelPermissionRequiredMixin, View):
     model = None
 
     def _target(self, pk):
-        return get_object_or_404(self.model, pk=pk, is_active=True)
+        # LV-372: la empresa de una alerta es la de su regla; la de una no conformidad, la de su
+        # faena (y una sin faena no se atribuye a nadie: se sigue viendo).
+        is_alert = self.model is Alert
+        return scoped_or_404(
+            self.request,
+            self.model.objects.all(),
+            ALERT_TENANT_PATH if is_alert else COST_CENTER_TENANT_PATH,
+            pk,
+            include_unowned=not is_alert,
+            is_active=True,
+        )
 
     def get(self, request, pk):
         target = self._target(pk)
@@ -2126,6 +2222,7 @@ class DocumentTypeUpdate(ComplianceUpdate):
 
 class AlertRuleList(ComplianceList):
     model = AlertRule
+    tenant_scope = "tenant_id"
     # LV-280: las tres columnas genéricas (Nombre / Creado / Estado).
     sortable_columns = {"name": "name", "created": "created_at", "status": "is_active"}
 

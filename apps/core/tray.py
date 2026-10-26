@@ -23,6 +23,8 @@ credenciales por vencer porque lo que lo tapaba no era un control de acceso.
 
 from django.urls import reverse
 
+from apps.core.tenancy import scope_queryset_to_visible_tenants
+
 # Las cuatro fuentes que tienen una definición de "pendiente" que se sostiene.
 #
 # ⚠️ **Mantención queda fuera a propósito, y el plan lo dice**: su fila la lista
@@ -67,7 +69,14 @@ def _alerts(user):
     from apps.compliance.reports import cost_centers_for_refs
 
     alerts = list(
-        Alert.objects.filter(is_active=True, is_resolved=False)
+        # LV-372 (F-08): la bandeja traía lo pendiente de **todas** las empresas. La empresa de una
+        # alerta es la de su regla; la de una no conformidad, la de su faena (una sin faena no se
+        # atribuye a nadie y se sigue viendo); la de un permiso o un entregable, la de su faena.
+        scope_queryset_to_visible_tenants(
+            Alert.objects.filter(is_active=True, is_resolved=False),
+            user,
+            "alert_rule__tenant_id",
+        )
         .select_related("alert_rule", "assigned_to")
         # Por `triggered_at` y no por `triggering_date`: esa segunda es una
         # **propiedad** que lee el valor congelado (`watched_value`, `LV-118`),
@@ -124,7 +133,12 @@ def _nonconformities(user):
 
     rows = []
     for finding in (
-        NonConformity.objects.filter(is_active=True, status="open")
+        scope_queryset_to_visible_tenants(
+            NonConformity.objects.filter(is_active=True, status="open"),
+            user,
+            "cost_center__tenant_id",
+            include_unowned=True,
+        )
         .select_related("cost_center", "assigned_to")
         .order_by("detected_on")
     ):
@@ -153,8 +167,12 @@ def _permits(user):
 
     rows = []
     for permit in (
-        FlightPermission.objects.filter(
-            is_active=True, status=FlightPermission.STATUS_REQUESTED
+        scope_queryset_to_visible_tenants(
+            FlightPermission.objects.filter(
+                is_active=True, status=FlightPermission.STATUS_REQUESTED
+            ),
+            user,
+            "cost_center__tenant_id",
         )
         .select_related("cost_center")
         .order_by("created_at")
@@ -185,7 +203,13 @@ def _deliverables(user):
 
     rows = []
     for deliverable in (
-        Deliverable.objects.filter(is_active=True, status__in=("draft", "validated"))
+        scope_queryset_to_visible_tenants(
+            Deliverable.objects.filter(
+                is_active=True, status__in=("draft", "validated")
+            ),
+            user,
+            "cost_center__tenant_id",
+        )
         .select_related("cost_center")
         .order_by("created_at")
     ):
