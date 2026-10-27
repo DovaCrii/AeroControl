@@ -15,6 +15,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import TemplateView, View
 
 from apps.core.exports import neutralize
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from apps.core.views import ModelViewPermissionRequiredMixin, lookup_by_pk
 from apps.registry.models import CostCenter
 from .digest import BUCKETS
@@ -54,8 +55,13 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         cost_center = None
         doc_type = None
         if request.GET.get("cost_center"):
+            # LV-372 (F-08): sólo faenas de las empresas de quien mira; la de otra es "sin filtro",
+            # no una ventana a lo que hay detrás.
             cost_center = lookup_by_pk(
-                CostCenter.objects.filter(is_active=True), request.GET["cost_center"]
+                scope_queryset_to_visible_tenants(
+                    CostCenter.objects.filter(is_active=True), request.user
+                ),
+                request.GET["cost_center"],
             )
         if request.GET.get("doc_type"):
             doc_type = lookup_by_pk(
@@ -66,7 +72,11 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
     def report_for(self, request):
         start, end, cost_center, doc_type = self._filters(request)
         return build_compliance_report(
-            start=start, end=end, cost_center=cost_center, doc_type=doc_type
+            start=start,
+            end=end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
 
     def report_and_comparison_for(self, request):
@@ -88,18 +98,28 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         """
         start, end, cost_center, doc_type = self._filters(request)
         current = build_compliance_report(
-            start=start, end=end, cost_center=cost_center, doc_type=doc_type
+            start=start,
+            end=end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
         prev_start, prev_end = previous_period(start, end)
         previous = build_compliance_report(
-            start=prev_start, end=prev_end, cost_center=cost_center, doc_type=doc_type
+            start=prev_start,
+            end=prev_end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
         snapshot = None
         # A doc_type filter narrows the report in a way the snapshot does not
         # record (snapshots are unfiltered), so comparing against one would be
         # apples to oranges. Only substitute when the view is unfiltered by type.
         if doc_type is None:
-            snapshot = latest_snapshot_before(start, cost_center=cost_center)
+            snapshot = latest_snapshot_before(
+                start, cost_center=cost_center, user=request.user
+            )
         if snapshot is not None:
             previous["totals"] = totals_from_snapshot(snapshot)
         return current, compare_periods(current, previous), snapshot
@@ -119,7 +139,9 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
             # there is no history and both sides are the same instant.
             comparison_baseline=snapshot,
             title=_("Compliance status report"),
-            cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
+            cost_centers=scope_queryset_to_visible_tenants(
+                CostCenter.objects.filter(is_active=True), self.request.user
+            ).order_by("code"),
             document_types=DocumentType.objects.filter(is_active=True).order_by("name"),
             filter_params=self.request.GET,
             export_query=self.request.GET.urlencode(),

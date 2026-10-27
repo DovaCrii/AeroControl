@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Count, F, IntegerField, Prefetch, Q, When
 from django.db.models.functions import Cast, Length, Substr
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -66,6 +66,28 @@ from .selectors import (
 from .services import bulk_assign_aircraft, bulk_assign_operators
 
 
+# LV-372 (F-08): ruta al tenant de los modelos del padrón que **no** lo llevan directo. Los que sí
+# (CostCenter, Aircraft, Operator, Battery) usan su propio `tenant_id`; un modelo que no figura acá ni
+# tiene `tenant` es un catálogo global (tipos de habilitación, aeródromos) y no se acota.
+REGISTRY_TENANT_PATHS = {
+    "assignment": "cost_center__tenant_id",
+    "operatorassignment": "cost_center__tenant_id",
+    "aircraftassignment": "cost_center__tenant_id",
+    "qualification": "operator__tenant_id",
+    "knowledgeassessment": "operator__tenant_id",
+}
+
+
+def registry_tenant_path(model):
+    """Camino ORM del modelo del padrón a su tenant, o `None` si es un catálogo global."""
+    path = REGISTRY_TENANT_PATHS.get(model._meta.model_name)
+    if path:
+        return path
+    if any(field.name == "tenant" for field in model._meta.fields):
+        return "tenant_id"
+    return None
+
+
 class RegistryList(
     CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView
 ):
@@ -91,6 +113,12 @@ class RegistryList(
             capfirst(self.model._meta.verbose_name_plural),
         )
         return context
+
+    @property
+    def tenant_scope(self):
+        # LV-372: acotar por empresa **toda** lista del padrón (búsqueda, filtros, CSV y parciales
+        # htmx incluidos) en `SearchMixin.get_queryset`, no sólo las que se acordaban de hacerlo.
+        return registry_tenant_path(self.model)
 
     def scope_by_tenant(self, queryset, field="tenant_id"):
         """T3.2 Fase 2: restrict a list to the user's tenant(s).
@@ -207,7 +235,11 @@ class RegistryArchive(ModelPermissionRequiredMixin, View):
         from apps.core.tenancy import scope_queryset_to_tenant
 
         obj = get_object_or_404(
-            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            scope_queryset_to_tenant(
+                self.model._default_manager.all(),
+                request.user,
+                registry_tenant_path(self.model),
+            ),
             pk=pk,
             is_active=True,
         )
@@ -259,7 +291,11 @@ class RegistryRestore(ModelPermissionRequiredMixin, View):
         from apps.core.tenancy import scope_queryset_to_tenant
 
         obj = get_object_or_404(
-            scope_queryset_to_tenant(self.model._default_manager.all(), request.user),
+            scope_queryset_to_tenant(
+                self.model._default_manager.all(),
+                request.user,
+                registry_tenant_path(self.model),
+            ),
             pk=pk,
             is_active=False,
         )
@@ -284,7 +320,13 @@ class CostCenterArchive(RegistryArchive):
     model = CostCenter
 
     def post(self, request, pk):
-        obj = get_object_or_404(CostCenter, pk=pk, is_active=True)
+        from apps.core.tenancy import scope_queryset_to_tenant
+
+        obj = get_object_or_404(
+            scope_queryset_to_tenant(CostCenter.objects.all(), request.user),
+            pk=pk,
+            is_active=True,
+        )
         dependents = {
             "operators": obj.operators.filter(is_active=True).count(),
             "aircraft": obj.aircraft.filter(is_active=True).count(),
@@ -329,8 +371,14 @@ class KnowledgeAssessmentArchive(RegistryArchive):
     model = KnowledgeAssessment
 
     def post(self, request, pk):
+        from apps.core.tenancy import scope_queryset_to_tenant
+
         obj = get_object_or_404(
-            KnowledgeAssessment.objects.select_related("operator"),
+            scope_queryset_to_tenant(
+                KnowledgeAssessment.objects.select_related("operator"),
+                request.user,
+                registry_tenant_path(KnowledgeAssessment),
+            ),
             pk=pk,
             is_active=True,
         )
@@ -1061,6 +1109,8 @@ class AircraftInsuranceTransition(StatusTransitionView):
 
     model = Aircraft
     status_field = "insurance_status"
+    # LV-372 (F-08): la aeronave de otra empresa es 404.
+    tenant_scope = "tenant_id"
 
 
 class AircraftInsurancePending(AircraftInsuranceTransition):
@@ -1096,7 +1146,7 @@ class AircraftInsuranceActive(AircraftInsuranceTransition):
     success_message = gettext_lazy("Insurance recorded as authorized.")
 
     def post(self, request, pk):
-        aircraft = get_object_or_404(Aircraft, pk=pk, is_active=True)
+        aircraft = self.get_object(pk)
         if aircraft.insurance_expiry is None:
             messages.error(
                 request,
@@ -1186,6 +1236,9 @@ class AssignmentList(RegistryList):
         "aircraft__model",
         "cost_center__code",
     ]
+    # Acota por su cuenta (abajo): una asignación heredada sin faena cae al tenant de su operador,
+    # y el acotado genérico por faena la dejaría fuera (LV-372).
+    tenant_scope = None
 
     def get_queryset(self):
         from django.db.models import Q
@@ -1709,17 +1762,80 @@ class QualificationTypeUpdate(RegistryUpdate):
     form_class = QualificationTypeForm
 
 
+# LV-372 (F-08): `ImportBatch` no lleva empresa; la de un lote es la de las filas que creó.
+IMPORT_ENTITY_MODELS = {
+    "registry.costcenter": CostCenter,
+    "registry.aircraft": Aircraft,
+    "registry.operator": Operator,
+}
+# Cuántos lotes recientes se miran buscando el primero visible para la persona: tope fijo, para
+# que el ofrecimiento de deshacer no recorra el historial entero.
+IMPORT_OFFER_LOOKBACK = 25
+
+
+def import_batch_is_visible(batch, user):
+    """El lote es de la empresa de quien mira: **todas** las filas que creó le son visibles.
+
+    Un lote sin filas no se puede atribuir a ninguna empresa; sólo lo ve quien lo hizo (o root).
+    """
+    from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+    created_ids = batch.created_ids
+    if not created_ids:
+        return user.is_superuser or batch.actor_id == user.pk
+    model = IMPORT_ENTITY_MODELS.get(batch.entity)
+    if model is None:
+        return False
+    created = model.objects.filter(pk__in=created_ids)
+    visible = scope_queryset_to_visible_tenants(created, user)
+    return not created.exclude(pk__in=visible.values("pk")).exists()
+
+
+def import_target_tenant(user):
+    """`(tenant_id, error)`: la empresa donde se crean las filas importadas.
+
+    Es la **única** empresa que ve quien importa, explícita. Root conserva la empresa por defecto.
+    Con varias membresías no se adivina: se rechaza, porque crear en la empresa equivocada es un
+    dato de una empresa dentro de la otra.
+    """
+    from apps.core.tenancy import get_default_tenant, visible_tenant_ids
+
+    tenant_ids = visible_tenant_ids(user)
+    if tenant_ids is None:
+        return get_default_tenant(), None
+    if len(tenant_ids) != 1:
+        return None, _(
+            "You belong to more than one organization, so the import cannot tell which one "
+            "should receive the records. Ask an administrator to import on your behalf."
+        )
+    return tenant_ids[0], None
+
+
 class CostCenterImportView(ModelPermissionRequiredMixin, View):
     model = CostCenter
     permission_action = "add"
     entity_key = "registry.costcenter"
+    entity_context = {}
 
     def last_applied_batch(self):
-        """Most recent applied batch of this entity, for the revert offer."""
-        return (
-            ImportBatch.objects.filter(entity=self.entity_key, status="applied")
-            .order_by("-created_at")
-            .first()
+        """Most recent applied batch of this entity **visible to the user**, for the revert offer."""
+        batches = ImportBatch.objects.filter(
+            entity=self.entity_key, status="applied"
+        ).order_by("-created_at")[:IMPORT_OFFER_LOOKBACK]
+        for batch in batches:
+            if import_batch_is_visible(batch, self.request.user):
+                return batch
+        return None
+
+    def _target_or_error(self, request):
+        """`(tenant_id, None)` o `(None, respuesta)` con el error de formulario ya dibujado."""
+        tenant_id, error = import_target_tenant(request.user)
+        if error is None:
+            return tenant_id, None
+        return None, render(
+            request,
+            "registry/costcenter_import.html",
+            {"rows": [], "errors": [error], "preview": True, **self.entity_context},
         )
 
     def _apply_feedback(self, request, created_count):
@@ -1750,9 +1866,14 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
         )
 
     @staticmethod
-    def parse(upload):
+    def parse(upload, tenant_id):
         spec = CsvImportSpec(("code", "name"), "code")
-        existing = set(CostCenter.objects.values_list("code", flat=True))
+        # El código sólo es único dentro de la empresa donde se importa.
+        existing = set(
+            CostCenter.objects.filter(tenant_id=tenant_id).values_list(
+                "code", flat=True
+            )
+        )
         return spec.parse(
             upload,
             existing,
@@ -1767,7 +1888,10 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
         )
 
     def post(self, request):
-        rows, errors = self.parse(request.FILES.get("file"))
+        tenant_id, refusal = self._target_or_error(request)
+        if refusal is not None:
+            return refusal
+        rows, errors = self.parse(request.FILES.get("file"), tenant_id)
         if errors or request.POST.get("apply") != "1":
             return render(
                 request,
@@ -1778,7 +1902,9 @@ class CostCenterImportView(ModelPermissionRequiredMixin, View):
             batch = ImportBatch.objects.create(
                 actor=request.user, entity="registry.costcenter", rows=rows
             )
-            created = [CostCenter.objects.create(**row) for row in rows]
+            created = [
+                CostCenter.objects.create(tenant_id=tenant_id, **row) for row in rows
+            ]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
         self._apply_feedback(request, len(created))
@@ -1794,18 +1920,13 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
             batch = get_object_or_404(
                 ImportBatch.objects.select_for_update(),
                 pk=pk,
-                entity__in=[
-                    "registry.costcenter",
-                    "registry.aircraft",
-                    "registry.operator",
-                ],
+                entity__in=list(IMPORT_ENTITY_MODELS),
                 status="applied",
             )
-            model = {
-                "registry.costcenter": CostCenter,
-                "registry.aircraft": Aircraft,
-                "registry.operator": Operator,
-            }[batch.entity]
+            # LV-372 (F-08): el lote de otra empresa no existe para quien mira.
+            if not import_batch_is_visible(batch, request.user):
+                raise Http404
+            model = IMPORT_ENTITY_MODELS[batch.entity]
             model.objects.filter(pk__in=batch.created_ids).update(is_active=False)
             batch.status = "reverted"
             batch.reverted_at = timezone.now()
@@ -1833,6 +1954,7 @@ class CostCenterImportRevertView(ModelPermissionRequiredMixin, View):
 class AircraftImportView(CostCenterImportView):
     model = Aircraft
     entity_key = "registry.aircraft"
+    entity_context = {"entity": "aircraft"}
 
     def get(self, request):
         if request.GET.get("template") == "1":
@@ -1856,7 +1978,7 @@ class AircraftImportView(CostCenterImportView):
         )
 
     @staticmethod
-    def parse(upload):
+    def parse(upload, tenant_id):
         spec = CsvImportSpec(
             (
                 "registration",
@@ -1869,9 +1991,12 @@ class AircraftImportView(CostCenterImportView):
             ),
             "registration",
         )
+        # La matrícula es única en toda la base (no por empresa): se mira en todas.
         existing = set(Aircraft.objects.values_list("registration", flat=True))
         centers = dict(
-            CostCenter.objects.filter(is_active=True).values_list("code", "pk")
+            CostCenter.objects.filter(is_active=True, tenant_id=tenant_id).values_list(
+                "code", "pk"
+            )
         )
 
         def build(raw, _line):
@@ -1891,7 +2016,10 @@ class AircraftImportView(CostCenterImportView):
         return spec.parse(upload, existing, build)
 
     def post(self, request):
-        rows, errors = self.parse(request.FILES.get("file"))
+        tenant_id, refusal = self._target_or_error(request)
+        if refusal is not None:
+            return refusal
+        rows, errors = self.parse(request.FILES.get("file"), tenant_id)
         if errors or request.POST.get("apply") != "1":
             return render(
                 request,
@@ -1902,7 +2030,9 @@ class AircraftImportView(CostCenterImportView):
             batch = ImportBatch.objects.create(
                 actor=request.user, entity="registry.aircraft", rows=rows
             )
-            created = [Aircraft.objects.create(**row) for row in rows]
+            created = [
+                Aircraft.objects.create(tenant_id=tenant_id, **row) for row in rows
+            ]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
         self._apply_feedback(request, len(created))
@@ -1912,6 +2042,7 @@ class AircraftImportView(CostCenterImportView):
 class OperatorImportView(CostCenterImportView):
     model = Operator
     entity_key = "registry.operator"
+    entity_context = {"entity": "operator"}
 
     def get(self, request):
         if request.GET.get("template") == "1":
@@ -1935,13 +2066,20 @@ class OperatorImportView(CostCenterImportView):
         )
 
     @staticmethod
-    def parse(upload):
+    def parse(upload, tenant_id):
         spec = CsvImportSpec(
             ("employee_id", "full_name", "email", "phone", "cost_center"), "employee_id"
         )
-        existing = set(Operator.objects.values_list("employee_id", flat=True))
+        # `employee_id` es único por empresa (`registry_operator_tenant_employee_uniq`).
+        existing = set(
+            Operator.objects.filter(tenant_id=tenant_id).values_list(
+                "employee_id", flat=True
+            )
+        )
         centers = dict(
-            CostCenter.objects.filter(is_active=True).values_list("code", "pk")
+            CostCenter.objects.filter(is_active=True, tenant_id=tenant_id).values_list(
+                "code", "pk"
+            )
         )
 
         def build(raw, _line):
@@ -1961,7 +2099,10 @@ class OperatorImportView(CostCenterImportView):
         return spec.parse(upload, existing, build)
 
     def post(self, request):
-        rows, errors = self.parse(request.FILES.get("file"))
+        tenant_id, refusal = self._target_or_error(request)
+        if refusal is not None:
+            return refusal
+        rows, errors = self.parse(request.FILES.get("file"), tenant_id)
         if errors or request.POST.get("apply") != "1":
             return render(
                 request,
@@ -1972,7 +2113,9 @@ class OperatorImportView(CostCenterImportView):
             batch = ImportBatch.objects.create(
                 actor=request.user, entity="registry.operator", rows=rows
             )
-            created = [Operator.objects.create(**row) for row in rows]
+            created = [
+                Operator.objects.create(tenant_id=tenant_id, **row) for row in rows
+            ]
             batch.created_ids = [str(obj.pk) for obj in created]
             batch.save(update_fields=["created_ids", "updated_at"])
         self._apply_feedback(request, len(created))

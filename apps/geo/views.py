@@ -17,7 +17,10 @@ from apps.compliance.models import Document, DocumentType
 from apps.operations.models import FlightPermission
 from apps.compliance.views import save_uploaded_file, uploaded_file_cleanup
 from apps.core.audit import add_audit_sibling, set_audit_context
-from apps.core.tenancy import scope_queryset_to_tenant
+from apps.core.tenancy import (
+    scope_queryset_to_tenant,
+    scope_queryset_to_visible_tenants,
+)
 from apps.core.views import (
     CsvExportMixin,
     ModelPermissionRequiredMixin,
@@ -32,6 +35,22 @@ from .forms import GeoPlanImportForm
 from .kml import canonical
 from .models import GeoPlan, GeoPlanVersion, WeatherReview
 from .sections import split_sections
+
+# LV-372: la empresa de un plan es la de su faena (el plan no lleva `tenant` propio).
+GEO_PLAN_TENANT_PATH = "cost_center__tenant_id"
+
+
+def _tenant_plans(user):
+    """Los planes que `user` puede alcanzar: los de las empresas que ve (F-08).
+
+    Con `scope_queryset_to_visible_tenants` (subconsulta) y no con `scope_queryset_to_tenant`: la
+    segunda resuelve los tenants con dos consultas propias y el listado tiene techo de consultas
+    (`test_the_list_does_not_query_once_per_row_for_the_file`, 11). La regla es la misma.
+    """
+    return scope_queryset_to_visible_tenants(
+        GeoPlan.objects.all(), user, GEO_PLAN_TENANT_PATH
+    )
+
 
 GEO_SOURCE_DOC_TYPE_CODE = "GEO_SOURCE"
 # LV-180: el nombre que ve la gente. Era "Geo source" —inglés y jerga— en una
@@ -146,7 +165,13 @@ class GeoPlanListView(
     ]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        # LV-372 (F-08): el listado, su búsqueda, el filtro de archivados, el CSV y la
+        # parcial htmx salen todos de este queryset, así que se acota **aquí**, por la
+        # empresa de la faena del plan. Sin esto cualquier persona con `view_geoplan`
+        # veía los planes de todas las empresas.
+        queryset = scope_queryset_to_visible_tenants(
+            super().get_queryset(), self.request.user, GEO_PLAN_TENANT_PATH
+        )
         # **El defecto sigue siendo lo vigente.** `SearchMixin` sin parámetro no
         # filtra nada, y eso acá mostraría lo archivado mezclado con lo activo --
         # justo lo que archivar viene a evitar. Se ve archivado sólo al pedirlo.
@@ -295,7 +320,7 @@ class GeoPlanArchive(ModelPermissionRequiredMixin, View):
         )
 
     def post(self, request, pk):
-        plan = get_object_or_404(GeoPlan, pk=pk, is_active=True)
+        plan = get_object_or_404(_tenant_plans(request.user), pk=pk, is_active=True)
         dependents = self._dependents(plan)
         # LV-176, pedido del usuario: poder cerrar el plan **junto con** sus
         # permisos. Acompañado y no en cascada, decisión tomada con él: cada
@@ -423,7 +448,7 @@ class GeoPlanRestore(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        plan = get_object_or_404(GeoPlan, pk=pk, is_active=False)
+        plan = get_object_or_404(_tenant_plans(request.user), pk=pk, is_active=False)
         plan.is_active = True
         plan.save(update_fields=["is_active", "updated_at"])
         set_audit_context(request, plan, action="restored")
@@ -437,7 +462,8 @@ class GeoPlanDetailView(ModelViewPermissionRequiredMixin, DetailView):
     context_object_name = "plan"
 
     def get_queryset(self):
-        return GeoPlan.objects.select_related(
+        # LV-372 (F-08): la ficha abría cualquier plan por su pk; el de otra empresa es 404.
+        return _tenant_plans(self.request.user).select_related(
             "cost_center", "flight_permission", "current_version", "source_document"
         )
 
@@ -827,6 +853,7 @@ class GeoPlanImportView(ModelPermissionRequiredMixin, FormView):
 
 class GeoPlanStartEditing(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "change"
     target_status = "editing"
     valid_from_statuses = ["draft"]
@@ -835,6 +862,7 @@ class GeoPlanStartEditing(StatusTransitionView):
 
 class GeoPlanSubmitReview(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "change"
     target_status = "in_review"
     valid_from_statuses = ["editing"]
@@ -843,6 +871,7 @@ class GeoPlanSubmitReview(StatusTransitionView):
 
 class GeoPlanApprove(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "approve"
     target_status = "approved"
     valid_from_statuses = ["in_review"]
@@ -851,6 +880,7 @@ class GeoPlanApprove(StatusTransitionView):
 
 class GeoPlanReject(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "approve"
     target_status = "rejected"
     valid_from_statuses = ["in_review"]
@@ -859,6 +889,7 @@ class GeoPlanReject(StatusTransitionView):
 
 class GeoPlanResumeEditing(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "change"
     target_status = "editing"
     valid_from_statuses = ["rejected"]
@@ -867,6 +898,7 @@ class GeoPlanResumeEditing(StatusTransitionView):
 
 class GeoPlanReopen(StatusTransitionView):
     model = GeoPlan
+    tenant_scope = GEO_PLAN_TENANT_PATH
     permission_action = "approve"
     target_status = "editing"
     valid_from_statuses = ["approved"]
@@ -890,7 +922,7 @@ class WeatherReviewCreate(ModelPermissionRequiredMixin, View):
     def post(self, request, pk):
         from apps.core.weather import bbox_centroid, forecast_for
 
-        plan = get_object_or_404(GeoPlan, pk=pk)
+        plan = get_object_or_404(_tenant_plans(request.user), pk=pk)
         centroid = bbox_centroid(plan.current_version)
         permission = plan.flight_permission
         target_date = permission.valid_from if permission else None

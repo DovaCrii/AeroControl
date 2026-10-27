@@ -17,6 +17,7 @@ from django.views.generic import TemplateView, View
 
 from apps.compliance.digest import bucket_for
 from apps.core.exports import neutralize
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from apps.core.views import ModelPermissionRequiredMixin, lookup_by_pk
 from .catastro import (
     AIRCRAFT_EXPIRY_COLUMN,
@@ -70,8 +71,12 @@ class CatastroMixin(ModelPermissionRequiredMixin):
     def filters_for(self, request):
         cost_center = None
         if request.GET.get("cost_center"):
+            # LV-372 (F-08): sólo faenas de las empresas de quien mira.
             cost_center = lookup_by_pk(
-                CostCenter.objects.filter(is_active=True), request.GET["cost_center"]
+                scope_queryset_to_visible_tenants(
+                    CostCenter.objects.filter(is_active=True), request.user
+                ),
+                request.GET["cost_center"],
             )
         # An unknown status is "no status filter", not an empty roster: the value
         # comes from a query string, and a stale bookmark should not answer
@@ -108,7 +113,9 @@ class CatastroReportView(CatastroMixin, TemplateView):
             sentences=totals_sentence(catastro),
             closing=closing_total(catastro),
             title=_("Fleet and personnel roster"),
-            cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
+            cost_centers=scope_queryset_to_visible_tenants(
+                CostCenter.objects.filter(is_active=True), self.request.user
+            ).order_by("code"),
             statuses=Aircraft.STATUS_CHOICES,
             filter_params=self.request.GET,
             export_query=self.request.GET.urlencode(),

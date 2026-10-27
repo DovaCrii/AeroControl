@@ -27,12 +27,13 @@
           {% if temp_points %}<svg class="wx-line" viewBox="0 0 {{ strip_width }} 52" width="{{ strip_width }}" height="52" aria-hidden="true" focusable="false"><polyline points="{{ temp_points }}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>{% endif %}
           <ol class="wx-hours">
             {% for h in hours %}
-            <li class="wx-hour" title="{{ h.title }}">
+            <li class="wx-hour{% if h.is_now %} is-now{% endif %}{% if h.new_day %} is-newday{% endif %}" title="{{ h.title }}"{% if h.is_now %} aria-current="time"{% endif %}>
               <b class="wx-hour-t">{% if h.temp is not None %}{{ h.temp }}°{% else %}–{% endif %}</b>
               <span class="wx-bars" aria-hidden="true"><i class="wx-gust" style="--v: {{ h.gust_pct }}%"></i><i class="wx-wind" style="--v: {{ h.wind_pct }}%"></i></span>
               <span class="wx-hour-w">{% if h.wind is not None %}{{ h.wind }}{% else %}–{% endif %}<small>{% if h.gust is not None %}{{ h.gust }}{% else %}–{% endif %}</small></span>
               <span class="wx-hour-r">{% if h.rain is not None %}{{ h.rain }}%{% else %}–{% endif %}</span>
               <span class="wx-hour-h">{{ h.hour }}</span>
+              {% if strip_marks %}{% comment %}LV-373: la hora actual y el cambio de día se dicen con TEXTO (además del resalte de fondo y borde de la columna); la fila existe en todas las columnas para que sigan alineadas.{% endcomment %}<span class="wx-hour-m">{% if h.is_now %}<b class="wx-mark-now">{% translate "Now" %}</b><span class="wx-mark-time">{{ now_time }}</span>{% endif %}{% if h.new_day %}<span class="wx-mark-day"><span>{{ h.moment|date:"D" }}</span> <span>{{ h.moment|date:"j" }}</span></span>{% endif %}</span>{% endif %}
             </li>
             {% endfor %}
           </ol>
@@ -43,8 +44,8 @@
       <h3 class="wx-h">{% translate "Next 7 days" %}</h3>
       <ul class="wx-days">
         {% for d in days %}
-        <li class="wx-day">
-          <span class="wx-day-n">{% if d.is_today %}{% translate "Today" %}{% else %}{{ d.date|date:"D" }}{% endif %}</span>
+        <li class="wx-day{% if d.is_today %} is-today{% endif %}"{% if d.is_today %} aria-current="date"{% endif %}>
+          <span class="wx-day-n">{% if d.is_today %}{% translate "Today" %}{% else %}{{ d.date|date:"D" }}{% endif %} <small>{{ d.date|date:"d/m" }}</small></span>
           {% include "weather/_icons.html" with slug=d.slug night=False size="sm" label=d.label %}
           <span class="wx-day-r">{% if d.rain is not None %}{{ d.rain }}%{% endif %}</span>
           <span class="wx-day-lo">{% if d.tmin is not None %}{{ d.tmin }}°{% endif %}</span>
@@ -73,7 +74,7 @@
         <li class="wx-event wx-event--{{ e.level }}">
           <span class="wx-lvl"><span aria-hidden="true">{{ e.symbol }}</span> {{ e.level_label }}</span>
           <b class="wx-event-t">{{ e.label }}</b>
-          <span class="wx-event-w">{% if e.start %}{{ e.start|date:"D H:i" }}{% endif %}{% if e.end and e.end != e.start %} – {{ e.end|date:"D H:i" }}{% endif %}</span>
+          <span class="wx-event-w">{% if e.start %}{% if e.crosses_days %}{{ e.start|date:"D d/m H:i" }}{% else %}{{ e.start|date:"D H:i" }}{% endif %}{% endif %}{% if e.end and e.end != e.start %} – {% if e.crosses_days %}{{ e.end|date:"D d/m H:i" }}{% else %}{{ e.end|date:"D H:i" }}{% endif %}{% endif %}</span>
           {% if e.value is not None %}<span class="wx-event-v">{{ e.value|floatformat:"-1" }} {{ e.unit }}</span>{% endif %}
         </li>
         {% endfor %}

@@ -101,3 +101,43 @@ def test_the_exclusion_is_only_for_permits(rule):
     call_command("generate_alerts")
 
     assert aircraft.pk in _alerted()
+
+
+@pytest.mark.django_db
+def test_the_tenant_filter_and_the_operating_filter_compose():
+    """F-08 (empresa de la regla) Y LV-378 (centros con operación) se suman con AND."""
+    from apps.core.models import OperationalTenant
+
+    tenants = {
+        key: OperationalTenant.objects.create(name=f"Empresa {key}", slug=f"emp-{key}")
+        for key in ("a", "b")
+    }
+    rules = {
+        key: AlertRule.objects.create(
+            name="Permisos de vuelo por vencer",
+            entity_type="operations.flightpermission",
+            field_to_watch="valid_until",
+            days_before_expiry=45,
+            tenant=tenant,
+        )
+        for key, tenant in tenants.items()
+    }
+    a_open = _permit(
+        CostCenter.objects.create(code="CC931", name="A abre", tenant=tenants["a"]),
+        "P-A1",
+    )
+    a_closed = _permit(
+        CostCenter.objects.create(
+            code="CC932",
+            name="A cerrada",
+            tenant=tenants["a"],
+            contract_status="closed",
+        ),
+        "P-A2",
+    )
+
+    call_command("generate_alerts")
+
+    pairs = set(Alert.objects.values_list("alert_rule_id", "object_id"))
+    assert pairs == {(rules["a"].pk, a_open.pk)}
+    assert a_closed.pk not in _alerted()

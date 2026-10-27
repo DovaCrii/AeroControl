@@ -137,8 +137,9 @@ class TestTheCard:
         content = self._page()
         assert "Santiago" in content
         assert re.search(r'<p class="wx-temp">.*?14°', content, re.S)
-        assert content.count('class="wx-hour"') == 24
-        assert content.count('class="wx-day"') == 7
+        # LV-373: la columna de ahora y la fila de hoy llevan una clase más (`is-now`, `is-today`).
+        assert len(re.findall(r'<li class="wx-hour(?: [^"]*)?"', content)) == 24
+        assert len(re.findall(r'<li class="wx-day(?: [^"]*)?"', content)) == 7
         assert "<polyline" in content
         assert 'class="wx-arrow"' in content
 

@@ -71,8 +71,15 @@ def make_permit(center, **overrides):
     permit = FlightPermission.objects.create(**fields)
     # La edición exige operadores y aeronaves: el permiso ficticio trae uno de cada uno.
     count = FlightPermission.objects.count()
+    # LV-372: del mismo tenant que la faena del permiso. El formulario sólo ofrece (y acepta)
+    # operadores y aeronaves de las empresas de quien edita; con el tenant por defecto, un permiso
+    # de la empresa A traía un padrón de otra y la edición no pasaba la validación.
     permit.operators.add(
-        Operator.objects.create(employee_id=f"E-{count}", full_name=f"Ana {count}")
+        Operator.objects.create(
+            employee_id=f"E-{count}",
+            full_name=f"Ana {count}",
+            tenant_id=center.tenant_id,
+        )
     )
     permit.aircraft_fleet.add(
         Aircraft.objects.create(
@@ -80,6 +87,7 @@ def make_permit(center, **overrides):
             type="Multirotor",
             model="M3E",
             manufacturer="DJI",
+            tenant_id=center.tenant_id,
         )
     )
     return permit

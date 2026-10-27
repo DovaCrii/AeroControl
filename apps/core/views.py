@@ -180,6 +180,15 @@ class SearchMixin(ListPreferenceMixin, SortableColumnsMixin):
 
     search_fields = []
     htmx_template_name = "generic/_table_body.html"
+    # LV-372 (F-08): ruta ORM del modelo a su tenant ("cost_center__tenant_id",
+    # "aircraft__tenant_id"; "tenant_id" si el modelo lo tiene propio). Con valor, la lista, su
+    # búsqueda, filtros, paginación, parciales htmx y exportaciones sólo ven las filas de las
+    # empresas de la persona. `None` (lo de siempre) no acota: es para listas de catálogos
+    # globales o que acotan por su cuenta.
+    tenant_scope = None
+    # Con `True`, las filas sin empresa (el camino llega a NULL) también se ven; ver
+    # `scope_queryset_to_visible_tenants(include_unowned=...)`.
+    tenant_scope_include_unowned = False
 
     def get_sortable_columns(self):
         """UX-07: the three columns the generic table always draws, when the
@@ -270,6 +279,15 @@ class SearchMixin(ListPreferenceMixin, SortableColumnsMixin):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        if self.tenant_scope:
+            from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+            queryset = scope_queryset_to_visible_tenants(
+                queryset,
+                self.request.user,
+                self.tenant_scope,
+                include_unowned=self.tenant_scope_include_unowned,
+            )
         query_text = self.request.GET.get("q", "").strip()
         if query_text and self.search_fields:
             from django.db.models import Q
@@ -371,7 +389,13 @@ def filter_options(user, model, permission, order_field):
     """
     if not user.has_perm(permission):
         return model.objects.none()
-    return model.objects.filter(is_active=True).order_by(order_field)
+    # LV-372 (F-08): sólo filas de las empresas de quien mira (el desplegable de la bandeja de
+    # alertas y los del calendario nombraban faenas, aeronaves y personas de todas).
+    from apps.core.tenancy import scope_queryset_for_model
+
+    return scope_queryset_for_model(
+        model.objects.filter(is_active=True), user
+    ).order_by(order_field)
 
 
 class CsvColumn(NamedTuple):
@@ -519,7 +543,20 @@ class CsvExportMixin:
 UX20_FIELD_THRESHOLD = 8
 
 
-class HtmxFormMixin:
+class TenantScopedChoicesMixin:
+    """Acota los desplegables del formulario de la vista a las empresas de la persona.
+
+    LV-372 (F-08): ver `apps.core.tenancy.scope_form_choices`. Va en la base de las vistas de
+    formulario para que ninguna alta ni edición ofrezca (ni acepte) filas de otra empresa.
+    """
+
+    def get_form(self, form_class=None):
+        from apps.core.tenancy import scope_form_choices
+
+        return scope_form_choices(super().get_form(form_class), self.request.user)
+
+
+class HtmxFormMixin(TenantScopedChoicesMixin):
     """Return form fragments for HTMX while preserving normal form behavior."""
 
     htmx_template_name = "generic/_form_content.html"
@@ -799,10 +836,23 @@ class TenantScopedQuerysetMixin:
     A no-op for superusers and single-tenant setups."""
 
     tenant_path = None
+    # LV-372: con `True`, también las filas sin empresa (el camino llega a NULL), p. ej. una no
+    # conformidad sin centro de costo. Usa la variante de subconsulta, que lo admite.
+    tenant_include_unowned = False
 
     def get_queryset(self):
-        from apps.core.tenancy import scope_queryset_to_tenant
+        from apps.core.tenancy import (
+            scope_queryset_to_tenant,
+            scope_queryset_to_visible_tenants,
+        )
 
+        if self.tenant_include_unowned:
+            return scope_queryset_to_visible_tenants(
+                super().get_queryset(),
+                self.request.user,
+                self.tenant_path,
+                include_unowned=True,
+            )
         return scope_queryset_to_tenant(
             super().get_queryset(), self.request.user, self.tenant_path
         )
@@ -866,7 +916,15 @@ class AlertCountPartial(LoginRequiredMixin, View):
             return render(
                 request, "core/_alert_badge.html", {"unresolved_alert_count": None}
             )
-        count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+        # LV-372 (F-08): sólo las alertas de las empresas de quien pregunta (ver el procesador de
+        # contexto `unresolved_alert_count`, que dibuja el mismo número en cada página).
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        count = scope_queryset_to_visible_tenants(
+            Alert.objects.filter(is_active=True, is_resolved=False),
+            request.user,
+            "alert_rule__tenant_id",
+        ).count()
         return render(
             request, "core/_alert_badge.html", {"unresolved_alert_count": count}
         )
@@ -1496,6 +1554,7 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
         if query:
             from django.db.models import Q
             from apps.compliance.models import Document
+            from apps.core.tenancy import scope_queryset_to_visible_tenants
             from apps.registry.models import Aircraft, CostCenter, Operator
 
             models = {
@@ -1519,9 +1578,12 @@ class GlobalSearchView(LoginRequiredMixin, TemplateView):
                 condition = Q()
                 for field in fields:
                     condition |= Q(**{f"{field}__icontains": query})
-                objects = model.objects.filter(condition, is_active=True).order_by(
-                    "-updated_at"
-                )[:10]
+                # LV-372 (F-08): la búsqueda global devolvía faenas, aeronaves, personas y
+                # documentos de todas las empresas. Los cuatro modelos llevan `tenant` propio.
+                objects = scope_queryset_to_visible_tenants(
+                    model.objects.filter(condition, is_active=True),
+                    self.request.user,
+                ).order_by("-updated_at")[:10]
                 for obj in objects:
                     url = (
                         reverse(detail_url, args=[obj.pk])
@@ -1710,12 +1772,22 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
     def _situation_metrics(self, user):
         from datetime import timedelta
 
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        def scoped(queryset, path=None):
+            return scope_queryset_to_visible_tenants(queryset, user, path)
+
         metrics = []
         today = timezone.localdate()
         if user.has_perm("compliance.view_alert"):
             from apps.compliance.models import Alert
 
-            count = Alert.objects.filter(is_active=True, is_resolved=False).count()
+            # LV-372 (F-08): estas tres cifras del centro de administración contaban todas las
+            # empresas; ahora sólo las de quien mira.
+            count = scoped(
+                Alert.objects.filter(is_active=True, is_resolved=False),
+                "alert_rule__tenant_id",
+            ).count()
             metrics.append(
                 {
                     "label": _("Unresolved alerts"),
@@ -1727,11 +1799,13 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         if user.has_perm("compliance.view_document"):
             from apps.compliance.models import Document
 
-            count = Document.objects.filter(
-                is_active=True,
-                is_current_version=True,
-                expiry_date__isnull=False,
-                expiry_date__lte=today + timedelta(days=30),
+            count = scoped(
+                Document.objects.filter(
+                    is_active=True,
+                    is_current_version=True,
+                    expiry_date__isnull=False,
+                    expiry_date__lte=today + timedelta(days=30),
+                )
             ).count()
             metrics.append(
                 {
@@ -1744,7 +1818,9 @@ class AdministrationCenterView(LoginRequiredMixin, TemplateView):
         if user.has_perm("compliance.view_alertrule"):
             from apps.compliance.models import AlertRule
 
-            count = AlertRule.objects.filter(is_active=True, enabled=True).count()
+            count = scoped(
+                AlertRule.objects.filter(is_active=True, enabled=True)
+            ).count()
             metrics.append(
                 {"label": _("Active alert rules"), "value": count, "tone": "muted"}
             )
@@ -1980,13 +2056,36 @@ class StatusTransitionView(ModelPermissionRequiredMixin, View):
     # airframe's condition and moving it would ground the aircraft instead of
     # recording that its policy came through.
     status_field = "status"
+    # LV-372 (F-08): ruta ORM del modelo a su tenant (p. ej. "cost_center__tenant_id"). Con
+    # valor, la fila de otra empresa es 404; `None` (lo de siempre) no acota. Es opt-in a
+    # propósito: acotar por defecto cambiaría de golpe las transiciones de otras apps, que se
+    # auditan por separado (ver `MASTER_PLAN.md`, LV-372).
+    tenant_scope = None
     # Subclasses must set this with a *marked* literal (gettext_lazy):
     # `_(self.success_message)` on a variable is invisible to makemessages, so
     # every transition message rendered in English inside a Spanish UI.
     success_message = gettext_lazy("Status updated.")
 
+    def get_queryset(self):
+        queryset = self.model._default_manager.all()
+        if self.tenant_scope:
+            from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+            queryset = scope_queryset_to_visible_tenants(
+                queryset, self.request.user, self.tenant_scope
+            )
+        return queryset
+
+    def get_object(self, pk):
+        """La fila a transicionar, acotada por empresa: la de otra es 404.
+
+        Los *mixins* de compuerta (`RequireDgac...`, `CrossCheck...`) la piden **antes** de
+        `post`; si buscaran por su cuenta sin acotar, una fila ajena respondería 302 con el
+        aviso de la compuerta en vez de 404 (LV-372)."""
+        return get_object_or_404(self.get_queryset(), pk=pk, is_active=True)
+
     def post(self, request, pk):
-        obj = get_object_or_404(self.model, pk=pk, is_active=True)
+        obj = self.get_object(pk)
         field = self.status_field
         from_status = getattr(obj, field)
         if from_status not in self.valid_from_statuses:
