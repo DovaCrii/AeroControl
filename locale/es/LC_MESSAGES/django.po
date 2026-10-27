@@ -3913,6 +3913,26 @@ msgstr ""
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
 
+#: .\apps\compliance\models.py:1080
+msgid "The record belongs to a different organization than the alert rule."
+msgstr ""
+"El registro pertenece a una organización distinta de la de la regla de "
+"alerta."
+
+#: .\apps\compliance\forms.py:780
+msgid "No record of that type with this id was found."
+msgstr "No se encontró un registro de ese tipo con este identificador."
+
+#: .\apps\registry\views.py:1740
+msgid ""
+"You belong to more than one organization, so the import cannot tell which "
+"one should receive the records. Ask an administrator to import on your "
+"behalf."
+msgstr ""
+"Usted pertenece a más de una organización, así que la importación no puede "
+"saber cuál debe recibir los registros. Pida a un administrador que importe "
+"en su nombre."
+
 #: .\apps\workboard\forms.py:25
 msgid "Tenant"
 msgstr "Organización"
@@ -12384,19 +12404,22 @@ msgstr "El motivo debe tener entre %(min)s y %(max)s caracteres."
 #: apps/reporting/models.py
 #, python-format
 msgid ""
-"The period %(period)s is already closed: it is issued as a normal report, not "
-"with an early cutoff."
+"The period %(period)s is already closed: it is issued as a normal report, "
+"not with an early cutoff."
 msgstr ""
 "El período %(period)s ya cerró: se emite como informe normal, no con corte "
 "anticipado."
 
 #: apps/reporting/models.py
 #, python-format
-msgid "The period %(period)s has not started: there is nothing to cut off yet."
-msgstr "El período %(period)s aún no comienza: todavía no hay nada que cortar."
+msgid ""
+"The period %(period)s has not started: there is nothing to cut off yet."
+msgstr ""
+"El período %(period)s aún no comienza: todavía no hay nada que cortar."
 
 #: apps/reporting/models.py
-msgid "The early cutoff must fall between the first day of the month and today."
+msgid ""
+"The early cutoff must fall between the first day of the month and today."
 msgstr "El corte anticipado debe caer entre el primer día del mes y hoy."
 
 #: apps/reporting/models.py
@@ -12412,8 +12435,8 @@ msgid ""
 "The early-cutoff report is already approved: the next one is the closing "
 "revision, issued when the month ends."
 msgstr ""
-"El informe de corte anticipado ya está aprobado: el siguiente es la revisión "
-"de cierre, que se emite al terminar el mes."
+"El informe de corte anticipado ya está aprobado: el siguiente es la revisión"
+" de cierre, que se emite al terminar el mes."
 
 #: apps/reporting/forms.py
 msgid "Reason for the early cutoff"
@@ -12424,8 +12447,8 @@ msgid ""
 "It is kept in the audit log and shown on screen. It is not printed in the "
 "report."
 msgstr ""
-"Queda en el registro de auditoría y se muestra en pantalla. No se imprime en "
-"el informe."
+"Queda en el registro de auditoría y se muestra en pantalla. No se imprime en"
+" el informe."
 
 #: apps/reporting/views.py
 #, python-format
@@ -12452,8 +12475,8 @@ msgstr "Este corte anticipado ya existía; se abre el último."
 
 #: apps/reporting/views.py
 msgid ""
-"Early-cutoff draft frozen. The closing revision will be issued when the month "
-"ends."
+"Early-cutoff draft frozen. The closing revision will be issued when the "
+"month ends."
 msgstr ""
 "Borrador de corte anticipado congelado. La revisión de cierre se emitirá al "
 "terminar el mes."
@@ -12464,14 +12487,14 @@ msgid ""
 "Early cutoff on %(cutoff)s: %(days)d day of the month is not included; the "
 "closing revision will be issued on %(closing)s."
 msgid_plural ""
-"Early cutoff on %(cutoff)s: %(days)d days of the month are not included; the "
-"closing revision will be issued on %(closing)s."
+"Early cutoff on %(cutoff)s: %(days)d days of the month are not included; the"
+" closing revision will be issued on %(closing)s."
 msgstr[0] ""
 "Corte anticipado al %(cutoff)s: %(days)d día del mes no está incluido; la "
 "revisión de cierre se emitirá el %(closing)s."
 msgstr[1] ""
-"Corte anticipado al %(cutoff)s: %(days)d días del mes no están incluidos; la "
-"revisión de cierre se emitirá el %(closing)s."
+"Corte anticipado al %(cutoff)s: %(days)d días del mes no están incluidos; la"
+" revisión de cierre se emitirá el %(closing)s."
 
 #: apps/reporting/checks.py
 #, python-format
@@ -12489,8 +12512,8 @@ msgstr "Emitir con corte anticipado"
 
 #: templates/reporting/early_freeze_form.html
 msgid ""
-"Freezes the month in progress with today as the cutoff. It is a draft: it is "
-"not approved until a person approves it."
+"Freezes the month in progress with today as the cutoff. It is a draft: it is"
+" not approved until a person approves it."
 msgstr ""
 "Congela el mes en curso con hoy como fecha de corte. Es un borrador: no "
 "queda aprobado hasta que una persona lo apruebe."

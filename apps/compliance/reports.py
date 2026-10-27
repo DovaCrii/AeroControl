@@ -8,7 +8,7 @@ email quotes. No wording or formatting decisions live here.
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Exists, Q
+from django.db.models import Count, Exists, Q, Subquery
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -532,6 +532,21 @@ def _resolution_stats(start, end, user=None):
     }
 
 
+SNAPSHOT_COUNTERS = ("total", "valid", "expired", "due_7", "due_15", "due_30")
+
+
+def documentary_rows(centers, doc_type, today):
+    """Las filas documentales de cada faena y sus totales: `([(faena, fila)], totales)`.
+
+    Es lo que el informe y `snapshot_compliance` (LV-372, F-08) comparten: el comando necesita la
+    faena **con** su fila para guardar la FK y la empresa, y el informe sólo las filas. Los totales
+    llevan los seis contadores; `valid_pct` lo agrega quien lo muestra.
+    """
+    pairs = [(center, _cost_center_row(center, doc_type, today)) for center in centers]
+    totals = {key: sum(row[key] for _center, row in pairs) for key in SNAPSHOT_COUNTERS}
+    return pairs, totals
+
+
 def build_compliance_report(
     start=None, end=None, cost_center=None, doc_type=None, user=None
 ):
@@ -561,11 +576,8 @@ def build_compliance_report(
     if cost_center:
         centers = centers.filter(pk=cost_center.pk)
 
-    rows = [_cost_center_row(center, doc_type, today) for center in centers]
-    totals = {
-        key: sum(row[key] for row in rows)
-        for key in ("total", "valid", "expired", "due_7", "due_15", "due_30")
-    }
+    pairs, totals = documentary_rows(centers, doc_type, today)
+    rows = [row for _center, row in pairs]
     totals["valid_pct"] = (
         round(totals["valid"] * 100 / totals["total"], 1) if totals["total"] else 0.0
     )
@@ -605,6 +617,15 @@ def latest_snapshot_before(day, cost_center=None, user=None):
     `None` when no history has been recorded yet -- a fresh install, or one
     where `snapshot_compliance` has never run. Callers must degrade instead of
     failing: an empty history is the normal state on day one.
+
+    LV-372 (F-08): la fila consolidada es **una por empresa**. Para la consolidada se toman las
+    empresas que la persona ve (todas las activas si es superusuario o no hay `user`, como en los
+    jobs) y la última fecha anterior que tenga consolidadas de ellas; si esa fecha no tiene la fila
+    de **todas**, devuelve `None` y el informe recalcula el periodo anterior (el camino de siempre
+    sin historial), porque una suma parcial leería como una baja que no ocurrió. Con una sola
+    empresa devuelve su fila; con varias, la suma de los seis contadores en un `ComplianceSnapshot`
+    **sin guardar** (`valid_pct` es una propiedad). Las filas por faena no tienen el problema: la
+    faena ya viene acotada.
     """
     from apps.core.models import OperationalTenant
 
@@ -613,31 +634,39 @@ def latest_snapshot_before(day, cost_center=None, user=None):
     queryset = ComplianceSnapshot.objects.filter(
         date__lt=day, cost_center=cost_center, is_active=True
     )
-    if user is not None and not user.is_superuser:
-        # LV-372 (F-08). La fila consolidada (`cost_center=None`) la escribe `snapshot_compliance`
-        # **sumando todas las empresas** bajo el tenant por defecto: para quien no ve todas, esa
-        # suma incluye lo de otra empresa. Sólo se usa si la persona ve todas las empresas
-        # activas (hoy, la instalación de una sola); si no, el informe cae a recalcular el
-        # periodo anterior, que es el camino de siempre sin historial. Las filas por faena no
-        # tienen el problema: la faena ya viene acotada. Cerrarlo del todo es que el comando
-        # escriba una fila consolidada **por empresa** (pendiente anotado en `MASTER_PLAN.md`).
-        if cost_center is None:
-            # Una sola consulta, sin resolver ids con `visible_tenant_ids`: «hay una empresa
-            # activa que la persona no ve». Es la regla de `visible_tenant_ids` (miembro activo
-            # de alguna; si de ninguna, la empresa por defecto) como subconsulta.
-            member_of = OperationalTenant.objects.filter(members=user, is_active=True)
-            # Va dentro de la misma consulta del snapshot (`~Exists`): si hay una empresa que la
-            # persona no ve, no devuelve fila y el informe recalcula el periodo anterior.
-            hidden = OperationalTenant.objects.filter(is_active=True).exclude(
-                Q(pk__in=member_of.values("pk"))
-                | (~Exists(member_of) & Q(slug=DEFAULT_TENANT_SLUG))
-            )
-            queryset = queryset.filter(~Exists(hidden))
-        else:
+    if cost_center is not None:
+        if user is not None:
             queryset = scope_queryset_to_visible_tenants(
                 queryset, user, "cost_center__tenant_id"
             )
-    return queryset.order_by("-date").first()
+        return queryset.order_by("-date").first()
+
+    if user is None or user.is_superuser:
+        expected = OperationalTenant.objects.filter(is_active=True)
+    else:
+        # La regla de `visible_tenant_ids` (miembro activo de alguna; si de ninguna, la empresa por
+        # defecto) como subconsulta: llamarla aquí costaría 2 consultas que el Reporte de vigencia
+        # no tiene en su presupuesto (#181), porque el resto de su alcance es perezoso.
+        member_of = OperationalTenant.objects.filter(members=user, is_active=True)
+        expected = OperationalTenant.objects.filter(
+            Q(pk__in=member_of.values("pk"))
+            | (~Exists(member_of) & Q(slug=DEFAULT_TENANT_SLUG))
+        )  # Una sola consulta (techo de consultas del Reporte de vigencia, #181): la última fecha con
+    # consolidadas de esas empresas y «no falta la fila de ninguna» van como subconsultas.
+    queryset = queryset.filter(tenant_id__in=expected.values("pk"))
+    latest_day = queryset.order_by("-date").values("date")[:1]
+    day_rows = queryset.filter(date=Subquery(latest_day))
+    missing = expected.exclude(pk__in=day_rows.values("tenant_id"))
+    rows = list(day_rows.filter(~Exists(missing)).order_by("tenant_id"))
+    if not rows:
+        return None
+    if len(rows) == 1:
+        return rows[0]
+    return ComplianceSnapshot(
+        date=rows[0].date,
+        cost_center=None,
+        **{key: sum(getattr(row, key) for row in rows) for key in SNAPSHOT_COUNTERS},
+    )
 
 
 def totals_from_snapshot(snapshot):
