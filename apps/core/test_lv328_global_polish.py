@@ -174,7 +174,8 @@ def test_stylesheet_weight_guard():
     ~9 KB entre las fases 2 y 4) lo sube a 245 KB; sigue siendo un techo y no una cifra a ciegas.
     Visual v3 (LV-367: tarjetas del Entorno con niveles propios, banda e infografía del centelleo, y el
     resumen plegable de Cumplimiento con la tabla simple; ~2 KB netos porque Cumplimiento retiró las
-    reglas de los anillos) lo sube a 250 KB.
+    reglas de los anillos) lo sube a 250 KB. Las marcas de la hora actual, del cambio de día y de la
+    fila de hoy del Tiempo (LV-373: ~1,4 KB, la base ya estaba a 249,5 KB) lo suben a 252 KB.
     """
     total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 250 * 1024
+    assert total < 252 * 1024

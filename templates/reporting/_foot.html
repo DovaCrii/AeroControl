@@ -63,12 +63,12 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     Referencia: DAN 91, DAN 137, DAN 151 · INS-096 numeral 6.4.1.
     {% elif section == "coverage" %}
     Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}. El
-    estado es el del cierre del período; sin permiso vigente, la faena no está habilitada.
+    estado es el {% if payload.meta.early_cutoff %}del corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}del cierre del período{% endif %}; sin permiso vigente, la faena no está habilitada.
     {% elif section == "coverage_plan" %}
     {% comment %}LV-260: la hoja que junta la cobertura y el plan lleva las dos
     notas — la fuente de la tabla y la obligación que el plan cita.{% endcomment %}
-    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado al
-    cierre del período. El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
+    Fuente: AeroControl — módulo Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado {% if payload.meta.early_cutoff %}al corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}al
+    cierre del período{% endif %}. El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
     con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
     {% elif section == "roster" %}
     Nómina designada en cada permiso vigente o en trámite al {{ cutoff_date|date:"d-m-Y" }},
@@ -76,6 +76,19 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     {% elif section == "plan" %}
     El informe mensual es obligación del {{ payload.meta.issued_by }} en conjunto
     con el {{ payload.meta.jointly_with }} (INS-096, 5.4.2 y 6.5).
+    {% elif section == "summary_v2" %}
+    {% comment %}LV-378: las notas del diseño 2, **más cortas** que las de arriba: el pie de
+    estas hojas va a 11,3 px (8,5 pt) y una nota de tres renglones le quita alto al
+    cuerpo. Sólo ramas nuevas: las de arriba son las de los informes ya emitidos.{% endcomment %}
+    Fuente: AeroControl, corte al {{ cutoff_date|date:"d-m-Y" }}. Un campo en ámbar punteado no tenía dato al corte.
+    {% elif section == "permits_v2" %}
+    Días al {{ cutoff_date|date:"d-m-Y" }}. Estado y población reconstruidos al corte. DAN 91, 137, 151 · INS-096 6.4.1.
+    {% elif section == "coverage_v2" %}
+    Fuente: AeroControl — Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado {% if payload.meta.early_cutoff %}al corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}al cierre del período{% endif %}.
+    {% elif section == "coverage_plan_v2" %}
+    Fuente: AeroControl — Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado {% if payload.meta.early_cutoff %}al corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}al cierre del período{% endif %}. Informe: INS-096, 5.4.2 y 6.5.
+    {% elif section == "roster_v2" %}
+    Registro de cada permiso al {{ cutoff_date|date:"d-m-Y" }}, como figura en el permiso. Detalle de la sección 2.
     {% endif %}
   </div>
   {% comment %}⚠️ **El total se calcula; antes decía «de 5» literal.**
@@ -89,7 +102,7 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
 
   Lo asigna `MonthlyReportView._sheets`, en un solo lugar.{% endcomment %}
   <div class="rpt-foot-id">
-    {{ revision_label }} · Página {{ page }} de {{ pages }}
+    {{ revision_label }}{% if payload.meta.early_cutoff %} · Corte anticipado {{ cutoff_date|date:"d-m-Y" }}{% endif %} · Página {{ page }} de {{ pages }}
     {% if cover %}<br>Documento de gestión interna{% endif %}
   </div>
 </div>

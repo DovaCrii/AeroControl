@@ -200,18 +200,26 @@ def to_docx(title, blocks):
     return output.getvalue()
 
 
-def cost_center_filter(params):
+def cost_center_filter(params, user=None):
     """La faena pedida en `?cost_center=` o `None` (S6).
 
     Antes estaba escrita dos veces, en `compliance/report_views.py` y en
     `registry/report_views.py`. Un valor que no es un UUID, o de una faena
     archivada, es **«sin filtro»** y no un 500 ni «no hay nada»: llega de un
     marcador viejo o de un enlace pegado a mano.
+
+    Con `user`, sólo cuentan las faenas de las empresas que esa persona ve
+    (LV-372, F-08): la de otra empresa es «sin filtro», no una ventana a lo que hay
+    detrás. Sin consultas propias (subconsulta en el `WHERE`).
     """
     from apps.core.views import lookup_by_pk
+    from apps.core.tenancy import scope_queryset_to_visible_tenants
     from apps.registry.models import CostCenter
 
     raw = params.get("cost_center")
     if not raw:
         return None
-    return lookup_by_pk(CostCenter.objects.filter(is_active=True), raw)
+    queryset = CostCenter.objects.filter(is_active=True)
+    if user is not None:
+        queryset = scope_queryset_to_visible_tenants(queryset, user)
+    return lookup_by_pk(queryset, raw)

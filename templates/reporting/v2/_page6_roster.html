@@ -1,0 +1,50 @@
+{% load report_leaf %}
+{% comment %}LV-378 · Anexo v2 · Registro permiso a permiso.
+
+Sólo se dibuja con `payload.meta.layout == 2`. **Recupera el detalle individual que la
+sección 2 agrupa por faena**: folio, N° DGAC, centro de costo, vigencia y operadores
+designados, de **todos** los permisos —vigentes, en trámite y vencidos sin cerrar—. Es
+consulta, no lectura: quien necesita saber si una persona estaba autorizada, o con qué
+número resolvió la DGAC, viene a esta hoja.
+
+Paginada con `pagination.sheets_for` y su propio estimador (alto medido en el navegador),
+con el total declarado en cada hoja: un recorte contra un total escrito se nota (y la
+invariante I8 comprueba que el anexo trae todas las filas). Texto en español y sin
+`{% translate %}`.{% endcomment %}
+<div class="rpt-page rpt2-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">A</span><span class="rpt-h2-text">Anexo · Registro permiso a permiso</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">{{ sheet.total }} permiso{{ sheet.total|pluralize:"s" }}: vigentes, en trámite y vencidos sin cerrar{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} del anexo{% endif %}</div>
+      <div class="rpt2-table">
+        <div class="rpt2-reg rpt2-reg-head">
+          <div>N° JEJ</div>
+          <div>N° DGAC</div>
+          <div>CC</div>
+          <div>Vigencia</div>
+          <div>Operadores designados</div>
+        </div>
+        <div class="rpt2-reg rpt2-reg-body">
+          {% for permit in sheet.rows %}
+          <div class="rpt2-reg-folio">{{ permit.folio }}</div>
+          <div>{% if permit.dgac_number %}{{ permit.dgac_number }}{% elif permit.status == "requested" %}<span class="rpt2-state-wait">En proceso</span>{% else %}<span class="rpt2-dash">—</span>{% endif %}</div>
+          <div>{{ permit.cost_centre }}{% if not permit.in_operation %}<span class="rpt2-reg-flag" title="Sin operación">○</span>{% endif %}</div>
+          <div>{% if permit.valid_until %}{{ permit.valid_from|as_date|date:"d-m"|default:"—" }} → {{ permit.valid_until|as_date|date:"d-m-Y" }}{% else %}<span class="rpt2-dash">Sin vigencia resuelta</span>{% endif %}</div>
+          <div class="rpt2-reg-people">{% for name in permit.operators %}{{ name }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">—</span>{% endfor %}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="rpt2-note-line">○ junto al CC: faena sin operación (no cuenta en la cobertura ni en las renovaciones).</div>
+    </div>
+  </div>
+
+  {% include "reporting/_foot.html" with section="roster_v2" %}
+
+</div>

@@ -145,6 +145,14 @@ def _fake_now(zone):
     return moment.replace(tzinfo=None)
 
 
+def _local_fold(forecast):
+    """0 salvo en la segunda vuelta de la hora repetida del cambio de abril (siempre 0 con hora fingida)."""
+    zone = _zone(forecast)
+    if _fake_now(zone) is not None:
+        return 0
+    return timezone.now().astimezone(zone).fold
+
+
 def _local_now(forecast):
     zone = _zone(forecast)
     fake = _fake_now(zone)
@@ -161,11 +169,24 @@ def _scaled(value, factor):
     return None if value is None else value * factor
 
 
-def _hour_rows(forecast, floor, to_kmh):
+def _hour_rows(forecast, floor, to_kmh, now=None, fold=0):
+    """Las horas de la franja. Con `now` (hora local naive) marca la columna de la hora actual.
+
+    LV-373: `is_now` sólo se pone si esa hora está en la serie (no se inventa la marca) y en UNA
+    columna: con la hora repetida de abril hay dos filas con la misma hora de pared y `fold` (0 la
+    primera vuelta, 1 la segunda) dice cuál es la de ahora. `new_day` marca la primera columna de
+    cada día nuevo, para que «00» no se confunda con hoy."""
     rows = [r for r in forecast.get("hourly") or [] if _parse(r.get("time"))]
     upcoming = [r for r in rows if _parse(r["time"]) >= floor]
     picked = (upcoming or rows)[:HOURS_SHOWN]
     hours = []
+    now_floor = None if now is None else now.replace(minute=0, second=0, microsecond=0)
+    same = [
+        i
+        for i, r in enumerate(picked)
+        if now_floor is not None and _parse(r["time"]) == now_floor
+    ]
+    now_index = same[min(fold, len(same) - 1)] if same else None
     for index, row in enumerate(picked):
         moment = _parse(row["time"])
         wind = _scaled(row.get("wind_speed_10m"), to_kmh)
@@ -175,6 +196,8 @@ def _hour_rows(forecast, floor, to_kmh):
             {
                 "hour": moment.strftime("%H"),
                 "moment": moment,
+                "is_now": index == now_index,
+                "new_day": index > 0 and moment.date() != hours[-1]["moment"].date(),
                 "x": STRIP_STEP // 2 + index * STRIP_STEP,
                 "temp": _round(row.get("temperature_2m")),
                 "temp_raw": row.get("temperature_2m"),
@@ -251,14 +274,16 @@ def _event_rows(events):
     rows = []
     for event in events:
         symbol, level_label = LEVEL_LABELS.get(event["level"], LEVEL_LABELS["info"])
+        start, end = _parse(event["start"]), _parse(event["end"])
         rows.append(
             {
                 "label": EVENT_LABELS.get(event["type"], event["type"]),
                 "level": event["level"],
                 "symbol": symbol,
                 "level_label": level_label,
-                "start": _parse(event["start"]),
-                "end": _parse(event["end"]),
+                "start": start,
+                "end": end,
+                "crosses_days": bool(start and end and start.date() != end.date()),
                 "value": event["value"] if event.get("unit") else None,
                 "unit": event.get("unit"),
             }
@@ -417,7 +442,9 @@ def build_card(location, forecast, events):
     now_state = _now_state(forecast, local_now)
     to_kmh = now_state["to_kmh"]
     floor = local_now.replace(minute=0, second=0, microsecond=0)
-    hours = _hour_rows(forecast, floor, to_kmh)
+    hours = _hour_rows(
+        forecast, floor, to_kmh, now=local_now, fold=_local_fold(forecast)
+    )
     days = _day_rows(forecast, local_now.date())
     current = now_state["current"]
     first = hours[0] if hours else {}
@@ -454,6 +481,8 @@ def build_card(location, forecast, events):
         "sky": sky,
         "scene": scene_module.scene_context(sky, local_now, scintillation),
         "hours": hours,
+        "now_time": local_now.strftime("%H:%M"),
+        "strip_marks": any(h["is_now"] or h["new_day"] for h in hours),
         "temp_points": points,
         "strip_width": strip_width,
         "gnss_band": band,

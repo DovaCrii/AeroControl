@@ -6,11 +6,12 @@ place so HTML, HTMX, exports and API consumers cannot drift apart.
 
 from uuid import UUID
 
-from django.db.models import Q
+from django.db.models import Exists, Q
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.core.models import OperationalTenant
+from apps.core.tenancy import DEFAULT_TENANT_SLUG
 from apps.registry.models import Operator
 
 from .models import KanbanBoard, KanbanBoardAccess, KanbanStage, KanbanTask
@@ -24,10 +25,16 @@ def accessible_boards(user, queryset=None):
     tenants = OperationalTenant.objects.filter(
         members=user, is_active=True, tenantmembership__is_active=True
     )
-    if tenants.exists():
-        queryset = queryset.filter(
-            Q(tenant__isnull=True) | Q(tenant_id__in=tenants.values("id"))
-        )
+    # LV-372 (F-08): quien **no** es miembro de ninguna empresa ve el tablero de la empresa por
+    # defecto (el mismo respaldo que `visible_tenant_ids`) y no, como antes, **todos**: ese `if
+    # tenants.exists()` dejaba pasar los tableros de cualquier empresa a quien no tuviera
+    # membresía. Con una sola empresa nada cambia (todo es de la por defecto o no tiene empresa).
+    # Va como subconsulta, sin consultas propias.
+    queryset = queryset.filter(
+        Q(tenant__isnull=True)
+        | Q(tenant_id__in=tenants.values("id"))
+        | (~Exists(tenants) & Q(tenant__slug=DEFAULT_TENANT_SLUG))
+    )
 
     rules = KanbanBoardAccess.objects.filter(user=user, is_active=True)
     if rules.exists():

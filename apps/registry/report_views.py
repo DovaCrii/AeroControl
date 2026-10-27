@@ -24,6 +24,7 @@ from apps.reporting.export import (
     to_csv,
     to_xlsx,
 )
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from .catastro import (
     AIRCRAFT_EXPIRY_COLUMN,
     AIRCRAFT_HEADERS,
@@ -86,7 +87,7 @@ class CatastroMixin(ModelPermissionRequiredMixin):
         return ("registry.view_aircraft", "registry.view_operator")
 
     def filters_for(self, request):
-        cost_center = cost_center_filter(request.GET)
+        cost_center = cost_center_filter(request.GET, request.user)
         # An unknown status is "no status filter", not an empty roster: the value
         # comes from a query string, and a stale bookmark should not answer
         # "you have no aircraft".
@@ -124,7 +125,9 @@ class CatastroReportView(CatastroMixin, TemplateView):
             # LV-355 F2 (S10): el universo, bajo cada tabla.
             universe=universe_sentence(cost_center_universe(self.request.user)),
             title=_("Fleet and personnel roster"),
-            cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
+            cost_centers=scope_queryset_to_visible_tenants(
+                CostCenter.objects.filter(is_active=True), self.request.user
+            ).order_by("code"),
             statuses=Aircraft.STATUS_CHOICES,
             filter_params=self.request.GET,
             export_query=self.request.GET.urlencode(),

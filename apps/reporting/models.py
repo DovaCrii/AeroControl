@@ -11,7 +11,7 @@ aeronaves ni operadores: recolecta lo que ya existe y lo congela.
 """
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
@@ -152,6 +152,12 @@ class ReportRun(BaseModel):
         verbose_name = _("report run")
         verbose_name_plural = _("report runs")
         ordering = ["-period", "-revision"]
+        # LV-375: emitir un informe con el mes abierto es una decisión de quien
+        # responde ante la DGAC, no de quien redacta la narrativa: permiso propio,
+        # que NO va a ningún rol de `bootstrap_roles` (se asigna a mano).
+        permissions = [
+            ("issue_early_reportrun", _("Can issue an early-cutoff monthly report")),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["period", "revision"],
@@ -176,8 +182,36 @@ class ReportRun(BaseModel):
         """
         return f"JEJ-GTE-CT-INF-RPA-{self.period:%Y-%m}"
 
+    EARLY_REASON_MIN = 10
+    EARLY_REASON_MAX = 300
+
+    @property
+    def is_early_cutoff(self):
+        """LV-375: ¿se emitió con el mes todavía abierto, a pedido de una persona?
+
+        La marca vive en el payload (`meta.early_cutoff`) y no en una columna: es un
+        hecho **del documento**, igual que `in_progress`, y un informe congelado
+        tiene que seguir diciéndolo aunque se lea en diciembre. Sin campo nuevo no
+        hay migración de esquema que pueda quedar sin aplicar en la VM.
+        """
+        return bool((self.payload or {}).get("meta", {}).get("early_cutoff"))
+
+    @property
+    def closes_early_cutoff(self):
+        """¿Es un anticipado cuyo mes ya cerró, o sea que toca emitir el cierre?
+
+        ⚠️ **Es lo que evita que octubre se quede con datos al 26.** Sin esto, el
+        trabajo del día 1 vería «ya existe un informe» y no emitiría nada.
+        """
+        from apps.reporting.builder import month_bounds
+
+        return (
+            self.is_early_cutoff
+            and month_bounds(self.period)[1] <= timezone.localdate()
+        )
+
     @classmethod
-    def freeze(cls, period, generated_by, *, force=False):
+    def freeze(cls, period, generated_by, *, force=False, early_cutoff=None, reason=""):
         """Congela el informe del período. Devuelve `(run, creado)`.
 
         **Es idempotente a propósito, y de eso depende que pueda correr desde un
@@ -201,12 +235,29 @@ class ReportRun(BaseModel):
         reescribir de cero y ahí nadie nota que un hallazgo dejó de ser cierto.
         Copiados, quedan a la vista para corregirlos.
 
+        **`early_cutoff` (LV-375) es la única vía para congelar un mes abierto**, y
+        la persona que lo pide responde por el motivo. Se valida **acá** y no sólo
+        en la vista: el corte tiene que caer dentro del mes, no en el futuro y
+        antes de su último día, y el motivo no puede ir vacío. Nunca aprueba. Y
+        cuando el mes cierra, el anticipado **no bloquea** el cierre: la revisión
+        siguiente se emite sola (el trabajo del día 1 no necesita `--force`) y
+        lleva `meta.replaces_early_cutoff`.
+
         Vive en el modelo y no en la vista ni en el comando porque **los dos lo
         llaman**: el botón de la pantalla y el trabajo programado. Dos copias de
         esta lógica es cómo el informe que genera el timer y el que genera una
         persona empiezan a diferir.
         """
         from apps.reporting.builder import build, month_bounds
+
+        start, end = month_bounds(period)
+        today = timezone.localdate()
+        latest = cls.objects.filter(period=period).order_by("-revision").first()
+
+        if early_cutoff is not None:
+            return cls._freeze_early(
+                period, generated_by, early_cutoff, reason, latest, start, end, today
+            )
 
         # ⚠️ **LV-233: un mes que no terminó no se congela.** Hasta acá nada lo
         # impedía, así que un `ReportRun` de septiembre con datos de tres días
@@ -219,8 +270,7 @@ class ReportRun(BaseModel):
         # día que es su último día, así que el 31 de agosto agosto **sí** se
         # congela. Con `>=` el trabajo programado —que corre el último día del
         # mes— habría quedado bloqueado justo el día que tiene que correr.
-        _start, end = month_bounds(period)
-        if end > timezone.localdate():
+        if end > today:
             raise ValidationError(
                 _(
                     "The period %(period)s has not finished yet: a monthly report "
@@ -229,34 +279,115 @@ class ReportRun(BaseModel):
                 % {"period": f"{period:%Y-%m}"}
             )
 
-        latest = cls.objects.filter(period=period).order_by("-revision").first()
-        if latest and not force:
+        # LV-375: un anticipado ya cerrado el mes pide su revisión de cierre sin
+        # `--force`; cualquier otro informe existente sigue siendo «sin cambios».
+        replaced = latest if latest and latest.closes_early_cutoff else None
+        if latest and not force and replaced is None:
             return latest, False
 
         payload, missing = build(period)
-        run = cls.objects.create(
-            period=period,
-            revision=(latest.revision + 1) if latest else 0,
-            generated_by=generated_by,
-            payload=payload,
-            missing_fields=missing,
-            completeness=(cls.COMPLETENESS_PARTIAL if missing else cls.COMPLETENESS_OK),
-            findings=latest.findings if latest else [],
-            period_note=latest.period_note if latest else "",
-            # LV-247: **las acciones también viajan**, y no viajaban. El docstring
-            # de arriba lo afirmaba para "la narrativa" entera, y la narrativa son
-            # tres bloques: se copiaban dos. `actions` llegó después (`LV-235`, las
-            # acciones del Dato Ejecutivo) y esta línea no se enteró, así que
-            # emitir una revisión para corregir una cifra **borraba en silencio**
-            # las acciones escritas — justo cuando alguien está corrigiendo el
-            # documento y menos lo va a notar.
-            actions=latest.actions if latest else [],
-        )
-        if latest:
-            cls.objects.filter(period=period).exclude(pk=run.pk).update(
-                status=cls.STATUS_SUPERSEDED
+        if replaced is not None:
+            payload["meta"]["replaces_early_cutoff"] = replaced.payload["meta"].get(
+                "cutoff"
             )
-        return run, True
+        return cls._create_revision(
+            period, generated_by, payload, missing, latest
+        ), True
+
+    @classmethod
+    def _freeze_early(
+        cls, period, generated_by, early_cutoff, reason, latest, start, end, today
+    ):
+        """La vía anticipada de `freeze`: todas sus validaciones, en un lugar."""
+        from apps.reporting.builder import build
+
+        reason = (reason or "").strip()
+        if not cls.EARLY_REASON_MIN <= len(reason) <= cls.EARLY_REASON_MAX:
+            raise ValidationError(
+                _("The reason must have between %(min)s and %(max)s characters.")
+                % {"min": cls.EARLY_REASON_MIN, "max": cls.EARLY_REASON_MAX}
+            )
+        if end <= today:
+            raise ValidationError(
+                _(
+                    "The period %(period)s is already closed: it is issued as a "
+                    "normal report, not with an early cutoff."
+                )
+                % {"period": f"{period:%Y-%m}"}
+            )
+        if start > today:
+            raise ValidationError(
+                _(
+                    "The period %(period)s has not started: there is nothing to "
+                    "cut off yet."
+                )
+                % {"period": f"{period:%Y-%m}"}
+            )
+        if not start <= early_cutoff <= today:
+            raise ValidationError(
+                _(
+                    "The early cutoff must fall between the first day of the "
+                    "month and today."
+                )
+            )
+        if early_cutoff >= end:
+            raise ValidationError(
+                _("The early cutoff must be before the last day of the month.")
+            )
+
+        if latest is not None:
+            if not latest.is_early_cutoff:
+                raise ValidationError(
+                    _(
+                        "This period already has a report; an early cutoff is not needed."
+                    )
+                )
+            if latest.payload["meta"].get("cutoff") == early_cutoff.isoformat():
+                return latest, False
+            if latest.status == cls.STATUS_APPROVED:
+                raise ValidationError(
+                    _(
+                        "The early-cutoff report is already approved: the next "
+                        "one is the closing revision, issued when the month ends."
+                    )
+                )
+
+        payload, missing = build(
+            period, cutoff=early_cutoff, early=True, early_reason=reason
+        )
+        return cls._create_revision(
+            period, generated_by, payload, missing, latest
+        ), True
+
+    @classmethod
+    def _create_revision(cls, period, generated_by, payload, missing, latest):
+        """La fila siguiente del período, con la narrativa copiada de la última."""
+        with transaction.atomic():
+            run = cls.objects.create(
+                period=period,
+                revision=(latest.revision + 1) if latest else 0,
+                generated_by=generated_by,
+                payload=payload,
+                missing_fields=missing,
+                completeness=(
+                    cls.COMPLETENESS_PARTIAL if missing else cls.COMPLETENESS_OK
+                ),
+                findings=latest.findings if latest else [],
+                period_note=latest.period_note if latest else "",
+                # LV-247: **las acciones también viajan**, y no viajaban. El
+                # docstring de `freeze` lo afirmaba para "la narrativa" entera, y
+                # la narrativa son tres bloques: se copiaban dos. `actions` llegó
+                # después (`LV-235`) y esta línea no se enteró, así que emitir una
+                # revisión para corregir una cifra **borraba en silencio** las
+                # acciones escritas — justo cuando alguien está corrigiendo el
+                # documento y menos lo va a notar.
+                actions=latest.actions if latest else [],
+            )
+            if latest:
+                cls.objects.filter(period=period).exclude(pk=run.pk).update(
+                    status=cls.STATUS_SUPERSEDED
+                )
+        return run
 
     def approve(self, approved_by):
         """Marca el informe como el documento emitido.

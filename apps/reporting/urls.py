@@ -6,6 +6,7 @@ from apps.reporting.views import (
     ReportApprove,
     ReportCompareView,
     ReportDraftCreate,
+    ReportEarlyFreeze,
     ReportNarrativeUpdate,
     ReportTemplateUpdate,
 )
@@ -20,6 +21,12 @@ urlpatterns = [
         name="monthly-report-brief",
     ),
     path("monthly/draft/", ReportDraftCreate.as_view(), name="monthly-report-draft"),
+    # LV-375: congelar el mes en curso con corte anticipado (permiso propio).
+    path(
+        "monthly/early/",
+        ReportEarlyFreeze.as_view(),
+        name="monthly-report-early",
+    ),
     # LV-249: los bloques editables — portada, fases del plan y matriz.
     path(
         "monthly/template/",
