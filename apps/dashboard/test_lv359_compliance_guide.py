@@ -226,12 +226,18 @@ def test_the_guide_is_a_closed_details_with_the_legend_and_both_scales(sites):
     for symbol in ("✕", "▲", "◆", "●", "○"):
         assert symbol in guide
     # las dos escalas y «hoy» frente al corte del informe: se comparan contra el catálogo, no contra
-    # un texto tecleado, así que sirven en cualquier idioma activo
-    for msgid in (
-        "Documents and alerts are graded at 7, 15 and 30 days. Flight permits are graded at 30 and 60 days: renewing one involves a request to the DGAC, which takes longer than renewing a document.",
-        "Everything here is as of today. The DGAC monthly report is frozen at its own cut-off date, so its figures can differ from these without either being wrong.",
+    # un texto tecleado, así que sirven en cualquier idioma activo (LV-376: sin motivo de negocio inventado)
+    today = timezone.localdate().strftime("%d-%m-%Y")
+    for text in (
+        gettext(
+            "Flight permits follow the scale of the report: 30 and 60 days. Documents and alerts are graded at 7, 15 and 30 days."
+        ),
+        gettext("Everything above is as of today, %(date)s.") % {"date": today},
+        gettext(
+            "The DGAC monthly report is a snapshot at its own cut-off date, so its figures can differ from these without either being wrong."
+        ),
     ):
-        assert escape(gettext(msgid)) in guide
+        assert escape(text) in guide
 
 
 @pytest.mark.django_db

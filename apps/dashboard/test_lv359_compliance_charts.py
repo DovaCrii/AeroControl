@@ -24,6 +24,7 @@ from apps.core.models import OperationalTenant
 from apps.core.test_lv315_identity_foundation import (
     APP,
     IDENTITY,
+    ROOT,
     _contrast,
     _resolve,
     _theme_tokens as _light_and_partial_dark,
@@ -46,6 +47,9 @@ from apps.maintenance.models import MaintenanceRecord
 from apps.operations.models import FlightPermission
 from apps.registry.models import Aircraft, CostCenter, Operator
 from apps.reporting.models import ReportRun
+
+# LV-376 (fase 0): el CSS de Cumplimiento vive en su propia hoja, cargada después de `identity.css`.
+COMPLIANCE = (ROOT / "static" / "css" / "compliance.css").read_text(encoding="utf-8")
 
 URL = "dashboard-compliance"
 HX = {"HTTP_HX_REQUEST": "true"}
@@ -71,8 +75,12 @@ def _theme_tokens(theme):
     par oscuro se mediría contra un color que no existe.
     """
     tokens = _light_and_partial_dark(theme)
+    for block in re.findall(r"(?m)^:root\s*\{([^}]*)\}", COMPLIANCE):
+        tokens.update(
+            {k: v.strip() for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", block)}
+        )
     if theme == "dark":
-        for css in (APP, IDENTITY):
+        for css in (APP, IDENTITY, COMPLIANCE):
             for block in re.findall(
                 r'(?m)^\[data-theme="dark"\](?:,\s*\[data-bs-theme="dark"\])?\s*\{([^}]*)\}',
                 css,
@@ -455,8 +463,24 @@ def section_html(mix, rule):
     return login_as(*ALL_SOURCES).get(reverse(URL), **HX).content.decode()
 
 
+@pytest.fixture
+def heat_html(mix, rule):
+    """El mapa de calor ya no sale en pantalla (LV-376, G4): su plantilla estacionada se renderiza directo."""
+    from django.template.loader import render_to_string
+
+    _alert(rule, 2)
+    client = login_as(*ALL_SOURCES)
+    html = client.get(reverse(URL), **HX).content.decode()
+    assert 'data-cx-block="heat"' not in html and "id-cx-heat" not in html
+    context = {}
+    for layer in _ctx(client):
+        context.update(layer.flatten())
+    return render_to_string("dashboard/_compliance_heat.html", context)
+
+
 @pytest.mark.django_db
-def test_the_heat_map_is_a_real_table_without_colspan(section_html):
+def test_the_parked_heat_map_is_a_real_table_without_colspan(heat_html):
+    section_html = heat_html
     assert "colspan" not in section_html
     assert "table-normalized" not in section_html
     tables = re.findall(
@@ -489,16 +513,28 @@ def test_every_svg_says_what_it_shows_and_prints_its_figure_beside_it(section_ht
         for s in re.findall(r"<svg\b.*?</svg>", section_html, flags=re.S)
         if 'class="nav-icon"' not in s
     ]
-    # LV-367: los anillos ya no se dibujan; queda el gráfico de barras de las alertas.
-    assert len(svgs) == 1 and "id-cx-ring-svg" not in section_html
-    for svg in svgs:
+    # LV-367: los anillos ya no se dibujan. LV-376: quedan el gráfico de barras de las alertas, una barra
+    # apilada por categoría con vencimientos y, decorativas (`aria-hidden`), las barras de días de los permisos.
+    assert "id-cx-ring-svg" not in section_html
+    described = [s for s in svgs if 'aria-hidden="true"' not in s.split(">")[0]]
+    assert len(described) >= 2
+    assert sum("id-cx-stack-svg" in s for s in described) >= 1
+    for svg in described:
         assert 'role="img"' in svg
         assert re.search(r"<title id=\"[^\"]+\">[^<]+</title>", svg)
         assert re.search(r"<desc id=\"[^\"]+\">[^<]+</desc>", svg)
         assert "style=" not in svg
-    # la cifra de cada indicador (y la de las alertas) está impresa FUERA de la imagen
-    figures = re.findall(r'<b class="id-cx-fig">(\d+)</b>', section_html)
-    assert len(figures) >= 3
+    for svg in svgs:
+        if svg not in described:
+            assert "id-cx-daybar" in svg and "<title" not in svg
+    # la cifra de cada categoría está impresa FUERA de la imagen, en la tira (y la de las alertas)
+    strips = re.findall(r'<li class="id-cx-strip".*?</li>', section_html, flags=re.S)
+    assert len(strips) == 5
+    for strip in strips:
+        if "id-cx-stack-svg" in strip:
+            text = strip.split('class="id-cx-strip-text">')[1].split("</span>")[0]
+            assert re.search(r"\d", text)
+    assert len(re.findall(r'<b class="id-cx-fig">(\d+)</b>', section_html)) >= 1
     assert "style=" not in section_html
 
 
@@ -506,18 +542,27 @@ def test_every_svg_says_what_it_shows_and_prints_its_figure_beside_it(section_ht
 def test_every_level_has_a_symbol_and_a_text_and_not_only_a_color(section_html):
     for level in LEVELS:
         assert LEVEL_SYMBOL[level] in section_html
-    # sólo la tabla de vencimientos por categoría: el historial y la guía también dibujan chips
-    table = section_html.split('data-cx-block="expiries"')[1].split("</table>")[0]
-    chips = re.findall(
-        r'<span class="id-chip id-chip--(\w+)">(.*?)</span></td>', table, flags=re.S
+    # LV-376: las tiras por categoría dicen cada tramo con PALABRAS (el color de la barra sólo ayuda) y la
+    # barra apilada nombra las mismas cifras en su `<desc>`; el historial y la guía siguen con símbolos.
+    block = section_html.split('data-cx-block="expiries"')[1].split("</details>")[0]
+    strips = re.findall(r'<li class="id-cx-strip".*?</li>', block, flags=re.S)
+    assert len(strips) == 5
+    words = (
+        "overdue",
+        "vencid",
+        "to attend within 30 days",
+        "por atender",
+        "later",
+        "más adelante",
+        "Nothing in 90 days",
+        "Nada en 90 días",
     )
-    assert chips
-    for _tone, body in chips:
-        assert re.search(r'aria-hidden="true">[✕▲◆●○]</span>', body)
-        assert re.search(
-            r"<b>\d+</b>", body
-        )  # símbolo y cifra; el nivel es el encabezado
-    assert table.count('<th scope="col" class="id-cx-col">') == 5  # un rótulo por nivel
+    for strip in strips:
+        text = strip.split('class="id-cx-strip-text">')[1].split("</span>")[0]
+        assert any(word in text for word in words), text
+        if "id-cx-stack-svg" in strip:
+            assert re.search(r"<desc[^>]*>[^<]*\d[^<]*</desc>", strip)
+    assert "<table" not in block
 
 
 # --- consultas ------------------------------------------------------------------------------
@@ -595,7 +640,9 @@ class TestContrast:
 
     def test_fills_use_sev_text_never_sev_border(self):
         """Rellenos con `--sev-*-text`: el borde (1,58–1,81:1) no se distingue del fondo."""
-        rules = re.findall(r"(?m)^\.id-cx-(?:seg|bar|spark)[^{]*\{([^}]*)\}", IDENTITY)
+        rules = re.findall(
+            r"(?m)^\.id-cx-(?:seg|bar|spark)[^{]*\{([^}]*)\}", COMPLIANCE
+        )
         assert rules
         for body in rules:
             assert "-border" not in body, body
@@ -604,15 +651,23 @@ class TestContrast:
             )
 
     def test_the_section_has_no_animation_and_no_new_prefix(self):
-        start = IDENTITY.index("/* D3: «Cumplimiento»")
-        end = IDENTITY.index("/* == E: pulido global == */")
-        block = IDENTITY[start:end]
+        block = COMPLIANCE
         assert not re.search(
             r"\banimation(-[a-z]+)?\s*:|@keyframes|transition\s*:", block
         )
         assert set(re.findall(r"(?m)^\s*(--[\w-]+)\s*:", block)) <= {
             f"--id-cx-{name}"
-            for name in ("ink", "track", "edge", "heat-1", "heat-2", "heat-3", "heat-4")
+            for name in (
+                "ink",
+                "track",
+                "edge",
+                "heat-1",
+                "heat-2",
+                "heat-3",
+                "heat-4",
+                "wait-bg",
+                "wait-fg",
+            )
         }
 
     def test_every_color_used_in_the_heat_cells_resolves_to_a_hex(self):

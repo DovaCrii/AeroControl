@@ -79,6 +79,44 @@ SUBJECT_CATEGORY = {
 }
 
 
+# LV-376 (fase 2): a dónde lleva «Ver» en la tira de cada categoría y qué permiso exige esa lista. El
+# enlace sólo existe si la persona puede abrir la pantalla (nunca un 403): una categoría puede verse por
+# una fuente (`view_qualification`) y su lista pedir otra (`view_operator`).
+CATEGORY_LINK = {
+    "papers": ("document-list", "compliance.view_document"),
+    "people": ("operator-list", "registry.view_operator"),
+    "aircraft": ("aircraft-list", "registry.view_aircraft"),
+    "permits": ("permission-list", "operations.view_flightpermission"),
+    "maintenance": ("maintenance-list", "maintenance.view_maintenancerecord"),
+}
+
+
+def category_url(user, key, cost_center):
+    name, permission = CATEGORY_LINK[key]
+    if not user.has_perm(permission):
+        return ""
+    url = reverse(name)
+    if key == "permits" and cost_center:
+        url = f"{url}?{urlencode({'cost_center': cost_center.pk})}"
+    return url
+
+
+def strip_text(counts):
+    """La tira de una categoría dicha con palabras, sin ceros: «1 vencido · 2 por atender en 30 días · 3 más adelante»."""
+    parts = []
+    if counts["overdue"]:
+        parts.append(
+            ngettext("%(n)s overdue", "%(n)s overdue", counts["overdue"])
+            % {"n": counts["overdue"]}
+        )
+    attend = counts["due_7"] + counts["due_15"] + counts["due_30"]
+    if attend:
+        parts.append(_("%(n)s to attend within 30 days") % {"n": attend})
+    if counts["later"]:
+        parts.append(_("%(n)s later") % {"n": counts["later"]})
+    return " · ".join(parts) or _("Nothing in 90 days")
+
+
 def category_label(key):
     return {
         "papers": _("Documents"),
@@ -222,6 +260,16 @@ def expiry_data(user, cost_center, today, tenant_ids):
                 "total": sum(c.values()),
                 "attend": attend,
                 "segments": [(f"id-cx-seg--{lv}", c[lv]) for lv in LEVELS],
+                # LV-376: la barra apilada une ≤7 y ≤15 (comparten ámbar); el texto dice cada cifra.
+                "stack": [
+                    ("id-cx-stk--overdue", c["overdue"]),
+                    ("id-cx-stk--soon", c["due_7"] + c["due_15"]),
+                    ("id-cx-stk--mid", c["due_30"]),
+                    ("id-cx-stk--later", c["later"]),
+                ],
+                "uid": f"cx-stack-{key}",
+                "summary": strip_text(c),
+                "url": category_url(user, key, cost_center),
                 "levels": [
                     {
                         "key": lv,

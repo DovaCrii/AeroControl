@@ -175,7 +175,17 @@ def test_stylesheet_weight_guard():
     Visual v3 (LV-367: tarjetas del Entorno con niveles propios, banda e infografía del centelleo, y el
     resumen plegable de Cumplimiento con la tabla simple; ~2 KB netos porque Cumplimiento retiró las
     reglas de los anillos) lo sube a 250 KB. Las marcas de la hora actual, del cambio de día y de la
-    fila de hoy del Tiempo (LV-373: ~1,4 KB, la base ya estaba a 249,5 KB) lo suben a 252 KB.
+    fila de hoy del Tiempo (LV-373: ~1,5 KB en `identity.css`) se sumaron en main sobre una base que ya
+    estaba a 249,5 KB y lo subieron a 252 KB allá.
+    LV-376 (fase 0) mudó el CSS de Cumplimiento (~10,5 KB) a `static/css/compliance.css`, que tiene su
+    propio guardián (`test_lv376_compliance_css.py`): tras fusionar con main las dos hojas globales suman
+    240.066 B (app.css 141.977 + identity.css 98.089), así que el techo vuelve a 250 KB, sin subirlo por
+    LV-373: ese aumento ya cupo en lo que se movió.
     """
-    total = sum((STATIC / name).stat().st_size for name in ("app.css", "identity.css"))
-    assert total < 252 * 1024
+    # En bytes con salto LF: `stat().st_size` cuenta los CRLF que el checkout de Windows (`autocrlf`)
+    # agrega, y el mismo árbol pesaba 255.573 B ahí y 249.611 B en el CI (LF).
+    total = sum(
+        len((STATIC / name).read_bytes().replace(b"\r\n", b"\n"))
+        for name in ("app.css", "identity.css")
+    )
+    assert total < 250 * 1024

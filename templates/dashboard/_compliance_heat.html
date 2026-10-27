@@ -1,0 +1,43 @@
+{% load i18n %}{% comment %}LV-359 (fase 2) y LV-376 (fase 2): el mapa de calor «Próximos 90 días», RETIRADO DE PANTALLA, no de código (paso 1). Nadie lo incluye: lo reemplazan las tiras por categoría de `_compliance_section.html` (barra apilada + las cifras dichas con palabras). Se conserva entero, con sus datos (`cx_heat_rows`, `cx_heat_*_columns` de `compliance_data.expiry_data`), sus reglas (`static/css/compliance-heat.css`, que ninguna plantilla carga) y sus pruebas, que lo renderizan directo.
+
+CONDICIÓN DE CIERRE (paso 2): borrar esta plantilla, `compliance-heat.css`, `heat_step` y `heat_rows`/`heat_*_columns` de `expiry_data`, los tokens `--id-cx-heat-*` y sus pruebas cuando la sección ya esté desplegada en `p340` sin el mapa y la persona confirme que no lo echa de menos (la decisión es suya: se retiró de pantalla por la decisión G4 de `docs/dev/cumplimiento-v4.md`, no porque nadie lo usara). Para volver a mostrarlo basta incluir esta plantilla en `_compliance_section.html` y cargar `compliance-heat.css` en `compliance.html` y en el `extrahead` del panel.{% endcomment %}
+<details class="id-cx-fold" data-cx-block="heat">
+  <summary><span>{% translate "Next 90 days" %}</span></summary>
+  <div class="id-cx-heat-wrap">
+    <table class="id-cx-heat id-cx-heat--wide">
+      <caption class="visually-hidden">{% translate "Expiries by week over the next 90 days" %}</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">{% translate "Category" %}</span></th>
+          {% for col in cx_heat_wide_columns %}<th scope="col" class="id-cx-col"><span class="id-cx-sym" aria-hidden="true">{{ col.symbol }}</span> <span>{{ col.label }}</span>{% if col.hint %}<span class="visually-hidden"> ({{ col.hint }})</span>{% endif %}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in cx_heat_rows %}
+        <tr>
+          <th scope="row" class="id-cx-rowhead">{{ row.label }}</th>
+          {% for cell in row.wide %}<td class="id-cx-cell id-cx-heat-{{ cell.step }}">{% if cell.n %}<b>{{ cell.n }}</b>{% else %}<b class="id-cx-zero"><span aria-hidden="true">·</span><span class="visually-hidden">0</span></b>{% endif %}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <table class="id-cx-heat id-cx-heat--narrow">
+      <caption class="visually-hidden">{% translate "Expiries in 30-day periods over the next 90 days" %}</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">{% translate "Category" %}</span></th>
+          {% for col in cx_heat_narrow_columns %}<th scope="col" class="id-cx-col"><span class="id-cx-sym" aria-hidden="true">{{ col.symbol }}</span> <span>{{ col.label }}</span></th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in cx_heat_rows %}
+        <tr>
+          <th scope="row" class="id-cx-rowhead">{{ row.label }}</th>
+          {% for cell in row.narrow %}<td class="id-cx-cell id-cx-heat-{{ cell.step }}">{% if cell.n %}<b>{{ cell.n }}</b>{% else %}<b class="id-cx-zero"><span aria-hidden="true">·</span><span class="visually-hidden">0</span></b>{% endif %}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="id-cx-legend">{% translate "✕ overdue · ▲ up to 7 days · ◆ up to 15 · ● up to 30 · ○ later. A week takes the symbol of its first day. The figure in each cell is the count; the color only helps to scan." %}</p>
+</details>
