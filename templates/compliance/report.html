@@ -16,7 +16,7 @@
   </div>
 </div>
 
-<form method="get" class="card p-3 mb-4">
+<form method="get" class="card p-3 mb-4 d-print-none">
   <div class="row g-2 align-items-end">
     <div class="col-md-3">
       <label class="form-label" for="cost_center">{% translate "Cost center" %}</label>
@@ -71,9 +71,9 @@
   cero ahí se lee como fracaso total cuando la verdad es que la pregunta no
   aplica— y fue ese test el que atrapó esta tarjeta imprimiendo "0/0" contra una
   base sin permisos.{% endcomment %}
-  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Permits in force" %}</small><strong>{% if report.permits.total %}{{ report.permits.in_force }}/{{ report.permits.total }}{% else %}<span class="text-muted">—</span>{% endif %}</strong>{% if report.permits.total %}<small class="text-muted">{% blocktranslate count counter=report.permits.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% if report.permits.soon %} · {% blocktranslate count counter=report.permits.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}</small>{% endif %}</div></div>
+  <div class="col-md-3 col-sm-6"><div class="summary-card"><small>{% translate "Permits in force" %}</small><strong>{% if report.permits.total %}{{ report.permits.in_force }}/{{ report.permits.total }}{% else %}<span class="text-muted">—</span>{% endif %}</strong>{% if report.permits.total %}<small class="text-muted">{% blocktranslate count counter=report.permits.awaiting %}{{ counter }} awaiting approval{% plural %}{{ counter }} awaiting approval{% endblocktranslate %}{% if report.permits.soon %} · {% blocktranslate count counter=report.permits.soon %}{{ counter }} expires within 30 days{% plural %}{{ counter }} expire within 30 days{% endblocktranslate %}{% endif %}</small>{% endif %}<small class="text-muted d-block" data-as-of>{{ permits_as_of }}</small></div></div>
   {% if report.permits.lapsed %}
-  <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Permits past their validity" %}</small><strong>{{ report.permits.lapsed }}</strong></div></div>
+  <div class="col-md-3 col-sm-6"><div class="summary-card summary-card-warning"><small>{% translate "Permits past their validity" %}</small><strong>{{ report.permits.lapsed }}</strong><small class="text-muted d-block" data-as-of>{{ permits_as_of }}</small></div></div>
   {% endif %}
 </div>
 
@@ -176,6 +176,10 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
       </tbody>
     </table>
   </div>
+  {% comment %}LV-355 F2 (S10): el universo de esta tabla, nombrado. Lista **todas** las faenas
+  activas; el informe mensual a la DGAC sólo las que operan: sin esta frase las dos
+  tablas parecen contradecirse.{% endcomment %}
+  <p class="text-muted small mb-0 px-3 py-2 border-top" data-universe>{{ universe }}</p>
 </div>
 
 <div class="card mb-4 p-3">

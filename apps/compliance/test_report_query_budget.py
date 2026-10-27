@@ -33,9 +33,11 @@ SMALL, LARGE = 2, 6
 # Medido (segunda llamada, cachés tibias): armar el reporte cuesta 26 consultas con
 # 2 faenas y 38 con 6, o sea 14 fijas y 3 por faena. La página lo arma dos veces
 # (período y período anterior) y suma sesión, permisos y plantilla: 63 y 87, o sea
-# 6 por faena.
+# 6 por faena. F2 (LV-355) sumó 2 COUNT a la página --la frase «faenas activas: N ·
+# con operación: M» bajo la tabla por faena-- y por eso eran 63 y 87 en F0: el
+# armado del reporte (BUILD_CEILING) no cambió.
 BUILD_CEILING = {SMALL: 26, LARGE: 38}
-PAGE_CEILING = {SMALL: 63, LARGE: 87}
+PAGE_CEILING = {SMALL: 65, LARGE: 89}
 BUILD_PER_CENTRE = 3
 PAGE_PER_CENTRE = 6
 

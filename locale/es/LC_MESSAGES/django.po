@@ -3737,6 +3737,16 @@ msgstr "movimientos de recursos"
 msgid "Fleet and personnel roster"
 msgstr "Catastro de flota y personal"
 
+#: .\apps\registry\selectors.py:90
+#, python-format
+msgid "Active cost centers: %(active)s · with operation: %(operating)s"
+msgstr "Faenas activas: %(active)s · con operación: %(operating)s"
+
+#: .\apps\compliance\report_views.py:105
+#, python-format
+msgid "as of %(date)s"
+msgstr "al %(date)s"
+
 #: .\apps\registry\report_views.py:128
 msgid "AeroControl — Fleet and personnel roster"
 msgstr "AeroControl — Catastro de flota y personal"
@@ -3792,6 +3802,15 @@ msgstr "Baterías"
 #, python-format
 msgid "%(name)s archived. It can be restored from the archived filter."
 msgstr "%(name)s archivado. Se puede restaurar desde el filtro de archivados."
+
+#: .\apps\registry\selectors.py:90
+#, python-brace-format
+msgid ""
+"{code} no longer operates, but these flight permits are still live: "
+"{permits}. They are not renewed: let them expire or archive them."
+msgstr ""
+"{code} ya no opera, pero estos permisos de vuelo siguen vigentes: {permits}."
+" No se renuevan: conviene dejarlos vencer o archivarlos."
 
 #: .\apps\registry\views.py:244
 #, python-format
@@ -3912,6 +3931,26 @@ msgstr ""
 #, python-format
 msgid "%(count)s imported records archived."
 msgstr "%(count)s registros importados archivados."
+
+#: .\apps\compliance\models.py:1080
+msgid "The record belongs to a different organization than the alert rule."
+msgstr ""
+"El registro pertenece a una organización distinta de la de la regla de "
+"alerta."
+
+#: .\apps\compliance\forms.py:780
+msgid "No record of that type with this id was found."
+msgstr "No se encontró un registro de ese tipo con este identificador."
+
+#: .\apps\registry\views.py:1740
+msgid ""
+"You belong to more than one organization, so the import cannot tell which "
+"one should receive the records. Ask an administrator to import on your "
+"behalf."
+msgstr ""
+"Usted pertenece a más de una organización, así que la importación no puede "
+"saber cuál debe recibir los registros. Pida a un administrador que importe "
+"en su nombre."
 
 #: .\apps\workboard\forms.py:25
 msgid "Tenant"
@@ -10682,26 +10721,8 @@ msgstr ""
 msgid "Why there are two scales"
 msgstr "Por qué hay dos escalas"
 
-msgid ""
-"Documents and alerts are graded at 7, 15 and 30 days. Flight permits are "
-"graded at 30 and 60 days: renewing one involves a request to the DGAC, which"
-" takes longer than renewing a document."
-msgstr ""
-"Los documentos y las alertas se gradúan a 7, 15 y 30 días. Los permisos de "
-"vuelo, a 30 y 60 días: renovar uno implica una solicitud a la DGAC, que "
-"demora más que renovar un documento."
-
 msgid "Today and the report cut-off"
 msgstr "Hoy y el corte del informe"
-
-msgid ""
-"Everything here is as of today. The DGAC monthly report is frozen at its own"
-" cut-off date, so its figures can differ from these without either being "
-"wrong."
-msgstr ""
-"Todo lo de aquí es a hoy. El informe mensual DGAC queda congelado en su "
-"propia fecha de corte, así que sus cifras pueden diferir de estas sin que "
-"ninguna esté mal."
 
 msgid "How to review it, in five steps"
 msgstr "Cómo revisarla, en cinco pasos"
@@ -12384,19 +12405,22 @@ msgstr "El motivo debe tener entre %(min)s y %(max)s caracteres."
 #: apps/reporting/models.py
 #, python-format
 msgid ""
-"The period %(period)s is already closed: it is issued as a normal report, not "
-"with an early cutoff."
+"The period %(period)s is already closed: it is issued as a normal report, "
+"not with an early cutoff."
 msgstr ""
 "El período %(period)s ya cerró: se emite como informe normal, no con corte "
 "anticipado."
 
 #: apps/reporting/models.py
 #, python-format
-msgid "The period %(period)s has not started: there is nothing to cut off yet."
-msgstr "El período %(period)s aún no comienza: todavía no hay nada que cortar."
+msgid ""
+"The period %(period)s has not started: there is nothing to cut off yet."
+msgstr ""
+"El período %(period)s aún no comienza: todavía no hay nada que cortar."
 
 #: apps/reporting/models.py
-msgid "The early cutoff must fall between the first day of the month and today."
+msgid ""
+"The early cutoff must fall between the first day of the month and today."
 msgstr "El corte anticipado debe caer entre el primer día del mes y hoy."
 
 #: apps/reporting/models.py
@@ -12412,8 +12436,8 @@ msgid ""
 "The early-cutoff report is already approved: the next one is the closing "
 "revision, issued when the month ends."
 msgstr ""
-"El informe de corte anticipado ya está aprobado: el siguiente es la revisión "
-"de cierre, que se emite al terminar el mes."
+"El informe de corte anticipado ya está aprobado: el siguiente es la revisión"
+" de cierre, que se emite al terminar el mes."
 
 #: apps/reporting/forms.py
 msgid "Reason for the early cutoff"
@@ -12424,8 +12448,8 @@ msgid ""
 "It is kept in the audit log and shown on screen. It is not printed in the "
 "report."
 msgstr ""
-"Queda en el registro de auditoría y se muestra en pantalla. No se imprime en "
-"el informe."
+"Queda en el registro de auditoría y se muestra en pantalla. No se imprime en"
+" el informe."
 
 #: apps/reporting/views.py
 #, python-format
@@ -12452,8 +12476,8 @@ msgstr "Este corte anticipado ya existía; se abre el último."
 
 #: apps/reporting/views.py
 msgid ""
-"Early-cutoff draft frozen. The closing revision will be issued when the month "
-"ends."
+"Early-cutoff draft frozen. The closing revision will be issued when the "
+"month ends."
 msgstr ""
 "Borrador de corte anticipado congelado. La revisión de cierre se emitirá al "
 "terminar el mes."
@@ -12464,14 +12488,14 @@ msgid ""
 "Early cutoff on %(cutoff)s: %(days)d day of the month is not included; the "
 "closing revision will be issued on %(closing)s."
 msgid_plural ""
-"Early cutoff on %(cutoff)s: %(days)d days of the month are not included; the "
-"closing revision will be issued on %(closing)s."
+"Early cutoff on %(cutoff)s: %(days)d days of the month are not included; the"
+" closing revision will be issued on %(closing)s."
 msgstr[0] ""
 "Corte anticipado al %(cutoff)s: %(days)d día del mes no está incluido; la "
 "revisión de cierre se emitirá el %(closing)s."
 msgstr[1] ""
-"Corte anticipado al %(cutoff)s: %(days)d días del mes no están incluidos; la "
-"revisión de cierre se emitirá el %(closing)s."
+"Corte anticipado al %(cutoff)s: %(days)d días del mes no están incluidos; la"
+" revisión de cierre se emitirá el %(closing)s."
 
 #: apps/reporting/checks.py
 #, python-format
@@ -12489,8 +12513,8 @@ msgstr "Emitir con corte anticipado"
 
 #: templates/reporting/early_freeze_form.html
 msgid ""
-"Freezes the month in progress with today as the cutoff. It is a draft: it is "
-"not approved until a person approves it."
+"Freezes the month in progress with today as the cutoff. It is a draft: it is"
+" not approved until a person approves it."
 msgstr ""
 "Congela el mes en curso con hoy como fecha de corte. Es un borrador: no "
 "queda aprobado hasta que una persona lo apruebe."
@@ -12625,6 +12649,292 @@ msgid ""
 msgstr ""
 "Formato del documento: v%(before)s → v%(now)s. Algunas cifras cambian por "
 "cómo se cuentan y no sólo por lo ocurrido."
+
+msgid "One row per site that flies; sites that cannot fly today come first."
+msgstr "Una fila por faena que vuela; primero las que hoy no pueden volar."
+
+msgid "Filter the sites by status"
+msgstr "Filtrar las faenas por estado"
+
+#, python-format
+msgid "%(count)s site:"
+msgid_plural "%(count)s sites:"
+msgstr[0] "%(count)s faena:"
+msgstr[1] "%(count)s faenas:"
+
+msgid "without a permit"
+msgstr "sin permiso"
+
+msgid "waiting"
+msgstr "esperando"
+
+msgid "to renew"
+msgstr "por renovar"
+
+msgid "Find a site"
+msgstr "Buscar una faena"
+
+msgid "Code or name"
+msgstr "Código o nombre"
+
+msgid "Show all"
+msgstr "Ver todas"
+
+msgid "No site matches this filter."
+msgstr "Ninguna faena coincide con este filtro."
+
+#, python-format
+msgid "Showing %(shown)s of %(total)s"
+msgstr "Mostrando %(shown)s de %(total)s"
+
+msgid "What to do"
+msgstr "Qué hay que hacer"
+
+msgid "Permits and dates"
+msgstr "Permisos y fechas"
+
+msgid "New permit for this site"
+msgstr "Nuevo permiso para esta faena"
+
+msgid ""
+"✕ no permit · ◐ waiting for the DGAC, or approved and not started yet · ▲ "
+"renew now (30 days or less) · ◆ renew soon (31 to 60 days) · ● up to date "
+"(over 60 days). The bar shows the days left of the first permit to expire (0"
+" to 90) with marks at 30 and 60; the word and the date carry the meaning."
+msgstr ""
+"✕ sin permiso · ◐ esperando a la DGAC, o aprobado que aún no empieza · ▲ "
+"renovar ya (30 días o menos) · ◆ renovar pronto (31 a 60 días) · ● al día "
+"(más de 60 días). La barra muestra los días que le quedan al primer permiso "
+"en vencer (0 a 90) con marcas en 30 y 60; la palabra y la fecha son las que "
+"dicen el estado."
+
+msgid "No permit"
+msgstr "Sin permiso"
+
+msgid "Waiting for the DGAC"
+msgstr "Esperando a la DGAC"
+
+msgid "Renew now"
+msgstr "Renovar ya"
+
+msgid "Renew soon"
+msgstr "Renovar pronto"
+
+#, python-format
+msgid "in %(n)s day"
+msgid_plural "in %(n)s days"
+msgstr[0] "en %(n)s día"
+msgstr[1] "en %(n)s días"
+
+#, python-format
+msgid "%(n)s in force"
+msgid_plural "%(n)s in force"
+msgstr[0] "%(n)s vigente"
+msgstr[1] "%(n)s vigentes"
+
+#, python-format
+msgid "%(n)s in progress"
+msgid_plural "%(n)s in progress"
+msgstr[0] "%(n)s en trámite"
+msgstr[1] "%(n)s en trámite"
+
+msgid "Request a permit"
+msgstr "Solicitar permiso"
+
+#, python-format
+msgid "Waiting for the DGAC since %(date)s"
+msgstr "Esperando a la DGAC desde el %(date)s"
+
+#, python-format
+msgid "Starts on %(date)s; nothing to do until then"
+msgstr "Rige desde el %(date)s; nada que hacer hasta entonces"
+
+msgid "Expires today: renew now"
+msgstr "Vence hoy: renovar ya"
+
+#, python-format
+msgid "Expires in %(n)s day: renew now"
+msgid_plural "Expires in %(n)s days: renew now"
+msgstr[0] "Vence en %(n)s día: renovar ya"
+msgstr[1] "Vence en %(n)s días: renovar ya"
+
+msgid "Expires today: the renewal is already requested"
+msgstr "Vence hoy: la renovación ya está solicitada"
+
+#, python-format
+msgid "Expires in %(n)s day: the renewal is already requested"
+msgid_plural "Expires in %(n)s days: the renewal is already requested"
+msgstr[0] "Vence en %(n)s día: la renovación ya está solicitada"
+msgstr[1] "Vence en %(n)s días: la renovación ya está solicitada"
+
+#, python-format
+msgid "Expires in %(n)s day: prepare the renewal"
+msgid_plural "Expires in %(n)s days: prepare the renewal"
+msgstr[0] "Vence en %(n)s día: preparar la renovación"
+msgstr[1] "Vence en %(n)s días: preparar la renovación"
+
+#, python-format
+msgid "%(n)s permit with a validity that has passed and is still open: review"
+msgid_plural ""
+"%(n)s permits with a validity that has passed and is still open: review"
+msgstr[0] "%(n)s permiso con vigencia pasada sin cerrar: revisar"
+msgstr[1] "%(n)s permisos con vigencia pasada sin cerrar: revisar"
+
+#, python-format
+msgid "Situation as of today, %(date)s · site %(site)s"
+msgstr "Situación a hoy, %(date)s · faena %(site)s"
+
+#, python-format
+msgid "Situation as of today, %(date)s · all sites"
+msgstr "Situación a hoy, %(date)s · todas las faenas"
+
+#, python-format
+msgid ""
+"DGAC monthly report for %(month)s: snapshot of %(date)s · %(status)s. What "
+"follows is today's situation, not the report's."
+msgstr ""
+"Informe mensual DGAC de %(month)s: foto al %(date)s · %(status)s. Lo de "
+"abajo es la situación de hoy, no la del informe."
+
+#, python-format
+msgid ""
+"DGAC monthly report for %(month)s: %(status)s. What follows is today's "
+"situation, not the report's."
+msgstr ""
+"Informe mensual DGAC de %(month)s: %(status)s. Lo de abajo es la situación "
+"de hoy, no la del informe."
+
+msgid "Up to date:"
+msgstr "Al día:"
+
+msgid "Expiries in the next 90 days"
+msgstr "Vencimientos de los próximos 90 días"
+
+msgid ""
+"Red: already overdue · Amber: 15 days or less · Cyan: 30 days or less · "
+"Gray: later"
+msgstr ""
+"Rojo: ya venció · Ámbar: 15 días o menos · Cian: 30 días o menos · Gris: más"
+" adelante"
+
+msgid "They cannot fly today"
+msgstr "Hoy no pueden volar"
+
+msgid "Every site that flies has a permit"
+msgstr "Todas las faenas que vuelan tienen permiso"
+
+msgid "Dates already past: documents, people, aircraft and permits"
+msgstr "Fechas ya pasadas: documentos, personas, aeronaves y permisos"
+
+msgid "Nothing overdue"
+msgstr "Nada vencido"
+
+msgid "Worth renewing now"
+msgstr "Conviene renovarlo ahora"
+
+msgid "Nothing expires within 30 days"
+msgstr "Nada vence en 30 días"
+
+msgid "Requested, or approved and not started yet"
+msgstr "Solicitados, o aprobados que aún no empiezan"
+
+msgid "Nothing is waiting"
+msgstr "Nada en espera"
+
+#, python-format
+msgid "%(n)s of %(m)s sites with a permit in force"
+msgstr "%(n)s de %(m)s faenas con permiso vigente"
+
+#, python-format
+msgid "%(n)s overdue"
+msgid_plural "%(n)s overdue"
+msgstr[0] "%(n)s vencido"
+msgstr[1] "%(n)s vencidos"
+
+#, python-format
+msgid "%(n)s to attend within 30 days"
+msgstr "%(n)s por atender en 30 días"
+
+#, python-format
+msgid "%(n)s later"
+msgstr "%(n)s más adelante"
+
+msgid "Nothing in 90 days"
+msgstr "Nada en 90 días"
+
+msgid "Status of each site"
+msgstr "Estado de cada faena"
+
+msgid "What it means"
+msgstr "Qué significa"
+
+msgid "Screen"
+msgstr "Pantalla"
+
+msgid "No permit in force: the site cannot fly."
+msgstr "Sin permiso vigente: la faena no puede volar."
+
+msgid "Follow up with the DGAC"
+msgstr "Hacer seguimiento con la DGAC"
+
+msgid "Requested; there is no answer yet."
+msgstr "Solicitado; todavía no hay respuesta."
+
+msgid "Starts later"
+msgstr "Empieza más adelante"
+
+msgid "Approved; it takes effect from its start date."
+msgstr "Aprobado; rige desde su fecha de inicio."
+
+msgid "Nothing to do until that date"
+msgstr "Nada que hacer hasta esa fecha"
+
+#, python-format
+msgid "Expires in %(n)s days or less."
+msgstr "Vence en %(n)s días o menos."
+
+msgid "Prepare the renewal today"
+msgstr "Preparar la renovación hoy"
+
+#, python-format
+msgid "Expires in %(a)s to %(b)s days."
+msgstr "Vence en %(a)s a %(b)s días."
+
+msgid "Plan the renewal"
+msgstr "Planificar la renovación"
+
+#, python-format
+msgid "More than %(n)s days left."
+msgstr "Quedan más de %(n)s días."
+
+msgid "Nothing to do"
+msgstr "Nada que hacer"
+
+msgid ""
+"Flight permits follow the scale of the report: 30 and 60 days. Documents and"
+" alerts are graded at 7, 15 and 30 days."
+msgstr ""
+"Los permisos de vuelo siguen la escala del informe: 30 y 60 días. Los "
+"documentos y las alertas se gradúan a 7, 15 y 30 días."
+
+#, python-format
+msgid "Everything above is as of today, %(date)s."
+msgstr "Todo lo de arriba es a hoy, %(date)s."
+
+#, python-format
+msgid ""
+"The DGAC monthly report is a snapshot at its own cut-off date (%(date)s), so"
+" its figures can differ from these without either being wrong."
+msgstr ""
+"El informe mensual DGAC es una foto a su propia fecha de corte (%(date)s), "
+"así que sus cifras pueden diferir de estas sin que ninguna esté mal."
+
+msgid ""
+"The DGAC monthly report is a snapshot at its own cut-off date, so its "
+"figures can differ from these without either being wrong."
+msgstr ""
+"El informe mensual DGAC es una foto a su propia fecha de corte, así que sus "
+"cifras pueden diferir de estas sin que ninguna esté mal."
 
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"

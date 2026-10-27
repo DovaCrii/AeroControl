@@ -131,6 +131,10 @@ Agrega `--with-optional` para sembrar también las dos opcionales
 (habilitaciones y mantenimiento). El comando deja la creación *automática* de
 tarea Kanban apagada al inicio (el flag `create_kanban_task` de cada regla).
 
+Las reglas son **de cada empresa**: el motor sólo vigila los registros de la empresa de la
+regla. Sin opciones se siembra la empresa por defecto; una empresa nueva arranca sin reglas
+hasta sembrarla con `seed_alert_rules --tenant <slug>`.
+
 Un rerun no duplica ni pisa reglas que hayas ajustado en la UI. También puedes
 crear o afinar reglas a mano desde `/compliance/alertrule/`.
 

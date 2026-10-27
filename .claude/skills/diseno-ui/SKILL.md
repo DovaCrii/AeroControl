@@ -36,17 +36,30 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css \
   --pair sev-nominal-text:sev-nominal-bg
 ```
 
-Pares de «Cumplimiento» (`LV-359`, tokens `--id-cx-*` de `identity.css`; pasar los dos CSS):
+Pares de «Cumplimiento» (`LV-359`, tokens `--id-cx-*` de `compliance.css` desde LV-376; pasar los tres CSS):
 
 ```bash
-python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css \
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css \
   --pair id-cx-ink:id-cx-heat-1 --pair id-cx-ink:id-cx-heat-2 \
   --pair id-cx-ink:id-cx-heat-3 --pair id-cx-ink:id-cx-heat-4 \
   --pair ac-text-muted:ac-surface
-python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css --min 3 \
   --pair id-cx-edge:ac-surface --pair sev-critical-text:id-cx-track --pair sev-warning-text:id-cx-track \
   --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
 ```
+
+Pares de «Cumplimiento v4» (`LV-376`, chips sólidos: letra `--ac-surface` sobre el relleno; tokens de espera `--id-cx-wait-*` de `compliance.css`):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css \
+  --pair ac-surface:sev-critical-text --pair ac-surface:sev-warning-text --pair ac-surface:sev-advisory-text \
+  --pair ac-surface:id-cx-wait-fg --pair id-cx-wait-fg:id-cx-wait-bg
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/compliance.css --min 3 \
+  --pair sev-critical-text:ac-surface --pair id-cx-wait-fg:ac-surface --pair sev-warning-text:id-cx-track \
+  --pair sev-advisory-text:id-cx-track --pair id-edge:ac-surface
+```
+
+`--id-ok-text` (chip «Al día») NO se mide con el script: el bloque `@media print` de `identity.css` lista `html[data-theme="dark"]` y el script lo lee como tema oscuro (3,09 falso; el real es 9,49). Lo cubre `test_lv376_permits_v4.py`, que sí lee el tema oscuro de verdad.
 
 Pares de «Visual v3» (`LV-367`, tokens `--id-edge` e `--id-tile`; el borde de una figura o tarjeta debe llegar a 3:1):
 
@@ -55,6 +68,13 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/cs
   --pair id-edge:ac-bg --pair id-edge:ac-surface --pair id-edge:id-tile
 python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css \
   --pair ac-text:id-tile --pair ac-text-secondary:id-tile
+```
+
+Pares de la hora actual de la franja del Tiempo (`LV-373`; el contorno de la columna y el filo del cambio de día son formas, 3:1; el texto sobre el resalte lo mide `apps/weather/test_lv373_now_marks.py`, porque el resalte es una mezcla y no un token):
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css --min 3 \
+  --pair ac-primary:ac-surface --pair ac-primary:id-tile --pair id-edge:ac-surface
 ```
 
 Los rellenos de gráficos usan `--sev-*-text`, nunca `--sev-*-border`. Cuidado: un bloque `@media print` que reasigne

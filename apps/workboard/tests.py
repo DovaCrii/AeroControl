@@ -592,7 +592,11 @@ def test_task_report_exports_filtered_csv(auth_client, board):
     response = auth_client.get(reverse("task-report-csv"), {"priority": "high"})
     assert response.status_code == 200
     assert "Export me" in response.content.decode()
-    assert response["Content-Disposition"].endswith('aerocontrol-tasks.csv"')
+    # LV-355 F1 (S12): el nombre lleva la fecha (`stem_AAAA-MM-DD`).
+    today = timezone.localdate()
+    assert response["Content-Disposition"].endswith(
+        f'aerocontrol-tasks_{today:%Y-%m-%d}.csv"'
+    )
 
 
 @pytest.mark.django_db

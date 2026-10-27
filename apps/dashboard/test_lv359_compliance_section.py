@@ -34,8 +34,11 @@ HX = {"HTTP_HX_REQUEST": "true"}
 # (sus dos consultas más las 4 de membresía de tenant que repite `scope_queryset_to_tenant`) y el detalle
 # de las faenas 1 (acotado con los `tenant_ids` ya resueltos). Todas constantes: no crecen con los datos
 # (`test_the_section_budget_does_not_grow_with_the_data`). Antes 20 y 23.
-SECTION_QUERY_BUDGET = 29
-SECTION_FILTERED_QUERY_BUDGET = 32
+# Bajan 4 (29 -> 25, 32 -> 26) al memoizar `visible_tenant_ids` por petición (en el objeto `user`):
+# las consultas de membresía que repetía `scope_queryset_to_tenant` se hacen ahora una sola vez.
+# El acotado por empresa es el mismo; sólo se dejó de repetir la pregunta.
+SECTION_QUERY_BUDGET = 25
+SECTION_FILTERED_QUERY_BUDGET = 26
 
 
 @pytest.fixture
@@ -175,7 +178,9 @@ def test_each_block_needs_the_permission_of_its_source(operation):
 
     document = _get(login_as("view_document")).content.decode()
     assert 'data-cx-block="rings"' in document
-    assert 'data-cx-block="heat"' in document
+    assert 'data-cx-block="expiries"' in document
+    # LV-376 (G4): el mapa de calor salió de pantalla
+    assert 'data-cx-block="heat"' not in document
     assert 'data-cx-block="alerts"' not in document
 
 
