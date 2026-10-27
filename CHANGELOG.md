@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Security
+
+- **`msgpack` 1.2.1 -> 1.2.4 (CVE-2026-114613).** `pip-audit` fallaba por esta dependencia transitiva de desarrollo (`pip-audit[filecache]` -> `cachecontrol` -> `msgpack`); se sube sólo ese paquete en `uv.lock` (corrección desde 1.2.3). Sin migración ni estáticos; no afecta a producción (grupo dev).
+
 ### Changed
 
 - **Una sola cabecera y un solo papel en los informes operativos (`LV-355`, F2).** El PDF del Reporte de vigencia pasa de Carta a **A4 vertical** y el del Catastro de Carta horizontal a **A4 horizontal** (la `Letterhead` de `apps/core/pdf.py` lee los mismos `REPORT_CONTACT_*`; las columnas del catastro se reescalan al ancho útil); la pantalla del Catastro lleva ahora la misma cabecera y pie de papel que el Reporte (`_print_head`/`_print_foot`, LV-319) y el encabezado y el formulario de filtros de ambos no se imprimen. Sistemas de cabecera 3→2 (operativo y DGAC) y tamaños de papel 3→1 (A4). Bajo cada tabla del Catastro y del Reporte se lee el universo («Faenas activas: N · con operación: M», con la definición única de «opera», LV-266) y las tarjetas de permisos del Reporte dicen «al dd-mm-aaaa» (las cifras son de hoy, no del corte del mensual); las cifras no cambian. El informe mensual a la DGAC no se toca: su instantánea y sus 5 hojas (más el Dato Ejecutivo en 1) siguen idénticas. **Lleva estáticos** (`identity.css`: la frase de universo no se separa de su tabla al imprimir) y catálogo `.mo` recompilado; sin migración.
