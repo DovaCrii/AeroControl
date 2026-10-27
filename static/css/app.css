@@ -45,10 +45,19 @@ body {
    way: by being more specific to that viewport, not by source-order luck. */
 .sidebar {
   position: sticky;
-  top: 58px;
+  /* LV-381 F0: el menu queda fijo bajo la barra superior. `--ac-sidebar-top`
+     lo escribe app.js con la altura **real** de la barra superior (mas el aviso
+     sin conexion si esta visible); 61px es lo que mide hoy y vale sin JS. Sin
+     `align-self` el `d-flex` del padre la estiraba hasta el alto de la pagina
+     (8641 px medidos) y el `sticky` no tenia recorrido: el menu se iba con el
+     scroll. */
+  top: var(--ac-sidebar-top, 61px);
+  align-self: flex-start;
   flex: 0 0 var(--ac-sidebar-width);
   width: var(--ac-sidebar-width);
-  min-height: calc(100vh - 58px);
+  height: calc(100vh - var(--ac-sidebar-top, 61px));
+  height: calc(100dvh - var(--ac-sidebar-top, 61px));
+  min-height: 0;
   padding: 1rem 0.75rem !important;
   gap: 0.15rem;
   background: var(--ac-surface);
@@ -186,13 +195,20 @@ body.is-resizing-sidebar {
    más parecidos entre sí. Se dejan porque ocupan los **extremos** del menú —Panel
    arriba, Inventario abajo— y nunca se ven contiguos; si algún día molesta, el
    que hay que mover es `overview`, no `inventory`. */
+/* LV-381 F2: los grupos pasan de seis a cinco (Vuelo, Cumplimiento, Informes,
+   Flota y personal, Faenas y movimientos), asi que las secciones de color son
+   siete: `overview` (el bloque sin titulo de arriba), `flight`, `compliance`,
+   `reports`, `fleet`, `sites` y `admin`. **Ningun hex es nuevo**: `fleet` es el azul
+   de `registry`, y `sites` toma el violeta que dejo libre `maintenance` (5.70:1 en
+   claro y 8.02:1 en oscuro, calculado con `contrast.py`). Cambiar el teal de
+   `inventory` por el violeta resuelve ademas el aviso de arriba: ya no hay dos
+   teales (`overview` e `inventory`) a distancia RGB 34. */
 .nav-overview .nav-icon { color: #0b7285; }
 .nav-flight .nav-icon { color: #15803d; }
 .nav-compliance .nav-icon { color: #b15d00; }
 .nav-reports .nav-icon { color: #be185d; }
-.nav-maintenance .nav-icon { color: #7c3aed; }
-.nav-registry .nav-icon { color: #2463b8; }
-.nav-inventory .nav-icon { color: #0d9488; }
+.nav-fleet .nav-icon { color: #2463b8; }
+.nav-sites .nav-icon { color: #7c3aed; }
 .nav-admin .nav-icon { color: #596579; }
 
 .sidebar a.active {
@@ -202,6 +218,34 @@ body.is-resizing-sidebar {
 .sidebar a .badge {
   margin-left: auto;
 }
+
+/* LV-381 F0 (V1/V3): la barra fija no se desplaza entera. Solo la zona de grupos
+   lo hace (`.sidebar-scroll`); la cabecera con el boton de colapsar y el pie de
+   administracion quedan siempre a la vista, asi que Administracion no cae bajo el
+   borde en 1366x768 aunque haya grupos abiertos. El tirador del ancho queda fuera
+   del contenedor con scroll: dentro se iria con el contenido. */
+.nav-top {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.sidebar-toolbar,
+.nav-admin-zone { flex: 0 0 auto; }
 
 .sidebar-label {
   color: #8892a4;
@@ -247,6 +291,19 @@ body.is-resizing-sidebar {
 }
 
 .nav-group-toggle[aria-expanded="false"] .nav-group-chevron { transform: rotate(-90deg); }
+
+/* LV-381 F3: el grupo de la página actual no se cierra (el JS pone aria-disabled). */
+.nav-group-toggle[aria-disabled="true"] { cursor: default; }
+.nav-group-toggle[aria-disabled="true"]:hover { color: inherit; }
+
+/* LV-381 F3: migas de las fichas; contraste medido sobre --ac-bg: 4.53 y 7.35. */
+.ac-breadcrumb .breadcrumb {
+  --bs-breadcrumb-divider: "›";
+  --bs-breadcrumb-divider-color: var(--ac-text-secondary);
+  --bs-breadcrumb-item-active-color: var(--ac-text-secondary);
+}
+.ac-breadcrumb a { color: var(--ac-primary); }
+.ac-breadcrumb a:hover { color: var(--ac-primary-hover); }
 
 .nav-group-items { display: flex; flex-direction: column; gap: 0.15rem; }
 
@@ -346,6 +403,34 @@ body.is-resizing-sidebar {
 .command-palette-item.is-active { background: var(--ac-surface); }
 .command-palette-item.is-search { font-weight: 600; }
 .command-palette-empty { padding: var(--sp-4); color: var(--ac-text-muted); }
+/* LV-381 F4: grupo en cada fila y títulos de «Recientes»/«Ir a»; texto sobre
+   --ac-surface(-raised) medido: 7.89:1 claro, 8.27:1 oscuro. */
+.command-palette-group,
+.command-palette-heading { color: var(--ac-text-secondary); }
+.command-palette-heading {
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+/* La pista `Ctrl K` vive dentro del cuadro de la barra, sobre su propio fondo. */
+.global-search .input-group { position: relative; }
+.global-search-input { padding-right: 76px; }
+.global-search-hint {
+  position: absolute;
+  top: 50%;
+  right: 46px;
+  z-index: 5;
+  transform: translateY(-50%);
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--ac-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ac-text-secondary);
+  font: inherit;
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
 .command-palette-foot {
   flex: none;
   padding: var(--sp-3) var(--sp-5);
@@ -662,20 +747,33 @@ body.palette-open { overflow: hidden; }
 @media (max-width: 768px) {
   .sidebar {
     position: fixed;
-    /* 58px: the navbar's real height, and the value the (now removed)
-       duplicate block was actually rendering. */
-    top: 58px;
+    /* LV-381 F0: the navbar's real height (61px measured; app.js keeps the
+       variable in sync). */
+    top: var(--ac-sidebar-top, 61px);
     bottom: 0;
     left: 0;
     z-index: 1040;
     width: min(86vw, var(--ac-sidebar-width));
     overflow-y: auto;
     transform: translateX(-105%);
+    /* LV-381 F5: cerrado, fuera de la tabulacion y de los lectores de pantalla
+       (al terminar de salir); abierto, visible de inmediato. */
+    visibility: hidden;
+    overscroll-behavior: contain;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
     /* transition lives in the base .sidebar rule now (LV-63) -- it already
        includes transform, and duplicating it here is exactly the trap this
        fix removes elsewhere. */
   }
-  .sidebar.is-open { transform: translateX(0); }
+  .sidebar.is-open { transform: translateX(0); visibility: visible; transition-delay: 0s; }
+  .sidebar-backdrop:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 1039; /* bajo el cajon (1040), sobre la barra superior */
+    display: block;
+    background: rgb(6 12 24 / 55%);
+  }
+  body.drawer-open { overflow: hidden; }
   .sidebar-toggle { display: inline-flex; align-items: center; justify-content: center; }
   .brand-subtitle { display: none; }
   .navbar > .d-flex { margin-left: auto; }
@@ -728,9 +826,8 @@ body.palette-open { overflow: hidden; }
 [data-theme="dark"] .nav-flight .nav-icon { color: #86efac; }
 [data-theme="dark"] .nav-compliance .nav-icon { color: #ffc66d; }
 [data-theme="dark"] .nav-reports .nav-icon { color: #f2a1c2; }
-[data-theme="dark"] .nav-maintenance .nav-icon { color: #c4a5ff; }
-[data-theme="dark"] .nav-registry .nav-icon { color: #82b1ff; }
-[data-theme="dark"] .nav-inventory .nav-icon { color: #55d6c8; }
+[data-theme="dark"] .nav-fleet .nav-icon { color: #82b1ff; }
+[data-theme="dark"] .nav-sites .nav-icon { color: #c4a5ff; }
 [data-theme="dark"] .nav-admin .nav-icon { color: #b9c4d2; }
 
 [data-theme="dark"] .card {
@@ -1021,6 +1118,9 @@ body, .card, .form-control, .form-select, .page-link, .table,
 }
 
 html { color-scheme: light; }
+/* LV-381: la barra superior es fija y sin esto tapa el ancla o el campo que recibe
+   el foco (WCAG 2.4.11), p. ej. el enlace del resumen de errores de un formulario. */
+html { scroll-padding-top: calc(var(--ac-sidebar-top, 61px) + 8px); }
 
 body {
   background: var(--ac-bg);
@@ -1037,6 +1137,11 @@ main {
 }
 
 .navbar-dark.navy {
+  /* LV-381 F0: la barra superior tambien queda fija. `top` sigue al aviso sin
+     conexion (sticky arriba de todo) para que no se tapen entre si. */
+  position: sticky;
+  top: var(--ac-banner-h, 0px);
+  z-index: 1030;
   min-height: 58px;
   background: #0d1727;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -1078,7 +1183,12 @@ main {
   text-transform: uppercase;
   opacity: 0.85;
 }
-.sidebar-label:first-of-type { border-top: 0; margin-top: 0.4rem; }
+/* LV-381 F0 (V4): `.sidebar-label:first-of-type` calzaba con **cada** titulo de
+   grupo (cada uno es el primer `<button>` de su `div`) y borraba la linea que
+   separa los grupos. Solo pierden la linea los rotulos que abren su propio
+   bloque: los atajos del rol y el pie de administracion (que ya lleva la suya). */
+.nav-shortcuts-label,
+.nav-admin-label { border-top: 0; margin-top: var(--sp-2); }
 .sidebar hr { border-color: var(--ac-border); opacity: 1; }
 
 /* LV-63: the collapsed rail is a desktop-only mode -- app.js only ever
@@ -1109,7 +1219,17 @@ main {
      muestran siempre; el estado plegado se conserva y vuelve al expandir la
      barra. Gana al `hidden` del JS porque `[hidden]` es `display:none` de la
      hoja del navegador y esto es más específico. */
-  .sidebar.is-collapsed .nav-group-items[hidden] { display: flex; }
+  .sidebar.is-collapsed .nav-group-items[hidden] { display: flex !important; }
+  /* LV-381 F0 (V2): sin el `!important` esta regla **perdia** contra
+     `[hidden] { display: none !important }` de bootstrap.min.css (el mismo choque
+     de LV-209): en modo icono faltaban 17 de 24 destinos. Es el unico `!important`
+     de la barra y es necesario por ese motivo. Sin titulos de grupo en la barra
+     estrecha, una linea fina separa un grupo del siguiente. */
+  .sidebar.is-collapsed .nav-group {
+    margin-top: var(--sp-2);
+    padding-top: var(--sp-2);
+    border-top: 1px solid var(--ac-border);
+  }
 
   /* Keep the pending-alert count visible while collapsed: it is the one piece
      of live state in the nav, so hiding it removed the reason to glance at
@@ -3145,7 +3265,8 @@ main h1[class],
  * barra que se va con el scroll obliga a volver para usarla. */
 .bulk-bar {
   position: sticky;
-  top: 0;
+  /* Bajo la barra superior (fija, z-index 1030): con `top: 0` quedaba detras. */
+  top: var(--ac-sidebar-top, 61px);
   z-index: 3;
   display: flex;
   align-items: center;

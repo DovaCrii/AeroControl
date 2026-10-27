@@ -48,9 +48,24 @@ def _f2_css():
 
 class TestEveryModuleHasItsMask:
     def test_the_modules_are_the_ones_of_the_sidebar(self):
-        groups = set(re.findall(r'data-nav-group="(\w+)"', BASE))
-        assert set(MODULES) <= groups
+        # `LV-381` F1/F2: los grupos de la barra viven en el registro del menú y
+        # **ya no coinciden uno a uno con los módulos**: el menú pasó de seis
+        # grupos a cinco (D2), pero la cabecera de cada pantalla sigue pintando el
+        # módulo al que pertenece (seis máscaras). Lo que se exige ahora es lo que
+        # importaba: que cada destino del menú con módulo caiga en uno de los seis
+        # que tienen máscara, para que ninguna pantalla nueva se quede sin cabecera.
+        from apps.core.navigation import all_items
+
         assert set(NAV_MODULE_STEMS) == set(MODULES)
+        resolved = {
+            item.url_name: module_for_url_name(item.url_name)
+            for item in all_items()
+            if item.url_name not in ("dashboard", "environment-hub", "administration")
+            and item.url_name != "admin:index"
+        }
+        assert all(resolved.values()), sorted(k for k, v in resolved.items() if not v)
+        assert set(resolved.values()) <= set(MODULES)
+        assert set(resolved.values()) == set(MODULES)
 
     @pytest.mark.parametrize("module", MODULES)
     def test_the_mask_exists_is_light_and_is_only_a_drawing(self, module):

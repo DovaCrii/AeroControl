@@ -22,10 +22,9 @@ from pathlib import Path
 import pytest
 from django.urls import reverse
 
-from apps.core.testing import login_as
+from apps.core.testing import full_sidebar_html, login_as
 
 CSS = Path("static/css/app.css")
-TEMPLATE = Path("templates/base.html")
 LIGHT_SURFACE = "#ffffff"
 DARK_SURFACE = "#161f2d"
 # WCAG 1.4.11: un icono es un elemento gráfico, no texto. Mismo umbral que LV-185.
@@ -91,9 +90,10 @@ def _sections_with_their_classes():
     exactamente este riesgo en `LV-169`, en vez de copiar la expresión: dos
     copias del mismo recorte es cómo una se queda vieja.
     """
-    from apps.core.test_translations import _without_template_comments
-
-    source = _without_template_comments(TEMPLATE.read_text(encoding="utf-8"))
+    # `LV-381` F1: se recorre el menú **renderizado** (todas las entradas, con un
+    # usuario que lo puede todo), no `base.html`: el menú es el resultado de
+    # `build_sidebar`. Lo renderizado tampoco trae las entradas retiradas.
+    source = full_sidebar_html()
     token = re.compile(
         r'data-nav-group="(?P<group>[^"]+)"'
         r"|(?P<open><div\b)"
@@ -138,29 +138,23 @@ class TestTheScanSeesWhatTheUserSees:
     """El guardián del guardián, y lo que vuelve al arreglo de arriba algo más
     que un comentario."""
 
-    def test_the_commented_out_links_are_not_scanned(self):
-        """Cinco enlaces del menú están dentro de `{% comment %}` y no se
-        dibujan. Contarlos hacía que este archivo afirmara sobre filas que el
-        usuario no recibe.
+    def test_the_retired_entries_are_not_scanned(self):
+        """Las entradas retiradas (`RETIRED`) no se dibujan: contarlas hacía que
+        este archivo afirmara sobre filas que el usuario no recibe.
 
-        Se compara el recuento crudo con el blanqueado en vez de fijar un número:
-        un `assert == 23` se rompería la próxima vez que alguien agregue un ítem
-        —o retire otro— por una razón que no tiene nada que ver con lo que este
-        test protege.
+        Antes eran cinco enlaces dentro de `{% comment %}`; desde `LV-381` F1 son
+        datos del registro. Se comprueba que el menú renderizado trae entradas y
+        que ninguna de las retiradas está entre ellas.
         """
-        from apps.core.test_translations import _without_template_comments
+        from apps.core.navigation import RETIRED
 
-        source = TEMPLATE.read_text(encoding="utf-8")
-        anchors = re.compile(r'class="nav-item (nav-[a-z]+)')
-        raw = anchors.findall(source)
-        live = anchors.findall(_without_template_comments(source))
+        html = full_sidebar_html()
+        live = re.findall(r'class="nav-item (nav-[a-z]+)', html)
 
         assert live, "no quedó ningún ítem de menú: ¿cambió el marcado?"
-        assert len(live) < len(raw), (
-            "ya no hay enlaces comentados en el menú. Si los retiros se "
-            "completaron, este test sobra; si no, alguien borró el ancla en vez "
-            "de comentarla y la reversión anunciada ya no se puede ejecutar."
-        )
+        assert RETIRED, "sin entradas retiradas este test sobra"
+        for item in RETIRED:
+            assert f"#icon-{item.icon}" not in html, item.url_name
 
 
 class TestOneColourPerSection:
@@ -224,7 +218,7 @@ class TestTheContrastIsCalculatedNotAssumed:
         Decía `registry 2.41`. Este test fija el valor real para que nadie vuelva
         a "corregir" un color que cumple de sobra.
         """
-        assert contrast(_icon_colours()["registry"], LIGHT_SURFACE) > 5
+        assert contrast(_icon_colours()["fleet"], LIGHT_SURFACE) > 5
 
     def test_the_new_green_was_chosen_by_measurement(self):
         """`#65a30d`, el candidato del diagnóstico previo, daba 3.09 en claro.
@@ -238,9 +232,14 @@ class TestTheContrastIsCalculatedNotAssumed:
 class TestTheScreenRendersThem:
     @pytest.mark.django_db
     def test_the_menu_uses_the_section_classes(self, db):
-        body = login_as().get(reverse("dashboard")).content.decode()
+        # `LV-381` F1: el menú respeta los permisos, así que hacen falta los de
+        # una entrada de cada sección para que se dibujen.
+        client = login_as(
+            "view_flightpermission", "view_document", "view_aircraft", "view_costcenter"
+        )
+        body = client.get(reverse("dashboard")).content.decode()
 
-        for family in ("nav-flight", "nav-reports", "nav-inventory"):
+        for family in ("nav-flight", "nav-reports", "nav-fleet", "nav-sites"):
             assert family in body
 
     @pytest.mark.django_db
@@ -254,3 +253,19 @@ class TestTheScreenRendersThem:
 
         assert "nav-operations" not in body
         assert "nav-workboard" not in body
+
+    @pytest.mark.django_db
+    def test_the_classes_retired_by_the_regrouping_are_gone(self, db):
+        """LV-381 F2: seis grupos pasan a cinco y tres clases de color se
+        retiran (`nav-maintenance`, `nav-registry`, `nav-inventory`): `fleet` es
+        el azul de `registry` y `sites` el violeta de `maintenance`. Con una
+        clase vieja viva, alguien volveria a asignarla por app."""
+        client = login_as(
+            "view_flightpermission", "view_document", "view_aircraft", "view_costcenter"
+        )
+        body = client.get(reverse("dashboard")).content.decode()
+        css = CSS.read_text(encoding="utf-8")
+
+        for old in ("nav-maintenance", "nav-registry", "nav-inventory"):
+            assert old not in body
+            assert f".{old} .nav-icon" not in css

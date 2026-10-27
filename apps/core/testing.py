@@ -103,6 +103,45 @@ def pin_now(monkeypatch, moment):
     return moment
 
 
+class AllowEverything:
+    """Un usuario que lo puede todo, **sin base de datos**.
+
+    Para renderizar el menú completo en los guardianes que antes leían `base.html`
+    como texto (`LV-381` F1): el menú ya no es marcado escrito a mano sino el
+    resultado de `build_sidebar`, y la mitad de sus entradas están tras un permiso
+    que una página cualquiera no ejercita. Renderizar con un usuario así es lo
+    equivalente a leer el archivo entero, pero ejecutando el mismo código que
+    ejecuta el usuario.
+    """
+
+    is_authenticated = True
+    is_staff = True
+    is_active = True
+    is_superuser = True
+
+    def has_perm(self, perm, obj=None):
+        return True
+
+
+def full_sidebar_html(url_name=""):
+    """El `<aside>` interior con **todas** las entradas vivas (todas las permitidas)."""
+    from django.template.loader import render_to_string
+    from django.utils import translation
+
+    from apps.core.navigation import build_sidebar
+
+    # En inglés: los msgid **son** el texto fuente, y los guardianes comparan contra ellos.
+    with translation.override("en"):
+        return render_to_string(
+            "core/_sidebar.html",
+            {
+                "sidebar_menu": build_sidebar(AllowEverything(), url_name),
+                "role_shortcuts": [],
+                "unresolved_alert_count": 0,
+            },
+        )
+
+
 def workbook_grid(content):
     """Un XLSX como datos comparables: hojas, celdas, negritas, filtro y anchos.
 

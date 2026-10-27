@@ -4148,6 +4148,10 @@ msgstr "Usar tema oscuro"
 msgid "Main navigation"
 msgstr "Navegación principal"
 
+#: .\templates\core\_sidebar.html:16
+msgid "Main menu"
+msgstr "Menú principal"
+
 #: .\templates\base.html:60
 msgid "Navigation"
 msgstr "Navegación"
@@ -4241,6 +4245,22 @@ msgstr "Centro de administración"
 #: .\templates\base.html:297
 msgid "Admin"
 msgstr "Administración"
+
+#: apps/core/navigation.py
+msgid "Technical administration"
+msgstr "Administración técnica"
+
+#: apps/core/navigation.py
+msgid "Validity report"
+msgstr "Reporte de vigencias"
+
+#: apps/core/navigation.py
+msgid "Fleet and personnel"
+msgstr "Flota y personal"
+
+#: apps/core/navigation.py
+msgid "Sites and movements"
+msgstr "Faenas y movimientos"
 
 #: .\templates\base.html:304 .\templates\base.html:311
 #: .\templates\compliance\_document_preview_modal.html:25
@@ -12670,6 +12690,26 @@ msgid ""
 msgstr ""
 "Formato del documento: v%(before)s → v%(now)s. Algunas cifras cambian por "
 "cómo se cuentan y no sólo por lo ocurrido."
+
+#: templates/core/_breadcrumbs.html
+msgid "Breadcrumb"
+msgstr "Ruta"
+
+#: templates/core/_breadcrumbs.html
+msgid "Details"
+msgstr "Detalle"
+
+#: templates/base.html
+msgid "Recent"
+msgstr "Recientes"
+
+#: templates/base.html
+msgid "Go to"
+msgstr "Ir a"
+
+#: templates/core/_sidebar.html
+msgid "Close navigation"
+msgstr "Cerrar navegación"
 
 msgid "One row per site that flies; sites that cannot fly today come first."
 msgstr "Una fila por faena que vuela; primero las que hoy no pueden volar."

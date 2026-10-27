@@ -50,7 +50,10 @@
     </a>
     <form method="get" action="{% url 'global-search' %}" role="search" class="global-search d-none d-md-flex mx-auto" hx-boost="false">
       <div class="input-group input-group-sm">
-        <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}">
+        <input class="form-control global-search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="{% translate 'Search in AeroControl' %}" aria-label="{% translate 'Global search' %}" aria-keyshortcuts="Control+K Meta+K">
+        {% comment %}LV-381 F4 (V7): la pista del atajo. Decorativa para el lector de pantalla
+        (el atajo se anuncia con `aria-keyshortcuts`); `command-palette.js` la cambia a ⌘ K en Mac.{% endcomment %}
+        <kbd class="global-search-hint" aria-hidden="true">Ctrl&nbsp;K</kbd>
         <button class="btn btn-outline-light" type="submit" aria-label="{% translate 'Search' %}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
@@ -92,326 +95,17 @@
     </span>
   </nav>
 
+  {% comment %}LV-381 F5: el fondo del cajón móvil (<769 px). `app.js` lo muestra mientras el cajón está
+  abierto; tocarlo lo cierra. Es un `<div>` y no un botón a propósito: el cierre por teclado es Esc y el
+  botón de la cabecera de la barra; esto es sólo el gesto de tocar fuera.{% endcomment %}
+  <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   <div class="d-flex">
     <aside class="sidebar p-3 d-flex flex-column" id="sidebar" aria-label="{% translate 'Main navigation' %}">
-      <div class="sidebar-toolbar">
-        <span class="sidebar-toolbar-title">{% translate "Navigation" %}</span>
-        <button class="sidebar-collapse" type="button" id="sidebar-collapse" aria-controls="sidebar" aria-label="{% translate 'Collapse sidebar' %}" title="{% translate 'Collapse sidebar' %}" data-label-expand="{% translate 'Expand sidebar' %}" data-label-collapse="{% translate 'Collapse sidebar' %}">
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-        </button>
-      </div>
-      {% with request.resolver_match.url_name as url_name %}
-      <a href="{% url 'dashboard' %}" class="nav-item nav-overview {% if url_name == 'dashboard' %}active{% endif %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-dashboard"/></svg><span class="nav-label">{% translate "Dashboard" %}</span></a>
-      {% comment %}LV-358: un solo ítem «Entorno» (tiempo, centelleo GNSS, después espacio aéreo). Aparece sólo si la persona puede abrir alguna pestaña: sin permiso de ninguna no hay ítem, y quien tiene una sola entra directo a esa.{% endcomment %}
-      {% load environment_tags %}{% environment_entry as env_entry %}
-      {% if env_entry %}<a href="{{ env_entry }}" class="nav-item nav-overview {% if url_name == 'environment-hub' or url_name == 'environment-weather' or url_name == 'environment-gnss' or url_name == 'airspace-map' %}active{% endif %}" {% if url_name == 'environment-hub' or url_name == 'environment-weather' or url_name == 'environment-gnss' or url_name == 'airspace-map' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-environment"/></svg><span class="nav-label">{% translate "Environment" %}</span></a>{% endif %}
-
-      {% comment %}`UX-31` · Los atajos del rol.
-
-      ⚠️ **Son un añadido, no un menú recortado.** Cada uno de estos destinos
-      sigue estando más abajo, en su grupo de siempre: lo que hace esta tira es
-      ponerlos primero para quien los usa todos los días. La fila del plan lo
-      dice y es la regla que gobierna toda la implementación — *"ocultar genera
-      desconfianza; priorizar genera velocidad"*.
-
-      Por eso también van **sin icono**: repetir el símbolo de la entrada de más
-      abajo haría creer que el menú se duplicó, y `UX-05` fijó un icono por
-      destino, no por enlace. Un atajo es el mismo destino, escrito antes.
-
-      Quien no tiene rol no ve nada: la lista llega vacía y el bloque entero
-      desaparece, así que el menú de siempre queda igual de siempre.{% endcomment %}
-      {% if role_shortcuts %}
-      <div class="nav-shortcuts">
-        <span class="sidebar-label nav-shortcuts-label">{% translate "Your day" %}</span>
-        {% for shortcut in role_shortcuts %}
-        <a href="{{ shortcut.url }}" class="nav-item nav-shortcut {% if url_name == shortcut.url_name %}active{% endif %}" {% if url_name == shortcut.url_name %}aria-current="page"{% endif %}><span class="nav-label">{% translate shortcut.label %}</span></a>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% comment %}LV-61 (2026-08-04): the menu used to be ordered by data
-      model -- what you configure once (registry, assignments) sat in the top
-      two groups, and the work done every day (permissions, alerts) was buried
-      below it. Now it reads as the operational flow: the permission lifecycle
-      first, in the order it actually happens, then how it is proven, then
-      maintenance, and the registry last because it is set up once.
-
-      "Geospatial planning" moved out of the old "Planning" group -- that group
-      is about staffing a contract (an administrative act), while a KMZ is the
-      flight area of one specific permission (LV-60). It now sits right after
-      Permissions, where it belongs in the flow.
-
-      Supersedes the LV-13a grouping (2026-07-30). The legacy "Resource
-      planning" (single Assignment model, superseded by the per-resource
-      assignments) is still out of the nav; its route stays.{% endcomment %}
-      {% comment %}LV-170: los grupos se pliegan y recuerdan su estado. Veinte
-      entradas no caben a la vista de nadie, y el que trabaja permisos no
-      necesita el padrón abierto todo el día. El rótulo pasa de `<span>` a
-      `<button>` porque ahora acciona algo: un `<span>` con click no llega por
-      teclado ni se anuncia. `aria-expanded` es lo que un lector de pantalla
-      lee, así que lo escribe la plantilla y no sólo el JS -- sin JS los grupos
-      quedan abiertos, que es el estado correcto para degradar.{% endcomment %}
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="flight" aria-expanded="true" aria-controls="nav-group-flight">{% translate "Flight" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-flight">
-      {% comment %}`UX-27`: encabeza el grupo de vuelo porque es la pregunta con
-      la que empieza la jornada de quien está en faena. Las demás entradas del
-      grupo son listas de trabajo; ésta es una sola respuesta, y ponerla después
-      de tres listas sería enterrarla bajo lo que vino a resumir.{% endcomment %}
-      {% comment %}LV-284 paso 1 (2026-10-06, decisión del usuario): «¿Puedo volar?» se
-      oculta del menú **de momento** — *«ocultar el puedo volar y vuelos no son
-      necesarios de momento»*. Sólo el enlace: la vista, la URL `can-i-fly`, sus
-      permisos y sus tests siguen enteros, y volver es descomentar la línea de abajo.
-      Condición de cierre: si en un mes nadie lo echa de menos y no hay un solo uso en
-      el registro de auditoría, se decide entre congelarlo y borrarlo; si lo piden de
-      vuelta, se descomenta y esta nota se retira.
-
-      <a href="{% url 'can-i-fly' %}" class="nav-item nav-flight {% if url_name == 'can-i-fly' %}active{% endif %}" {% if url_name == 'can-i-fly' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-can-i-fly"/></svg><span class="nav-label">{% translate "Can I fly?" %}</span></a>
-      {% endcomment %}
-      <a href="{% url 'permission-list' %}" class="nav-item nav-flight {% if url_name == 'permission-list' %}active{% endif %}" {% if url_name == 'permission-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-permission-list"/></svg><span class="nav-label">{% translate "Permissions" %}</span></a>
-      {% comment %}LV-150 paso 1 (2026-08-26, decisión del usuario): "Solicitudes
-      SIGO" se retira del menú siguiendo el procedimiento de LV-78 y LV-103 --
-      primero sin superficie propia, después congelado, y sólo al final se borra
-      si nadie lo echa de menos.
-
-      La premisa de R9.5 —abajo, conservada— era que la solicitud es un objeto
-      distinto del plan y del permiso, y sigue siendo cierta. Lo que cambió es
-      dónde se trabaja: desde `R10.1` los datos que SIGO pide se leen **en la
-      ficha del plan**, y con `LV-149` se copian de ahí casilla por casilla. Con
-      una sola circunferencia —el caso normal— ya no hace falta separar nada, así
-      que la lista de solicitudes es una pantalla a la que se llega sin tener nada
-      que hacer en ella.
-
-      **Se retira sólo el enlace del menú.** Sobreviven la tarjeta y la sección
-      del panel (ahí vive el seguimiento de "presentado y sin respuesta", que es
-      lo que vale), el renglón del expediente del permiso (`FlightRequest` no está
-      en el admin: ese listado es la única superficie de lectura del conjunto), el
-      redirect del POST de separar (acabas de crear N filas y ésa es la pantalla
-      que las muestra) y la navegación interna de la ficha.
-
-      Y para que el retiro no destruya el descubrimiento, la ficha del plan gana
-      un enlace **contextual**: "N solicitudes de este plan", junto a Separar.
-
-      **Nada se borra**: la vista, la URL `flight-request-list`, sus permisos y
-      sus tests siguen enteros; con descomentar la línea de abajo vuelve al menú.
-      Condición de reversión escrita: si en un mes hay al menos una solicitud
-      creada en producción, esto se revierte en vez de avanzar al paso 2.
-
-      R9.5: sección propia y no una pestaña del plan ni del permiso (decisión del
-      usuario, 2026-08-20). La solicitud es una cosa distinta de las dos: el plan
-      es el dibujo, el permiso es el papel que responde la DGAC, y esto es el
-      trámite que va en medio. Va entre ambos porque ése es el orden en que
-      ocurre.
-
-      <a href="{% url 'flight-request-list' %}" class="nav-item nav-flight {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}active{% endif %}" {% if url_name == 'flight-request-list' or url_name == 'flight-request-detail' or url_name == 'geo-plan-split' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-flight-request-list"/></svg><span class="nav-label">{% translate "SIGO requests" %}</span></a>
-      {% endcomment %}
-      <a href="{% url 'geo-plan-list' %}" class="nav-item nav-flight {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}active{% endif %}" {% if url_name == 'geo-plan-list' or url_name == 'geo-plan-detail' or url_name == 'geo-plan-import' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-geo-plan-list"/></svg><span class="nav-label">{% translate "Geospatial planning" %}</span></a>
-      {% comment %}LV-291 (2026-10-07, pedido del usuario): «Vuelos» vuelve al menú, ahora que el registro de operaciones en formato DGAC (LV-290) vive ahí: la lista es el registro de todos los vuelos y cada permiso tiene su pantalla de operaciones. LV-284 lo había ocultado; «¿Puedo volar?» sigue oculto.{% endcomment %}
-      <a href="{% url 'record-list' %}" class="nav-item nav-flight {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}active{% endif %}" {% if url_name == 'record-list' or url_name == 'record-detail' or url_name == 'permission-operations' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-record-list"/></svg><span class="nav-label">{% translate "Flights" %}</span></a>
-      {% comment %}LV-103 paso 1 (2026-08-14, decisión del usuario): el
-      calendario se retira siguiendo el procedimiento de LV-78 -- primero sin
-      superficies, después congelado, y sólo al final se borra si nadie lo echa
-      de menos. Motivo del usuario: "no lo utilizo, me estoy guiando de alertas
-      principalmente".
-
-      Y hay una razón estructural detrás de esa costumbre: de los ocho tipos de
-      evento que dibujaba, **cuatro son vencimientos** (documentos,
-      habilitaciones, credenciales, seguros), o sea lo mismo que ya llega a la
-      bandeja de alertas -- donde además se resuelven, se comentan y quedan como
-      evidencia ISO 10.2. Dos pantallas contando lo mismo, y sólo una en la que
-      se trabaja. Los otros cuatro son agenda (permisos, vuelos, asignaciones,
-      mantenciones), que es lo único que se pierde y que hoy nadie estaba
-      mirando.
-
-      **Nada se borra**: las vistas `calendar`/`calendar-events`, su feed, sus
-      permisos por tipo y sus tests siguen enteros; con revertir este comentario
-      vuelve entero. A diferencia del Kanban, acá no había ninguna dependencia
-      escondida -- `CALENDAR_EVENT_PERMISSIONS` y `CalendarAccessMixin` viven en
-      `apps.core.views` y sólo los usa el propio calendario.
-      <a href="{% url 'calendar' %}" class="nav-item nav-flight {% if url_name == 'calendar' %}active{% endif %}" {% if url_name == 'calendar' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-calendar"/></svg><span class="nav-label">{% translate "Calendar" %}</span></a>
-      {% endcomment %}
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="compliance" aria-expanded="true" aria-controls="nav-group-compliance">{% translate "Compliance" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-compliance">
-      {% comment %}LV-D8 (2026-08-03): la lista general de Documentos se ocultó
-      del menú por decisión de producto -- la carga ya está dividida por sección
-      (ficha de cada entidad, Documentos de la empresa, Registros operacionales),
-      así que una pestaña transversal encima se sentía redundante. La vista y la
-      URL 'document-list' siguen vivas (auditoría de todo junto) -- solo se
-      quita el enlace, igual que el patrón de LV-7 con Kanban.
-      <a href="{% url 'document-list' %}" class="nav-item nav-compliance {% if url_name == 'document-list' %}active{% endif %}" {% if url_name == 'document-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-document-list"/></svg><span class="nav-label">{% translate "Documents" %}</span></a>
-      {% endcomment %}
-      {% comment %}`UX-13`: la bandeja va **primera** en esta sección y encima de las
-alertas, porque es la pantalla con la que se empieza el día: alertas es una de
-sus cuatro fuentes, no su reemplazo. Reusa el icono de alertas a propósito —
-`UX-05` fijó el juego de símbolos y un icono nuevo por pantalla nueva es cómo el
-menú deja de leerse de un vistazo.{% endcomment %}
-<a href="{% url 'work-tray' %}" class="nav-item nav-compliance {% if url_name == 'work-tray' %}active{% endif %}" {% if url_name == 'work-tray' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-work-tray"/></svg><span class="nav-label">{% translate "Work tray" %}</span></a>
-<a href="{% url 'alert-list' %}" class="nav-item nav-compliance {% if url_name == 'alert-list' %}active{% endif %}" {% if url_name == 'alert-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><span class="nav-label">{% translate "Alerts" %}</span> {% include "core/_alert_badge.html" %}</a>
-      {% comment %}LV-69 (2026-08-11): "Seguimiento de alertas" se ocultó del menú
-      por decisión del usuario, que no reconocía qué hacía y lo veía duplicado.
-      Es la tercera vuelta de este módulo (LV-7 lo ocultó, LV-48 lo renombró y lo
-      devolvió). La duplicación ahora es real: desde R6.2 y R6.3 la lista de
-      alertas ya registra causa raíz y cierra sin pasar por el tablero, así que
-      dejó de ser el único camino. **No se eliminó**: sigue siendo el mecanismo
-      de acción correctiva de ISO 10.2 y el cierre alerta↔tarjeta de R6.1 lo usa,
-      así que la vista y la URL 'kanban' siguen vivas — los enlaces "Ver tarea"
-      de la lista de alertas siguen funcionando. Si en un mes nadie lo extraña,
-      se puede eliminar con confianza; el diseño de R7.6 propone el reemplazo
-      (NonConformity + verificación de eficacia).
-      <a href="{% url 'kanban' %}" class="nav-item nav-compliance {% if url_name == 'kanban' %}active{% endif %}" {% if url_name == 'kanban' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-kanban"/></svg><span class="nav-label">{% translate "Action plan" %}</span></a>
-      {% endcomment %}
-      {% comment %}LV-262: «Registros operacionales» y «Cumplimiento mensual» son
-      ahora **una entrada**, el cierre mensual — pedido del usuario para la etapa
-      de carga de datos. La lista de documentos (`operational-records`) no se
-      retiró: se abre desde cada fila del cierre y desde «Todos los registros», y
-      por eso se marca activa esta entrada cuando se está en ella.{% endcomment %}
-      <a href="{% url 'monthly-review' %}" class="nav-item nav-compliance {% if url_name == 'monthly-review' or url_name == 'operational-records' %}active{% endif %}" {% if url_name == 'monthly-review' or url_name == 'operational-records' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-review"/></svg><span class="nav-label">{% translate "Monthly close" %}</span></a>
-      {% comment %}Los entregables salen del menú a pedido del usuario
-      (2026-08-20): no se están usando todavía y ocupaban un sitio en la columna
-      de cumplimiento, que es la que se mira a diario. **La función sigue
-      entera** —modelo, vistas, permisos y la URL `deliverable-list`—, y las no
-      conformidades que nacen de un entregable rechazado siguen funcionando
-      igual.
-
-      ⚠️ **Corregido el 2026-09-02: este bloque decía "devolverla al menú es
-      descomentar esta línea" y no hay línea que descomentar.** El ancla se
-      borró, no se comentó — es la única de los retiros que no siguió el patrón
-      de `LV-7`/`LV-D8`, y la instrucción escrita no se podía ejecutar. Para
-      devolverla hay que **escribir** el enlace, con `perms.compliance.
-      view_deliverable` y apuntando a `deliverable-list`.
-
-      **CONDICIÓN DE CIERRE**: en cuanto se cree **un** entregable en
-      producción, el enlace vuelve; si no se crea ninguno, se retira de verdad
-      —vista, URL, plantillas y tests— salvo que `NonConformity` siga
-      dependiendo del rechazo de entregables, que hoy es el caso.{% endcomment %}
-      {% if perms.compliance.view_nonconformity %}<a href="{% url 'nonconformity-list' %}" class="nav-item nav-compliance {% if url_name == 'nonconformity-list' %}active{% endif %}" {% if url_name == 'nonconformity-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-nonconformity-list"/></svg><span class="nav-label">{% translate "Non-conformities" %}</span></a>{% endif %}
-      <a href="{% url 'company-documents' %}" class="nav-item nav-compliance {% if url_name == 'company-documents' %}active{% endif %}" {% if url_name == 'company-documents' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-company-documents"/></svg><span class="nav-label">{% translate "Company documents" %}</span></a>
-        </div>
-      </div>
-
-      {% comment %}LV-170: grupo **Informes**, con el catastro y el reporte de
-      cumplimiento juntos. El usuario los confundió justamente porque estaban
-      separados —el catastro abría Padrón y el reporte vivía en Cumplimiento—
-      siendo que la pregunta que se hace al buscarlos es la misma: "necesito un
-      documento para entregar". El catastro contesta "¿qué tengo inscrito?" y el
-      reporte "¿están vigentes mis papeles?"; son las dos caras de lo mismo y
-      desde `LV-167` el catastro ya trae las vigencias, así que se parecen más
-      que nunca. Va después de Cumplimiento porque se produce con lo de arriba,
-      no antes de usarlo.
-
-      El catastro conserva su doble permiso, los mismos que su vista, porque el
-      documento lleva flota **y** personal.{% endcomment %}
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">{% translate "Reports" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-reports">
-      {% if perms.registry.view_aircraft and perms.registry.view_operator %}
-      <a href="{% url 'registry-roster' %}" class="nav-item nav-reports {% if url_name == 'registry-roster' %}active{% endif %}" {% if url_name == 'registry-roster' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-registry-roster"/></svg><span class="nav-label">{% translate "Roster report" %}</span></a>
-      {% endif %}
-      <a href="{% url 'compliance-report' %}" class="nav-item nav-reports {% if url_name == 'compliance-report' %}active{% endif %}" {% if url_name == 'compliance-report' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-compliance-report"/></svg><span class="nav-label">{% translate "Report" %}</span></a>
-      {% comment %}R3: el informe mensual RPA entra al menú el mismo día que
-      gana pantalla. El repo arrastra vistas vivas a las que sólo se llega
-      tecleando la URL (ver §4b del plan y las condiciones de cierre en
-      `MASTER_PLAN.md`); ésta no suma otra.{% endcomment %}
-      {% if perms.reporting.view_reportrun %}
-      <a href="{% url 'monthly-report' %}" class="nav-item nav-reports {% if url_name == 'monthly-report' %}active{% endif %}" {% if url_name == 'monthly-report' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-monthly-report"/></svg><span class="nav-label">{% translate "Monthly RPA report" %}</span></a>
-      {% endif %}
-        </div>
-      </div>
-
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="maintenance" aria-expanded="true" aria-controls="nav-group-maintenance">{% translate "Maintenance" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-maintenance">
-      {% comment %}LV-61: was "Records", which collided with "Operational
-      records" above and with the flight records in "Flights" -- three
-      different things called the same in one menu.{% endcomment %}
-      <a href="{% url 'maintenance-list' %}" class="nav-item nav-maintenance {% if url_name == 'maintenance-list' %}active{% endif %}" {% if url_name == 'maintenance-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-maintenance-list"/></svg><span class="nav-label">{% translate "Maintenance jobs" %}</span></a>
-        </div>
-      </div>
-
-      {% comment %}LV-61: `context` because a bare "Registry" already means the
-      eyebrow of the cost-center import page ("Registro"); as a sidebar group
-      covering the roster and its assignments it reads "Padrón".
-
-      LV-170: **Padrón queda con lo que se da de alta una vez** -- faenas,
-      aeronaves, operadores y la prueba de conocimientos, que es un dato de la
-      persona. Tenía nueve entradas de las veinte del menú, así que era el grupo
-      que hacía scrollear a todos los demás. El inventario y sus movimientos
-      —baterías, asignaciones, bitácora— se van al grupo de abajo: no se
-      configuran, se mueven todos los días, y esa es una pregunta distinta.
-      El catastro se fue a **Informes**.{% endcomment %}
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="registry" aria-expanded="true" aria-controls="nav-group-registry">{% translate "Registry" context "sidebar group" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-registry">
-      <a href="{% url 'costcenter-list' %}" class="nav-item nav-registry {% if url_name == 'costcenter-list' %}active{% endif %}" {% if url_name == 'costcenter-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-costcenter-list"/></svg><span class="nav-label">{% translate "Cost Centers" %}</span></a>
-      <a href="{% url 'aircraft-list' %}" class="nav-item nav-registry {% if url_name == 'aircraft-list' %}active{% endif %}" {% if url_name == 'aircraft-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraft-list"/></svg><span class="nav-label">{% translate "Aircraft" %}</span></a>
-      <a href="{% url 'operator-list' %}" class="nav-item nav-registry {% if url_name == 'operator-list' %}active{% endif %}" {% if url_name == 'operator-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operator-list"/></svg><span class="nav-label">{% translate "Operators" %}</span></a>
-      {% comment %}R5.8 (2026-08-11): "Habilitaciones" se ocultó del menú por
-      decisión del usuario -- redundante con la ficha del operador, que ahora
-      muestra las habilitaciones reales de cada uno (ver operator_detail.html).
-      La vista y la URL 'qualification-list' siguen vivas (auditoría de todas
-      juntas), igual que el patrón de LV-7 con Kanban y LV-D8 con Documentos.
-      <a href="{% url 'qualification-list' %}" class="nav-item nav-registry {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}active{% endif %}" {% if url_name == 'qualification-list' or url_name == 'qualification-detail' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-qualification-list"/></svg><span class="nav-label">{% translate "Qualifications" %}</span></a>
-      {% endcomment %}
-      {% comment %}LV-158: la prueba de conocimientos, para quien la rinde. Va en
-      Padrón porque es un dato de la persona, junto a operadores; y sólo aparece
-      con `add_knowledgeassessment`, porque quien no la rinde no tiene nada que
-      hacer ahí -- el historial de todos se lee en la ficha de cada operador.
-      {% endcomment %}
-      {% if perms.registry.add_knowledgeassessment %}
-      <a href="{% url 'assessment-take' %}" class="nav-item nav-registry {% if url_name == 'assessment-take' %}active{% endif %}" {% if url_name == 'assessment-take' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-assessment-take"/></svg><span class="nav-label">{% translate "Knowledge assessment" %}</span></a>
-      {% endif %}
-        </div>
-      </div>
-
-      {% comment%}LV-170: **Inventario y movimientos**. Las asignaciones, las
-      baterías y la bitácora no son padrón: el padrón dice qué existe, y esto
-      dice dónde está y quién lo tiene hoy. Se consultan a diario y se
-      modifican, mientras el resto de Padrón se toca cuando entra o sale alguien
-      o algo.{% endcomment %}
-      <div class="nav-group">
-        <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="inventory" aria-expanded="true" aria-controls="nav-group-inventory">{% translate "Inventory and movements" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-        <div class="nav-group-items" id="nav-group-inventory">
-      <a href="{% url 'operatorassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'operatorassignment-list' %}active{% endif %}" {% if url_name == 'operatorassignment-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-operatorassignment-list"/></svg><span class="nav-label">{% translate "Operator assignments" %}</span></a>
-      <a href="{% url 'aircraftassignment-list' %}" class="nav-item nav-inventory {% if url_name == 'aircraftassignment-list' %}active{% endif %}" {% if url_name == 'aircraftassignment-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-aircraftassignment-list"/></svg><span class="nav-label">{% translate "Aircraft assignments" %}</span></a>
-      <a href="{% url 'battery-list' %}" class="nav-item nav-inventory {% if url_name == 'battery-list' %}active{% endif %}" {% if url_name == 'battery-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg><span class="nav-label">{% translate "Batteries" %}</span></a>
-      <a href="{% url 'resourcemovementlog-list' %}" class="nav-item nav-inventory {% if url_name == 'resourcemovementlog-list' %}active{% endif %}" {% if url_name == 'resourcemovementlog-list' %}aria-current="page"{% endif %}><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-resourcemovementlog-list"/></svg><span class="nav-label">{% translate "Resource movements" %}</span></a>
-        </div>
-      </div>
-
-      <div class="nav-admin-zone">
-        <span class="sidebar-label nav-admin-label">{% translate "Administration" context "sidebar zone" %}</span>
-      {% comment %}Gated by the same view_* permissions the page itself checks
-      per row, not by is_staff: a compliance manager with view_documenttype had
-      no way to reach the document-type and alert-rule configuration at all.
-      {% endcomment %}
-      {% if perms.core.view_operationaltenant or perms.core.view_tenantmembership or perms.compliance.view_documenttype or perms.compliance.view_alertrule or perms.workboard.view_kanbanboard or perms.workboard.view_kanbanstage or perms.workboard.view_kanbanlabel or perms.core.view_backupconfig or perms.core.view_auditevent %}<a href="{% url 'administration' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-administration"/></svg><span class="nav-label">{% translate "Administration center" %}</span></a>{% endif %}
-      <a href="{% url 'admin:index' %}" class="nav-item nav-admin"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-admin-index"/></svg><span class="nav-label">{% translate "Admin" %}</span></a>
-      </div>
-      {% endwith %}
-      {% comment %}LV-208: el tirador del ancho, pedido del usuario para poder
-      regular la barra en vez de sólo abrirla o colapsarla.
-
-      Va **dentro** del `<aside>` y al final: se posiciona sobre el borde derecho
-      con `position:absolute`, y el contexto lo da el `position:sticky` de la
-      propia barra. Al final del contenido para que el orden de tabulación lo
-      encuentre después de los enlaces del menú — un control de layout antes de
-      la navegación sería un obstáculo en el camino de todos los días.
-
-      `role="separator"` con `tabindex="0"` es lo que lo vuelve alcanzable por
-      teclado y lo que un lector de pantalla anuncia como movible; los
-      `aria-value*` los mantiene el JS. Sin esto sería un control exclusivo del
-      ratón, y `LV-185` fijó que eso no se da por bueno.{% endcomment %}
-      <button class="sidebar-resizer" type="button" role="separator"
-              aria-orientation="vertical" tabindex="0"
-              aria-label="{% translate 'Drag, or use the arrow keys, to set the navigation width. Double-click to reset it.' %}"
-              title="{% translate 'Drag to set the width · double-click to reset' %}"></button>
+      {% include "core/_sidebar.html" %}
     </aside>
 
     <main class="container-fluid p-4" id="main-content" tabindex="-1">
+      {% include "core/_breadcrumbs.html" %}
       {% if messages %}
       <div class="mb-3 d-print-none" aria-live="polite">
         {% for message in messages %}{% with sev=message.level_tag|default:"info" %}<div class="alert alert-{{ sev }} alert-dismissible fade show id-message id-message--{{ sev }}" role="{% if sev == 'danger' %}alert{% else %}status{% endif %}"><svg class="id-message-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{% if sev == 'success' %}<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16 9.5"/>{% elif sev == 'warning' %}<path d="M12 3.5 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.01"/>{% elif sev == 'danger' %}<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16v.01"/>{% else %}<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 8v.01"/>{% endif %}</svg><span class="id-message-text"><span class="visually-hidden">{% if sev == 'success' %}{% translate "Success:" %}{% elif sev == 'warning' %}{% translate "Warning:" %}{% elif sev == 'danger' %}{% translate "Error:" %}{% else %}{% translate "Notice:" %}{% endif %}</span> {{ message }}</span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Close' %}"></button></div>{% endwith %}{% endfor %}
@@ -450,7 +144,10 @@ menú deja de leerse de un vistazo.{% endcomment %}
   <div class="command-palette" id="command-palette" hidden
        data-search-url="{% url 'global-search' %}"
        data-search-label="{% translate 'Search everywhere for' %}"
-       data-empty-label="{% translate 'Nothing matches that.' %}">
+       data-empty-label="{% translate 'Nothing matches that.' %}"
+       data-recent-label="{% translate 'Recent' %}"
+       data-goto-label="{% translate 'Go to' %}"
+       data-user="{{ user.pk }}">
     <div class="command-palette-backdrop" data-palette-close></div>
     <div class="command-palette-panel" role="dialog" aria-modal="true" aria-label="{% translate 'Search in AeroControl' %}">
       <input class="command-palette-input" type="search" id="command-palette-input" autocomplete="off"

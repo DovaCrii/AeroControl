@@ -11,11 +11,10 @@ from pathlib import Path
 import pytest
 from django.urls import reverse
 
-from apps.core.testing import login_as
+from apps.core.testing import full_sidebar_html, login_as
 
 APP_JS = Path("static/js/app.js")
 IDENTITY_CSS = Path("static/css/identity.css")
-BASE = Path("templates/base.html")
 
 NO_PREFERENCE = "@media (prefers-reduced-motion: no-preference) {"
 
@@ -34,41 +33,47 @@ def _no_preference_block(css):
 
 
 def _sidebar_markup():
-    html = re.sub(
-        r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}",
-        "",
-        BASE.read_text(encoding="utf-8"),
-        flags=re.DOTALL,
-    )
-    start = html.index('<aside class="sidebar')
-    return html[start : html.index("</aside>", start)]
+    """El menú renderizado completo (`LV-381` F1: ya no está escrito en `base.html`)."""
+    return full_sidebar_html()
 
 
-class TestTheAccordion:
-    def test_opening_a_group_closes_the_others(self):
+class TestTheGroups:
+    """Reescrito A PROPOSITO en `LV-381` F3 (D1).
+
+    Esta clase afirmaba el **acordeon**: abrir un grupo cerraba los demas y se
+    recordaba un solo grupo (`nav-group-open`). La decision D1 del diseno lo
+    invierte (varios grupos abiertos a la vez, el de la pagina activa siempre
+    abierto, lista guardada en `nav-groups-open`), porque quien trabaja con Vuelo y
+    Flota a la vez reabria uno cada vez. El comportamiento nuevo lo cubre
+    `test_lv381_nav_orientation.py::TestTheGroupsAreIndependent`; aqui quedan las
+    afirmaciones que siguen valiendo y la que prohibe volver al acordeon.
+    """
+
+    def test_opening_a_group_does_not_close_the_others(self):
         source = APP_JS.read_text(encoding="utf-8")
 
-        assert "other !== toggle" in source
-        assert "setGroup(other, false, true)" in source
+        assert "other !== toggle" not in source
+        assert "setGroup(other" not in source
 
-    def test_the_open_group_is_remembered_under_a_new_key(self):
+    def test_the_open_groups_are_remembered_under_a_new_key(self):
         source = APP_JS.read_text(encoding="utf-8")
 
-        assert "'nav-group-open'" in source
-        # La clave antigua ya no se lee: seria resucitar el estado de varios grupos.
+        assert "'nav-groups-open'" in source
+        # Las claves antiguas ya no se leen: eran otro formato (un nombre, o los plegados).
+        assert "getItem('nav-group-open')" not in source
         assert "getItem('nav-groups-collapsed')" not in source
 
-    def test_the_group_of_the_current_page_wins_over_the_remembered_one(self):
+    def test_the_group_of_the_current_page_always_stays_open(self):
         source = APP_JS.read_text(encoding="utf-8")
 
         assert ".nav-group-items .nav-item.active" in source
         assert re.search(
-            r"openName = activeOwner \? activeOwner\.dataset\.navGroup", source
+            r"activeName = activeOwner \? activeOwner\.dataset\.navGroup", source
         )
 
     def test_every_storage_access_is_guarded(self):
         source = APP_JS.read_text(encoding="utf-8")
-        start = source.index("function openGroupName")
+        start = source.index("function readOpenGroups")
         end = source.index("function mayAnimate")
 
         block = source[start:end]
@@ -83,7 +88,7 @@ class TestTheAccordion:
     def test_the_html_still_degrades_to_everything_open(self):
         toggles = re.findall(r"<button[^>]*nav-group-toggle[^>]*>", _sidebar_markup())
 
-        assert len(toggles) == 6
+        assert len(toggles) == 5  # LV-381 F2: cinco grupos
         assert all('aria-expanded="true"' in toggle for toggle in toggles)
 
 
@@ -97,7 +102,7 @@ class TestTheLabelsAndTheTooltip:
         assert all('<span class="nav-label">' in link for link in links)
 
     def test_the_current_page_is_announced(self):
-        assert "aria-current=" in _sidebar_markup()
+        assert 'aria-current="page"' in full_sidebar_html("dashboard")
 
     @pytest.mark.django_db
     def test_the_rendered_menu_marks_exactly_the_current_page(self, db):

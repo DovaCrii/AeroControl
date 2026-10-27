@@ -14,9 +14,15 @@ Pedido del usuario sobre la app desplegada. Tres cosas en una:
   esta misma hoja: la más larga pide 248 px de texto y la barra incluye 24 de
   relleno, así que el mínimo real son **272**.
 
-Se lee el archivo y no una página renderizada, como en `LV-162`: el reparto es
-una decisión de la plantilla, y varias de estas filas están tras un permiso que
-una petición cualquiera no ejercita.
+**`LV-381` cambió dos cosas de este archivo, a propósito.** F1: el menú sale de
+`apps/core/navigation.py`, así que se lee el registro y el menú renderizado con
+un usuario que lo puede todo (antes, el texto de `base.html`). F2: de seis grupos
+a cinco (*Vuelo, Cumplimiento, Informes, Flota y personal, Faenas y movimientos*)
+con los mismos veinticuatro destinos; los tests de reparto de arriba describen
+el reparto de F2 y el docstring del principio, el de `LV-170`.
+
+Varias filas están tras un permiso que una petición cualquiera no ejercita, y
+por eso se lee el menú completo y no una página.
 
 **Lo que estos tests protegen no es el orden estético sino tres invariantes que
 se rompen en silencio**: que un grupo plegado siga siendo alcanzable con la barra
@@ -31,46 +37,39 @@ from pathlib import Path
 import pytest
 from django.conf import settings
 
-BASE = Path(settings.BASE_DIR) / "templates" / "base.html"
+from apps.core.navigation import NAV_FOOTER, NAV_GROUPS, NAV_TOP
+from apps.core.testing import full_sidebar_html
+
 CSS = Path(settings.BASE_DIR) / "static" / "css" / "app.css"
 APP_JS = Path(settings.BASE_DIR) / "static" / "js" / "app.js"
 
 # El mínimo medido en el navegador: 248 px de la fila más larga + 24 de relleno.
 MIN_SIDEBAR_WIDTH = 272
 
-_COMMENT = re.compile(r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL)
-_GROUP = re.compile(
-    r'<div class="nav-group">\s*(?P<toggle><button[^>]*nav-group-toggle[^>]*>)'
-    r"(?P<body>.*?)</div>\s*</div>",
-    re.DOTALL,
-)
-
 
 @pytest.fixture(scope="module")
 def markup():
-    """La plantilla sin los bloques comentados: no se dibujan, no cuentan."""
-    return _COMMENT.sub("", BASE.read_text(encoding="utf-8"))
+    """El menú **renderizado** con todas las entradas.
+
+    `LV-381` F1: el menú ya no está escrito en `base.html` sino que sale del
+    registro (`apps/core/navigation.py`), así que el guardián lo lee renderizado
+    con un usuario que lo puede todo: el mismo código que ejecuta quien lo usa.
+    """
+    return full_sidebar_html()
 
 
 @pytest.fixture(scope="module")
-def groups(markup):
-    """{nombre del grupo: sus urls}, leído de la plantilla."""
-    found = {}
-    for match in _GROUP.finditer(markup):
-        name = re.search(r'data-nav-group="([^"]+)"', match.group("toggle")).group(1)
-        found[name] = set(re.findall(r"\{%\s*url '([^']+)'", match.group("body")))
-    return found
+def groups():
+    """{nombre del grupo: sus nombres de URL}, leído del registro."""
+    return {group.key: {item.url_name for item in group.items} for group in NAV_GROUPS}
 
 
-def test_the_six_groups_are_there(groups):
-    assert set(groups) == {
-        "flight",
-        "compliance",
-        "reports",
-        "maintenance",
-        "registry",
-        "inventory",
-    }
+def test_the_five_groups_are_there(groups):
+    """`LV-381` F2 (D2 del diseño): de seis grupos a cinco, con los mismos
+    veinticuatro destinos. «Mantenimiento» tenía una sola entrada; «Padrón» e
+    «Inventario y movimientos» se reparten entre *Flota y personal* (lo que se
+    opera y se mantiene) y *Faenas y movimientos* (dónde está cada cosa)."""
+    assert set(groups) == {"flight", "compliance", "reports", "fleet", "sites"}
 
 
 def test_reports_holds_the_roster_and_the_compliance_report_together(groups):
@@ -92,46 +91,84 @@ def test_the_compliance_group_no_longer_holds_the_report(groups):
     assert "compliance-report" not in groups["compliance"]
 
 
-def test_registry_keeps_only_what_is_set_up_once(groups):
-    assert groups["registry"] == {
-        "costcenter-list",
+def test_flight_holds_the_permission_flow_and_the_environment(groups):
+    """«Entorno» (LV-358) pasa a Vuelo: se consulta para decidir si se vuela."""
+    assert groups["flight"] == {
+        "permission-list",
+        "geo-plan-list",
+        "record-list",
+        "environment-hub",
+    }
+
+
+def test_compliance_keeps_the_monthly_close_and_what_backs_it(groups):
+    """La bandeja y las alertas salen al bloque de arriba: son la cola de
+    pendientes de cualquiera, no sólo de quien gestiona cumplimiento."""
+    assert groups["compliance"] == {
+        "monthly-review",
+        "nonconformity-list",
+        "company-documents",
+    }
+
+
+def test_fleet_and_personnel_hold_what_is_operated_and_maintained(groups):
+    assert groups["fleet"] == {
         "aircraft-list",
+        "battery-list",
+        "maintenance-list",
         "operator-list",
         "assessment-take",
     }
 
 
-def test_inventory_takes_what_moves_every_day(groups):
-    assert groups["inventory"] == {
+def test_sites_and_movements_hold_where_each_thing_is(groups):
+    assert groups["sites"] == {
+        "costcenter-list",
         "operatorassignment-list",
         "aircraftassignment-list",
-        "battery-list",
         "resourcemovementlog-list",
     }
+
+
+def test_the_menu_keeps_exactly_the_same_destinations(groups):
+    """F2 reagrupa y renombra; **no suma ni quita** un destino. Son los
+    veinticuatro de siempre (entre ellos, «Entorno»)."""
+    everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
+    everything |= set().union(*groups.values())
+
+    assert len(everything) == 24
 
 
 def test_no_menu_row_is_left_outside_a_group(markup, groups):
     """Una fila suelta se dibuja pegada al grupo anterior y parece suya.
 
-    ⚠️ El corte llega hasta `</aside>` y no hasta el final del archivo. Cortaba
-    hasta el final, que funcionó mientras el menú fuera lo último con enlaces, y
-    `UX-25` lo rompió: la paleta de comandos lleva `{% url 'global-search' %}` en
-    un `data-*`, o sea un destino que no es una fila de menú, y el guardián lo
-    contó como si lo fuera. Un guardián que se equivoca de región acusa a quien
-    no toca lo que él vigila.
+    ⚠️ Mide la región del menú y nada más. Antes leía `base.html` hasta
+    `</aside>` (y, antes todavía, hasta el final del archivo, que `UX-25` rompió
+    al poner `{% url 'global-search' %}` en un `data-*` de la paleta: un destino
+    que no es una fila de menú, contado como si lo fuera). Desde `LV-381` F1 la
+    región es el menú renderizado, así que la paleta ni entra. Un guardián que se
+    equivoca de región acusa a quien no toca lo que él vigila.
     """
-    start = markup.index('<aside class="sidebar')
-    sidebar = markup[start : markup.index("</aside>", start)]
-    everything = set(re.findall(r"\{%\s*url '([^']+)'", sidebar))
+    everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
     grouped = set().union(*groups.values())
-    # Fuera de grupo sólo el panel (encabeza el menú) y el pie de administración.
-    assert everything - grouped == {"dashboard", "administration", "admin:index"}
+    # Fuera de grupo sólo el bloque sin título de arriba (panel, bandeja y
+    # alertas, LV-381 F2) y el pie de administración.
+    assert everything == {
+        "dashboard",
+        "work-tray",
+        "alert-list",
+        "administration",
+        "admin:index",
+    }
+    assert grouped.isdisjoint(everything)
+    # Y lo dibujado es exactamente eso: ninguna fila fuera de un grupo ni de los extremos.
+    assert markup.count('class="nav-item') == len(everything) + len(grouped)
 
 
 def test_every_toggle_points_at_the_container_it_folds(markup):
     """Un `aria-controls` mal escrito deja el botón sin efecto y sin aviso."""
     toggles = re.findall(r"<button[^>]*nav-group-toggle[^>]*>", markup)
-    assert len(toggles) == 6
+    assert len(toggles) == 5
     for toggle in toggles:
         controls = re.search(r'aria-controls="([^"]+)"', toggle).group(1)
         assert f'id="{controls}"' in markup
@@ -180,15 +217,23 @@ def test_the_sidebar_is_wide_enough_for_its_longest_row():
     )
 
 
-def test_the_folded_state_is_remembered_by_what_is_folded():
-    """Guardar los abiertos haría nacer invisible a cualquier grupo nuevo."""
+def test_the_open_groups_are_remembered_as_a_list():
+    """Reescrito A PROPOSITO en `LV-381` F3 (D1).
+
+    Antes se guardaba lo **plegado** para que un grupo nuevo naciera abierto
+    (guardar los abiertos lo haria nacer invisible). La decision D1 pide guardar
+    la **lista de abiertos** (`nav-groups-open`): el costo conocido es que un grupo
+    que se agregue en el futuro aparece plegado para quien ya tenia una
+    preferencia guardada, hasta que lo abra; se acepta porque el de la pagina
+    activa siempre se abre solo y los grupos cambian rara vez (F2 fijo cinco).
+    """
     source = APP_JS.read_text(encoding="utf-8")
 
-    assert "nav-groups-collapsed" in source
+    assert "nav-groups-open" in source
     assert "localStorage" in source
 
 
-def test_the_group_of_the_current_page_is_opened_even_if_it_was_folded():
+def test_the_group_of_the_current_page_is_opened_even_if_it_was_not_remembered():
     """Si no, la pantalla en la que estás parado no figura en el menú."""
     source = APP_JS.read_text(encoding="utf-8")
 

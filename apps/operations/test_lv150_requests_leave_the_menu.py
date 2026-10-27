@@ -12,11 +12,8 @@ paso 2.
 """
 
 import math
-import re
-from pathlib import Path
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Permission, User
 from django.test import Client
 from django.urls import reverse
@@ -26,7 +23,6 @@ from apps.geo.models import GeoPlan, GeoPlanVersion
 from apps.operations.models import FlightRequest
 from apps.registry.models import CostCenter
 
-BASE_HTML = Path(settings.BASE_DIR) / "templates" / "base.html"
 LAT, LON = -31.918, -70.949
 
 
@@ -96,23 +92,24 @@ def _request_for(plan, title="Solicitud de prueba"):
 # -- el retiro -------------------------------------------------------------
 
 
-def test_the_link_is_commented_out_and_not_deleted():
-    """Reversible en una línea, que es lo que hace de esto un paso 1 y no una
-    amputación. Se lee el archivo porque el enlace comentado no se renderiza y
-    ninguna página lo puede mostrar."""
-    markup = BASE_HTML.read_text(encoding="utf-8")
-    commented = re.findall(
-        r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", markup, flags=re.DOTALL
-    )
+def test_the_link_is_retired_with_its_closing_condition_and_not_deleted():
+    """Reversible pasando la entrada a su grupo, que es lo que hace de esto un
+    paso 1 y no una amputación.
 
-    assert "flight-request-list" in "\n".join(commented), (
-        "el enlace no está dentro de un bloque comentado: o se borró, o volvió"
+    `LV-381` F1: el enlace ya no es un bloque comentado de `base.html` sino una
+    entrada de `RETIRED` en el registro del menú, con su motivo y su condición de
+    cierre a la vista. Lo que se afirma es lo mismo: está retirada (no se dibuja
+    en ningún grupo), no borrada, y dice qué tiene que pasar para decidir.
+    """
+    from apps.core.navigation import RETIRED, all_items
+
+    retired = {item.url_name: item for item in RETIRED}
+
+    assert "flight-request-list" in retired, (
+        "la entrada retirada se borró del registro: no se puede volver al menú"
     )
-    # Y fuera de los comentarios no queda ninguno.
-    visible = re.sub(
-        r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", "", markup, flags=re.DOTALL
-    )
-    assert "flight-request-list" not in visible
+    assert retired["flight-request-list"].closing, "sin condición de cierre"
+    assert "flight-request-list" not in {item.url_name for item in all_items()}
 
 
 def test_the_menu_still_has_more_icons_than_the_guard_requires():

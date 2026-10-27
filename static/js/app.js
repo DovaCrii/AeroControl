@@ -38,6 +38,30 @@
     }
   }
 
+  // LV-381 F0: la barra lateral y la superior son fijas, y la lateral cuelga de
+  // la altura **real** de la superior (61 px medidos, no los 58 que decia el CSS)
+  // mas el aviso sin conexion cuando esta visible. Se mide y se escribe en
+  // `documentElement`; el CSS trae el mismo valor de reserva para el caso sin JS.
+  function syncChromeHeights() {
+    var navbar = document.querySelector('.navbar');
+    var banner = document.getElementById('offline-banner');
+    var bannerH = banner && banner.offsetParent !== null ? banner.offsetHeight : 0;
+    var navH = navbar ? navbar.offsetHeight : 61;
+    var root = document.documentElement.style;
+    root.setProperty('--ac-banner-h', bannerH + 'px');
+    root.setProperty('--ac-sidebar-top', (bannerH + navH) + 'px');
+  }
+  syncChromeHeights();
+  window.addEventListener('resize', syncChromeHeights);
+  window.addEventListener('load', syncChromeHeights);  // tipografias y estilos ya asentados
+  if (window.ResizeObserver) {
+    var chromeObserver = new ResizeObserver(syncChromeHeights);
+    ['.navbar', '#offline-banner'].forEach(function (selector) {
+      var node = document.querySelector(selector);
+      if (node) chromeObserver.observe(node);
+    });
+  }
+
   function applyTheme(theme) {
     var html = document.documentElement;
     html.setAttribute('data-theme', theme);
@@ -57,17 +81,69 @@
   function toggleTheme() {
     applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
+  // LV-381 F5 (V10): bajo 769 px la barra es un cajon. Un cajon abierto es modal:
+  // fondo oscuro que cierra al tocar fuera, el foco entra al primer enlace y
+  // vuelve al boton que lo abrio, y el resto de la pagina queda `inert` (ni se
+  // tabula, ni se lee, ni recibe clics) mientras esta abierto. `inert` va sobre
+  // los hermanos y no sobre `body`: el cajon cuelga de `body` y quedaria inerte
+  // con todo lo demas.
+  var DRAWER_BELOW = 769;
+  var INERT_WHILE_OPEN = '.skip-link, #offline-banner, body > .navbar, #main-content';
+  function isNarrow() {
+    return window.innerWidth < DRAWER_BELOW;
+  }
+  function setPageInert(on) {
+    document.querySelectorAll(INERT_WHILE_OPEN).forEach(function (node) {
+      node.inert = on;
+    });
+  }
   function setSidebar(open) {
     var sidebar = document.getElementById('sidebar');
     var toggle = document.getElementById('sidebar-toggle');
+    var backdrop = document.getElementById('sidebar-backdrop');
+    var narrow = isNarrow();
+    var wasOpen = sidebar.classList.contains('is-open');
     sidebar.classList.toggle('is-open', open);
-    if (toggle && window.innerWidth < 769) toggle.setAttribute('aria-expanded', String(open));
+    if (toggle && narrow) toggle.setAttribute('aria-expanded', String(open));
+    var modal = narrow && open;
+    if (backdrop) backdrop.hidden = !modal;
+    document.body.classList.toggle('drawer-open', modal);
+    setPageInert(modal);
+    if (narrow && open && !wasOpen) {
+      var first = sidebar.querySelector('nav a[href]');
+      if (first) first.focus();
+    } else if (narrow && !open && wasOpen && toggle) {
+      toggle.focus();
+    }
   }
-  function setSidebarCollapsed(collapsed) {
+  // El boton de la cabecera de la barra colapsa a modo icono en escritorio y
+  // **cierra el cajon** en el telefono: su rotulo tiene que decir lo que hace.
+  function syncToolbarLabel() {
+    var sidebar = document.getElementById('sidebar');
+    var button = document.getElementById('sidebar-collapse');
+    if (!sidebar || !button) return;
+    var label = isNarrow()
+      ? button.dataset.labelClose
+      : (sidebar.classList.contains('is-collapsed') ? button.dataset.labelExpand : button.dataset.labelCollapse);
+    if (label) {
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
+    }
+  }
+  // Si se agranda la ventana con el cajon abierto, deja de ser cajon: sin esto el
+  // contenido quedaria inerte en escritorio sin forma de cerrarlo.
+  window.addEventListener('resize', function () {
+    var sidebar = document.getElementById('sidebar');
+    if (!isNarrow() && sidebar && sidebar.classList.contains('is-open')) setSidebar(false);
+    syncToolbarLabel();
+  });
+  function setSidebarCollapsed(collapsed, persist) {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('is-collapsed', collapsed);
-    remember('sidebar-collapsed', String(collapsed));
+    // `persist === false`: el modo icono por defecto de la tableta no es una
+    // preferencia de la persona y no debe quedar guardado como si lo fuera.
+    if (persist !== false) remember('sidebar-collapsed', String(collapsed));
     var toggle = document.getElementById('sidebar-toggle');
     var innerToggle = document.getElementById('sidebar-collapse');
     if (toggle && window.innerWidth >= 769) toggle.setAttribute('aria-expanded', String(!collapsed));
@@ -80,26 +156,36 @@
     }
   }
 
-  // LV-170 / LV-309: los grupos del menu son un **acordeon** y recuerdan cual
-  // quedo abierto. Va en `localStorage` y no en la sesion del servidor a
-  // proposito: es una preferencia de esta persona en este navegador, no un dato
-  // de la cuenta, y guardarla en el servidor costaria una peticion por click.
+  // LV-170 / LV-309 / LV-381 F3 (D1): los grupos del menu se pliegan **de forma
+  // independiente** y recuerdan cuales quedaron abiertos. Antes eran un acordeon
+  // (abrir uno cerraba los demas, V9): quien trabaja con Vuelo y Flota a la vez
+  // tenia que reabrir uno cada vez. Va en `localStorage` y no en la sesion del
+  // servidor a proposito: es una preferencia de esta persona en este navegador,
+  // no un dato de la cuenta, y guardarla en el servidor costaria una peticion por
+  // click.
   //
-  // Se guarda **el grupo abierto** (clave `nav-group-open`); la clave antigua
-  // `nav-groups-collapsed` se ignora. Sin JS todos los grupos quedan abiertos,
-  // que es el estado correcto para degradar: el HTML ya trae `aria-expanded`.
-  function openGroupName() {
+  // Se guarda **la lista de grupos abiertos** (clave `nav-groups-open`, JSON). Las
+  // claves antiguas (`nav-group-open`, `nav-groups-collapsed`) se ignoran. Sin JS
+  // todos los grupos quedan abiertos, que es el estado correcto para degradar: el
+  // HTML ya trae `aria-expanded="true"`.
+  //
+  // Todo acceso va dentro de `try`, **la lectura incluida**: `localStorage`
+  // lanza en una ventana privada y una excepcion aqui cortaria la funcion entera.
+  var NAV_OPEN_KEY = 'nav-groups-open';
+  function readOpenGroups() {
     try {
-      return localStorage.getItem('nav-group-open');
+      var raw = localStorage.getItem(NAV_OPEN_KEY);
+      var list = raw === null ? null : JSON.parse(raw);
+      return Array.isArray(list) ? list : null;
     } catch (error) {
-      return null;  // localStorage bloqueado: se abre el primer grupo.
+      return null;  // bloqueado o JSON invalido: como si no hubiera preferencia.
     }
   }
-  function rememberOpenGroup(name) {
+  function writeOpenGroups(list) {
     try {
-      localStorage.setItem('nav-group-open', name);
+      localStorage.setItem(NAV_OPEN_KEY, JSON.stringify(list));
     } catch (error) {
-      /* Sin poder guardar, el acordeon sigue andando en esta pagina. */
+      /* Sin poder guardar, los grupos siguen andando en esta pagina. */
     }
   }
   // La altura solo se anima si la persona no pidio reducir el movimiento; con
@@ -143,29 +229,35 @@
   }
   var navToggles = document.querySelectorAll('.nav-group-toggle');
   if (navToggles.length) {
-    // El grupo que contiene la pagina actual gana siempre: si no, la pantalla en
-    // la que estas parado no aparece en el menu y el menu contradice a la pagina.
+    // El grupo que contiene la pagina actual **siempre** esta abierto y no se
+    // puede cerrar: si no, la pantalla en la que estas parado no aparece en el
+    // menu y el menu contradice a la pagina.
     var active = document.querySelector('.nav-group-items .nav-item.active');
     var activeOwner = active ? active.closest('.nav-group').querySelector('.nav-group-toggle') : null;
-    var remembered = openGroupName();
-    var openName = activeOwner ? activeOwner.dataset.navGroup : remembered;
-    var known = Array.prototype.some.call(navToggles, function (toggle) {
-      return toggle.dataset.navGroup === openName;
+    var activeName = activeOwner ? activeOwner.dataset.navGroup : null;
+    var names = Array.prototype.map.call(navToggles, function (toggle) {
+      return toggle.dataset.navGroup;
     });
-    // Sin pagina activa ni recuerdo valido se abre el primero; '' (todo
-    // cerrado a proposito) tambien se respeta.
-    if (!known && openName !== '') openName = navToggles[0].dataset.navGroup;
+    var remembered = readOpenGroups();
+    // Sin preferencia valida: el de la pagina actual, o el primero si la pagina
+    // no esta en ningun grupo. Una preferencia guardada (aunque sea `[]`) se respeta.
+    var openNames = remembered
+      ? remembered.filter(function (name) { return names.indexOf(name) !== -1; })
+      : [activeName || names[0]];
+    if (activeName && openNames.indexOf(activeName) === -1) openNames.push(activeName);
+    var currentOpen = function () {
+      return Array.prototype.filter.call(navToggles, function (toggle) {
+        return toggle.getAttribute('aria-expanded') === 'true';
+      }).map(function (toggle) { return toggle.dataset.navGroup; });
+    };
     navToggles.forEach(function (toggle) {
-      setGroup(toggle, toggle.dataset.navGroup === openName, false);
+      var locked = toggle.dataset.navGroup === activeName;
+      setGroup(toggle, openNames.indexOf(toggle.dataset.navGroup) !== -1, false);
+      if (locked) toggle.setAttribute('aria-disabled', 'true');
       toggle.addEventListener('click', function () {
-        var expanded = toggle.getAttribute('aria-expanded') === 'true';
-        navToggles.forEach(function (other) {
-          if (other !== toggle && other.getAttribute('aria-expanded') === 'true') {
-            setGroup(other, false, true);
-          }
-        });
-        setGroup(toggle, !expanded, true);
-        rememberOpenGroup(expanded ? '' : toggle.dataset.navGroup);
+        if (locked) return;
+        setGroup(toggle, toggle.getAttribute('aria-expanded') !== 'true', true);
+        writeOpenGroups(currentOpen());
       });
     });
   }
@@ -185,10 +277,39 @@
     }
   });
   document.getElementById('sidebar-collapse').addEventListener('click', function () {
-    setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed'));
+    if (isNarrow()) {
+      setSidebar(false);  // en el telefono este boton cierra el cajon
+    } else {
+      setSidebarCollapsed(!document.getElementById('sidebar').classList.contains('is-collapsed'));
+    }
   });
+  var drawerBackdrop = document.getElementById('sidebar-backdrop');
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', function () { setSidebar(false); });
   applyTheme(document.documentElement.getAttribute('data-theme') || 'light');
-  if (window.innerWidth >= 769 && recall('sidebar-collapsed') === 'true') setSidebarCollapsed(true);
+  // LV-381 F5 (D5): una preferencia guardada manda; sin ella, la tableta
+  // (769-1199 px) arranca en modo icono para no quitarle un tercio al contenido, y
+  // eso **no se guarda**: no es una eleccion de la persona.
+  if (!isNarrow()) {
+    var savedRail = recall('sidebar-collapsed');
+    if (savedRail === 'true') setSidebarCollapsed(true);
+    else if (savedRail === null && window.innerWidth < 1200) setSidebarCollapsed(true, false);
+  }
+  syncToolbarLabel();
+  // LV-381 F0: en modo icono el rotulo de cada enlace es una burbuja. Dentro del
+  // contenedor con scroll (y del `overflow:hidden` del propio enlace) quedaba
+  // recortada, asi que el rail mostraba 24 iconos sin nombre. La burbuja pasa a
+  // `position:fixed` (ver identity.css) y esto le da su altura al apuntar o enfocar.
+  function placeRailTip(event) {
+    var link = event.target.closest ? event.target.closest('#sidebar a.nav-item') : null;
+    if (!link) return;
+    var box = link.getBoundingClientRect();
+    link.style.setProperty('--tip-y', Math.round(box.top + box.height / 2) + 'px');
+  }
+  var railSidebar = document.getElementById('sidebar');
+  if (railSidebar) {
+    railSidebar.addEventListener('pointerover', placeRailTip);
+    railSidebar.addEventListener('focusin', placeRailTip);
+  }
   document.querySelectorAll('#sidebar a').forEach(function (link) {
     link.addEventListener('click', function () { setSidebar(false); });
   });
