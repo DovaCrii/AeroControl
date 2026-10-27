@@ -1,0 +1,60 @@
+{
+ "order": [
+  "Resumen"
+ ],
+ "sheets": {
+  "Resumen": {
+   "bold_rows": [
+    1
+   ],
+   "filter": "A1:I3",
+   "freeze": "A2",
+   "rows": [
+    [
+     "Centro de costo",
+     "Nombre",
+     "Documentos",
+     "Vigentes",
+     "% vigentes",
+     "Vencidos",
+     "Vence <=7d",
+     "Vence <=15d",
+     "Vence <=30d"
+    ],
+    [
+     "FAENA-01",
+     "'=SENTINEL(1+1)",
+     "6",
+     "5",
+     "83.3",
+     "1",
+     "1",
+     "1",
+     "1"
+    ],
+    [
+     "FAENA-02",
+     "Faena Sur",
+     "0",
+     "0",
+     "0.0",
+     "0",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "widths": {
+    "A": 17.0,
+    "B": 17.0,
+    "C": 12.0,
+    "D": 10.0,
+    "E": 12.0,
+    "F": 10.0,
+    "G": 12.0,
+    "H": 13.0,
+    "I": 13.0
+   }
+  }
+ }
+}

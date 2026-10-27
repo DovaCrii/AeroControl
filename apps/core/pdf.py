@@ -22,7 +22,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from reportlab.lib.colors import HexColor
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
@@ -364,8 +364,14 @@ def urgency_commands(ranges):
     return commands
 
 
-def build_pdf(elements, letterhead, pagesize=letter):
-    """Render `elements` into PDF bytes wearing the corporate letterhead."""
+def build_pdf(elements, letterhead, pagesize=A4):
+    """Render `elements` into PDF bytes wearing the corporate letterhead.
+
+    LV-355 F2: **A4 por defecto**, el único papel de los informes (en Chile se
+    entrega A4; Carta y Carta horizontal eran herencia de reportlab). La hoja
+    impresa del navegador (`identity.css`, `@page`) y el informe mensual ya eran
+    A4: ahora el papel es uno solo en las tres salidas.
+    """
     output = BytesIO()
     SimpleDocTemplate(
         output,
@@ -381,7 +387,7 @@ def build_pdf(elements, letterhead, pagesize=letter):
     return output.getvalue()
 
 
-def pdf_response(elements, letterhead, filename, pagesize=letter):
+def pdf_response(elements, letterhead, filename, pagesize=A4):
     """`build_pdf` as a download response.
 
     LV-167: `pagesize` travels through because the roster went landscape when it

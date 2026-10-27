@@ -1,0 +1,17 @@
+{
+ "bom": true,
+ "lines": [
+  "Catastro de flota y personal",
+  "1 aeronave y 1 operador inscritos al 2026-10-26.",
+  "",
+  "Flota",
+  "Matrícula,Tipo,Modelo,Fabricante,Número de serie,Año,Estado,Centro de costo,Vencimiento seguro JAC",
+  "RPA-7126,Multirotor,'=cmd|' /C calc'!A0,DJI,—,—,Activo,CC738,—",
+  "",
+  "Personal",
+  "Nombre completo,RUT,Credencial DGAC,Tipo de operador,Centro de costo,Vencimiento credencial DGAC",
+  "Ana Rivas,—,—,'+piloto,CC738,—",
+  "",
+  ""
+ ]
+}

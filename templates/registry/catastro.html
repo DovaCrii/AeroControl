@@ -2,7 +2,12 @@
 {% load i18n %}
 {% block title %}{% translate "Fleet and personnel roster" %} - AeroControl{% endblock %}
 {% block content %}
-<div class="page-header">
+{% comment %}LV-355 F2: la misma cabecera y pie de papel que el Reporte de vigencia (LV-319),
+sólo visibles al imprimir: qué es, a qué corte, y el contacto de `REPORT_CONTACT_*`.{% endcomment %}
+{% translate "Fleet and personnel roster" as print_title %}
+{% include "reporting/_print_head.html" with title=print_title subtitle=catastro.as_of|date:"Y-m-d" %}
+{% include "reporting/_print_foot.html" %}
+<div class="page-header d-print-none">
   {% translate "Registry" as page_eyebrow %}{% translate "Fleet and personnel roster" as page_title %}{% translate "Everything on the books at a cut-off date, ready to hand over when someone asks for it." as page_description %}
   {% include "generic/_page_header.html" %}
   <div class="d-flex gap-2 flex-wrap">
@@ -12,7 +17,7 @@
   </div>
 </div>
 
-<form method="get" class="card p-3 mb-4">
+<form method="get" class="card p-3 mb-4 d-print-none">
   <div class="row g-2 align-items-end">
     <div class="col-md-4">
       <label class="form-label" for="cost_center">{% translate "Cost center" %}</label>
@@ -68,6 +73,8 @@ models -- so the second sentence exists to say how much.{% endcomment %}
       </tbody>
     </table>
   </div>
+  {% comment %}LV-355 F2 (S10): el universo de las faenas, nombrado bajo cada tabla.{% endcomment %}
+  <p class="text-muted small mb-0 px-3 py-2 border-top" data-universe>{{ universe }}</p>
 </div>
 
 <div class="card mb-4">
@@ -90,6 +97,8 @@ models -- so the second sentence exists to say how much.{% endcomment %}
       </tbody>
     </table>
   </div>
+  {% comment %}LV-355 F2 (S10): el universo de las faenas, nombrado bajo cada tabla.{% endcomment %}
+  <p class="text-muted small mb-0 px-3 py-2 border-top" data-universe>{{ universe }}</p>
 </div>
 
 {% comment %}LV-172: el total de cierre. El mismo número está arriba, y aun así

@@ -1,0 +1,56 @@
+{
+ "order": [
+  "Tasks"
+ ],
+ "sheets": {
+  "Tasks": {
+   "bold_rows": [
+    1
+   ],
+   "filter": "A1:H3",
+   "freeze": "A2",
+   "rows": [
+    [
+     "Task",
+     "Board",
+     "State",
+     "Labels",
+     "Assignee",
+     "Priority",
+     "Due",
+     "Progress"
+    ],
+    [
+     "'=SENTINEL(1+1)",
+     "Operations",
+     "Personalizado",
+     "urgente",
+     "Test Operator",
+     "Alta",
+     "2026-11-03",
+     "No steps"
+    ],
+    [
+     "Segunda tarea",
+     "Operations",
+     "Personalizado",
+     null,
+     null,
+     "Media",
+     null,
+     "No steps"
+    ]
+   ],
+   "widths": {
+    "A": 17.0,
+    "B": 12.0,
+    "C": 15.0,
+    "D": 9.0,
+    "E": 15.0,
+    "F": 10.0,
+    "G": 12.0,
+    "H": 10.0
+   }
+  }
+ }
+}

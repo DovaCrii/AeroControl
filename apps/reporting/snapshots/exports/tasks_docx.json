@@ -1,0 +1,43 @@
+{
+ "left_margins": [
+  0.6
+ ],
+ "paragraphs": [
+  [
+   "Title",
+   "AeroControl — Reporte operativo de tareas"
+  ],
+  [
+   "Normal",
+   "Generado: 2026-10-26"
+  ]
+ ],
+ "tables": [
+  [
+   [
+    "Tarea",
+    "Tablero",
+    "Estado",
+    "Responsable",
+    "Prioridad",
+    "Avance"
+   ],
+   [
+    "=SENTINEL(1+1)",
+    "Operations",
+    "Personalizado",
+    "Test Operator",
+    "Alta",
+    "No steps"
+   ],
+   [
+    "Segunda tarea",
+    "Operations",
+    "Personalizado",
+    "",
+    "Media",
+    "No steps"
+   ]
+  ]
+ ]
+}
