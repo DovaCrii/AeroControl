@@ -1118,6 +1118,9 @@ body, .card, .form-control, .form-select, .page-link, .table,
 }
 
 html { color-scheme: light; }
+/* LV-381: la barra superior es fija y sin esto tapa el ancla o el campo que recibe
+   el foco (WCAG 2.4.11), p. ej. el enlace del resumen de errores de un formulario. */
+html { scroll-padding-top: calc(var(--ac-sidebar-top, 61px) + 8px); }
 
 body {
   background: var(--ac-bg);
@@ -3262,7 +3265,8 @@ main h1[class],
  * barra que se va con el scroll obliga a volver para usarla. */
 .bulk-bar {
   position: sticky;
-  top: 0;
+  /* Bajo la barra superior (fija, z-index 1030): con `top: 0` quedaba detras. */
+  top: var(--ac-sidebar-top, 61px);
   z-index: 3;
   display: flex;
   align-items: center;

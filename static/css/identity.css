@@ -999,7 +999,8 @@ tr.row-critical > td {
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  z-index: 1030;
+  /* Sobre el contenido y bajo la barra superior (1030): pasando bajo ella no la tapa. */
+  z-index: 1025;
   min-width: 12rem;
   padding: 0.25rem;
   border: 1px solid var(--ac-border);

@@ -39,7 +39,6 @@
   var opener = null;
   var entries = [];
   var active = 0;
-  var restoringFocus = false;
 
   function clean(text) {
     return (text || '').replace(/\s+/g, ' ').trim();
@@ -111,7 +110,7 @@
   // --- Recientes -----------------------------------------------------------
 
   function isRelativePath(href) {
-    return typeof href === 'string' && /^\/(?!\/)/.test(href);
+    return typeof href === 'string' && /^\/(?![\/\\])/.test(href);
   }
 
   function readRecents() {
@@ -290,11 +289,7 @@
     palette.hidden = true;
     document.body.classList.remove('palette-open');
     if (opener && opener.focus) {
-      // Si se abrió desde el cuadro de la barra, devolverle el foco volvería a
-      // abrir la paleta (se abre al recibirlo): se marca que es una restitución.
-      restoringFocus = true;
       opener.focus();
-      restoringFocus = false;
     }
   }
 
@@ -339,12 +334,10 @@
   if (trigger) trigger.addEventListener('click', open);
 
   // El cuadro «Buscar en AeroControl» de la barra es la puerta visible de la
-  // paleta (`LV-381` F4, V7): al recibir el foco, o un clic si ya lo tenía,
-  // abre la paleta. Y su pista `Ctrl K` dice `⌘ K` donde corresponde.
+  // paleta (`LV-381` F4, V7): un clic lo abre (y `Ctrl/⌘+K`). El foco por Tab
+  // **no** abre nada (WCAG 3.2.1 «On Focus»; tampoco al volver a la pestaña).
+  // Su pista `Ctrl K` dice `⌘ K` donde corresponde.
   if (box) {
-    box.addEventListener('focus', function () {
-      if (!restoringFocus && palette.hidden) open();
-    });
     box.addEventListener('click', function () {
       if (palette.hidden) open();
     });

@@ -117,10 +117,61 @@ def test_the_icon_rail_rule_beats_the_bootstrap_hidden_rule():
 
 @pytest.mark.parametrize("name", ["costcenter-list", "operator-list", "battery-list"])
 def test_every_group_keeps_its_rows_in_the_rail(name):
-    """Los grupos siguen siendo `.nav-group-items` con `id`, para el JS y el rail."""
-    from apps.core.navigation import all_items
+    """Las filas de cada grupo se dibujan dentro de un `.nav-group-items` del menú
+    real (el que el rail muestra aunque el grupo esté plegado). No es redundante
+    con la prueba de la cascada: aquélla mira la regla, ésta mira el HTML."""
+    from django.urls import reverse
 
-    assert name in {item.url_name for item in all_items()}
+    from apps.core.testing import full_sidebar_html
+
+    html = full_sidebar_html()
+    blocks = re.findall(
+        r'<div class="nav-group-items" id="nav-group-[\w-]+">(.*?)\n      </div>',
+        html,
+        re.S,
+    )
+    href = f'href="{reverse(name)}"'
+
+    assert blocks, "el menu ya no dibuja .nav-group-items"
+    assert any(href in block for block in blocks), f"{name} no esta en ningun grupo"
+    assert ".sidebar.is-collapsed .nav-group-items[hidden]" in APP_CSS
+
+
+def test_the_bulk_bar_sticks_below_the_fixed_top_bar():
+    """El revisor: con `top: 0` la barra de seleccion quedaba detras de la superior."""
+    body = _rule_body(APP_CSS, ".bulk-bar")
+
+    assert re.search(r"top:\s*var\(--ac-sidebar-top,\s*61px\)", body)
+    assert not re.search(r"top:\s*0\s*;", body)
+
+
+def test_the_row_menu_never_paints_over_the_top_bar():
+    css = (ROOT / "static" / "css" / "identity.css").read_text(encoding="utf-8")
+    z = int(
+        re.search(r"z-index:\s*(\d+)", _rule_body(css, ".id-rowmenu-list")).group(1)
+    )
+    navbar = int(
+        re.search(
+            r"z-index:\s*(\d+)",
+            "\n".join(
+                re.findall(
+                    r"(?:^|[};])\s*\.navbar-dark\.navy\s*\{([^}]*)\}", APP_CSS, re.M
+                )
+            ),
+        ).group(1)
+    )
+
+    assert 3 < z < navbar
+
+
+def test_anchors_and_focus_clear_the_fixed_top_bar():
+    """WCAG 2.4.11: sin `scroll-padding-top` la barra fija tapa el foco."""
+    rules = re.findall(r"(?:^|[};])\s*html\s*\{([^}]*)\}", APP_CSS, re.M)
+
+    assert any(
+        re.search(r"scroll-padding-top:\s*calc\(var\(--ac-sidebar-top,\s*61px\)", r)
+        for r in rules
+    )
 
 
 def test_group_titles_keep_their_separator_line():

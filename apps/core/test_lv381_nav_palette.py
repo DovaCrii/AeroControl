@@ -99,19 +99,20 @@ class TestTheTopBarBoxOpensIt:
 
         assert 'aria-hidden="true"' in hint
 
-    def test_the_box_opens_the_palette_on_focus_and_click(self):
+    def test_the_box_opens_the_palette_on_click_only(self):
         code = _code(PALETTE)
 
-        assert "box.addEventListener('focus'" in code
         assert "box.addEventListener('click'" in code
+        assert "(event.ctrlKey || event.metaKey)" in code
 
-    def test_giving_the_focus_back_does_not_reopen_it(self):
-        """Cerrar devuelve el foco al cuadro, y el cuadro abre al recibirlo: sin
-        la marca de restitución la paleta sería imposible de cerrar."""
+    def test_receiving_focus_never_opens_it(self):
+        """WCAG 3.2.1 «On Focus»: el foco por Tab, o al volver a la pestaña, no
+        puede cambiar el contexto. Y sin oyente de foco, cerrar y devolver el foco
+        al cuadro no reabre nada."""
         code = _code(PALETTE)
 
-        assert "restoringFocus = true;" in code
-        assert "!restoringFocus && palette.hidden" in code
+        assert "addEventListener('focus'" not in code
+        assert "restoringFocus" not in code
 
     def test_the_hint_reads_command_k_on_a_mac(self):
         assert "String.fromCharCode(160)" in PALETTE
@@ -137,8 +138,12 @@ class TestRecents:
         ahí no debe llegar a un `href`."""
         code = _code(PALETTE)
 
-        assert r"/^\/(?!\/)/.test(href)" in code
+        assert r"/^\/(?![\/\\])/.test(href)" in code
         assert "isRelativePath(item.href)" in code
+
+    def test_a_backslash_after_the_slash_is_not_a_relative_path(self):
+        """Los navegadores tratan `/\\evil.com` como `//evil.com`: otro sitio."""
+        assert r"(?![\/\\])" in _code(PALETTE)
 
     def test_they_belong_to_the_user_who_visited(self):
         """En un equipo compartido, otra sesión no hereda títulos de fichas ajenas."""
