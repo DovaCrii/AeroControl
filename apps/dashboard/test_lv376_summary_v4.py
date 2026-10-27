@@ -88,14 +88,12 @@ def test_the_permit_cards_equal_the_table_and_the_panel_chip(sites):
     client = login_as(*ALL_SOURCES)
     context = client.get(reverse(URL)).context
     cards = _cards(context)
-    assert cards["no_permit"]["n"] == context["cx_permits"]["without_permit"] == 2
+    # Cada faena cuenta en UNA tarjeta: «sin permiso» son sólo las que no tienen ni solicitud (CC5);
+    # CC4, que espera a la DGAC, va en su propia tarjeta.
+    assert cards["no_permit"]["n"] == context["cx_permits"]["no_permit"] == 1
     assert cards["waiting"]["n"] == 1  # CC4 espera a la DGAC
-    chip = next(
-        i
-        for i in client.get(reverse("dashboard")).context["attention"]
-        if i["key"] == "sites_without_permit"
-    )
-    assert chip["count"] == cards["no_permit"]["n"]
+    # el total «sin vigente» de la tabla sigue siendo la suma de las dos
+    assert context["cx_permits"]["without_permit"] == 2
 
 
 @pytest.mark.django_db
@@ -161,12 +159,17 @@ def test_cards_and_calm_line_are_built_from_what_is_already_computed():
             "attend": 0,
         },
     ]
-    permits = {"without_permit": 2, "total": 7, "tally": [{"key": "waiting", "n": 3}]}
+    permits = {
+        "without_permit": 5,
+        "no_permit": 2,
+        "total": 7,
+        "tally": [{"key": "waiting", "n": 3}],
+    }
     cards = {c["key"]: c["n"] for c in summary_cards(rings, permits)}
     assert cards == {"no_permit": 2, "overdue": 2, "expiring": 2, "waiting": 3}
     assert calm_line(rings, permits) == {
         "names": "Maintenance",
-        "sites": "5 of 7 sites with a permit in force",
+        "sites": "2 of 7 sites with a permit in force",
     }
     assert calm_line([], None) is None
     assert summary_cards(None, None) == []

@@ -18,7 +18,7 @@ Se mudó del panel (donde vivía desde `LV-206`) a esta sección. **El cálculo 
   existen con `add_flightpermission` (y `geo.add_geoplan` para renovar, como `_renewal_guard`).
 """
 
-from django.db.models import F
+from django.db.models import Exists, F, OuterRef
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -165,6 +165,12 @@ def _details(tenant_ids, rows):
     purposes = dict(FlightPermission._meta.get_field("purpose").flatchoices)
     statuses = dict(FlightPermission.STATUS_CHOICES)
     grouped = {}
+    # `renewed` es lo que `active_renewal` mira (un sucesor vivo, sea cual sea su estado), sin consulta nueva.
+    queryset = queryset.annotate(
+        renewed=Exists(
+            FlightPermission.objects.filter(renews=OuterRef("pk"), is_active=True)
+        )
+    )
     values = queryset.order_by(F("valid_until").asc(nulls_last=True), "internal_folio")
     for item in values.values(
         "pk",
@@ -176,6 +182,7 @@ def _details(tenant_ids, rows):
         "valid_from",
         "valid_until",
         "created_at",
+        "renewed",
     ):
         grouped.setdefault(item["cost_center_id"], []).append(
             {
@@ -188,6 +195,12 @@ def _details(tenant_ids, rows):
                 "valid_from": item["valid_from"],
                 "valid_until": item["valid_until"],
                 "created_at": item["created_at"],
+                "renewed": item["renewed"],
+                # Igual que `FlightPermission.can_be_renewed`: autorizado alguna vez y sin sucesor vivo.
+                "can_renew": (
+                    item["status"] in FlightPermission.RENEWABLE_STATUSES
+                    and not item["renewed"]
+                ),
             }
         )
     return grouped
@@ -262,8 +275,8 @@ def _counts_text(row):
     return " · ".join(parts) or _("No live permits.")
 
 
-def _renewal_pk(row, listed, today):
-    """El permiso a renovar: el primer aprobado y vigente cuya fecha final es el próximo vencimiento."""
+def _expiring_permit(row, listed, today):
+    """El primer permiso aprobado y vigente cuya fecha final es el próximo vencimiento, o `None`."""
     for permit in listed:
         if (
             not permit["awaiting"]
@@ -271,8 +284,14 @@ def _renewal_pk(row, listed, today):
             and permit["valid_from"]
             and permit["valid_from"] <= today
         ):
-            return permit["pk"]
+            return permit
     return None
+
+
+def _renewal_pk(row, listed, today):
+    """El permiso a renovar: el que vence primero, sólo si `can_be_renewed` (sin renovación en curso)."""
+    permit = _expiring_permit(row, listed, today)
+    return permit["pk"] if permit and permit["can_renew"] else None
 
 
 def _awaiting_since(listed):
@@ -303,7 +322,19 @@ def _action(kind, row, listed, today, flags):
             "date": _dm(row["next_start"])
         }
     elif kind == "renew_now":
-        if days is not None and days <= 0:
+        expiring = _expiring_permit(row, listed, today)
+        if expiring and expiring["renewed"]:
+            # Ya hay una renovación en curso: decir «renovar ahora» sería falso y el enlace
+            # terminaría en «ya fue renovado».
+            if days is not None and days <= 0:
+                text = _("Expires today: the renewal is already requested")
+            else:
+                text = ngettext(
+                    "Expires in %(n)s day: the renewal is already requested",
+                    "Expires in %(n)s days: the renewal is already requested",
+                    days or 0,
+                ) % {"n": days}
+        elif days is not None and days <= 0:
             text = _("Expires today: renew now")
         else:
             text = ngettext(
@@ -478,6 +509,7 @@ def permit_table(
         "shown": len(items),
         "problems": problems,
         "without_permit": without_permit,
+        "no_permit": counts["none"],
         "column": column,
         "direction": direction,
         "state": state,

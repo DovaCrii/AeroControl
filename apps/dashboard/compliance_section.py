@@ -307,7 +307,7 @@ def summary_cards(rings, permits):
     """Las cuatro tarjetas de arriba (LV-376, fase 2): ¿hay algo que no pueda esperar?
 
     Sale todo de lo ya calculado para la sección, cero consultas y ninguna cifra nueva: «sin permiso» es
-    `without_permit` de la tabla; «vencido» y «vence en 30 días» son las del panel (`overdue_count` y
+    `no_permit` de la tabla (sólo faenas sin solicitud ni permiso: las que esperan van aparte); «vencido» y «vence en 30 días» son las del panel (`overdue_count` y
     `expiring_count`: SIN mantención, que el panel no cuenta y una prueba compara); «esperando a la DGAC»
     son las faenas con un permiso solicitado o aprobado que aún no empieza (el «esperando» del resumen de
     la tabla). Una tarjeta sólo existe si quien mira puede ver su fuente, y un cero se dice con palabras.
@@ -319,7 +319,7 @@ def summary_cards(rings, permits):
                 "no_permit",
                 "✕",
                 "none",
-                permits["without_permit"],
+                permits["no_permit"],
                 "#cx-permits",
                 _("Sites without a permit"),
                 _("They cannot fly today"),

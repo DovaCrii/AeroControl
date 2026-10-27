@@ -12667,6 +12667,15 @@ msgid_plural "Expires in %(n)s days: renew now"
 msgstr[0] "Vence en %(n)s día: renovar ya"
 msgstr[1] "Vence en %(n)s días: renovar ya"
 
+msgid "Expires today: the renewal is already requested"
+msgstr "Vence hoy: la renovación ya está solicitada"
+
+#, python-format
+msgid "Expires in %(n)s day: the renewal is already requested"
+msgid_plural "Expires in %(n)s days: the renewal is already requested"
+msgstr[0] "Vence en %(n)s día: la renovación ya está solicitada"
+msgstr[1] "Vence en %(n)s días: la renovación ya está solicitada"
+
 #, python-format
 msgid "Expires in %(n)s day: prepare the renewal"
 msgid_plural "Expires in %(n)s days: prepare the renewal"
