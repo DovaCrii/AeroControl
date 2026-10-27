@@ -11147,6 +11147,27 @@ msgstr "No hay nada que mostrar en esta capa."
 msgid "valid until {date}"
 msgstr "vigente hasta {date}"
 
+msgid "Permits in process"
+msgstr "Permisos en trámite"
+
+msgid "Permit in process"
+msgstr "Permiso en trámite"
+
+msgid "registered on {date}"
+msgstr "registrado el {date}"
+
+msgid "proposed validity {from} – {until}"
+msgstr "vigencia propuesta {from} – {until}"
+
+msgid "validity not yet set by the DGAC"
+msgstr "vigencia aún sin fijar por la DGAC"
+
+msgid "{n} in process without a location: not drawn."
+msgstr "{n} en trámite sin ubicación: no se dibujan."
+
+msgid "Dotted outline and hourglass: requested from the DGAC, not yet approved. Not an authorization to fly."
+msgstr "Contorno punteado y reloj de arena: solicitado a la DGAC, aún sin aprobar. No autoriza a volar."
+
 msgid "Measured (no threshold set)"
 msgstr "Medida (sin umbral definido)"
 

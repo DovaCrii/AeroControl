@@ -49,6 +49,20 @@ def current_permits(user, today=None):
     )
 
 
+def pending_permits(user):
+    """Los permisos aún «Solicitados» a la DGAC, activos y acotados por tenant (capa «en trámite», LV-379).
+
+    Sin filtro de ubicación: quien dibuja decide qué hacer con los que no tienen coordenadas.
+    """
+    return scope_queryset_to_tenant(
+        FlightPermission.objects.filter(
+            is_active=True, status=FlightPermission.STATUS_REQUESTED
+        ),
+        user,
+        "cost_center__tenant_id",
+    )
+
+
 def _sites(user, today):
     """`{(lat, lon, radio_km)}` de las faenas con permiso aprobado y vigente hoy (una consulta)."""
     permits = current_permits(user, today).values_list(

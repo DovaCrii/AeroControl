@@ -3,7 +3,7 @@
 * `AirspaceTab`   GET /environment/airspace/            the screen (404 with an import guide if no snapshot)
 * `AirspaceData`  GET /environment/airspace/data.json   the current snapshot as JSON (ETag = its sha256)
 * `AirspaceNear`  GET /environment/airspace/near/       what contains / is near a point or circle
-* `AirspaceOwnLayers` GET /environment/airspace/own-layers.json?layer=sites|permits  the person's own layers
+* `AirspaceOwnLayers` GET /environment/airspace/own-layers.json?layer=sites|permits|pending  the person's own layers
 
 The first three need `view_airspacefeature` (LV-268). The catalog is global (no tenant), like `Aerodrome`.
 `near/` runs the very same pure functions as `apps/geo/airspace_geometry.py`, so the client never
@@ -18,15 +18,17 @@ from datetime import date
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseNotModified, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
 
 from apps.core.views import ModelViewPermissionRequiredMixin
 from apps.core.tenancy import scope_queryset_to_tenant
-from apps.environment.airspace_near import current_permits
+from apps.environment.airspace_near import current_permits, pending_permits
 from apps.environment.views import EnvironmentTab, environment_context
 from apps.geo import administrative_layer
 from apps.geo.airspace_geometry import features_in_area, nearby
@@ -89,6 +91,12 @@ def ui_strings():
         "layerOwnHeading": _("My layers (off by default)"),
         "layerSites": _("My sites"),
         "layerPermits": _("Current permits"),
+        "layerPending": _("Permits in process"),
+        "pendingWord": _("Permit in process"),
+        "registeredOn": _("registered on {date}"),
+        "proposedValidity": _("proposed validity {from} – {until}"),
+        "validityUnset": _("validity not yet set by the DGAC"),
+        "pendingUnplaced": _("{n} in process without a location: not drawn."),
         "layerOwnFailed": _("Your layer could not be loaded. Try again."),
         "layerOwnEmpty": _("Nothing to show on this layer."),
         "siteWord": _("Site"),
@@ -142,6 +150,8 @@ def admin_kind_labels():
 OWN_LAYERS = {
     "sites": "registry.view_costcenter",
     "permits": "operations.view_flightpermission",
+    # LV-379: the permits still waiting for the DGAC. Same permission as «permits»; a separate layer.
+    "pending": "operations.view_flightpermission",
 }
 
 
@@ -304,8 +314,30 @@ def _permit_entry(permit):
     }
 
 
+def _pending_entry(permit):
+    """A permit still in process, as map data. No operators or aircraft: the map only says where.
+
+    Folio and dates are optional for a request (the DGAC has not set them yet), so nothing here assumes
+    them; `_permit_entry` would break on a null `valid_until`."""
+    radius = permit.radius_km
+    return {
+        "id": str(permit.pk),
+        "folio": permit.internal_folio,
+        "number": permit.permission_number or "",
+        "site": permit.cost_center.code,
+        "location": permit.location,
+        "status": str(permit.get_status_display()),
+        "created_on": timezone.localtime(permit.created_at).date().isoformat(),
+        "valid_from": permit.valid_from.isoformat() if permit.valid_from else None,
+        "valid_until": permit.valid_until.isoformat() if permit.valid_until else None,
+        "lat": float(permit.latitude),
+        "lon": float(permit.longitude),
+        "radius_km": float(radius) if radius is not None else None,
+    }
+
+
 class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
-    """The person's own layers for the map: `?layer=sites` or `?layer=permits`.
+    """The person's own layers for the map: `?layer=sites`, `permits` or `pending`.
 
     «My sites» are the cost centers with coordinates; «Current permits» the approved permits in force
     today with a point (and a circle when they carry a radius). Each layer needs ITS model's view
@@ -320,6 +352,7 @@ class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
             return JsonResponse({"error": "invalid_layer"}, status=400)
         if not request.user.has_perm(OWN_LAYERS[layer]):
             raise PermissionDenied
+        extra = {}
         if layer == "sites":
             from apps.registry.models import CostCenter
 
@@ -330,6 +363,18 @@ class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
                 request.user,
             ).order_by("code")
             items = [_site_entry(center) for center in rows]
+        elif layer == "pending":
+            requested = pending_permits(request.user)
+            rows = (
+                requested.filter(latitude__isnull=False, longitude__isnull=False)
+                .select_related("cost_center")
+                .order_by("created_at", "pk")
+            )
+            items = [_pending_entry(permit) for permit in rows]
+            # The ones without a location are not drawn (and never borrow the cost center's point).
+            extra["unplaced"] = requested.filter(
+                Q(latitude__isnull=True) | Q(longitude__isnull=True)
+            ).count()
         else:
             rows = (
                 current_permits(request.user)
@@ -339,7 +384,7 @@ class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
             )
             items = [_permit_entry(permit) for permit in rows]
         response = HttpResponse(
-            payload.dumps({"layer": layer, "items": items}),
+            payload.dumps({"layer": layer, "items": items, **extra}),
             content_type="application/json; charset=utf-8",
         )
         response["Cache-Control"] = "private, no-cache"
