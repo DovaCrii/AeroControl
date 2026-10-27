@@ -769,6 +769,37 @@ class AlertForm(AeroModelForm):
             "message": _("Message"),
         }
 
+    scope_user = None
+
+    def scope_to_user(self, user):
+        """`scope_form_choices` nos dice quién mira (LV-372, F-08). Sin llamarlo (pruebas, consola)
+        el registro sólo tiene que existir, igual que antes."""
+        self.scope_user = user
+
+    def clean(self):
+        """`object_id` es una referencia genérica libre: debe ser un registro **que existe** del
+        tipo elegido y de las empresas de quien crea la alerta. Antes se aceptaba cualquier UUID,
+        incluso inexistente o de otra empresa; esa alerta quedaba colgada de un objeto ajeno."""
+        from apps.core.tenancy import scope_queryset_for_model
+
+        cleaned = super().clean()
+        content_type = cleaned.get("content_type")
+        object_id = cleaned.get("object_id")
+        if content_type is None or object_id is None:
+            return cleaned
+        model = content_type.model_class()
+        found = (
+            model is not None
+            and scope_queryset_for_model(
+                model._default_manager.filter(pk=object_id), self.scope_user
+            ).exists()
+        )
+        if not found:
+            self.add_error(
+                "object_id", _("No record of that type with this id was found.")
+            )
+        return cleaned
+
 
 class DeliverableForm(AeroModelForm):
     """R7.4. `status` is not editable here: it moves through the validate /

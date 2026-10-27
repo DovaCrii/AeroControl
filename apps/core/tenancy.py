@@ -111,6 +111,9 @@ FORM_CHOICE_TENANT_PATHS = {
     "registry.operatorassignment": ("cost_center__tenant_id", False),
     "registry.aircraftassignment": ("cost_center__tenant_id", False),
     "registry.qualification": ("operator__tenant_id", False),
+    # LV-372 (fase 4): el motor de alertas vigila estos dos con el mismo camino.
+    "registry.knowledgeassessment": ("operator__tenant_id", False),
+    "compliance.monthlycompliancereview": ("cost_center__tenant_id", False),
     "compliance.document": ("tenant_id", False),
     "compliance.alertrule": ("tenant_id", False),
     "compliance.deliverable": ("cost_center__tenant_id", False),

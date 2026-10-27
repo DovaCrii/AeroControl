@@ -9,12 +9,19 @@ The two essential rules cover the whole document catalog and the DGAC flight
 permits; `--with-optional` also seeds the qualification and maintenance rules.
 Kanban task creation is left off on purpose: seed the board with
 ``init_dgac_board`` before turning it on.
+
+LV-372 (F-08): alert rules belong to **one tenant** and the engine only watches that tenant's
+records, so a new tenant starts with no rules until it is seeded:
+``seed_alert_rules --tenant <slug>``. Without the option the default tenant is seeded, as
+always. Idempotence is per (tenant, name): the same rule name in two tenants is two rules.
 """
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from apps.compliance.models import AlertRule
+from apps.core.models import OperationalTenant
+from apps.core.tenancy import get_default_tenant
 
 # (name, entity_type, field_to_watch, days_before_expiry)
 ESSENTIAL_RULES = [
@@ -99,9 +106,20 @@ class Command(BaseCommand):
             action="store_true",
             help="Also seed the qualification and maintenance rules.",
         )
+        parser.add_argument(
+            "--tenant",
+            help="Slug of the tenant to seed (defaults to the default tenant).",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
+        if options.get("tenant"):
+            try:
+                tenant_id = OperationalTenant.objects.get(slug=options["tenant"]).pk
+            except OperationalTenant.DoesNotExist as exc:
+                raise CommandError(f"Unknown tenant: {options['tenant']}") from exc
+        else:
+            tenant_id = get_default_tenant()
         rules = list(ESSENTIAL_RULES)
         if options["with_optional"]:
             rules += OPTIONAL_RULES
@@ -109,6 +127,7 @@ class Command(BaseCommand):
         created_count = 0
         for name, entity_type, field_to_watch, days_before_expiry in rules:
             _obj, created = AlertRule.objects.get_or_create(
+                tenant_id=tenant_id,
                 name=name,
                 defaults={
                     "entity_type": entity_type,
