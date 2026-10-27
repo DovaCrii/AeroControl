@@ -30,6 +30,9 @@
   --id-air-admin-line: #ffffff;
   --id-air-admin-halo: #0b1220;
   --id-air-admin-region: #ffd166;
+  /* LV-379: «Permisos en trámite». Magenta fijo (no el ámbar de la zona restringida, no ligado al tema).
+     Contraste: línea/halo #0b1220 7.02, línea/negro 7.87, halo/blanco 18.72 (sin halo, sobre blanco, 2.67). */
+  --id-air-line-pending: #ff5ce1;
   --id-air-edge: var(--id-edge, #7d8aa0);
   --id-air-tile: var(--id-tile, #f7f9fc);
 }
@@ -231,6 +234,11 @@
 .air-own-wrap { background: none; border: 0; }
 .air-own { display: inline-flex; align-items: center; justify-content: center; width: 1.125rem; height: 1.125rem; border: 2px solid var(--ac-surface); background: var(--ac-text); color: var(--ac-surface); font-size: 0.6rem; line-height: 1; box-shadow: 0 0 0 1px var(--ac-text); }
 .air-own-permit { stroke: var(--ac-primary); stroke-width: 2; stroke-dasharray: 6 4; fill: var(--ac-primary); fill-opacity: 0.08; }
+.air-swatch--own-pending { background: var(--id-air-halo); border-style: dotted; border-color: var(--id-air-line-pending); color: var(--id-air-line-pending); border-radius: 50%; }
+.air-own.air-pending { background: var(--id-air-halo); border: 2px solid var(--id-air-line-pending); color: var(--id-air-line-pending); border-radius: 50%; font-size: 0.7rem; box-shadow: 0 0 0 1px var(--id-air-halo); }
+.air-map .leaflet-airPending-pane { z-index: 398; }
+.air-own-pending-halo { stroke: var(--id-air-halo); stroke-width: 4px; fill: none; stroke-linecap: round; }
+.air-own-pending { stroke: var(--id-air-line-pending); stroke-width: 2.5px; stroke-dasharray: 1 5; stroke-linecap: round; fill: none; }
 .air-own-permit-dot { stroke: var(--ac-primary); stroke-width: 2; fill: var(--ac-surface); fill-opacity: 1; }
 .air-badge-wrap, .air-plane-wrap, .air-tag-wrap { background: none; border: 0; }
 /* Jerarquía de marcadores: aeropuerto (disco de 30 px con borde) > aeródromo (22 px) = insignia de zona (22 px). */

@@ -365,6 +365,7 @@ solo el gráfico.{% endcomment %}
 {% endblock %}
 
 {% block extrahead %}
+{% if show_compliance_slot %}<link rel="stylesheet" href="{% static 'css/compliance.css' %}">{% endif %}
 <script defer src="{% static 'vendor/chartjs/chart.umd.min.js' %}"
         integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
         crossorigin="anonymous"></script>

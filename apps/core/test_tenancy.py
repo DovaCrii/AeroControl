@@ -438,3 +438,110 @@ class TestCalendarFeedIsolation:
 
         client = self._client("plain")  # no membership -> default fallback
         assert f"permission-{permission.pk}" in self._feed_ids(client)
+
+
+class TestLazyScopeEqualsEagerScope:
+    """LV-372: `scope_queryset_to_visible_tenants` es la misma regla que `visible_tenant_ids`."""
+
+    @pytest.mark.django_db
+    def test_same_rows_for_every_kind_of_user(self):
+        from apps.core.tenancy import (
+            scope_queryset_to_tenant,
+            scope_queryset_to_visible_tenants,
+        )
+
+        default = get_default_tenant()
+        alfa = OperationalTenant.objects.create(name="Alfa", slug="alfa")
+        beta = OperationalTenant.objects.create(name="Beta", slug="beta")
+        dormant = OperationalTenant.objects.create(
+            name="Dormida", slug="dormida", is_active=False
+        )
+        for code, tenant in (
+            ("D", default),
+            ("A", alfa),
+            ("B", beta),
+            ("Z", dormant.pk),
+        ):
+            CostCenter.objects.create(
+                code=code,
+                name=code,
+                tenant_id=tenant.pk if hasattr(tenant, "pk") else tenant,
+            )
+        member = User.objects.create_user("lazy-member", password="pw")  # nosec B106
+        alfa.members.add(member)
+        both = User.objects.create_user("lazy-both", password="pw")  # nosec B106
+        alfa.members.add(both)
+        beta.members.add(both)
+        dormant_member = User.objects.create_user("lazy-dormant", password="pw")  # nosec B106
+        dormant.members.add(dormant_member)
+        plain = User.objects.create_user("lazy-plain", password="pw")  # nosec B106
+        root = User.objects.create_superuser("lazy-root", "r@test.com", "pw")  # nosec B106
+
+        def codes(scope, user, path=None):
+            return set(
+                scope(CostCenter.objects.all(), user, path).values_list(
+                    "code", flat=True
+                )
+            )
+
+        for user in (member, both, dormant_member, plain, root):
+            assert codes(scope_queryset_to_visible_tenants, user) == codes(
+                scope_queryset_to_tenant, user
+            ), user.username
+        # Una membresía de empresa inactiva no cuenta: cae al tenant por defecto.
+        assert codes(scope_queryset_to_visible_tenants, dormant_member) == {"D"}
+        assert codes(scope_queryset_to_visible_tenants, both) == {"A", "B"}
+        # Con camino explícito (a través de una relación).
+        from apps.registry.models import Aircraft
+
+        for tenant_code in ("D", "A", "B"):
+            center = CostCenter.objects.get(code=tenant_code)
+            Aircraft.objects.create(
+                registration=f"RPA-{tenant_code}",
+                type="RPA",
+                model="M",
+                manufacturer="DJI",
+                cost_center=center,
+                tenant=center.tenant,
+            )
+
+        def regs(scope, user):
+            return set(
+                scope(
+                    Aircraft.objects.all(), user, "cost_center__tenant_id"
+                ).values_list("registration", flat=True)
+            )
+
+        for user in (member, both, plain, root):
+            assert regs(scope_queryset_to_visible_tenants, user) == regs(
+                scope_queryset_to_tenant, user
+            ), user.username
+
+    @pytest.mark.django_db
+    def test_it_costs_no_queries_of_its_own(self, django_assert_num_queries):
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        user = User.objects.create_user("lazy-free", password="pw")  # nosec B106
+        queryset = scope_queryset_to_visible_tenants(
+            CostCenter.objects.all(), user, "tenant_id"
+        )
+        with django_assert_num_queries(0):
+            str(queryset.query)
+
+
+@pytest.mark.django_db
+def test_visible_tenant_ids_is_asked_once_per_user_object(django_assert_num_queries):
+    """El Reporte de vigencia la llamaba 7 veces por petición (2 consultas cada una)."""
+    from django.contrib.auth.models import User
+
+    from apps.core.tenancy import visible_tenant_ids
+
+    user = User.objects.create_user("memo", password="x")
+    first = visible_tenant_ids(user)
+    with django_assert_num_queries(0):
+        second = visible_tenant_ids(user)
+    assert second == first
+    # Otra persona no hereda la respuesta: se calcula con sus propias membresías.
+    other = User.objects.create_user("memo2", password="x")
+    assert not hasattr(other, "_ac_visible_tenant_ids")
+    assert visible_tenant_ids(other) == first

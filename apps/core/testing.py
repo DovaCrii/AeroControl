@@ -142,6 +142,79 @@ def full_sidebar_html(url_name=""):
         )
 
 
+def workbook_grid(content):
+    """Un XLSX como datos comparables: hojas, celdas, negritas, filtro y anchos.
+
+    `LV-355` F1: la prueba de «contenido idéntico antes/después» de la tubería de
+    exportación. Lo que importa de un libro es lo que alguien ve al abrirlo --
+    las hojas en su orden, el valor de cada celda, qué filas van en negrita,
+    dónde está el filtro y el panel congelado, y el ancho de cada columna --, y
+    todo eso cabe en un diccionario que se guarda como JSON y se compara.
+    """
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    workbook = load_workbook(BytesIO(content))
+    sheets = {}
+    for sheet in workbook.worksheets:
+        sheets[sheet.title] = {
+            "rows": [
+                [cell.value for cell in row] for row in sheet.iter_rows(min_row=1)
+            ],
+            "bold_rows": [
+                row[0].row for row in sheet.iter_rows() if row and row[0].font.bold
+            ],
+            "freeze": sheet.freeze_panes,
+            "filter": sheet.auto_filter.ref,
+            "widths": {
+                letter: dimension.width
+                for letter, dimension in sorted(sheet.column_dimensions.items())
+            },
+        }
+    return {"sheets": sheets, "order": workbook.sheetnames}
+
+
+def docx_grid(content):
+    """Un DOCX como datos: párrafos con su estilo, y cada tabla fila por fila."""
+    from io import BytesIO
+
+    from docx import Document
+
+    document = Document(BytesIO(content))
+    return {
+        "paragraphs": [[p.style.name, p.text] for p in document.paragraphs],
+        "tables": [
+            [[cell.text for cell in row.cells] for row in table.rows]
+            for table in document.tables
+        ],
+        "left_margins": [section.left_margin.inches for section in document.sections],
+    }
+
+
+def assert_golden(path, data):
+    """Compara `data` con el JSON guardado en `path`.
+
+    Con `UPDATE_SNAPSHOTS=1` lo reescribe (y hay que revisar el diff). Los
+    archivos `golden` de `LV-355` F1 se generaron **con el código anterior a la
+    tubería**: que sigan pasando es la prueba de que unificar los escritores no
+    movió una sola celda.
+    """
+    import json
+    import os
+
+    text = json.dumps(data, indent=1, ensure_ascii=False, sort_keys=True) + "\n"
+    if os.environ.get("UPDATE_SNAPSHOTS") == "1":
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8", newline="\n")
+        return
+    assert path.exists(), f"falta {path.name}: UPDATE_SNAPSHOTS=1 para crearlo"
+    assert text == path.read_text(encoding="utf-8"), (
+        f"la salida cambió respecto de {path.name}; si es a propósito, "
+        "UPDATE_SNAPSHOTS=1 y revisar el diff"
+    )
+
+
 _TEMPLATE_COMMENT = re.compile(
     r"\{%\s*comment\s*%\}.*?\{%\s*endcomment\s*%\}", re.DOTALL
 )

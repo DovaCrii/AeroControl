@@ -275,8 +275,8 @@ class TestTheScreen:
         for codes, expected in (
             ((AIR,), []),
             ((AIR, SITES), ["sites"]),
-            ((AIR, PERMITS), ["permits"]),
-            ((AIR, SITES, PERMITS), ["sites", "permits"]),
+            ((AIR, PERMITS), ["permits", "pending"]),
+            ((AIR, SITES, PERMITS), ["sites", "permits", "pending"]),
         ):
             html = login_as(*codes, member_of=world["mine"]).get(PAGE).content.decode()
             assert [o["key"] for o in config_of(html)["ownLayers"]] == expected, codes
@@ -330,7 +330,8 @@ class TestTheScript:
         assert tooltips and all(arg.startswith("tipNode(") for arg in tooltips)
 
     def test_each_layer_has_a_symbol_and_a_text_in_the_legend(self):
-        assert '"■" : "◎"' in self.SECTION and "ownName(own.key)" in self.SECTION
+        assert all(symbol in self.SECTION for symbol in ('"■"', '"⧗"', '"◎"'))
+        assert "ownName(own.key)" in self.SECTION
         assert ".air-swatch--own-sites" in CSS and ".air-swatch--own-permits" in CSS
 
     def test_the_map_shapes_differ_besides_colour(self):

@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.compliance.models import DocumentType
 from apps.compliance.report_views import build_report_workbook_bytes
+from apps.reporting.export import dated_filename
 from apps.compliance.reports import build_compliance_report, cost_center_rows
 from apps.core.jobs import record_job_run
 from apps.registry.models import CostCenter
@@ -80,8 +81,9 @@ class Command(BaseCommand):
         # yet: checking is_dir() alone silently produced an extension-less file
         # when the folder had not been created.
         if path.is_dir() or not path.suffix:
-            stamp = timezone.localdate().isoformat()
-            path = path / f"aerocontrol-cumplimiento-{stamp}.xlsx"
+            path = path / dated_filename(
+                "aerocontrol-cumplimiento", timezone.localdate(), "xlsx"
+            )
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(build_report_workbook_bytes(report))
         return path

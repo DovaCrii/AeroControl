@@ -110,7 +110,10 @@ def _tables(elements):
 def test_the_report_pdf_wears_the_letterhead(response, capture):
     assert response.status_code == 200
     assert response.content[:5] == b"%PDF-"
-    assert capture["filename"] == "aerocontrol-cumplimiento.pdf"
+    # LV-355 F1 (S12): el nombre lleva la fecha del informe (`stem_AAAA-MM-DD`).
+    assert capture["filename"] == (
+        f"aerocontrol-cumplimiento_{timezone.localdate():%Y-%m-%d}.pdf"
+    )
 
     letterhead = capture["letterhead"]
     assert isinstance(letterhead, corepdf.Letterhead)

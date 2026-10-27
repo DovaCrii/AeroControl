@@ -12,6 +12,8 @@ from datetime import timedelta
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import format_html, format_html_join
+from django.utils.translation import gettext as _
 
 from .models import (
     Aircraft,
@@ -60,6 +62,107 @@ def operating_cost_centers():
     """
     return CostCenter.objects.filter(is_active=True, operates_flights=True).exclude(
         contract_status=CostCenter.CONTRACT_CLOSED
+    )
+
+
+def cost_center_universe(user=None):
+    """LV-355 F2 (S10): cuántas faenas hay y cuántas **entran en los registros**.
+
+    Las tablas de los informes tienen universos distintos y legítimos: el Reporte
+    de vigencia lista todas las faenas activas, y el informe mensual a la DGAC
+    sólo las que operan y tienen contrato. Sin decirlo, dos tablas del mismo
+    informe parecen contradecirse. «Con operación» sale de
+    `operating_cost_centers()`, **la** definición (LV-266): contarla de nuevo acá
+    sería la cuarta copia.
+
+    Con `user`, acotado a las empresas que ve (como los informes, LV-372); sin él,
+    todas. Dos `COUNT`, fuera de `build_catastro` (que
+    conserva sus 2+2 consultas medidas).
+    """
+    active = CostCenter.objects.filter(is_active=True)
+    operating = operating_cost_centers()
+    if user is not None:
+        from apps.core.tenancy import scope_queryset_to_visible_tenants
+
+        active = scope_queryset_to_visible_tenants(active, user)
+        operating = scope_queryset_to_visible_tenants(operating, user)
+    return {"active": active.count(), "operating": operating.count()}
+
+
+def universe_sentence(universe):
+    """La frase de universo que va bajo cada tabla, ya traducida."""
+    return _("Active cost centers: %(active)s · with operation: %(operating)s") % {
+        "active": universe["active"],
+        "operating": universe["operating"],
+    }
+
+
+def is_operating(cost_center):
+    """¿Esta faena entra en los registros? Es la misma regla que
+    `operating_cost_centers`, leída sobre una fila ya cargada."""
+    return (
+        cost_center.is_active
+        and cost_center.operates_flights
+        and cost_center.contract_status != CostCenter.CONTRACT_CLOSED
+    )
+
+
+def live_permits_of(cost_center, user, today=None):
+    """LV-378 fase 4: los permisos de vuelo **vivos** de una faena.
+
+    Vivo es `requested` o `approved`, activo y con la vigencia **no vencida** (sin
+    fecha de término también cuenta: un permiso en trámite aún no la tiene). Es
+    lo que hay que dejar vencer o archivar cuando la faena deja de operar; no se
+    inventa un estado nuevo.
+
+    Acotado al tenant de `user` por la faena del permiso, y vacío si la persona
+    no puede ver permisos de vuelo: el aviso no es un canal para enterarse de
+    folios que la pantalla de permisos le negaría.
+    """
+    from apps.core.tenancy import scope_queryset_to_tenant
+    from apps.operations.models import FlightPermission
+
+    if not user.has_perm("operations.view_flightpermission"):
+        return FlightPermission.objects.none()
+    today = today or timezone.localdate()
+    queryset = FlightPermission.objects.filter(
+        cost_center=cost_center,
+        is_active=True,
+        status__in=(
+            FlightPermission.STATUS_REQUESTED,
+            FlightPermission.STATUS_APPROVED,
+        ),
+    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gte=today))
+    return scope_queryset_to_tenant(
+        queryset, user, tenant_path="cost_center__tenant_id"
+    ).order_by("internal_folio")
+
+
+def closed_centre_permit_warning(cost_center, user, today=None):
+    """El aviso (HTML ya escapado) de los permisos vivos que dejó una faena que
+    salió de operación, o `None` si no hay nada que decir."""
+    permits = list(live_permits_of(cost_center, user, today))
+    if not permits:
+        return None
+    links = format_html_join(
+        ", ",
+        '<a href="{}">{}</a>',
+        (
+            (
+                reverse("permission-detail", args=[permit.pk]),
+                permit.internal_folio,
+            )
+            for permit in permits
+        ),
+    )
+    return format_html(
+        _(
+            "{code} no longer operates, but these flight permits are still "
+            "live: {permits}. They are not renewed: let them expire or "
+            "archive them."
+        ),
+        code=cost_center.code,
+        permits=links,
     )
 
 

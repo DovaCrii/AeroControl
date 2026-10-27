@@ -340,9 +340,8 @@ class TestTheTableShowsTheDateItAlreadyHad:
         )
 
         # LV-359 (fase 4): la tabla vive en la sección «Cumplimiento»; la fecha sigue
-        # a la vista y los días restantes quedan además en un medidor con su texto («12 d»).
+        # a la vista (dd-mm-aaaa, LV-376) y los días restantes dichos con palabras («en 12 días»).
         content = auth_client.get(reverse("dashboard-compliance")).content.decode()
 
-        assert (TODAY + timedelta(days=12)).isoformat() in content
-        assert "quedan 12 días" in content
-        assert "12 d" in content
+        assert (TODAY + timedelta(days=12)).strftime("%d-%m-%Y") in content
+        assert "en 12 días" in content

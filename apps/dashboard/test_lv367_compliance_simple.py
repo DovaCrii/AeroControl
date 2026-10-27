@@ -15,7 +15,6 @@ import pytest
 from django.urls import reverse
 from django.utils import translation
 
-from apps.core.test_lv315_identity_foundation import IDENTITY
 from apps.core.testing import login_as as _login_as
 from apps.dashboard import compliance_section as section
 from apps.dashboard.compliance_section import (
@@ -199,7 +198,7 @@ class TestOpenIsDecidedByWhatThereIs:
     def test_a_quiet_operation_opens_nothing(self, db):
         client = login_as(*ALL_SOURCES)
         html = _full(client)
-        for block in ("expiries", "heat", "alerts", "maintenance", "history"):
+        for block in ("expiries", "alerts", "maintenance", "history"):
             assert " open" not in _fold(html, block), block
 
     @pytest.mark.django_db
@@ -209,8 +208,7 @@ class TestOpenIsDecidedByWhatThereIs:
         assert " open" in _fold(html, "expiries")
         assert " open" in _fold(html, "alerts")
         assert " open" in _fold(html, "maintenance")  # hay una mantención por definir
-        for never in ("heat", "history"):
-            assert " open" not in _fold(html, never), never
+        assert " open" not in _fold(html, "history")
         assert '<details class="id-cx-guide" id="cx-guide" open' not in html
 
     @pytest.mark.django_db
@@ -225,10 +223,12 @@ class TestOpenIsDecidedByWhatThereIs:
         assert " open" not in _fold(_full(client), "permits")
 
     @pytest.mark.django_db
-    def test_the_heat_map_history_and_guide_are_never_open(self, mix, rule):
+    def test_the_history_and_guide_are_never_open_and_the_heat_map_is_gone(
+        self, mix, rule
+    ):
         _alert(rule, 3)
         html = _full(login_as(*ALL_SOURCES))
-        assert " open" not in _fold(html, "heat")
+        assert 'data-cx-block="heat"' not in html  # LV-376 (G4)
         assert " open" not in _fold(html, "history")
         assert re.search(r'<details class="id-cx-guide"[^>]*>', html)
         assert " open" not in re.search(
@@ -249,58 +249,59 @@ class TestTheSummary:
             assert html.count(f'data-cx-ring="{key}"') == 1, key
 
     @pytest.mark.django_db
-    def test_a_category_with_nothing_goes_to_no_pending_and_is_not_an_indicator(
+    def test_a_category_with_nothing_says_so_in_words_and_is_listed_as_up_to_date(
         self, db
     ):
         html = _full(login_as("view_aircraft"))
-        indicators = html.split('class="id-cx-clear"')[0]
-        assert 'data-cx-ring="aircraft"' not in indicators
-        clear = html.split('class="id-cx-clear"')[1]
-        assert "No pending" in clear and 'data-cx-ring="aircraft"' in clear
+        strip = re.search(
+            r'<li class="id-cx-strip" data-cx-ring="aircraft">.*?</li>', html, re.S
+        ).group(0)
+        assert "Nothing in 90 days" in strip and "id-cx-stack-svg" not in strip
+        calm = html.split("data-cx-calm")[1].split("</p>")[0]
+        assert "Up to date:" in calm and "Aircraft" in calm
 
     @pytest.mark.django_db
-    def test_an_indicator_has_icon_figure_and_a_cross_for_overdue(self, mix):
-        html = _full(login_as(*ALL_SOURCES))
-        indicators = html.split('class="id-cx-ind"')[1].split("</ul>")[0]
-        assert "icons.svg#icon-aircraft-list" in indicators
-        assert re.search(
-            r'id-chip--critical"><span aria-hidden="true">✕</span> <b>\d+</b>',
-            indicators,
-        )
-        assert re.search(
-            r'<b class="id-cx-fig">\d+</b> <span>to attend within 30 days</span>',
-            indicators,
-        )
-
-    @pytest.mark.django_db
-    def test_a_zero_is_a_dot_with_a_hidden_zero_and_empty_rows_are_summarised(
-        self, mix
+    def test_the_four_cards_have_symbol_figure_name_and_a_link_to_their_block(
+        self, mix, sites
     ):
         html = _full(login_as(*ALL_SOURCES))
-        assert (
-            '<span aria-hidden="true">·</span><span class="visually-hidden">0 ' in html
-        )
-        # el mapa de calor trae ceros con la misma forma
-        heat = html.split('data-cx-block="heat"')[1]
-        assert '<b class="id-cx-zero"><span aria-hidden="true">·</span>' in heat
+        cards = re.findall(r'<li class="id-cx-card[^"]*" data-cx-card="(\w+)">', html)
+        assert cards == ["no_permit", "overdue", "expiring", "waiting"]
+        block = html.split("data-cx-cards")[1].split("</ul>")[0]
+        for key, anchor in (
+            ("no_permit", "#cx-permits"),
+            ("overdue", "#cx-expiries"),
+            ("expiring", "#cx-expiries"),
+            ("waiting", "#cx-permits"),
+        ):
+            card = block.split(f'data-cx-card="{key}"')[1].split("</li>")[0]
+            assert f'href="{anchor}"' in card
+            assert re.search(r'<b class="id-cx-card-fig">\d+</b>', card)
+            assert 'class="id-cx-card-sym" aria-hidden="true"' in card
+        # cada ancla existe en la página
+        assert 'id="cx-permits"' in html and 'id="cx-expiries"' in html
 
     @pytest.mark.django_db
-    @pytest.mark.django_db
-    def test_the_level_table_scrolls_inside_its_own_box_on_a_phone(self, mix):
-        """A 375 px la tabla de niveles desbordaba la página 30 px (medido en el navegador)."""
+    def test_a_zero_card_says_it_with_words_and_a_tick_not_a_red_cross(self, db):
         html = _full(login_as(*ALL_SOURCES))
-        assert (
-            '<div class="id-cx-lv-wrap">\n      <table class="id-cx-lv">'
-            in html.replace("\r\n", "\n")
-        )
-        assert re.search(r"(?m)^\.id-cx-lv-wrap \{ overflow-x: auto; \}", IDENTITY)
+        block = html.split("data-cx-cards")[1].split("</ul>")[0]
+        overdue = block.split('data-cx-card="overdue"')[1].split("</li>")[0]
+        assert "id-cx-card--zero" in block.split('data-cx-card="overdue"')[0][-80:]
+        assert "Nothing overdue" in overdue and "✓" in overdue and "✕" not in overdue
+
+    @pytest.mark.django_db
+    def test_the_cards_come_also_in_the_panel_fragment(self, mix):
+        client = login_as(*ALL_SOURCES)
+        assert "data-cx-cards" in _fragment(client)
+        assert "What to attend first" not in _fragment(client)
 
     @pytest.mark.django_db
     def test_a_category_without_expiries_is_one_line_not_a_row_of_zeros(self, db):
         html = _full(login_as(*ALL_SOURCES))
-        table_less = html.split('data-cx-block="expiries"')[1].split("</details>")[0]
-        assert "<table" not in table_less
-        assert "No expiries in the next 90 days:" in table_less
+        block = html.split('data-cx-block="expiries"')[1].split("</details>")[0]
+        assert "<table" not in block
+        assert block.count("Nothing in 90 days") == 5
+        assert 'visually-hidden">0 ' not in block  # sin filas de ceros
 
     @pytest.mark.django_db
     def test_the_rings_are_gone_but_the_tag_still_renders(self, mix):
@@ -410,15 +411,15 @@ class TestTheSimplePermitTable:
         assert many[0] == few[0]
 
     @pytest.mark.django_db
-    def test_it_has_three_columns_and_one_status_chip_per_row(self, sites):
+    def test_it_has_four_columns_and_one_status_chip_per_row(self, sites):
         html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
-        assert table.split("<thead>")[1].split("</thead>")[0].count("<th") == 3
+        assert table.split("<thead>")[1].split("</thead>")[0].count("<th") == 4
         for row in re.findall(
             r"<tr[ >].*?</tr>", table.split("<tbody>")[1], flags=re.S
         ):
             status_cell = row.split("<td")[2]
-            assert status_cell.count("id-chip ") == 1
+            assert status_cell.count("id-cx-state ") == 1
 
     @pytest.mark.django_db
     def test_the_next_expiry_has_days_and_date_and_the_rest_lives_in_the_details(
@@ -427,7 +428,7 @@ class TestTheSimplePermitTable:
         html = _page(login_as(VIEW)).content.decode()
         table = _permits_block(html)
         row = next(r for r in table.split("<tr") if "CC1" in r)
-        assert re.search(r"\d+ d</b>", row) and re.search(r"\d{4}-\d\d-\d\d", row)
+        assert re.search(r"in \d+ days", row) and re.search(r"\d\d-\d\d-\d{4}", row)
         details = row.split("<details")[1].split("</details>")[0]
         assert "In force" in details and "expiring soon" in details
 

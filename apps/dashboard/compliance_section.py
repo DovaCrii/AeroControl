@@ -24,9 +24,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.utils.translation import gettext as _
-from django.utils.translation import ngettext
+from django.utils.translation import ngettext, pgettext
 
 from apps.compliance.expirations import EXPIRATION_PERMISSIONS
+from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
 from apps.core.tenancy import visible_tenant_ids
 from apps.reporting.models import ReportRun
 
@@ -38,9 +39,12 @@ from .compliance_data import (
     visible_categories,
 )
 from .compliance_permits import (
+    KIND_CHIP,
     PERMIT_PERMISSION,
     permit_table,
+    requested_query,
     requested_sort,
+    requested_state,
     sort_context,
 )
 from .selection import resolve_cost_center
@@ -170,6 +174,78 @@ def guide_steps(user, cost_center):
     ]
 
 
+def guide_states(user):
+    """La leyenda de estados de la guía (LV-376, fase 3): qué significa cada uno, qué hacer y, si se puede, a dónde ir.
+
+    Los números (30 y 60 días) salen de las constantes de `kpis`, no de un texto tecleado, así que la guía no
+    puede quedar atrás si se mueven. El enlace sólo existe si la persona puede abrir esa pantalla: la guía nunca
+    manda a un 403 (`url` vacío si no).
+    """
+    permits = reverse("permission-list") if user.has_perm(PERMIT_PERMISSION) else ""
+    create = (
+        reverse("permission-create")
+        if user.has_perm("operations.add_flightpermission")
+        else ""
+    )
+    critical, warning = PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+    rows = [
+        (
+            "none",
+            _("No permit"),
+            _("No permit in force: the site cannot fly."),
+            _("Request a permit"),
+            create,
+        ),
+        (
+            "awaiting",
+            _("Waiting for the DGAC"),
+            _("Requested; there is no answer yet."),
+            _("Follow up with the DGAC"),
+            permits,
+        ),
+        (
+            "not_started",
+            _("Starts later"),
+            _("Approved; it takes effect from its start date."),
+            _("Nothing to do until that date"),
+            "",
+        ),
+        (
+            "renew_now",
+            _("Renew now"),
+            _("Expires in %(n)s days or less.") % {"n": critical},
+            _("Prepare the renewal today"),
+            permits,
+        ),
+        (
+            "renew_soon",
+            _("Renew soon"),
+            _("Expires in %(a)s to %(b)s days.") % {"a": critical + 1, "b": warning},
+            _("Plan the renewal"),
+            "",
+        ),
+        (
+            "ok",
+            _("Up to date"),
+            _("More than %(n)s days left.") % {"n": warning},
+            _("Nothing to do"),
+            "",
+        ),
+    ]
+    return [
+        {
+            "kind": kind,
+            "symbol": KIND_CHIP[kind][0],
+            "tone": KIND_CHIP[kind][1],
+            "label": label,
+            "meaning": meaning,
+            "todo": todo,
+            "url": url,
+        }
+        for kind, label, meaning, todo, url in rows
+    ]
+
+
 def attention_first(rings, alerts, permits):
     """Hasta tres cosas que atender primero, en el orden de `PRIORITY_ORDER`; sólo las que hay (cifra > 0).
 
@@ -214,6 +290,100 @@ def attention_first(rings, alerts, permits):
     return items[:PRIORITY_LIMIT]
 
 
+def _card(key, symbol, tone, n, url, name, sub, zero):
+    return {
+        "key": key,
+        "symbol": symbol,
+        "tone": tone,
+        "n": n,
+        "url": url,
+        "name": name,
+        "sub": sub,
+        "zero": zero,
+    }
+
+
+def summary_cards(rings, permits):
+    """Las cuatro tarjetas de arriba (LV-376, fase 2): ¿hay algo que no pueda esperar?
+
+    Sale todo de lo ya calculado para la sección, cero consultas y ninguna cifra nueva: «sin permiso» es
+    `no_permit` de la tabla (sólo faenas sin solicitud ni permiso: las que esperan van aparte); «vencido» y «vence en 30 días» son las del panel (`overdue_count` y
+    `expiring_count`: SIN mantención, que el panel no cuenta y una prueba compara); «esperando a la DGAC»
+    son las faenas con un permiso solicitado o aprobado que aún no empieza (el «esperando» del resumen de
+    la tabla). Una tarjeta sólo existe si quien mira puede ver su fuente, y un cero se dice con palabras.
+    """
+    cards = []
+    if permits:
+        cards.append(
+            _card(
+                "no_permit",
+                "✕",
+                "none",
+                permits["no_permit"],
+                "#cx-permits",
+                _("Sites without a permit"),
+                _("They cannot fly today"),
+                _("Every site that flies has a permit"),
+            )
+        )
+    counted = [r for r in rings or () if r["key"] != "maintenance"]
+    if counted:
+        cards.append(
+            _card(
+                "overdue",
+                "✕",
+                "overdue",
+                sum(r["counts"]["overdue"] for r in counted),
+                "#cx-expiries",
+                pgettext("compliance level", "Overdue"),
+                _("Dates already past: documents, people, aircraft and permits"),
+                _("Nothing overdue"),
+            )
+        )
+        cards.append(
+            _card(
+                "expiring",
+                "▲",
+                "soon",
+                sum(
+                    r["counts"]["due_7"] + r["counts"]["due_15"] + r["counts"]["due_30"]
+                    for r in counted
+                ),
+                "#cx-expiries",
+                _("Expiring within 30 days"),
+                _("Worth renewing now"),
+                _("Nothing expires within 30 days"),
+            )
+        )
+    if permits:
+        waiting = next((t["n"] for t in permits["tally"] if t["key"] == "waiting"), 0)
+        cards.append(
+            _card(
+                "waiting",
+                "◐",
+                "wait",
+                waiting,
+                "#cx-permits",
+                _("Waiting for the DGAC"),
+                _("Requested, or approved and not started yet"),
+                _("Nothing is waiting"),
+            )
+        )
+    return cards
+
+
+def calm_line(rings, permits):
+    """«✓ Al día: Personas, Mantenimiento · 8 de 11 faenas con permiso vigente», o `None` si no hay nada que decir."""
+    names = ", ".join(str(r["label"]) for r in rings or () if not r["attend"])
+    sites = ""
+    if permits and permits["total"]:
+        sites = _("%(n)s of %(m)s sites with a permit in force") % {
+            "n": permits["total"] - permits["without_permit"],
+            "m": permits["total"],
+        }
+    return {"names": names, "sites": sites} if names or sites else None
+
+
 def open_flags(context):
     """Qué secciones plegables salen abiertas: sólo las que tienen algo. Se decide acá, no en la plantilla.
 
@@ -252,6 +422,14 @@ def section_context(request):
             context["cx_alerts"] = alert_ages(user, cost_center, today, tenant_ids)
         if blocks["permits"]:
             column, direction = requested_sort(request.GET)
+            # LV-376: `?state=` (lista permitida) filtra en las dos vistas; `?q=` sólo en la página
+            # completa, que es donde existe el cuadro de búsqueda (el fragmento del panel no lo dibuja).
+            state = requested_state(request.GET)
+            query = (
+                requested_query(request.GET)
+                if request.headers.get("HX-Request") != "true"
+                else ""
+            )
             context["cx_permits"] = permit_table(
                 user,
                 cost_center,
@@ -259,17 +437,21 @@ def section_context(request):
                 tenant_ids,
                 column,
                 direction,
+                state,
+                query,
             )
-            context["worktable_sort"] = sort_context(request, cost_center)
+            context["worktable_sort"] = sort_context(
+                request, cost_center, state=state, query=query
+            )
         if blocks["history"]:
             context["cx_history"] = review_history(user, cost_center, today, tenant_ids)
         context["cx_guide"] = guide_steps(user, cost_center)
+        context["cx_guide_states"] = guide_states(user)
         rings = context.get("cx_rings") or []
         context["cx_attention"] = [r for r in rings if r["attend"]]
         context["cx_clear"] = [r for r in rings if not r["attend"]]
-        # Filas en cero resumidas: una categoría sin vencimientos a 90 días no ocupa una fila de ceros.
-        context["cx_listed"] = [r for r in rings if r["total"]]
-        context["cx_unlisted"] = [r for r in rings if not r["total"]]
+        context["cx_cards"] = summary_cards(rings, context.get("cx_permits"))
+        context["cx_calm"] = calm_line(rings, context.get("cx_permits"))
         context["cx_priorities"] = attention_first(
             rings, context.get("cx_alerts"), context.get("cx_permits")
         )

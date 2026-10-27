@@ -132,6 +132,7 @@
   var map = null;
   var svgRenderer = null;
   var haloRenderer = null;
+  var pendingRenderer = null;
   var adminRenderer = null;
   var canvasRenderer = null;
   var adminPool = [];
@@ -206,6 +207,9 @@
     // Los límites administrativos van en lienzo (decenas de miles de vértices) y debajo de las zonas.
     map.createPane("airAdmin");
     adminRenderer = L.canvas({ padding: 0.5, pane: "airAdmin" });
+    // Los permisos en trámite (LV-379) van en su propio panel SVG, bajo el halo de las zonas (CSS, z 398).
+    map.createPane("airPending");
+    pendingRenderer = L.svg({ padding: 0.5, pane: "airPending" });
     var bases = {};
     var providers = cfg.tileProviders || [];
     var initial = providers.find(function (p) { return p.default; }) || providers[0];
@@ -1540,6 +1544,9 @@
   var ownGroups = {};
 
   function ownName(key) {
+    if (key === "pending") {
+      return T.layerPending;
+    }
     return key === "sites" ? T.layerSites : T.layerPermits;
   }
   function tipNode(text) {
@@ -1587,6 +1594,42 @@
     return shapes;
   }
 
+  /* «Permisos en trámite» (LV-379): solicitados a la DGAC y aún sin aprobar. Contorno punteado y reloj de
+     arena, nunca el trazo del permiso vigente. Folio y fechas pueden faltar: el servidor manda null. */
+  function drawPending(item) {
+    var title =
+      T.pendingWord + " " + item.folio + " · " + item.site + " · " + item.status + " · " +
+      fmt(T.registeredOn, { date: dateText(item.created_on) }) + " · " +
+      (item.valid_from && item.valid_until
+        ? fmt(T.proposedValidity, { from: dateText(item.valid_from), until: dateText(item.valid_until) })
+        : T.validityUnset);
+    var shapes = [];
+    if (item.radius_km) {
+      [["air-own-pending-halo", false], ["air-own-pending", true]].forEach(function (spec) {
+        var ring = L.circle([item.lat, item.lon], {
+          renderer: pendingRenderer,
+          radius: item.radius_km * 1000,
+          className: spec[0],
+          interactive: spec[1],
+        });
+        if (spec[1]) {
+          ring.bindTooltip(tipNode(title), { sticky: true });
+        }
+        shapes.push(ring);
+      });
+    }
+    var icon = L.divIcon({
+      className: "air-own-wrap",
+      html: '<span class="air-own air-pending" aria-hidden="true">⧗</span>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+    var marker = L.marker([item.lat, item.lon], { icon: icon, title: title, alt: title, keyboard: true });
+    marker.bindTooltip(tipNode(title), { direction: "top" });
+    shapes.push(marker);
+    return shapes;
+  }
+
   function setOwnLayer(key, on, box) {
     var group = ownGroups[key];
     group.on = on;
@@ -1604,9 +1647,11 @@
       group.layers.forEach(function (layer) {
         layer.addTo(map);
       });
-      $("air-tool-hint").textContent = group.layers.length
-        ? fmt(T.layerShown, { name: ownName(key) })
-        : T.layerOwnEmpty;
+      var hint = group.layers.length ? fmt(T.layerShown, { name: ownName(key) }) : T.layerOwnEmpty;
+      if (group.unplaced) {
+        hint += " · " + fmt(T.pendingUnplaced, { n: group.unplaced });
+      }
+      $("air-tool-hint").textContent = hint;
     };
     if (group.loaded) {
       show();
@@ -1621,12 +1666,16 @@
       })
       .then(function (data) {
         data.items.forEach(function (item) {
-          var drawn = key === "sites" ? drawSite(item) : drawPermit(item);
+          var drawn = key === "sites" ? drawSite(item) : key === "pending" ? drawPending(item) : drawPermit(item);
           drawn.forEach(function (layer) {
             group.layers.push(layer);
           });
         });
         group.loaded = true;
+        group.unplaced = Number(data.unplaced) || 0;
+        if (key === "pending" && group.label) {
+          group.label.appendChild(el("span", "air-count-pill", String(data.items.length)));
+        }
         show();
       })
       .catch(function (error) {
@@ -1643,8 +1692,11 @@
       return;
     }
     $("air-legend-own-group").hidden = false;
+    $("air-legend-pending-note").hidden = !offered.some(function (own) {
+      return own.key === "pending";
+    });
     offered.forEach(function (own) {
-      ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false };
+      ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false, unplaced: 0, label: null };
       var label = el("label", "air-legend-item");
       var box = el("input");
       box.type = "checkbox";
@@ -1653,7 +1705,8 @@
       box.addEventListener("change", function () {
         setOwnLayer(own.key, box.checked, box);
       });
-      var swatch = el("span", "air-swatch air-swatch--own-" + own.key, own.key === "sites" ? "■" : "◎");
+      ownGroups[own.key].label = label;
+      var swatch = el("span", "air-swatch air-swatch--own-" + own.key, own.key === "sites" ? "■" : own.key === "pending" ? "⧗" : "◎");
       swatch.setAttribute("aria-hidden", "true");
       label.appendChild(box);
       label.appendChild(swatch);

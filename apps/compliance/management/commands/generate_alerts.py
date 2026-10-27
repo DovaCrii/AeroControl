@@ -8,12 +8,15 @@ from django.utils import timezone
 
 from apps.compliance.models import Alert, AlertRule
 from apps.compliance.watchables import (
+    canonical_entity_type,
     resolve_model,
     terminal_statuses,
     watchable_fields,
 )
 from apps.core.jobs import record_job_run
-from apps.registry.selectors import without_departed
+from apps.core.tenancy import FORM_CHOICE_TENANT_PATHS
+from apps.operations.models import FlightPermission
+from apps.registry.selectors import operating_cost_centers, without_departed
 
 logger = logging.getLogger("compliance.alerts")
 
@@ -150,12 +153,33 @@ class Command(BaseCommand):
                     },
                 )
                 continue
+            # LV-372 (F-08): las reglas son **de cada empresa**. Sin este filtro la regla de A
+            # vigilaba también los registros de B (con dos empresas, el seguro vencido de una
+            # aeronave de B generaba una alerta bajo la regla de A, que A veía con la matrícula de
+            # B y B nunca). Falla cerrado: un modelo vigilable sin camino a su empresa no se vigila
+            # (y `test_every_watchable_model_has_a_tenant_path` lo atrapa antes).
+            tenant_entry = FORM_CHOICE_TENANT_PATHS.get(
+                canonical_entity_type(rule.entity_type)
+            )
+            if tenant_entry is None:
+                self.stdout.write(
+                    self.style.WARNING(f"Skipped rule without tenant path: {rule.name}")
+                )
+                logger.warning(
+                    "alert_rule_without_tenant_path_skipped",
+                    extra={"rule_id": str(rule.pk), "entity_type": rule.entity_type},
+                )
+                continue
             content_type = ContentType.objects.get_for_model(model)
             field = rule.field_to_watch
             # LV-369: lo que cuelga de alguien que salió de la empresa (su ficha,
             # sus habilitaciones, sus pruebas, sus documentos) no se vigila: el
             # vencimiento de quien ya no trabaja aquí no es trabajo de nadie.
-            records = without_departed(model.objects.filter(is_active=True))
+            records = without_departed(
+                model.objects.filter(
+                    is_active=True, **{tenant_entry[0]: rule.tenant_id}
+                )
+            )
             # LV-113: fuera los registros que ya no operan, **en las dos ramas**.
             #
             # `LV-90` documentó este defecto y lo corrigió sólo en la rama de
@@ -173,6 +197,12 @@ class Command(BaseCommand):
             retired = terminal_statuses(model)
             if retired and any(f.name == "status" for f in model._meta.fields):
                 records = records.exclude(status__in=retired)
+            # LV-378 fase 4: un permiso de una faena sin operación (cerrada, que
+            # no vuela o archivada) no se renueva, así que no genera el aviso de
+            # renovación 45/30/15. La definición de «con operación» es la de
+            # `operating_cost_centers`, la misma de cobertura e informe.
+            if model is FlightPermission:
+                records = records.filter(cost_center__in=operating_cost_centers())
             # The field is known to be watchable at this point, so branch on its
             # actual type rather than guessing from the name.
             if isinstance(model._meta.get_field(field), models.DateField):

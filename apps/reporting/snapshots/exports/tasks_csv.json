@@ -1,0 +1,9 @@
+{
+ "bom": true,
+ "lines": [
+  "Task,Board,State,Labels,Assignee,Priority,Due,Progress",
+  "'=SENTINEL(1+1),Operations,Personalizado,urgente,Test Operator,Alta,2026-11-03,No steps",
+  "Segunda tarea,Operations,Personalizado,,,Media,,No steps",
+  ""
+ ]
+}

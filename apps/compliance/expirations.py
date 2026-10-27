@@ -38,6 +38,7 @@ from apps.compliance.reports import (
     documents_for_cost_center,
 )
 from apps.compliance.watchables import terminal_statuses
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from apps.operations.models import FlightPermission
 from apps.registry.models import (
     Aircraft,
@@ -192,6 +193,18 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     """
     items = []
 
+    def tenant(queryset, path):
+        """LV-372 (F-08): con `user`, sólo lo de las empresas que esa persona ve.
+
+        Sin `user` no se acota, por la misma razón que no se gatea por permiso (ver `add`): el
+        digest y los informes preguntan por una faena, no por una sesión, y la faena ya es de una
+        sola empresa. Se expresa como subconsulta (`scope_queryset_to_visible_tenants`) para no
+        sumar consultas al panel, que tiene techo (`LV-237`).
+        """
+        if user is None:
+            return queryset
+        return scope_queryset_to_visible_tenants(queryset, user, path)
+
     def code(cost_center_of_the_row):
         """El código de la faena, o "" cuando la fila no tiene ninguna.
 
@@ -251,13 +264,16 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     # LV-369: `without_departed` en las fuentes que cuelgan de una persona. Quien
     # salió de la empresa no deja vencimientos que atender; el motor de alertas
     # aplica la misma exclusión, así que el panel y la bandeja no discrepan.
-    quals = without_departed(
-        Qualification.objects.filter(
-            is_active=True,
-            expiry_date__lte=cutoff,
-            # LV-146: `operator__cost_center` en el `select_related`, o leer la faena
-            # de cada fila costaría una consulta por fila.
-        )
+    quals = tenant(
+        without_departed(
+            Qualification.objects.filter(
+                is_active=True,
+                expiry_date__lte=cutoff,
+                # LV-146: `operator__cost_center` en el `select_related`, o leer la faena
+                # de cada fila costaría una consulta por fila.
+            )
+        ),
+        "operator__tenant_id",
     ).select_related("operator__cost_center", "qualification_type")
     if cost_center:
         quals = quals.filter(operator__cost_center=cost_center)
@@ -277,8 +293,11 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
 
     # LV-29: the DGAC vigencias join the same window -- a lapsing credential or
     # JAC insurance is exactly what "upcoming expirations" is for.
-    credentials = without_departed(
-        Operator.objects.filter(is_active=True, credential_expiry__lte=cutoff)
+    credentials = tenant(
+        without_departed(
+            Operator.objects.filter(is_active=True, credential_expiry__lte=cutoff)
+        ),
+        "tenant_id",
     ).select_related("cost_center")
     if cost_center:
         credentials = credentials.filter(cost_center=cost_center)
@@ -297,7 +316,10 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         )
 
     insured = (
-        Aircraft.objects.filter(is_active=True, insurance_expiry__lte=cutoff)
+        tenant(
+            Aircraft.objects.filter(is_active=True, insurance_expiry__lte=cutoff),
+            "tenant_id",
+        )
         .exclude(status__in=terminal_statuses(Aircraft))
         .select_related("cost_center")
     )
@@ -323,8 +345,13 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     # que nadie ve venir no sirve para eso. Sólo la **última** de cada operador:
     # los intentos anteriores son historial, y su vencimiento ya no es trabajo.
     assessments = (
-        without_departed(
-            KnowledgeAssessment.objects.filter(is_active=True, expires_on__lte=cutoff)
+        tenant(
+            without_departed(
+                KnowledgeAssessment.objects.filter(
+                    is_active=True, expires_on__lte=cutoff
+                )
+            ),
+            "operator__tenant_id",
         )
         .select_related("operator__cost_center")
         .order_by("operator_id", "-taken_at")
@@ -349,13 +376,16 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
             },
         )
 
-    document_qs = without_departed(
-        Document.objects.filter(
-            is_active=True,
-            is_current_version=True,
-            expiry_date__isnull=False,
-            expiry_date__lte=cutoff,
-        )
+    document_qs = tenant(
+        without_departed(
+            Document.objects.filter(
+                is_active=True,
+                is_current_version=True,
+                expiry_date__isnull=False,
+                expiry_date__lte=cutoff,
+            )
+        ),
+        "tenant_id",
     ).select_related("doc_type")
     # LV-146: los documentos **pasan a respetar el filtro por faena**. El
     # docstring de esta función decía que iban siempre "porque cuelgan de una
@@ -396,7 +426,10 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         )
 
     permissions = (
-        FlightPermission.objects.filter(is_active=True, valid_until__lte=cutoff)
+        tenant(
+            FlightPermission.objects.filter(is_active=True, valid_until__lte=cutoff),
+            "cost_center__tenant_id",
+        )
         .exclude(status__in=terminal_statuses(FlightPermission))
         .select_related("cost_center")
     )

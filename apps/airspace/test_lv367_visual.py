@@ -71,7 +71,7 @@ def contrast(a, b):
     return (high + 0.05) / (low + 0.05)
 
 
-LINES = ("prohibited", "restricted", "danger", "naval", "fir")
+LINES = ("prohibited", "restricted", "danger", "naval", "fir", "pending")
 
 
 @pytest.mark.parametrize("name", LINES)
@@ -88,6 +88,17 @@ def test_the_halo_reads_against_the_lightest_tile():
 def test_the_four_zone_colours_are_all_different():
     colours = {_token(f"id-air-line-{name}") for name in LINES[:4]}
     assert len(colours) == 4
+
+
+def test_the_pending_outline_is_dotted_and_unfilled_unlike_the_current_permit():
+    pending = re.search(r"\.air-own-pending\s*\{([^}]*)\}", CSS).group(1)
+    current = re.search(r"\.air-own-permit\s*\{([^}]*)\}", CSS).group(1)
+    dash = re.search(r"stroke-dasharray:\s*([^;]+);", pending).group(1).strip()
+    assert (
+        dash != "6 4"
+        and dash != re.search(r"stroke-dasharray:\s*([^;]+);", current).group(1).strip()
+    )
+    assert "fill: none" in pending and "fill-opacity" not in pending
 
 
 def test_the_label_halo_and_the_airstrip_dot_are_legible():
