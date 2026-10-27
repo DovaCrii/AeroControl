@@ -218,7 +218,32 @@ class MultipleFileField(forms.FileField):
         return [single(data, initial)]
 
 
-class DocumentBulkUploadForm(forms.Form):
+class EntityScopeMixin:
+    """El registro al que se adjunta un documento sólo puede ser de las empresas de la persona.
+
+    LV-372 (F-08). `entity_type` + `object_id` son una referencia genérica: el formulario ofrecía
+    (y la validación aceptaba) cualquier registro activo del modelo elegido, de **cualquier**
+    empresa. `scope_form_choices` llama a `scope_to_user` con quien mira; sin llamarlo (pruebas,
+    consola) no se acota, igual que antes.
+    """
+
+    scope_user = None
+
+    def scope_to_user(self, user):
+        self.scope_user = user
+        raw = self.data.get("entity_type") or self.initial.get("entity_type")
+        if raw:
+            self._populate_object_choices(raw)
+
+    def _entity_records(self, model):
+        from apps.core.tenancy import scope_queryset_for_model
+
+        return scope_queryset_for_model(
+            model._default_manager.filter(is_active=True), self.scope_user
+        )
+
+
+class DocumentBulkUploadForm(EntityScopeMixin, forms.Form):
     """LV-86: several files onto the same record, in one action.
 
     Deliberately **one record and one document type per batch**, not a free
@@ -299,9 +324,7 @@ class DocumentBulkUploadForm(forms.Form):
             return
         self.fields["object_id"].choices = [
             (str(record.pk), str(record))
-            for record in model._default_manager.filter(is_active=True).order_by(
-                "created_at"
-            )
+            for record in self._entity_records(model).order_by("created_at")
         ]
 
     def clean(self):
@@ -310,7 +333,7 @@ class DocumentBulkUploadForm(forms.Form):
         if entity_type and object_id:
             model = entity_type.model_class()
             record = (
-                model._default_manager.filter(pk=object_id, is_active=True).first()
+                self._entity_records(model).filter(pk=object_id).first()
                 if model is not None
                 else None
             )
@@ -351,7 +374,7 @@ class DocumentBulkUploadForm(forms.Form):
         ]
 
 
-class DocumentForm(AeroModelForm):
+class DocumentForm(EntityScopeMixin, AeroModelForm):
     # LV-2: free-text titles drifted (same document type worded differently
     # session to session). Optional here; clean() fills it in from the
     # document type, the related record and the issue date when left blank,
@@ -473,7 +496,7 @@ class DocumentForm(AeroModelForm):
         model = content_type.model_class()
         if model is None:
             return
-        records = model._default_manager.filter(is_active=True).order_by("created_at")
+        records = self._entity_records(model).order_by("created_at")
         choices = [(str(record.pk), str(record)) for record in records]
         self.fields["object_id"].choices = choices
         self.fields["object_id"].help_text = (
@@ -496,7 +519,7 @@ class DocumentForm(AeroModelForm):
         elif entity_type and object_id:
             model = entity_type.model_class()
             record = (
-                model._default_manager.filter(pk=object_id, is_active=True).first()
+                self._entity_records(model).filter(pk=object_id).first()
                 if model is not None
                 else None
             )
@@ -745,6 +768,37 @@ class AlertForm(AeroModelForm):
             "object_id": _("Object id"),
             "message": _("Message"),
         }
+
+    scope_user = None
+
+    def scope_to_user(self, user):
+        """`scope_form_choices` nos dice quién mira (LV-372, F-08). Sin llamarlo (pruebas, consola)
+        el registro sólo tiene que existir, igual que antes."""
+        self.scope_user = user
+
+    def clean(self):
+        """`object_id` es una referencia genérica libre: debe ser un registro **que existe** del
+        tipo elegido y de las empresas de quien crea la alerta. Antes se aceptaba cualquier UUID,
+        incluso inexistente o de otra empresa; esa alerta quedaba colgada de un objeto ajeno."""
+        from apps.core.tenancy import scope_queryset_for_model
+
+        cleaned = super().clean()
+        content_type = cleaned.get("content_type")
+        object_id = cleaned.get("object_id")
+        if content_type is None or object_id is None:
+            return cleaned
+        model = content_type.model_class()
+        found = (
+            model is not None
+            and scope_queryset_for_model(
+                model._default_manager.filter(pk=object_id), self.scope_user
+            ).exists()
+        )
+        if not found:
+            self.add_error(
+                "object_id", _("No record of that type with this id was found.")
+            )
+        return cleaned
 
 
 class DeliverableForm(AeroModelForm):

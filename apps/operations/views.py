@@ -30,7 +30,10 @@ from django.utils.text import capfirst, slugify
 
 from apps.compliance.alerts import resolve_expiry_alerts_for
 from apps.core.audit import add_audit_sibling, set_audit_context
-from apps.core.tenancy import scope_queryset_to_tenant
+from apps.core.tenancy import (
+    scope_queryset_to_tenant,
+    scope_queryset_to_visible_tenants,
+)
 from apps.core.views import (
     CALENDAR_EVENT_PERMISSIONS,
     CalendarAccessMixin,
@@ -93,6 +96,14 @@ from apps.registry.selectors import (
 
 logger = logging.getLogger(__name__)
 
+# LV-372 (F-08): un permiso es de la empresa de su faena; un vuelo, de la de su permiso; una
+# solicitud SIGO, de la de su faena. Un solo lugar para que lista, detalle y acciones coincidan.
+PERMISSION_TENANT_PATH = "cost_center__tenant_id"
+RECORD_TENANT_PATH = "permission__cost_center__tenant_id"
+REQUEST_TENANT_PATH = "cost_center__tenant_id"
+# Un chequeo prevuelo cuelga de una aeronave (sea con vuelo o sin él): la empresa es la suya.
+CHECK_TENANT_PATH = "aircraft__tenant_id"
+
 
 class OList(CsvExportMixin, SearchMixin, ModelViewPermissionRequiredMixin, ListView):
     template_name = "generic/list.html"
@@ -140,6 +151,7 @@ class FlightPermissionList(
     # LV-280: sólo las columnas que tienen un valor propio que ordenar. Operadores
     # y Aeronaves son relaciones M2M (no hay un valor que ordene la fila), así que
     # quedan como encabezado simple. «Vigencia» ordena por la fecha de término.
+    tenant_scope = PERMISSION_TENANT_PATH
     sortable_columns = {
         "number": "internal_folio",
         "cost_center": "cost_center__code",
@@ -414,7 +426,27 @@ class FlightPermissionCreate(OCreate):
             initial["aircraft_fleet"] = list(
                 renewed.aircraft_fleet.values_list("pk", flat=True)
             )
+        elif self.request.method == "GET":
+            # LV-376 (fase 1a): «Nuevo permiso» desde la fila de una faena de Cumplimiento
+            # (`?cost_center=<pk>`). Sólo se precarga lo que el formulario OFRECE (su propio
+            # queryset, activo y dentro de los tenants de la persona): una faena de otra
+            # empresa, archivada, inexistente o un valor que no es un UUID se ignora sin
+            # error y el formulario sale en blanco, como siempre.
+            centre = self._preselected_cost_center()
+            if centre is not None:
+                initial["cost_center"] = centre.pk
         return initial
+
+    def _preselected_cost_center(self):
+        raw = self.request.GET.get("cost_center")
+        if not raw:
+            return None
+        offered = self.form_class.base_fields["cost_center"].queryset.filter(
+            is_active=True
+        )
+        return lookup_by_pk(
+            scope_queryset_to_tenant(offered, self.request.user, "tenant_id"), raw
+        )
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -939,7 +971,13 @@ class PermissionFolioFromPdf(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        permission = get_object_or_404(
+            scope_queryset_to_tenant(
+                self.model.objects.all(), request.user, PERMISSION_TENANT_PATH
+            ),
+            pk=pk,
+            is_active=True,
+        )
         if (permission.permission_number or "").strip():
             messages.info(
                 request,
@@ -1030,7 +1068,15 @@ class NotamReviewCreate(ModelPermissionRequiredMixin, View):
     permission_action = "add"
 
     def _permission(self, pk):
-        return get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        return get_object_or_404(
+            scope_queryset_to_tenant(
+                FlightPermission.objects.all(),
+                self.request.user,
+                PERMISSION_TENANT_PATH,
+            ),
+            pk=pk,
+            is_active=True,
+        )
 
     def get(self, request, pk):
         permission = self._permission(pk)
@@ -1083,7 +1129,7 @@ class RequireDgacPermitPdfMixin:
     missing_pdf_message = None
 
     def post(self, request, pk):
-        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        permission = self.get_object(pk)
         if not has_dgac_authorization(permission):
             messages.error(request, self.missing_pdf_message)
             return redirect(permission)
@@ -1113,7 +1159,7 @@ class CrossCheckDgacWindowMixin:
     window_mismatch_message = None
 
     def post(self, request, pk):
-        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        permission = self.get_object(pk)
         window = read_dgac_window(permission)
         if window is not None:
             start, end = window
@@ -1163,7 +1209,7 @@ class RequireDgacFolioMixin:
     missing_folio_message = None
 
     def post(self, request, pk):
-        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        permission = self.get_object(pk)
         if not (permission.permission_number or "").strip():
             messages.error(request, self.missing_folio_message)
             return redirect(permission)
@@ -1195,7 +1241,7 @@ class RequireValidityWindowMixin:
     missing_validity_message = None
 
     def post(self, request, pk):
-        permission = get_object_or_404(self.model, pk=pk, is_active=True)
+        permission = self.get_object(pk)
         if permission.valid_from is None or permission.valid_until is None:
             messages.error(request, self.missing_validity_message)
             return redirect(permission)
@@ -1210,6 +1256,7 @@ class FlightPermissionApprove(
     StatusTransitionView,
 ):
     model = FlightPermission
+    tenant_scope = PERMISSION_TENANT_PATH
     target_status = "approved"
     valid_from_statuses = ["requested"]
     missing_validity_message = gettext_lazy(
@@ -1235,6 +1282,7 @@ class FlightPermissionApprove(
 
 class FlightPermissionDeny(StatusTransitionView):
     model = FlightPermission
+    tenant_scope = PERMISSION_TENANT_PATH
     target_status = "denied"
     valid_from_statuses = ["requested"]
     success_message = gettext_lazy("Permission denied.")
@@ -1242,6 +1290,7 @@ class FlightPermissionDeny(StatusTransitionView):
 
 class FlightPermissionComplete(RequireDgacPermitPdfMixin, StatusTransitionView):
     model = FlightPermission
+    tenant_scope = PERMISSION_TENANT_PATH
     target_status = "completed"
     valid_from_statuses = ["approved"]
     success_message = gettext_lazy("Permission completed.")
@@ -1481,6 +1530,7 @@ class FlightRecordList(OList):
     model = FlightRecord
     template_name = "operations/record_list.html"
     htmx_template_name = "operations/_record_rows.html"
+    tenant_scope = RECORD_TENANT_PATH
     # LV-280. «Duración» se calcula de dos horas y no es una columna: sin orden.
     sortable_columns = {
         "date": "actual_date",
@@ -1776,7 +1826,7 @@ class FlightRecordDetail(
     model = FlightRecord
     template_name = "operations/flightrecord_detail.html"
     context_object_name = "record"
-    tenant_path = "aircraft__tenant_id"
+    tenant_path = RECORD_TENANT_PATH
 
     def get_queryset(self):
         return (
@@ -1787,10 +1837,13 @@ class FlightRecordDetail(
         )
 
 
-class FlightRecordDelete(ModelPermissionRequiredMixin, DetailView):
+class FlightRecordDelete(
+    TenantScopedQuerysetMixin, ModelPermissionRequiredMixin, DetailView
+):
     model = FlightRecord
     permission_action = "delete"
     context_object_name = "object"
+    tenant_path = RECORD_TENANT_PATH
 
     def post(self, request, *args, **kwargs):
         record = self.get_object()
@@ -1852,8 +1905,16 @@ class CalendarView(CalendarAccessMixin, ListView):
             # every day of the month it actually covers -- not just its
             # start. select_related -> prefetch_related: operators/aircraft
             # are now M2M, and select_related only ever worked on FK/O2O.
-            for permission in FlightPermission.objects.filter(
-                valid_from__lte=month_end, valid_until__gte=month_start, is_active=True
+            # LV-372 (F-08): el calendario dibujaba los permisos y las mantenciones de todas las
+            # empresas (el de eventos `calendar-events` ya acotaba; esta página, no).
+            for permission in scope_queryset_to_visible_tenants(
+                FlightPermission.objects.filter(
+                    valid_from__lte=month_end,
+                    valid_until__gte=month_start,
+                    is_active=True,
+                ),
+                self.request.user,
+                PERMISSION_TENANT_PATH,
             ).prefetch_related("operators", "aircraft_fleet"):
                 first_day = max(permission.valid_from, month_start)
                 last_day = min(permission.valid_until, month_end)
@@ -1862,8 +1923,12 @@ class CalendarView(CalendarAccessMixin, ListView):
                     events.setdefault(day, []).append(("permission", permission))
                     day += timedelta(days=1)
         if "maintenance" in allowed_types:
-            for record in MaintenanceRecord.objects.filter(
-                scheduled_date__range=(month_start, month_end), is_active=True
+            for record in scope_queryset_to_visible_tenants(
+                MaintenanceRecord.objects.filter(
+                    scheduled_date__range=(month_start, month_end), is_active=True
+                ),
+                self.request.user,
+                "aircraft__tenant_id",
             ).select_related("aircraft"):
                 events.setdefault(record.scheduled_date, []).append(
                     ("maintenance", record)
@@ -1973,6 +2038,7 @@ class FlightRequestList(
         "status": "status",
     }
     search_fields = ["title", "commune", "area_name"]
+    tenant_scope = REQUEST_TENANT_PATH
 
     def get_queryset(self):
         queryset = (
@@ -2030,6 +2096,7 @@ class FlightRequestDetail(
     model = FlightRequest
     template_name = "operations/flight_request_detail.html"
     context_object_name = "request_obj"
+    tenant_path = REQUEST_TENANT_PATH
 
     def get_queryset(self):
         return (
@@ -2070,11 +2137,27 @@ class FlightRequestUpdate(
     form_class = FlightRequestForm
     template_name = "generic/form.html"
     permission_action = "change"
+    tenant_path = REQUEST_TENANT_PATH
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("Edit flight request")
         return context
+
+
+def scoped_request_or_404(request, pk, **filters):
+    """La solicitud SIGO `pk` **si es de una empresa de la persona**; la de otra es 404 (LV-372).
+
+    Las acciones sobre una solicitud (nota, par, vínculo, KMZ) la buscaban por `pk` a secas:
+    con el identificador de otra empresa respondían como si fuera propia."""
+    filters.setdefault("is_active", True)
+    return get_object_or_404(
+        scope_queryset_to_visible_tenants(
+            FlightRequest.objects.all(), request.user, REQUEST_TENANT_PATH
+        ),
+        pk=pk,
+        **filters,
+    )
 
 
 class FlightRequestKmz(ModelViewPermissionRequiredMixin, View):
@@ -2083,7 +2166,7 @@ class FlightRequestKmz(ModelViewPermissionRequiredMixin, View):
     model = FlightRequest
 
     def get(self, request, pk):
-        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        obj = scoped_request_or_404(request, pk)
         if not obj.section_content:
             messages.error(request, _("This request has no geometry to export."))
             return redirect(obj)
@@ -2104,7 +2187,7 @@ class FlightRequestAddNote(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        obj = scoped_request_or_404(request, pk)
         form = FlightRequestNoteForm(request.POST)
         if form.is_valid():
             note = form.save(commit=False)
@@ -2124,7 +2207,7 @@ class FlightRequestAddWorkItem(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        obj = scoped_request_or_404(request, pk)
         form = FlightRequestWorkItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
@@ -2151,7 +2234,7 @@ class FlightRequestRemoveWorkItem(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk, item_pk):
-        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        obj = scoped_request_or_404(request, pk)
         FlightRequestWorkItem.objects.filter(pk=item_pk, request=obj).delete()
         return redirect(obj)
 
@@ -2160,6 +2243,7 @@ class FlightRequestFile(StatusTransitionView):
     """Marcar la solicitud como presentada en SIGO."""
 
     model = FlightRequest
+    tenant_scope = REQUEST_TENANT_PATH
     target_status = FlightRequest.STATUS_FILED
     valid_from_statuses = [FlightRequest.STATUS_PREPARED]
     success_message = gettext_lazy("Recorded as filed in SIGO.")
@@ -2169,7 +2253,7 @@ class FlightRequestFile(StatusTransitionView):
         # La fecha de presentación es lo que hace medible la espera
         # (`days_waiting`). Se pone acá y no en el formulario porque el acto de
         # presentar y la fecha en que ocurrió son el mismo hecho.
-        obj = get_object_or_404(FlightRequest, pk=pk)
+        obj = get_object_or_404(self.get_queryset(), pk=pk)
         if obj.status == FlightRequest.STATUS_FILED and not obj.filed_on:
             obj.filed_on = timezone.localdate()
             obj.save(update_fields=["filed_on", "updated_at"])
@@ -2178,6 +2262,7 @@ class FlightRequestFile(StatusTransitionView):
 
 class FlightRequestClose(StatusTransitionView):
     model = FlightRequest
+    tenant_scope = REQUEST_TENANT_PATH
     target_status = FlightRequest.STATUS_CLOSED
     valid_from_statuses = [FlightRequest.STATUS_LINKED, FlightRequest.STATUS_FILED]
     success_message = gettext_lazy("Request closed.")
@@ -2190,7 +2275,7 @@ class FlightRequestLink(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        obj = get_object_or_404(FlightRequest, pk=pk, is_active=True)
+        obj = scoped_request_or_404(request, pk)
         permission = FlightPermission.objects.filter(
             pk=request.POST.get("permission"),
             cost_center=obj.cost_center,
@@ -2568,7 +2653,11 @@ class PreflightCheckView(ModelPermissionRequiredMixin, View):
 
     def _record(self, pk):
         return get_object_or_404(
-            FlightRecord.objects.select_related("aircraft", "pilot", "permission"),
+            scope_queryset_to_visible_tenants(
+                FlightRecord.objects.select_related("aircraft", "pilot", "permission"),
+                self.request.user,
+                RECORD_TENANT_PATH,
+            ),
             pk=pk,
             is_active=True,
         )
@@ -2674,7 +2763,13 @@ class PreflightStartView(ModelPermissionRequiredMixin, View):
     permission_action = "add"
 
     def post(self, request, pk):
-        permission = get_object_or_404(FlightPermission, pk=pk, is_active=True)
+        permission = get_object_or_404(
+            scope_queryset_to_visible_tenants(
+                FlightPermission.objects.all(), request.user, PERMISSION_TENANT_PATH
+            ),
+            pk=pk,
+            is_active=True,
+        )
         # La aeronave sale **de la flota del permiso**: un chequeo de una aeronave que
         # el permiso no cubre no serviría de evidencia de ese permiso.
         aircraft = get_object_or_404(
@@ -2714,12 +2809,15 @@ class StandalonePreflightView(ModelPermissionRequiredMixin, View):
     model = FlightRecord
     permission_action = "change"
 
-    @staticmethod
-    def _check(pk):
+    def _check(self, pk):
         return get_object_or_404(
-            PreflightCheck.objects.select_related(
-                "permission", "aircraft", "signed_by"
-            ).filter(is_active=True),
+            scope_queryset_to_visible_tenants(
+                PreflightCheck.objects.select_related(
+                    "permission", "aircraft", "signed_by"
+                ).filter(is_active=True),
+                self.request.user,
+                CHECK_TENANT_PATH,
+            ),
             pk=pk,
         )
 
@@ -2762,7 +2860,13 @@ class StandalonePreflightSignView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        check = get_object_or_404(PreflightCheck, pk=pk, is_active=True)
+        check = get_object_or_404(
+            scope_queryset_to_visible_tenants(
+                PreflightCheck.objects.all(), request.user, CHECK_TENANT_PATH
+            ),
+            pk=pk,
+            is_active=True,
+        )
         try:
             check.sign(request.user)
         except ValidationError as error:
@@ -2795,7 +2899,13 @@ class PreflightSignView(ModelPermissionRequiredMixin, View):
     permission_action = "change"
 
     def post(self, request, pk):
-        record = get_object_or_404(FlightRecord, pk=pk, is_active=True)
+        record = get_object_or_404(
+            scope_queryset_to_visible_tenants(
+                FlightRecord.objects.all(), request.user, RECORD_TENANT_PATH
+            ),
+            pk=pk,
+            is_active=True,
+        )
         check = getattr(record, "preflight_check", None)
         if check is None:
             raise Http404("There is no preflight check on this flight.")

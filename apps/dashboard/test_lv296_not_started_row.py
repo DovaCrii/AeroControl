@@ -88,7 +88,7 @@ class TestTheRowSaysWhenItStarts:
         marker = 'cc-chip me-2">CC684'
         row = html.split(marker)[1].split("</tr>")[0]
 
-        assert start.strftime("%d/%m") in row
+        assert start.strftime("%d-%m") in row
         tr_open = html[: html.index(marker)].rsplit("<tr", 1)[1].split(">")[0]
         assert "row-awaiting" in tr_open
         assert "row-critical" not in tr_open

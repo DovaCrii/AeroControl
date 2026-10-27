@@ -179,7 +179,9 @@ class TestOnThePanel:
 
         content = self._content(client, django_user_model)
 
-        assert "Ninguno" in content
+        assert (
+            "Sin permiso" in content
+        )  # LV-376: el chip dice «Sin permiso» (antes «Ninguno»)
 
     def test_the_table_left_the_panel_and_the_slot_carries_its_anchor(
         self, client, django_user_model

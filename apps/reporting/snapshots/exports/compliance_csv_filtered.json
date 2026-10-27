@@ -1,0 +1,16 @@
+{
+ "bom": true,
+ "lines": [
+  "Reporte de estado documental",
+  "Generado,2026-10-26",
+  "",
+  "Centro de costo,Nombre,Documentos,Vigentes,% vigentes,Vencidos,Vence <=7d,Vence <=15d,Vence <=30d",
+  "FAENA-02,Faena Sur,0,0,0.0,0,0,0,0",
+  "TOTAL,,0,0,0.0,0,0,0,0",
+  "",
+  "Alertas abiertas",
+  "Entidad,Tipo,Regla,Detectada,Antigüedad (días)",
+  "en 3 dias,Documento,Documentos por vencer,2026-10-26,0",
+  ""
+ ]
+}

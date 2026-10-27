@@ -700,6 +700,43 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         entity = self.content_object
         return f"{self.alert_rule.name} · {entity}" if entity else self.alert_rule.name
 
+    def clean(self):
+        """LV-372 (F-08): la empresa del objeto es la de la regla.
+
+        Las reglas son **de cada empresa** y la bandeja acota las alertas por la de su regla
+        (`alert_rule__tenant_id`): una alerta de la regla de A sobre un objeto de B la vería A con
+        datos de B, y B nunca. `generate_alerts` ya sólo vigila los registros de la empresa de la
+        regla; esto cierra el mismo hueco para la alta manual, el admin y cualquier import. Un
+        modelo que no figura en `FORM_CHOICE_TENANT_PATHS` (global) o un objeto que ya no existe
+        no se juzgan acá.
+        """
+        super().clean()
+        if not (self.alert_rule_id and self.content_type_id and self.object_id):
+            return
+        from apps.core.tenancy import FORM_CHOICE_TENANT_PATHS
+
+        model = self.content_type.model_class()
+        if model is None:
+            return
+        entry = FORM_CHOICE_TENANT_PATHS.get(
+            f"{model._meta.app_label}.{model._meta.model_name}"
+        )
+        if entry is None:
+            return
+        owner = (
+            model._default_manager.filter(pk=self.object_id)
+            .values_list(entry[0], flat=True)
+            .first()
+        )
+        if owner is not None and owner != self.alert_rule.tenant_id:
+            raise ValidationError(
+                {
+                    "object_id": _(
+                        "The record belongs to a different organization than the alert rule."
+                    )
+                }
+            )
+
     def _watched_value(self):
         field = self.alert_rule.field_to_watch
         return getattr(self.content_object, field, None)

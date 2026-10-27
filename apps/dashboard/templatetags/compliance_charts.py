@@ -132,6 +132,76 @@ def render_sparkline(values, uid, title, desc, width=120, height=28, pad=3):
     return "".join(parts)
 
 
+def render_stack(parts, uid, title, desc, width=240, height=14, gap=1):
+    """Barra apilada de una categoría (LV-376, fase 2). `parts`: [(clase_css, valor)]; el valor 0 no se dibuja.
+
+    Cada tramo es un `<rect>` con ancho proporcional a su cifra (mínimo 3 px para que un 1 entre 40 se
+    vea) y un hueco de `gap` entre tramos. `role="img"` con `<title>` y `<desc>`: la cifra va impresa
+    fuera de la imagen, en la plantilla. Con todos los tramos en cero no hay barra.
+    """
+    parts = [(css, int(value)) for css, value in parts if int(value) > 0]
+    if not parts:
+        return ""
+    usable = width - gap * (len(parts) - 1)
+    total = sum(value for _css, value in parts)
+    widths = [max(usable * value / total, 3) for _css, value in parts]
+    scale = min(1, usable / sum(widths))
+    out = [
+        _head(uid, title, desc, width, height, "id-cx-stack-svg"),
+        f'<rect class="id-cx-stk-track" x="0" y="0" width="{_n(width)}" '
+        f'height="{_n(height)}" rx="3"/>',
+    ]
+    x = 0.0
+    for (css, _value), size in zip(parts, widths, strict=True):
+        size *= scale
+        out.append(
+            f'<rect class="id-cx-stk {escape(css)}" x="{_n(x)}" y="0" '
+            f'width="{_n(size)}" height="{_n(height)}" rx="2"/>'
+        )
+        x += size + gap
+    out.append("</svg>")
+    return "".join(out)
+
+
+@register.simple_tag
+def stack(parts, uid, title, desc, width=240):
+    return mark_safe(render_stack(parts, uid, title, desc, width))  # nosec B308 B703
+
+
+def render_daybar(days, width=128, height=14, horizon=90, marks=(30, 60)):
+    """Barra de días 0 a `horizon` con marcas en 30 y 60 (LV-376, fase 1b). Decorativa: `aria-hidden`.
+
+    La fecha y «en N días» van impresas al lado, así que el dibujo no lleva `<title>` ni `role`. El
+    color sale de la clase (`id-cx-day--soon|mid|far`), nunca de un `style`; la geometría, de atributos.
+    Escala de PERMISOS: hasta 30 días ámbar, hasta 60 cian, más allá verde.
+    """
+    days = int(days)
+    clamped = min(max(days, 0), horizon)
+    fill = max(width * clamped / horizon, 3)
+    css = "soon" if days <= marks[0] else ("mid" if days <= marks[1] else "far")
+    top, bar = 3, height - 6
+    parts = [
+        f'<svg class="id-cx-svg id-cx-daybar" width="{_n(width)}" height="{_n(height)}" '
+        f'viewBox="0 0 {_n(width)} {_n(height)}" aria-hidden="true" focusable="false">',
+        f'<rect class="id-cx-day-track" x="0" y="{top}" width="{_n(width)}" '
+        f'height="{bar}" rx="3"/>',
+        f'<rect class="id-cx-day-fill id-cx-day--{css}" x="0" y="{top}" '
+        f'width="{_n(fill)}" height="{bar}" rx="3"/>',
+    ]
+    for mark in marks:
+        x = width * mark / horizon
+        parts.append(
+            f'<line class="id-cx-day-mark" x1="{_n(x)}" y1="0" x2="{_n(x)}" y2="{_n(height)}"/>'
+        )
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+@register.simple_tag
+def daybar(days, width=128):
+    return mark_safe(render_daybar(days, width))  # nosec B308 B703
+
+
 # Retirada de PANTALLA (LV-367, fase 4), no de código: «Cumplimiento» ya no dibuja anillos, pero la etiqueta
 # sigue registrada y probada. Condición de cierre (paso 2): borrar `ring`, `render_ring` y las reglas
 # `.id-cx-seg*`/`.id-cx-track`/`.id-cx-ring-*` de `identity.css` cuando NINGUNA plantilla la use durante un

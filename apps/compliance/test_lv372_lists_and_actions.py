@@ -1,11 +1,11 @@
-"""LV-372: fugas de aislamiento por empresa **fuera del alcance** de la fila, demostradas.
+"""LV-372: listas y transiciones de otras apps que fugaban entre empresas, ya cerradas.
 
 Al auditar `geo`, el panel y los vencimientos con dos empresas aparecieron listados y acciones de
-**otras apps** que tampoco acotan por tenant. No se arreglan aquí (la fila lo prohíbe: otra app,
-otro bloque); se dejan **demostradas** con `xfail(strict=True)`: cada caso afirma lo correcto
-(la otra empresa no aparece / es 404) y hoy falla. Cuando alguien acote la vista, el caso pasa,
-`strict` lo convierte en error y obliga a quitar la marca: la deuda no se puede cerrar sin que
-esta prueba lo note. Ver `MASTER_PLAN.md`, fila LV-372. Datos ficticios.
+**otras apps** que tampoco acotaban por tenant. La primera tanda los dejó demostrados con
+`xfail(strict=True)`; la segunda los acotó y estas pruebas pasaron a normales (`strict` obligó a
+quitar la marca). Siguen aquí como guardián de los seis listados y las dos transiciones que dieron
+el aviso; el barrido completo está en `test_lv372_two_tenants.py`. Ver `MASTER_PLAN.md`, fila
+LV-372. Datos ficticios.
 """
 
 from datetime import time
@@ -63,9 +63,6 @@ def other_tenant_rows(world):  # noqa: F811
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("url_name,needle", LEAKING_LISTS)
-@pytest.mark.xfail(
-    strict=True, reason="LV-372: lista fuera de alcance sin acotar por tenant"
-)
 def test_list_hides_the_other_tenant(other_tenant_rows, url_name, needle):
     client = _client(other_tenant_rows, *LIST_PERMS)
     response = client.get(reverse(url_name))
@@ -74,9 +71,6 @@ def test_list_hides_the_other_tenant(other_tenant_rows, url_name, needle):
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(
-    strict=True, reason="LV-372: StatusTransitionView sin tenant_scope fuera de geo"
-)
 def test_maintenance_transition_of_the_other_tenant_is_404(other_tenant_rows):
     record = MaintenanceRecord.objects.get(aircraft=other_tenant_rows["b"]["aircraft"])
     client = _client(other_tenant_rows, "change_maintenancerecord")
@@ -86,9 +80,6 @@ def test_maintenance_transition_of_the_other_tenant_is_404(other_tenant_rows):
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(
-    strict=True, reason="LV-372: StatusTransitionView sin tenant_scope fuera de geo"
-)
 def test_permit_transition_of_the_other_tenant_is_404(other_tenant_rows):
     permit = other_tenant_rows["b"]["permit"]
     client = _client(other_tenant_rows, "change_flightpermission")

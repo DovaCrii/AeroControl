@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.compliance.report_views import build_report_workbook_bytes
+from apps.reporting.export import dated_filename
 from apps.compliance.reports import build_compliance_report, compare_periods
 from apps.core.groups import REPORT_RECIPIENTS, direction_emails
 from apps.core.jobs import record_job_run
@@ -123,7 +124,7 @@ class Command(BaseCommand):
             "text/html",
         )
         message.attach(
-            f"aerocontrol-cumplimiento-{report['generated_on'].isoformat()}.xlsx",
+            dated_filename("aerocontrol-cumplimiento", report["generated_on"], "xlsx"),
             build_report_workbook_bytes(report),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )

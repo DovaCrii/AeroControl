@@ -1,48 +1,75 @@
-{% load i18n static aero_tags %}{% comment %}LV-359 (fase 4) y LV-367 (fase 4): «Permisos por faena», SIMPLE. El cálculo es uno: `kpis.permit_status_by_cost_center` y `permit_band` (30/60 días), nada se recalcula aquí. Tres columnas: Faena, Estado (UN chip con símbolo y palabra) y Próximo vencimiento (días y fecha, con el medidor 0 a 90 sólo como ayuda visual); todo lo demás (permisos vivos, cuántos vencen pronto, esperando o con vigencia pasada) va en el `<details>` de la celda de la faena. LV-374: salen TODAS las faenas, también las vigentes, en el orden de atención (sin permiso, por empezar, esperando, 30/60 días, vigentes); el contador del encabezado es el número de filas, y `?all=1` se acepta sin efecto. Columnas ordenables con `?sort=&dir=` y lista permitida en Python (`worktable_th` pone `aria-sort`; el enlace lleva su propia ruta porque el fragmento se pinta dentro del panel). No hay `colspan` ni `.table-normalized`. La sección entera es un `<details>` abierto sólo si hay un problema (`cx_open.permits`). Sólo con `view_flightpermission` (`cx_blocks.permits`).{% endcomment %}
+{% load i18n static aero_tags compliance_charts %}{% comment %}LV-359 (fase 4), LV-367 (fase 4) y LV-376 (fase 1b): «Permisos por faena», v4. El cálculo es uno: `kpis.permit_status_by_cost_center` y `permit_band` (30/60 días), nada se recalcula aquí. Encima, el resumen («11 faenas: 2 sin permiso · 3 esperando · ...»): cada trozo es un enlace `?state=` con lista permitida y sus cifras son SIEMPRE las totales; el cuadro de búsqueda `q` sólo existe en la página completa (`cx_full_page`). Columnas: Faena (con sus contadores debajo), Estado (chip SÓLIDO con símbolo y palabra, `.id-cx-state`), Qué hay que hacer (una frase y su enlace, que sólo existe con el permiso de quien mira; debajo el `<details>` con los permisos y sus fechas) y Próximo vencimiento (fecha, «en N días» y la barra `daybar` con marcas en 30 y 60: decorativa, la fecha y las palabras llevan el significado). Salen TODAS las faenas por omisión (LV-374), primero las que no pueden volar hoy. La clase `row-critical`/`row-awaiting` del `<tr>` se conserva y dentro de `.id-cx-permits` se dibuja como filete de 4 px, no como tinte entero. A 375 px cada fila es una tarjeta (`td::before { content: attr(data-cx-label) }`, sin `style=""`; el atributo es propio y no `data-label` porque `worktable.js` reescribe ese con el texto del `<th>`, flechita de orden incluida). Columnas ordenables con `?sort=&dir=` y lista permitida en Python (`worktable_th` pone `aria-sort`; el enlace lleva su propia ruta porque el fragmento se pinta dentro del panel). No hay `colspan` ni `.table-normalized`. La sección entera es un `<details>` abierto sólo si hay un problema (`cx_open.permits`). Sólo con `view_flightpermission` (`cx_blocks.permits`).{% endcomment %}
 <details class="id-cx-fold" data-cx-block="permits" id="cx-permits"{% if cx_open.permits %} open{% endif %}>
   <summary><span>{% translate "Flight permits by cost center" %}</span> <b class="id-cx-count">{{ cx_permits.total }}</b></summary>
+  <p class="id-cx-sub">{% translate "One row per site that flies; sites that cannot fly today come first." %}</p>
   <div class="id-cx-permits-head">
+    {% if cx_permits.tally %}
+    <nav class="id-cx-tally" data-cx-tally aria-label="{% translate 'Filter the sites by status' %}">
+      <span class="id-cx-tally-total">{{ cx_permits.tally_total }}</span>
+      <ul>
+        {% for item in cx_permits.tally %}<li><a class="id-cx-tally-item id-cx-tally-item--{{ item.tone }}" href="{{ item.url }}"{% if item.active %} aria-current="true"{% endif %}><span aria-hidden="true">{{ item.symbol }}</span> <b>{{ item.n }}</b> {{ item.label }}</a></li>{% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
     <a class="id-cx-link" href="{% url 'permission-list' %}{% if cx_cost_center %}?cost_center={{ cx_cost_center.pk }}{% endif %}">{% translate "Open the permits" %}</a>
   </div>
+  {% if cx_full_page %}
+  <form class="id-cx-find" method="get" action="{% url 'dashboard-compliance' %}#cx-permits" role="search">
+    {% for name, value in cx_permits.hidden_params %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+    <label for="cx-q">{% translate "Find a site" %}</label>
+    <input id="cx-q" class="form-control form-control-sm" type="search" name="q" value="{{ cx_permits.query }}" maxlength="60" placeholder="{% translate 'Code or name' %}" autocomplete="off">
+    <button type="submit" class="btn btn-sm btn-outline-secondary">{% translate "Search" %}</button>
+  </form>
+  {% endif %}
+  {% if cx_permits.filtered %}<p class="id-cx-note" data-cx-showing>{{ cx_permits.showing }} · <a href="{{ cx_permits.show_all_url }}">{% translate "Show all" %}</a></p>{% endif %}
   {% if cx_permits.rows %}
   <div class="id-cx-permits-wrap">
-    <table class="table table-sm table-hover mb-0 id-cx-permits">
+    <table class="table table-hover mb-0 id-cx-permits">
       <caption class="visually-hidden">{{ cx_permits.title }}</caption>
       <thead>
         <tr>
           {% worktable_th _("Cost center") "code" %}
           {% worktable_th _("Status") "status" %}
+          <th scope="col">{% translate "What to do" %}</th>
           {% worktable_th _("Next expiry") "days" %}
         </tr>
       </thead>
       <tbody>
         {% for row in cx_permits.rows %}
-        <tr{% if row.row_class %} class="{{ row.row_class }}"{% endif %}>
-          <td class="id-cx-site">
+        <tr{% if row.row_class %} class="{{ row.row_class }}"{% endif %} data-kind="{{ row.kind }}">
+          <td class="id-cx-site" data-cx-label="{% translate 'Cost center' %}">
+            <span class="cc-chip me-2">{{ row.cost_center.code }}</span>{% if row.site_url %}<a class="id-cx-site-name" href="{{ row.site_url }}">{{ row.cost_center.name }}</a>{% else %}<span class="id-cx-site-name">{{ row.cost_center.name }}</span>{% endif %}
+            <p class="id-cx-note id-cx-site-counts">{{ row.counts_text }}</p>
+          </td>
+          <td class="id-cx-statecell" data-cx-label="{% translate 'Status' %}"><span class="id-cx-state id-cx-state--{{ row.chip.tone }}"><span aria-hidden="true">{{ row.chip.symbol }}</span> {{ row.chip.label }}</span></td>
+          <td class="id-cx-todo" data-cx-label="{% translate 'What to do' %}">
+            <p class="id-cx-todo-text">{% if row.action.url %}<a href="{{ row.action.url }}">{{ row.action.text }} <span aria-hidden="true">→</span></a>{% else %}{{ row.action.text }}{% endif %}</p>
+            {% if row.past_text %}<p class="id-cx-note id-cx-past-note"><a href="{{ row.url }}">{{ row.past_text }} <span aria-hidden="true">→</span></a></p>{% endif %}
             <details class="id-cx-site-details">
-              <summary><span class="cc-chip me-2">{{ row.cost_center.code }}</span>{{ row.cost_center.name }}</summary>
+              <summary>{% translate "Permits and dates" %}</summary>
               <p class="id-cx-note id-cx-counts">{% blocktranslate with in_force=row.in_force soon=row.soon awaiting=row.awaiting past=row.past %}In force {{ in_force }} · expiring soon {{ soon }} · awaiting {{ awaiting }} · past validity {{ past }}{% endblocktranslate %}</p>
               {% if row.permits %}
               <ul class="id-cx-permit-list">
                 {% for permit in row.permits %}
-                <li><a href="{{ permit.url }}"><b>{{ permit.folio }}</b></a> · {{ permit.purpose }} · {% if permit.valid_from and permit.valid_until %}{{ permit.valid_from|date:"Y-m-d" }} → {{ permit.valid_until|date:"Y-m-d" }}{% else %}{% translate "No validity yet" %}{% endif %} · {% if permit.awaiting %}<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> {{ permit.status }}</span>{% else %}<span class="id-chip id-chip--ok"><span aria-hidden="true">●</span> {{ permit.status }}</span>{% endif %}</li>
+                <li><a href="{{ permit.url }}"><b>{{ permit.folio }}</b></a> · {{ permit.purpose }} · {% if permit.valid_from and permit.valid_until %}{{ permit.valid_from|date:"d-m-Y" }} → {{ permit.valid_until|date:"d-m-Y" }}{% else %}{% translate "No validity yet" %}{% endif %} · {% if permit.awaiting %}<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> {{ permit.status }}</span>{% else %}<span class="id-chip id-chip--ok"><span aria-hidden="true">●</span> {{ permit.status }}</span>{% endif %}</li>
                 {% endfor %}
               </ul>
               {% if row.more %}<p class="id-cx-note">{% blocktranslate count counter=row.more %}and {{ counter }} more permit{% plural %}and {{ counter }} more permits{% endblocktranslate %}</p>{% endif %}
               {% else %}
               <p class="id-cx-note">{% translate "No live permits." %}</p>
               {% endif %}
-              <p class="id-cx-note"><a href="{{ row.url }}">{% translate "Open the permits" %} <span aria-hidden="true">→</span></a></p>
+              <p class="id-cx-note"><a href="{{ row.url }}">{% translate "Open the permits" %} <span aria-hidden="true">→</span></a>{% if row.new_url %} · <a href="{{ row.new_url }}">{% translate "New permit for this site" %} <span aria-hidden="true">→</span></a>{% endif %}</p>
             </details>
           </td>
-          <td>{% if row.state == "in_force" %}<span class="id-chip id-chip--{{ row.band_tone }}"><span aria-hidden="true">{{ row.band_symbol }}</span> {% if row.band == "nominal" %}{% translate "Permit in force" %}{% else %}{{ row.band_label }}{% endif %}</span>{% elif row.state == "awaiting" %}<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> {% translate "Awaiting" %}</span>{% elif row.state == "not_started" %}<span class="id-chip id-chip--warning"><span aria-hidden="true">▲</span> {% blocktranslate with date=row.next_start|date:"d/m" %}Starts {{ date }}{% endblocktranslate %}</span>{% else %}<span class="id-chip id-chip--critical"><span aria-hidden="true">✕</span> {% translate "None" %}</span>{% endif %}</td>
-          <td>{% if row.meter is not None %}<span class="id-cx-days"><meter class="id-cx-meter" min="0" max="90" low="30" high="60" optimum="90" value="{{ row.meter }}" aria-hidden="true">{{ row.days_text }}</meter> <b aria-hidden="true">{{ row.days_text }}</b><span class="visually-hidden">{% blocktranslate count days=row.days_remaining %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktranslate %}</span></span> <span class="id-cx-date">{{ row.next_expiry|date:"Y-m-d" }}</span>{% else %}<span class="id-cx-zero"><span aria-hidden="true">·</span><span class="visually-hidden">{% translate "No expiry date" %}</span></span>{% endif %}</td>
+          <td class="id-cx-expiry" data-cx-label="{% translate 'Next expiry' %}">{% if row.next_expiry %}<span class="id-cx-date"><b>{{ row.next_expiry|date:"d-m-Y" }}</b> <span class="id-cx-in">{{ row.in_text }}</span></span> {% daybar row.days_bar %}{% else %}<span class="id-cx-zero"><span aria-hidden="true">·</span><span class="visually-hidden">{% translate "No expiry date" %}</span></span>{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <p class="id-cx-legend">{% translate "✕ no permit in force, or 30 days or less · ▲ awaiting, not started yet, or 60 days or less · ● more than 60 days. The meter shows the days left of the first permit to expire (0 to 90); the number and the word carry the meaning." %}</p>
+  <p class="id-cx-legend">{% translate "✕ no permit · ◐ waiting for the DGAC, or approved and not started yet · ▲ renew now (30 days or less) · ◆ renew soon (31 to 60 days) · ● up to date (over 60 days). The bar shows the days left of the first permit to expire (0 to 90) with marks at 30 and 60; the word and the date carry the meaning." %}</p>
+  {% elif cx_permits.filtered %}
+  <p class="id-cx-note">{% translate "No site matches this filter." %} <a href="{{ cx_permits.show_all_url }}">{% translate "Show all" %}</a></p>
   {% else %}
   {% translate "No sites with flight operations." as no_sites %}{% include "generic/_signal.html" with kind="ok" text=no_sites %}
   {% endif %}
