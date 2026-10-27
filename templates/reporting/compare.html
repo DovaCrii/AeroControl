@@ -44,6 +44,7 @@ no deja ver contra qué.{% endcomment %}
 
 <section class="card p-3 mb-3">
   <h2 class="h5">{% translate "Indicators" %}</h2>
+  {% if layouts %}<p class="small mb-2"><strong>{% blocktranslate with before=layouts.0 now=layouts.1 %}Document format: v{{ before }} → v{{ now }}. Some figures changed because of how they are counted, not only because of what happened.{% endblocktranslate %}</strong></p>{% endif %}
   <p class="text-muted small mb-2">{% blocktranslate count counter=changed_count %}{{ counter }} indicator changed.{% plural %}{{ counter }} indicators changed.{% endblocktranslate %}</p>
   <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">

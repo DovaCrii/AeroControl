@@ -5,18 +5,29 @@ controlled-template DOCX), and reads its numbers from apps.compliance.reports
 so the screen, the spreadsheet and the executive email cannot disagree.
 """
 
-import csv
 from datetime import datetime, timedelta
-from io import BytesIO
 
-from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import TemplateView, View
 
 from apps.core.exports import neutralize
+from apps.core.tenancy import scope_queryset_to_visible_tenants
 from apps.core.views import ModelViewPermissionRequiredMixin, lookup_by_pk
 from apps.registry.models import CostCenter
+from apps.reporting.export import (
+    CSV_TYPE,
+    DOCX_TYPE,
+    XLSX_TYPE,
+    Table,
+    cost_center_filter,
+    dated_filename,
+    download,
+    to_csv,
+    to_docx,
+    to_xlsx,
+)
+from apps.registry.selectors import cost_center_universe, universe_sentence
 from .digest import BUCKETS
 from .models import Document, DocumentType
 from .reports import (
@@ -51,12 +62,8 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         # Same timezone as the report's own period bounds; see reports.py.
         end = _parse_date(request.GET.get("end")) or timezone.localdate()
         start = _parse_date(request.GET.get("start")) or (end - timedelta(days=30))
-        cost_center = None
+        cost_center = cost_center_filter(request.GET, request.user)
         doc_type = None
-        if request.GET.get("cost_center"):
-            cost_center = lookup_by_pk(
-                CostCenter.objects.filter(is_active=True), request.GET["cost_center"]
-            )
         if request.GET.get("doc_type"):
             doc_type = lookup_by_pk(
                 DocumentType.objects.filter(is_active=True), request.GET["doc_type"]
@@ -66,7 +73,11 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
     def report_for(self, request):
         start, end, cost_center, doc_type = self._filters(request)
         return build_compliance_report(
-            start=start, end=end, cost_center=cost_center, doc_type=doc_type
+            start=start,
+            end=end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
 
     def report_and_comparison_for(self, request):
@@ -88,18 +99,28 @@ class ComplianceReportMixin(ModelViewPermissionRequiredMixin):
         """
         start, end, cost_center, doc_type = self._filters(request)
         current = build_compliance_report(
-            start=start, end=end, cost_center=cost_center, doc_type=doc_type
+            start=start,
+            end=end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
         prev_start, prev_end = previous_period(start, end)
         previous = build_compliance_report(
-            start=prev_start, end=prev_end, cost_center=cost_center, doc_type=doc_type
+            start=prev_start,
+            end=prev_end,
+            cost_center=cost_center,
+            doc_type=doc_type,
+            user=request.user,
         )
         snapshot = None
         # A doc_type filter narrows the report in a way the snapshot does not
         # record (snapshots are unfiltered), so comparing against one would be
         # apples to oranges. Only substitute when the view is unfiltered by type.
         if doc_type is None:
-            snapshot = latest_snapshot_before(start, cost_center=cost_center)
+            snapshot = latest_snapshot_before(
+                start, cost_center=cost_center, user=request.user
+            )
         if snapshot is not None:
             previous["totals"] = totals_from_snapshot(snapshot)
         return current, compare_periods(current, previous), snapshot
@@ -118,8 +139,16 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
             # from. "Compared with the previous period" is misleading when
             # there is no history and both sides are the same instant.
             comparison_baseline=snapshot,
+            # LV-355 F2: las cifras de permisos son **de hoy** (`permit_counts(today)`),
+            # y el informe mensual cuenta al corte: la etiqueta lo dice (S7).
+            permits_as_of=_("as of %(date)s")
+            % {"date": report["generated_on"].strftime("%d-%m-%Y")},
+            # LV-355 F2 (S10): el universo de la tabla por faena.
+            universe=universe_sentence(cost_center_universe(self.request.user)),
             title=_("Compliance status report"),
-            cost_centers=CostCenter.objects.filter(is_active=True).order_by("code"),
+            cost_centers=scope_queryset_to_visible_tenants(
+                CostCenter.objects.filter(is_active=True), self.request.user
+            ).order_by("code"),
             document_types=DocumentType.objects.filter(is_active=True).order_by("name"),
             filter_params=self.request.GET,
             export_query=self.request.GET.urlencode(),
@@ -127,203 +156,147 @@ class ComplianceReportView(ComplianceReportMixin, TemplateView):
         return context
 
 
+def _total_row(report):
+    totals = report["totals"]
+    return (
+        _("TOTAL"),
+        "",
+        totals["total"],
+        totals["valid"],
+        totals["valid_pct"],
+        totals["expired"],
+        totals["due_7"],
+        totals["due_15"],
+        totals["due_30"],
+    )
+
+
+def _summary_table(report):
+    return Table(
+        headers=tuple(COST_CENTER_HEADERS),
+        rows=tuple(cost_center_rows(report)),
+        sheet="Resumen",
+        footer=_total_row(report),
+    )
+
+
+def _alerts_table(report):
+    return Table(
+        headers=tuple(ALERT_HEADERS),
+        rows=tuple(alert_rows(report)),
+        sheet="Alertas abiertas",
+        heading=_("Open alerts"),
+    )
+
+
 class ComplianceReportCsvView(ComplianceReportMixin, View):
     def get(self, request):
         report = self.report_for(request)
-        response = HttpResponse(content_type="text/csv; charset=utf-8")
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.csv"'
-        response.write("﻿")  # BOM so Excel detects UTF-8
-        writer = csv.writer(response, lineterminator="\r\n")
-        writer.writerow([_("Compliance status report")])
-        writer.writerow([_("Generated"), report["generated_on"].isoformat()])
-        writer.writerow([])
-        writer.writerow(COST_CENTER_HEADERS)
-        for row in cost_center_rows(report):
-            writer.writerow([neutralize(value) for value in row])
-        totals = report["totals"]
-        writer.writerow(
-            [
-                neutralize(_("TOTAL")),
-                "",
-                totals["total"],
-                totals["valid"],
-                totals["valid_pct"],
-                totals["expired"],
-                totals["due_7"],
-                totals["due_15"],
-                totals["due_30"],
-            ]
+        content = to_csv(
+            [_summary_table(report), _alerts_table(report)],
+            preamble=[
+                [_("Compliance status report")],
+                [_("Generated"), report["generated_on"].isoformat()],
+            ],
         )
-        writer.writerow([])
-        writer.writerow([_("Open alerts")])
-        writer.writerow(ALERT_HEADERS)
-        for row in alert_rows(report):
-            writer.writerow([neutralize(value) for value in row])
-        return response
+        return download(
+            content,
+            CSV_TYPE,
+            dated_filename(FILENAME_STEM, report["generated_on"], "csv"),
+        )
 
 
 class ComplianceReportXlsxView(ComplianceReportMixin, View):
     def get(self, request):
-        from openpyxl import Workbook
-        from openpyxl.styles import Font
-
         report = self.report_for(request)
-        workbook = Workbook()
-        summary = workbook.active
-        summary.title = "Resumen"
-        summary.append(COST_CENTER_HEADERS)
-        for row in cost_center_rows(report):
-            summary.append([neutralize(value) for value in row])
-        totals = report["totals"]
-        summary.append(
-            [
-                _("TOTAL"),
-                "",
-                totals["total"],
-                totals["valid"],
-                totals["valid_pct"],
-                totals["expired"],
-                totals["due_7"],
-                totals["due_15"],
-                totals["due_30"],
-            ]
+        content = to_xlsx([_summary_table(report), _alerts_table(report)])
+        return download(
+            content,
+            XLSX_TYPE,
+            dated_filename(FILENAME_STEM, report["generated_on"], "xlsx"),
         )
-        for cell in summary[1]:
-            cell.font = Font(bold=True)
-        for cell in summary[summary.max_row]:
-            cell.font = Font(bold=True)
-
-        alerts = workbook.create_sheet("Alertas abiertas")
-        alerts.append(ALERT_HEADERS)
-        for cell in alerts[1]:
-            cell.font = Font(bold=True)
-        for row in alert_rows(report):
-            alerts.append([neutralize(value) for value in row])
-
-        for sheet in (summary, alerts):
-            sheet.freeze_panes = "A2"
-            sheet.auto_filter.ref = sheet.dimensions
-            for column in sheet.columns:
-                sheet.column_dimensions[column[0].column_letter].width = min(
-                    max(len(str(cell.value or "")) for cell in column) + 2, 40
-                )
-
-        output = BytesIO()
-        workbook.save(output)
-        response = HttpResponse(
-            output.getvalue(),
-            content_type=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
-        )
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.xlsx"'
-        return response
 
 
 def build_report_workbook_bytes(report):
     """XLSX bytes for a prepared report, for attaching to the executive email."""
-    from openpyxl import Workbook
-    from openpyxl.styles import Font
-
-    workbook = Workbook()
-    sheet = workbook.active
-    sheet.title = "Resumen"
-    sheet.append(COST_CENTER_HEADERS)
-    for cell in sheet[1]:
-        cell.font = Font(bold=True)
-    for row in cost_center_rows(report):
-        sheet.append([neutralize(value) for value in row])
-    sheet.freeze_panes = "A2"
-    sheet.auto_filter.ref = sheet.dimensions
-    output = BytesIO()
-    workbook.save(output)
-    return output.getvalue()
+    return to_xlsx(
+        [
+            Table(
+                headers=tuple(COST_CENTER_HEADERS),
+                rows=tuple(cost_center_rows(report)),
+                sheet="Resumen",
+            )
+        ]
+    )
 
 
 class ComplianceReportDocxView(ComplianceReportMixin, View):
     def get(self, request):
-        from docx import Document as DocxDocument
-        from docx.shared import Inches
-
         report = self.report_for(request)
-        document = DocxDocument()
-        document.add_heading(_("AeroControl — Compliance status report"), 0)
-        document.add_paragraph(
-            _("Generated: %(date)s") % {"date": timezone.localdate().isoformat()}
-        )
         period = report["period"]
-        document.add_paragraph(
-            _("Period analysed: %(start)s to %(end)s")
-            % {"start": period["start"].isoformat(), "end": period["end"].isoformat()}
-        )
         totals = report["totals"]
-        document.add_paragraph(
-            _(
-                "%(valid)s of %(total)s current documents are valid "
-                "(%(pct)s%%). %(expired)s expired, %(due)s expiring within "
-                "%(horizon)s days."
-            )
-            % {
-                "valid": totals["valid"],
-                "total": totals["total"],
-                "pct": totals["valid_pct"],
-                "expired": totals["expired"],
-                "due": totals["due_7"] + totals["due_15"] + totals["due_30"],
-                "horizon": report["horizon_days"],
-            }
-        )
-
-        document.add_heading(_("By cost center"), level=1)
-        table = document.add_table(rows=1, cols=len(COST_CENTER_HEADERS))
-        table.style = "Light Shading Accent 1"
-        for cell, header in zip(table.rows[0].cells, COST_CENTER_HEADERS):
-            cell.text = str(header)
-        for row in cost_center_rows(report):
-            cells = table.add_row().cells
-            for cell, value in zip(cells, row):
-                cell.text = str(value)
-
         resolution = report["resolution"]
-        document.add_heading(_("Alert resolution in the period"), level=1)
-        if resolution["resolved_count"]:
-            document.add_paragraph(
+        blocks = [
+            (
+                "paragraph",
+                _("Generated: %(date)s") % {"date": timezone.localdate().isoformat()},
+            ),
+            (
+                "paragraph",
+                _("Period analysed: %(start)s to %(end)s")
+                % {
+                    "start": period["start"].isoformat(),
+                    "end": period["end"].isoformat(),
+                },
+            ),
+            (
+                "paragraph",
+                _(
+                    "%(valid)s of %(total)s current documents are valid "
+                    "(%(pct)s%%). %(expired)s expired, %(due)s expiring within "
+                    "%(horizon)s days."
+                )
+                % {
+                    "valid": totals["valid"],
+                    "total": totals["total"],
+                    "pct": totals["valid_pct"],
+                    "expired": totals["expired"],
+                    "due": totals["due_7"] + totals["due_15"] + totals["due_30"],
+                    "horizon": report["horizon_days"],
+                },
+            ),
+            ("heading", _("By cost center")),
+            (
+                "table",
+                Table(
+                    headers=tuple(COST_CENTER_HEADERS),
+                    rows=tuple(cost_center_rows(report)),
+                ),
+            ),
+            ("heading", _("Alert resolution in the period")),
+            (
+                "paragraph",
                 _("%(count)s alerts resolved, %(days)s days on average.")
                 % {
                     "count": resolution["resolved_count"],
                     "days": resolution["avg_days"],
                 }
-            )
-        else:
-            document.add_paragraph(_("No alerts were resolved in this period."))
-
-        document.add_heading(_("Open alerts"), level=1)
-        if report["open_alerts"]:
-            alert_table = document.add_table(rows=1, cols=len(ALERT_HEADERS))
-            alert_table.style = "Light Shading Accent 1"
-            for cell, header in zip(alert_table.rows[0].cells, ALERT_HEADERS):
-                cell.text = str(header)
-            for row in alert_rows(report):
-                cells = alert_table.add_row().cells
-                for cell, value in zip(cells, row):
-                    cell.text = str(value)
-        else:
-            document.add_paragraph(_("No open alerts."))
-
-        for section in document.sections:
-            section.left_margin = Inches(0.6)
-            section.right_margin = Inches(0.6)
-
-        output = BytesIO()
-        document.save(output)
-        response = HttpResponse(
-            output.getvalue(),
-            content_type=(
-                "application/vnd.openxmlformats-officedocument."
-                "wordprocessingml.document"
+                if resolution["resolved_count"]
+                else _("No alerts were resolved in this period."),
             ),
+            ("heading", _("Open alerts")),
+            (
+                ("table", _alerts_table(report))
+                if report["open_alerts"]
+                else ("paragraph", _("No open alerts."))
+            ),
+        ]
+        content = to_docx(_("AeroControl — Compliance status report"), blocks)
+        return download(
+            content,
+            DOCX_TYPE,
+            dated_filename(FILENAME_STEM, report["generated_on"], "docx"),
         )
-        response["Content-Disposition"] = f'attachment; filename="{FILENAME_STEM}.docx"'
-        return response
 
 
 class ComplianceReportPdfView(ComplianceReportMixin, View):
@@ -464,4 +437,8 @@ class ComplianceReportPdfView(ComplianceReportMixin, View):
             _("No open alerts."),
         )
 
-        return corepdf.pdf_response(elements, letterhead, f"{FILENAME_STEM}.pdf")
+        return corepdf.pdf_response(
+            elements,
+            letterhead,
+            dated_filename(FILENAME_STEM, report["generated_on"], "pdf"),
+        )

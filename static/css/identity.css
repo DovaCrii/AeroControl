@@ -1405,6 +1405,11 @@ form.is-submitting-slow .btn-primary::after {
   /* Estados: texto + color, y el color se imprime. */
   .id-chip { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 
+  /* LV-355 F2: la frase de universo («faenas activas: N · con operación: M») va pegada a la
+   * tabla que explica; sin esto, medido con Edge sin cabeza, quedaba sola al tope de la hoja
+   * siguiente, separada de su tabla. */
+  [data-universe] { break-before: avoid; }
+
   /* Encabezado y pie de papel: el pie se repite al fondo de cada hoja. */
   .id-print-head {
     display: flex;
@@ -2002,6 +2007,14 @@ summary:focus-visible {
 .wx-hour-w small { display: block; font-size: 0.68rem; font-weight: 500; color: var(--ac-text-secondary); }
 .wx-hour-r { color: var(--sev-advisory-text); font-weight: 700; }
 .wx-hour-h { color: var(--ac-text-secondary); }
+/* LV-373: la hora actual y el cambio de día de la franja. Se dicen con TEXTO («Ahora» + hh:mm; «mar 27») además del
+   resalte: fondo + contorno de `--ac-primary` (el contorno sobrevive al modo de alto contraste, que quita los
+   fondos) y un filo `--id-edge` a la izquierda de la primera columna del día nuevo. Sin animación. */
+.wx-hour.is-now { background: color-mix(in srgb, var(--ac-primary) 14%, transparent); outline: 2px solid var(--ac-primary); outline-offset: -2px; border-radius: var(--id-r-control); }
+.wx-hour.is-newday { border-left: 1px solid var(--id-edge); }
+.wx-hour-m { display: flex; flex-direction: column; align-items: center; min-height: 2.1em; font-size: 0.66rem; line-height: 1.05; color: var(--ac-text-secondary); }
+.wx-mark-now { font-weight: 800; color: var(--ac-text); }
+.wx-mark-day { display: flex; flex-direction: column; align-items: center; font-weight: 700; }
 .wx-key { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--ac-text-secondary); }
 .wx-key i { display: inline-block; width: 10px; height: 10px; margin-right: 0.3rem; border-radius: 2px; }
 .wx-key-wind { background: var(--ac-primary); }
@@ -2009,9 +2022,12 @@ summary:focus-visible {
 .wx-key-rain { background: var(--sev-advisory-text); }
 
 .wx-days { margin: 0; padding: 0; list-style: none; }
-.wx-day { display: grid; grid-template-columns: 3rem 28px 2.4rem 2rem minmax(40px, 1fr) 2rem; align-items: center; gap: 0.4rem; padding: 0.2rem 0; border-top: 1px solid var(--ac-border); font-size: var(--id-fs-sm); }
+.wx-day { display: grid; grid-template-columns: 4.6rem 28px 2.4rem 2rem minmax(40px, 1fr) 2rem; align-items: center; gap: 0.4rem; padding: 0.2rem 0 0.2rem 0.3rem; border-top: 1px solid var(--ac-border); border-left: 3px solid transparent; font-size: var(--id-fs-sm); }
 .wx-day:first-child { border-top: 0; }
 .wx-day-n { font-weight: 700; }
+.wx-day-n small { font-weight: 500; color: var(--ac-text-secondary); }
+/* LV-373: la fila de hoy, con texto («Hoy») y una barra a la izquierda además del fondo. */
+.wx-day.is-today { background: color-mix(in srgb, var(--ac-primary) 12%, transparent); border-left-color: var(--ac-primary); }
 .wx-day-r { color: var(--sev-advisory-text); font-weight: 700; }
 .wx-day-lo { text-align: right; color: var(--ac-text-secondary); }
 .wx-day-hi { font-weight: 700; }

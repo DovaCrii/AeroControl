@@ -9,7 +9,9 @@ el usuario: **HTML en la app primero, PDF automático después.** Al imprimir,
 `report-a4.css` y el bloque `@media print` de `app.css` (`UX-06`) sacan el menú,
 la barra y los botones, y quedan las cinco hojas A4 solas.{% endcomment %}
 
-{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% endblock %}
+{% comment %}LV-378: `report-a4-v2.css` se carga SOLO con diseño 2. `report-a4.css` no se toca:
+los informes ya emitidos se vuelven a dibujar desde su payload con estos estilos.{% endcomment %}
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/report-a4.css' %}">{% if payload.meta.layout == 2 %}<link rel="stylesheet" href="{% static 'css/report-a4-v2.css' %}">{% endif %}{% endblock %}
 
 {% block content %}
 {% comment %}LV-263: `d-print-none` porque el encabezado de la pantalla, impreso,
@@ -127,6 +129,22 @@ la DGAC diciendo «detalle permiso a permiso». La numeración la asigna
 documento termina con dos hojas numeradas igual.{% endcomment %}
 <div class="rpt-doc">
   {% include "reporting/_page1_cover.html" with page=1 pages=total_pages %}
+  {% if payload.meta.layout == 2 %}
+  {% comment %}LV-378: las hojas del diseño 2 (resumen, permisos agrupados por faena,
+  cobertura y anexo «registro permiso a permiso»). La portada y la hoja del plan no
+  cambian.{% endcomment %}
+  {% include "reporting/v2/_page2_summary.html" with page=2 pages=total_pages %}
+  {% for sheet in permit_sheets %}
+  {% include "reporting/v2/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
+  {% include "reporting/v2/_page4_coverage.html" with page=coverage_page pages=total_pages %}
+  {% if not plan_joins_coverage %}
+  {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
+  {% endif %}
+  {% for sheet in roster_sheets %}
+  {% include "reporting/v2/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
+  {% else %}
   {% include "reporting/_page2_summary.html" with page=2 pages=total_pages %}
   {% for sheet in permit_sheets %}
   {% include "reporting/_page3_permits.html" with sheet=sheet page=sheet.page pages=total_pages %}
@@ -142,5 +160,6 @@ documento termina con dos hojas numeradas igual.{% endcomment %}
   {% for sheet in roster_sheets %}
   {% include "reporting/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}
+  {% endif %}
 </div>
 {% endblock %}

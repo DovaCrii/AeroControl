@@ -391,6 +391,9 @@ def test_new_links_and_summary_add_no_queries_per_row(db):
 
     for n in range(2):
         _permit(_site(f"CC{n}"), 10 + n)
+    # La primera llamada paga lo que main memoiza por petición (empresas visibles del usuario, #181):
+    # se calienta antes de medir, como `test_lv237_panel_query_budget` con `ContentType`.
+    count()
     before = count()
     for n in range(2, 12):
         site = _site(f"CC{n}")

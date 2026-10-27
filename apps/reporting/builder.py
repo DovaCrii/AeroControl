@@ -13,9 +13,16 @@ en `missing_fields` — no se rellena con cero, porque un cero es una afirmació
 haría que el informe declarara cumplimiento donde sólo hay un hueco de carga.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 FIRST_DAY = 1
+
+#: LV-378: la versión del diseño del documento. `collect_meta` escribe `2` **sólo en
+#: los informes nuevos** (como `early_cutoff`): los payloads anteriores no traen la
+#: llave y se siguen dibujando exactamente como se emitieron. Es lo que protege a
+#: agosto y septiembre, que se vuelven a dibujar desde su payload con las
+#: plantillas de hoy.
+LAYOUT = 2
 
 
 def month_bounds(period):
@@ -63,6 +70,9 @@ def collect_meta(period, cutoff, early=False, early_reason=""):
         # es anticipado, para que los informes cerrados no cambien ni un byte. El
         # motivo queda en el payload (auditoría) y **no se imprime**.
         **({"early_cutoff": True, "early_reason": early_reason} if early else {}),
+        # LV-378: el diseño con el que se emite este informe. Un informe congelado
+        # sin la llave es de diseño 1 y no se toca.
+        "layout": LAYOUT,
         # LV-249: los textos de la portada salen de los **bloques editables**
         # (`ReportTemplate`) y no de literales de este archivo. Siguen yendo al
         # payload —no a la plantilla— por la razón que `R3` dejó escrita acá: el
@@ -199,6 +209,45 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
             "operations",
             cutoff,
         ),
+        # LV-378: **lo que mide RENOVACIÓN cuenta sólo los centros con operación.**
+        # `permits_in_force` (arriba) sigue siendo todos los vigentes —es un hecho
+        # legal: SIGO los tiene— y se desglosa en estas dos. Las llaves viejas no
+        # cambian de significado porque el comparador y los informes ya emitidos
+        # dependen de ellas; lo nuevo va en llaves nuevas.
+        "permits_in_force_operating": leaf(
+            sum(1 for row in permit_rows if row["in_force"] and row["in_operation"]),
+            "operations",
+            cutoff,
+        ),
+        "permits_in_force_outside": leaf(
+            sum(
+                1 for row in permit_rows if row["in_force"] and not row["in_operation"]
+            ),
+            "operations",
+            cutoff,
+        ),
+        "permits_expiring_30d_operating": leaf(
+            sum(
+                1
+                for row in permit_rows
+                if row["in_force"]
+                and row["in_operation"]
+                and row["days_remaining"] <= PERMIT_CRITICAL_DAYS
+            ),
+            "operations",
+            cutoff,
+        ),
+        "permits_expiring_60d_operating": leaf(
+            sum(
+                1
+                for row in permit_rows
+                if row["in_force"]
+                and row["in_operation"]
+                and row["days_remaining"] <= PERMIT_WARNING_DAYS
+            ),
+            "operations",
+            cutoff,
+        ),
         # LV-235: **incidentes del período**, el indicador que los dos documentos
         # de referencia piden y que el payload no producía. El informe emitido lo
         # llevaba escrito a mano ("0 Incidentes en el período") y la plantilla del
@@ -267,45 +316,147 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
     }
 
 
-def collect_cost_centres(cutoff):
+def operating_centres():
+    """Las faenas con operación, ordenadas por código: **una sola definición**.
+
+    Es `operating_cost_centers` (LV-266) y nada más. Se lee acá una vez y de la
+    lista salen tanto las filas de la cobertura como el criterio `in_operation`
+    de cada permiso.
+    """
+    from apps.registry.selectors import operating_cost_centers
+
+    return list(operating_cost_centers().order_by("code"))
+
+
+def collect_cost_centres(cutoff, permit_rows, centres=None):
     """Una fila por faena que vuela, **incluidas las que no tienen permiso**.
 
-    Se apoya en `permit_status_by_cost_center` (`LV-206`), que ya parte de las
-    faenas y no de los permisos precisamente para eso: un `GROUP BY` sobre
-    permisos sólo devuelve las que tienen alguno, y las que interesan en un
+    Parte de las faenas y no de los permisos precisamente para eso: un `GROUP BY`
+    sobre permisos sólo devuelve las que tienen alguno, y las que interesan en un
     informe de cumplimiento son las que **no** tienen ninguno. La página 3 del
     informe de agosto lista 12 faenas y 7 sin habilitación; con el recorrido al
     revés esas 7 no existirían.
-    """
-    from apps.compliance.kpis import permit_band, permit_status_by_cost_center
 
-    return [
-        {
-            # La fila trae el objeto `cost_center`, no sus campos sueltos.
-            "code": row["cost_center"].code,
-            "name": row["cost_center"].name,
-            "permits_in_force": row["in_force"],
-            "permits_awaiting": row["awaiting"],
-            "permits_lapsed": row["lapsed"],
-            "permits_expiring_30d": row["soon"],
-            # R4: el vencimiento que manda es el **primero** de la faena.
-            "next_expiry": (
-                row["next_expiry"].isoformat() if row["next_expiry"] else None
-            ),
-            "days_remaining": row["days_remaining"],
-            # Una faena sin ningún permiso vigente es `critical` y no "sin
-            # banda": no poder volar es la peor situación de la escala, no la
-            # ausencia de una. Es el §4.2 del SPEC —el semáforo de la faena es
-            # **el peor** de sus habilitantes, nunca el promedio— aplicado al
-            # único habilitante que el informe cuenta hoy.
-            "band": (
-                permit_band(row["days_remaining"])
-                if row["in_force"]
-                else permit_band(0)
-            ),
-        }
-        for row in permit_status_by_cost_center(cutoff)
-    ]
+    ⚠️ LV-378: **los conteos por faena se agregan desde las filas de `permit_rows`**
+    y no con una segunda consulta (`permit_status_by_cost_center`), por el mismo
+    principio que `collect_kpis`. Eran dos fuentes que leían estados distintos —la
+    cobertura el estado de **hoy**, los permisos el reconstruido **al corte**— y por
+    eso la fila Total de la sección 3 decía 15 mientras las filas sumaban 14. Con una
+    sola fuente, la suma de las filas **es** el total por construcción
+    (`invariants.py` lo comprueba igual).
+    """
+    from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, permit_band
+
+    centres = operating_centres() if centres is None else centres
+    by_code = {}
+    for row in permit_rows:
+        by_code.setdefault(row["cost_centre"], []).append(row)
+
+    rows = []
+    for centre in centres:
+        own = by_code.get(centre.code, [])
+        in_force = [row for row in own if row["in_force"]]
+        days = min((row["days_remaining"] for row in in_force), default=None)
+        expiries = [row["valid_until"] for row in in_force]
+        rows.append(
+            {
+                "code": centre.code,
+                "name": centre.name,
+                "permits_in_force": len(in_force),
+                "permits_awaiting": sum(
+                    1 for row in own if row["status"] == "requested"
+                ),
+                "permits_lapsed": sum(
+                    1
+                    for row in own
+                    if row["status"] == "approved" and not row["in_force"]
+                ),
+                "permits_expiring_30d": sum(
+                    1
+                    for row in in_force
+                    if row["days_remaining"] <= PERMIT_CRITICAL_DAYS
+                ),
+                # R4: el vencimiento que manda es el **primero** de la faena.
+                "next_expiry": min(expiries) if expiries else None,
+                "days_remaining": days,
+                # Una faena sin ningún permiso vigente es `critical` y no "sin
+                # banda": no poder volar es la peor situación de la escala, no la
+                # ausencia de una. El semáforo de la faena es **el peor** de sus
+                # habilitantes, nunca el promedio.
+                "band": permit_band(days) if in_force else permit_band(0),
+            }
+        )
+    return rows
+
+
+#: LV-378: por qué una faena con permiso vivo no está en la cobertura.
+OUTSIDE_REASONS = ("closed", "not_flying", "archived")
+
+
+def outside_reason(centre):
+    """El motivo por el que `centre` no entra en `operating_cost_centers`.
+
+    El orden importa sólo para el rótulo: una faena cerrada que además está
+    archivada se dice «terminada», que es lo que la persona reconoce.
+    """
+    from apps.registry.models import CostCenter
+
+    if centre.contract_status == CostCenter.CONTRACT_CLOSED:
+        return "closed"
+    if not centre.operates_flights:
+        return "not_flying"
+    return "archived"
+
+
+def collect_outside_centres(permit_rows):
+    """LV-378: las faenas **sin operación** que todavía tienen algún permiso vivo.
+
+    Regla (a'): la cobertura y el «X de N» siguen siendo sólo de las faenas con
+    operación —«cerrada es cerrada», decisión del 2026-09-14—, pero un permiso
+    vigente de una faena terminada **existe ante la DGAC**: callarlo en un papel
+    firmado sería una omisión. Va en un bloque aparte, y se calcula **desde las
+    filas de permisos** igual que el resto.
+
+    Entra la faena con cualquier permiso vivo al corte (vigente, en trámite o
+    vencido sin cerrar), para que ningún permiso quede huérfano (invariante I5).
+    """
+    from apps.compliance.kpis import permit_band
+
+    found = {}
+    for row in permit_rows:
+        if row["in_operation"]:
+            continue
+        entry = found.setdefault(
+            row["cost_centre"],
+            {
+                "code": row["cost_centre"],
+                "name": row["cost_centre_name"],
+                "reason": row["outside_reason"],
+                "permits_in_force": 0,
+                "permits_awaiting": 0,
+                "permits_lapsed": 0,
+                "next_expiry": None,
+                "days_remaining": None,
+                "band": None,
+                "folios": [],
+            },
+        )
+        if row["in_force"]:
+            entry["permits_in_force"] += 1
+            entry["folios"].append(row["folio"])
+            if (
+                entry["days_remaining"] is None
+                or row["days_remaining"] < entry["days_remaining"]
+            ):
+                entry["days_remaining"] = row["days_remaining"]
+                entry["next_expiry"] = row["valid_until"]
+        elif row["status"] == "requested":
+            entry["permits_awaiting"] += 1
+        else:
+            entry["permits_lapsed"] += 1
+    for entry in found.values():
+        entry["band"] = permit_band(entry["days_remaining"])
+    return [found[code] for code in sorted(found)]
 
 
 def status_at_cutoff(permits, cutoff):
@@ -353,7 +504,7 @@ def status_at_cutoff(permits, cutoff):
     return resolved
 
 
-def collect_permits(cutoff):
+def collect_permits(cutoff, operating_codes=None):
     """R4: una fila por permiso vivo, como la tabla de la página 3.
 
     **Vivos son los vigentes y los que esperan a la DGAC**, y van juntos en una
@@ -363,6 +514,20 @@ def collect_permits(cutoff):
     volar. Los caducados no entran: un permiso que terminó no es un permiso
     incumplido, es historia (mismo criterio que `permit_counts`).
 
+    ⚠️ **LV-378: «vivo» es vivo AL CORTE, y el estado de hoy no lo dice.** La
+    consulta filtraba por el estado ACTUAL (`requested`, `approved`), así que un
+    permiso vigente hasta el 31-10 que `expire_permissions` pasa a `expired` el 1-11
+    a las 05:30 **desaparecía** del cierre de las 06:30 aunque estaba vigente al
+    corte. `status_at_cutoff` ya sabía reconstruirlo; la consulta lo descartaba
+    antes. Ahora entran también los `expired` que **tienen un movimiento posterior
+    al corte** (los que vencieron después de él) y la reconstrucción decide: lo que
+    no estaba vivo al corte se descarta al final. Sin ese movimiento posterior, un
+    caducado antiguo no entra —la historia no crece en cada informe—.
+
+    `operating_codes` son los códigos de las faenas con operación (el mismo
+    universo que la cobertura); sin él se leen de la base. Cada fila trae
+    `in_operation` y, si no lo está, el nombre y el motivo de su faena.
+
     ⚠️ **Dos `prefetch_related` y no una consulta por fila.** Cada permiso nombra
     sus operadores y sus aeronaves, así que sin esto son 2N consultas para once
     permisos — y el payload se construye también desde un trabajo nocturno,
@@ -371,14 +536,21 @@ def collect_permits(cutoff):
     from django.db import models
 
     from apps.compliance.kpis import permit_band
-    from apps.operations.models import FlightPermission
+    from apps.operations.models import FlightPermission, PermissionHistory
 
+    if operating_codes is None:
+        operating_codes = {centre.code for centre in operating_centres()}
+
+    alive = (FlightPermission.STATUS_REQUESTED, FlightPermission.STATUS_APPROVED)
+    moved_after_cutoff = models.Exists(
+        PermissionHistory.objects.filter(
+            permission=models.OuterRef("pk"), created_at__date__gt=cutoff
+        )
+    )
     permits = (
         FlightPermission.objects.filter(
-            status__in=(
-                FlightPermission.STATUS_REQUESTED,
-                FlightPermission.STATUS_APPROVED,
-            ),
+            models.Q(status__in=alive)
+            | models.Q(moved_after_cutoff, status=FlightPermission.STATUS_EXPIRED)
         )
         # LV-233, tercera parte: **vivo al corte**, no vivo hoy. Un permiso
         # archivado *después* del corte estaba vivo entonces y tiene que
@@ -430,7 +602,12 @@ def collect_permits(cutoff):
 
     rows = []
     for permit in permits:
+        # LV-378: un caducado que entró por haberse movido después del corte sólo
+        # se lista si al corte estaba vivo.
+        if was[permit.pk] not in alive:
+            continue
         approved = was[permit.pk] == FlightPermission.STATUS_APPROVED
+        operating = permit.cost_center.code in operating_codes
         # Un permiso solicitado no tiene vigencia (`LV-219`), así que sus días
         # son `None` y no cero: cero afirmaría que vence hoy.
         days = (permit.valid_until - cutoff).days if permit.valid_until else None
@@ -456,9 +633,19 @@ def collect_permits(cutoff):
                 ),
                 "days_remaining": days,
                 "band": permit_band(days),
-                "in_force": approved
-                and permit.valid_until
-                and permit.valid_until >= cutoff,
+                "in_force": bool(
+                    approved and permit.valid_until and permit.valid_until >= cutoff
+                ),
+                # LV-378: ¿su faena está en la cobertura? Es el criterio que parte
+                # lo que mide renovación (sólo con operación) de lo que es un hecho
+                # legal (todos los vigentes). Una faena fuera trae su nombre y el
+                # motivo, para el bloque «sin operación» (no se pregunta a la base
+                # al dibujar: el informe congelado se explica con su payload).
+                "in_operation": operating,
+                "cost_centre_name": permit.cost_center.name,
+                "outside_reason": (
+                    None if operating else outside_reason(permit.cost_center)
+                ),
             }
         )
     return rows
@@ -653,10 +840,93 @@ def collect_concentration(permits):
         by_centre.setdefault(row["cost_centre"], set()).update(row["operators"])
     dependent = sorted(code for code, people in by_centre.items() if len(people) == 1)
 
+    # LV-378: **lo mismo, sólo con las faenas con operación.** El riesgo de «depende
+    # de una persona» es de la operación que vuela: una faena terminada con un
+    # permiso que se deja vencer inflaba la cifra («8 de 15», «CC716, CC738») y
+    # nombraba como dependiente una faena que ya no opera. Las llaves de arriba
+    # conservan su significado —los informes emitidos y el comparador dependen de
+    # ellas— y las corregidas van en llaves nuevas. `in_operation` falta en las
+    # filas de payloads anteriores a LV-378: sin él, todas cuentan.
+    operating = [row for row in in_force if row.get("in_operation", True)]
+    operating_by_centre = {}
+    for row in operating:
+        operating_by_centre.setdefault(row["cost_centre"], set()).update(
+            row["operators"]
+        )
+
     return {
         "permits_in_force": len(in_force),
         "permits_with_one_operator": len(single),
         "cost_centres_on_one_person": dependent,
+        "permits_in_force_operating": len(operating),
+        "permits_with_one_operator_operating": sum(
+            1 for row in operating if len(row["operators"]) == 1
+        ),
+        "cost_centres_on_one_person_operating": sorted(
+            code for code, people in operating_by_centre.items() if len(people) == 1
+        ),
+    }
+
+
+def collect_changes(period, cutoff, cost_centres, permits):
+    """LV-378: qué cambió desde el último informe del mes anterior, **congelado**.
+
+    Lo comparable ya existe y está probado (`compare_permits`): se reutiliza **acá,
+    al construir**, y el resultado viaja en el payload. No se calcula al dibujar:
+    un informe congelado tiene que decir lo mismo el día que se reabra, y
+    recomparar contra un informe que entre tanto se reemplazó cambiaría la hoja.
+
+    Se compara contra la revisión más alta del mes anterior (la que quedó
+    vigente), no contra la revisión previa del mismo mes. Sin informe del mes
+    anterior devuelve `None`, no una comparación vacía: «sin cambios» y «no hay
+    contra qué comparar» son afirmaciones distintas.
+    """
+    from apps.reporting.compare import compare_permits
+    from apps.reporting.models import ReportRun
+
+    previous_period = (period.replace(day=1) - timedelta(days=1)).replace(day=1)
+    previous = (
+        ReportRun.objects.filter(period=previous_period).order_by("-revision").first()
+    )
+    if previous is None:
+        return None
+
+    before = previous.payload or {}
+    now = {"permits": permits}
+    changed = compare_permits(before, now)
+
+    def without_permit(rows):
+        return {row["code"] for row in rows if not row.get("permits_in_force")}
+
+    was = without_permit(before.get("cost_centres") or [])
+    now_without = without_permit(cost_centres)
+
+    def figure(payload, key):
+        leaf = (payload.get("kpis") or {}).get(key)
+        return leaf.get("value") if isinstance(leaf, dict) else None
+
+    now_kpis = {
+        "permits_in_force": sum(1 for row in permits if row["in_force"]),
+        "permits_awaiting": sum(1 for row in permits if row["status"] == "requested"),
+        "cost_centres_without_permit": len(now_without),
+    }
+    return {
+        "against": {
+            "period": f"{previous.period:%Y-%m}",
+            "revision": previous.revision,
+            "cutoff": (before.get("meta") or {}).get("cutoff"),
+            "layout": (before.get("meta") or {}).get("layout", 1),
+        },
+        "in_force": changed["in_force"],
+        "awaiting": changed["awaiting"],
+        "without_permit": {
+            "added": sorted(now_without - was),
+            "removed": sorted(was - now_without),
+        },
+        "kpis": {
+            key: {"before": figure(before, key), "after": value}
+            for key, value in now_kpis.items()
+        },
     }
 
 
@@ -708,14 +978,20 @@ def build(period, cutoff=None, early=False, early_reason=""):
 
     _start, end = month_bounds(period)
     cutoff = cutoff or min(end, timezone.localdate())
-    cost_centres = collect_cost_centres(cutoff)
-    permits = collect_permits(cutoff)
+    centres = operating_centres()
+    permits = collect_permits(cutoff, {centre.code for centre in centres})
+    cost_centres = collect_cost_centres(cutoff, permits, centres)
     payload = {
         "meta": collect_meta(period, cutoff, early, early_reason),
         "kpis": collect_kpis(cutoff, cost_centres, permits),
         "cost_centres": cost_centres,
+        # LV-378: las faenas sin operación que conservan un permiso vivo, aparte de
+        # la cobertura (regla a').
+        "outside_centres": collect_outside_centres(permits),
         "permits": permits,
         "concentration": collect_concentration(permits),
+        # LV-378: lo que cambió desde el informe anterior, congelado con el resto.
+        "changes": collect_changes(period, cutoff, cost_centres, permits),
         # LV-235: el detalle de los eventos del período, para la sección que la
         # plantilla del Dato Ejecutivo pedía escribir a mano.
         "incidents": collect_incidents(cutoff),

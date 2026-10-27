@@ -33,6 +33,10 @@ SMALL, LARGE = 2, 6
 # las faenas (agrega por `GROUP BY`/`prefetch_related`); la pantalla de vista previa
 # suma sesión, permisos y plantilla: 42. El Dato Ejecutivo, 42: reconstruye lo mismo
 # en su propio GET. Congelado, 10: sólo lee el `ReportRun`.
+# LV-378: el número no cambió y se justifica: se quitó la consulta de conteos por
+# faena (ahora salen de las filas de permisos) y se sumó la del informe del mes
+# anterior para `payload.changes`; la reconstrucción de los vencidos tras el corte es
+# una subconsulta dentro de la consulta de permisos, no una más.
 BUILD_CEILING = {SMALL: 32, LARGE: 32}
 PREVIEW_CEILING = {SMALL: 42, LARGE: 42}
 BRIEF_CEILING = {SMALL: 42, LARGE: 42}

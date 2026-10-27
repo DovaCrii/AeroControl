@@ -6,11 +6,14 @@ para las dos: «un filtro malformado es un no-op, no un error» (la convención 
 
 from django.core.exceptions import ValidationError
 
-from apps.core.tenancy import scope_queryset_to_tenant
+from apps.core.tenancy import (
+    scope_queryset_to_tenant,
+    scope_queryset_to_visible_tenants,
+)
 from apps.registry.models import CostCenter
 
 
-def _lookup(raw, scope_user):
+def _lookup(raw, scope_user, lazy_scope=False):
     """La faena activa con esa pk, o `None`: UUID inválido, archivada, inexistente o de otro tenant.
 
     LV-146: el `try/except` cubre `?cost_center=abc`. Un valor que no es UUID hace que `filter(pk=...)`
@@ -19,13 +22,18 @@ def _lookup(raw, scope_user):
     try:
         queryset = CostCenter.objects.filter(pk=raw, is_active=True)
         if scope_user is not None:
-            queryset = scope_queryset_to_tenant(queryset, scope_user)
+            scope = (
+                scope_queryset_to_visible_tenants
+                if lazy_scope
+                else scope_queryset_to_tenant
+            )
+            queryset = scope(queryset, scope_user)
         return queryset.first()
     except (ValueError, ValidationError):
         return None
 
 
-def resolve_cost_center(request, remember=False, scope_user=None):
+def resolve_cost_center(request, remember=False, scope_user=None, lazy_scope=False):
     """La faena elegida en `request`, o `None` para «todas».
 
     - `remember=False`: sólo el `?cost_center=` explícito de la URL; no lee ni escribe la sesión.
@@ -34,13 +42,16 @@ def resolve_cost_center(request, remember=False, scope_user=None):
       (se restaura lo recordado), mientras que `?cost_center=` vacío es pedir «todas» a propósito y
       **borra** el recuerdo. Se guarda la faena que resolvió de verdad y no la cadena cruda, así una
       archivada deja de recordarse sola.
-    - `scope_user`: si se pasa, la faena tiene que ser de un tenant que esa persona ve. El panel NO lo
-      pasa (hoy no acota por tenant: riesgo anotado en `MASTER_PLAN.md`, LV-359); la sección sí.
+    - `scope_user`: si se pasa, la faena tiene que ser de un tenant que esa persona ve. Lo pasan el
+      panel (LV-372; antes no acotaba, riesgo anotado en LV-359) y la sección.
+    - `lazy_scope`: acota con subconsulta en vez de resolver los tenants con consultas propias
+      (`scope_queryset_to_visible_tenants`); lo usa el panel para no sumar consultas a su techo
+      (`LV-237`). La sección conserva el acotado eager, que ya está medido en el suyo.
     """
     selected = None
     raw = request.GET.get("cost_center")
     if raw:
-        selected = _lookup(raw, scope_user)
+        selected = _lookup(raw, scope_user, lazy_scope)
 
     if not remember:
         return selected
@@ -53,7 +64,7 @@ def resolve_cost_center(request, remember=False, scope_user=None):
     else:
         remembered = request.session.get("dashboard_cost_center")
         if remembered:
-            selected = _lookup(remembered, scope_user)
+            selected = _lookup(remembered, scope_user, lazy_scope)
             if selected is None:
                 request.session.pop("dashboard_cost_center", None)
     return selected

@@ -42,7 +42,7 @@ from apps.reporting.forms import (
     PeriodNoteForm,
 )
 from apps.reporting.models import ReportRun
-from apps.reporting.summary import executive_summary
+from apps.reporting.summary import executive_summary, executive_summary_v2
 
 # Cuatro dígitos de año y dos de mes, exactos. Partir por el guion y confiar en
 # `int()` acepta `26-8` y devuelve **el año 26**: un informe fechado dieciocho
@@ -125,9 +125,14 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
                 ),
             }
         )
-        context.update(self._sheets(payload))
+        # LV-378: la observación escrita ocupa lo que ocupa su texto; el diseño 2 lo
+        # descuenta del techo de la última hoja de permisos.
+        context.update(self._sheets(payload, run.period_note if run else ""))
         # LV-260: la hoja ejecutiva, calculada del payload y no de la base.
         context["summary"] = executive_summary(payload)
+        # LV-378: la del diseño 2 (sólo se dibuja con `meta.layout == 2`).
+        if (payload.get("meta") or {}).get("layout") == 2:
+            context["summary_v2"] = executive_summary_v2(payload)
         # LV-265: lo que conviene mirar antes de emitir, sólo en pantalla.
         previous_month = (period.replace(day=1) - timedelta(days=1)).replace(day=1)
         previous = (
@@ -152,7 +157,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         return self.request.user.has_perm("reporting.issue_early_reportrun")
 
     @staticmethod
-    def _sheets(payload):
+    def _sheets(payload, period_note=""):
         """El reparto de las tablas en hojas, y la numeración del documento.
 
         ⚠️ **La numeración se asigna acá, en un solo lugar.** Antes cada plantilla
@@ -168,7 +173,15 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
 
         permits = payload.get("permits") or []
         in_force = [row for row in permits if row.get("in_force")]
-        awaiting = [row for row in permits if not row.get("in_force")]
+        not_in_force = [row for row in permits if not row.get("in_force")]
+        # ⚠️ LV-378: **«en trámite» es `requested`, no «todo lo que no está
+        # vigente».** `awaiting` era lo segundo, así que un permiso aprobado cuya
+        # vigencia ya pasó y que nadie cerró se imprimía como «Solicitudes en
+        # trámite · En proceso» —una afirmación falsa en un papel firmado—. Va a
+        # su propio bloque, «Vencidos sin cerrar». Para un payload sin esos
+        # permisos (todos los emitidos hasta hoy) el resultado es idéntico.
+        awaiting = [row for row in not_in_force if row.get("status") == "requested"]
+        lapsed = [row for row in not_in_force if row.get("status") != "requested"]
         # El bloque de "en trámite" cierra la sección junto a la observación y la
         # leyenda, así que su alto se descuenta del techo de la última hoja: si
         # no, cinco solicitudes en trámite volverían a empujar el cierre fuera.
@@ -177,23 +190,36 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         closing = CLOSING_PX + sum(row_px(row) for row in awaiting)
         if awaiting:
             closing += ROW_BASE_PX
-        permit_sheets = sheets_for(in_force, closing_px=closing)
+        closing += sum(row_px(row) for row in lapsed)
+        if lapsed:
+            closing += ROW_BASE_PX
 
         first_permit_page = 3
-        for offset, sheet in enumerate(permit_sheets):
-            sheet["page"] = first_permit_page + offset
-            # `index`/`of` son de la **sección**, no del documento: el rótulo de
-            # la tabla dice "hoja 2 de 3 de la sección" mientras el pie dice
-            # "Página 4 de 6". Son dos cuentas distintas y confundirlas es cómo
-            # alguien cree que le falta media sección.
-            sheet["index"] = offset + 1
-            sheet["of"] = len(permit_sheets)
-            # El total de la sección, repetido en cada hoja: es lo que vuelve
-            # detectable un recorte (ver la advertencia de `pagination.py`).
-            sheet["total"] = len(in_force)
-            # Las solicitudes en trámite van en la última hoja de la sección,
-            # que es donde el documento emitido las tenía.
-            sheet["awaiting"] = awaiting if sheet["last"] else []
+        # LV-378: los informes de diseño 2 reparten **faenas**, no permisos, con su
+        # propio estimador de alto (medido en el navegador). Los emitidos antes
+        # siguen repartiéndose como siempre.
+        layout = (payload.get("meta") or {}).get("layout") or 1
+        if layout >= 2:
+            permit_sheets = MonthlyReportView._permit_sheets_v2(
+                payload, first_permit_page, period_note
+            )
+        else:
+            permit_sheets = sheets_for(in_force, closing_px=closing)
+            for offset, sheet in enumerate(permit_sheets):
+                sheet["page"] = first_permit_page + offset
+                # `index`/`of` son de la **sección**, no del documento: el rótulo
+                # de la tabla dice "hoja 2 de 3 de la sección" mientras el pie
+                # dice "Página 4 de 6". Son dos cuentas distintas y confundirlas
+                # es cómo alguien cree que le falta media sección.
+                sheet["index"] = offset + 1
+                sheet["of"] = len(permit_sheets)
+                # El total de la sección, repetido en cada hoja: es lo que vuelve
+                # detectable un recorte (ver la advertencia de `pagination.py`).
+                sheet["total"] = len(in_force)
+                # Las solicitudes en trámite van en la última hoja de la sección,
+                # que es donde el documento emitido las tenía.
+                sheet["awaiting"] = awaiting if sheet["last"] else []
+                sheet["lapsed"] = lapsed if sheet["last"] else []
         after = first_permit_page + len(permit_sheets)
         # LV-260: el plan compacto comparte hoja con la cobertura cuando los dos
         # bloques caben, medidos (`pagination.plan_fits_with_coverage`). Si no,
@@ -202,6 +228,10 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
 
         plan = payload.get("plan") or {}
         matrix_rows = len((plan.get("matrix") or {}).get("rows") or []) or 4
+        if layout >= 2:
+            return MonthlyReportView._tail_v2(
+                payload, permit_sheets, after, matrix_rows
+            )
         plan_joins = plan_fits_with_coverage(
             len(payload.get("cost_centres") or []), matrix_rows
         )
@@ -216,7 +246,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         # lector que falta algo que nunca existió.
         from .pagination import ROSTER_FIRST_ROW_TOP_PX, roster_row_px
 
-        roster = in_force + awaiting
+        roster = in_force + not_in_force
         roster_sheets = []
         if any(row.get("operators") for row in roster):
             roster_sheets = sheets_for(
@@ -239,6 +269,113 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             "roster_sheets": roster_sheets,
             "total_pages": last_fixed + len(roster_sheets),
         }
+
+    @staticmethod
+    def _tail_v2(payload, permit_sheets, after, matrix_rows):
+        """LV-378: la cobertura, el plan y el anexo del diseño 2.
+
+        Misma lógica que la de siempre —el plan compacto comparte hoja con la cobertura
+        si caben, medidos— con las alturas **del diseño 2** (letra de 8,5 pt, barra
+        apilada y bloque de faenas sin operación) y el anexo «registro permiso a
+        permiso», que lista todos los permisos con su N° DGAC y sus operadores.
+        """
+        from .groups import register_rows
+        from .pagination import (
+            V2_ROSTER_CONTINUATION_TOP_PX,
+            V2_ROSTER_FIRST_TOP_PX,
+            V2_ROSTER_NOTE_PX,
+            V2_SAFETY_PX,
+            plan_fits_with_coverage_v2,
+            roster_row_px_v2,
+            sheets_for,
+        )
+
+        outside = [
+            row
+            for row in payload.get("outside_centres") or []
+            if row.get("permits_in_force")
+        ]
+        plan_joins = plan_fits_with_coverage_v2(
+            len(payload.get("cost_centres") or []), matrix_rows, len(outside)
+        )
+        coverage_page = after
+        plan_page = None if plan_joins else after + 1
+        last_fixed = coverage_page if plan_joins else plan_page
+
+        # El anexo lista **todos** los permisos (vigentes, en trámite y vencidos sin
+        # cerrar), con o sin operadores: es el registro, y su total declarado es el de
+        # la invariante I8.
+        rows = register_rows(payload)
+        roster_sheets = sheets_for(
+            rows,
+            closing_px=V2_ROSTER_NOTE_PX,  # la nota de debajo de la tabla
+            estimate=roster_row_px_v2,
+            first_top=V2_ROSTER_FIRST_TOP_PX,
+            continuation_top=V2_ROSTER_CONTINUATION_TOP_PX,
+            safety=V2_SAFETY_PX,
+        )
+        for offset, sheet in enumerate(roster_sheets):
+            sheet["page"] = last_fixed + 1 + offset
+            sheet["index"] = offset + 1
+            sheet["of"] = len(roster_sheets)
+            sheet["total"] = len(rows)
+        return {
+            "permit_sheets": permit_sheets,
+            "coverage_page": coverage_page,
+            "plan_page": plan_page,
+            "plan_joins_coverage": plan_joins,
+            "coverage_section": "coverage_plan_v2" if plan_joins else "coverage_v2",
+            "roster_sheets": roster_sheets if rows else [],
+            "total_pages": last_fixed + (len(roster_sheets) if rows else 0),
+        }
+
+    @staticmethod
+    def _permit_sheets_v2(payload, first_page, period_note=""):
+        """LV-378: las hojas de la sección 2 del diseño 2, repartidas por **faena**.
+
+        La unidad que no se parte es la faena (su cabecera, sus sublíneas y sus
+        folios), con el alto que estima `pagination.group_px`; el cierre de la última
+        hoja descuenta lo que va debajo (sin operación, en trámite, vencidos sin
+        cerrar y la observación). La tira de vencimientos —que ocupa la parte alta
+        de la primera hoja— ya está en `V2_FIRST_TOP_PX`.
+
+        Cada hoja trae el resumen de **toda** la sección (`summary`): el rótulo
+        declara los totales en cada una, que es lo que vuelve detectable un recorte
+        (`overflow: hidden` recorta en silencio) junto con la invariante I8.
+        """
+        from .groups import permit_groups
+        from .pagination import (
+            V2_CONTINUATION_TOP_PX,
+            V2_SAFETY_PX,
+            closing_px_v2,
+            group_px,
+            sheets_for,
+            v2_first_top_px,
+        )
+        from .templatetags.report_svg import strip_height
+
+        groups = permit_groups(payload)
+        closing = closing_px_v2(groups, period_note)
+        sheets = sheets_for(
+            groups["operating"],
+            closing_px=closing,
+            estimate=group_px,
+            first_top=v2_first_top_px(strip_height(groups["operating"])),
+            continuation_top=V2_CONTINUATION_TOP_PX,
+            safety=V2_SAFETY_PX,
+        )
+        for offset, sheet in enumerate(sheets):
+            sheet["groups"] = sheet.pop("rows")
+            sheet["page"] = first_page + offset
+            sheet["index"] = offset + 1
+            sheet["of"] = len(sheets)
+            sheet["summary"] = groups
+            sheet["strip_uid"] = f"strip-{offset + 1}"
+            last = sheet["last"]
+            sheet["outside"] = groups["outside"] if last else []
+            sheet["awaiting"] = groups["awaiting"] if last else []
+            sheet["lapsed"] = groups["lapsed"] if last else []
+        return sheets
 
 
 class ExecutiveBriefView(MonthlyReportView):
@@ -549,6 +686,7 @@ class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
             compare_kpis,
             compare_narrative,
             compare_permits,
+            layout_change,
         )
 
         context = super().get_context_data(**kwargs)
@@ -579,6 +717,8 @@ class ReportCompareView(ModelViewPermissionRequiredMixin, TemplateView):
                 changed_count=sum(1 for row in kpis if row["changed"]),
                 permits=compare_permits(baseline.payload, run.payload),
                 narrative=compare_narrative(baseline, run),
+                # LV-378: «Formato del documento: v1 → v2» cuando difiere.
+                layouts=layout_change(baseline.payload, run.payload),
             )
         return context
 

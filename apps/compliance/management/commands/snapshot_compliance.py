@@ -6,9 +6,12 @@ for, so comparing period against period reads "no change" on those counters by
 construction (found while doing R6.4). Storing the totals per day turns the
 comparison into real history.
 
-Reads its numbers from `build_compliance_report`, the same function the screen,
-the spreadsheet and the executive email use -- so a snapshot can never disagree
+`documentary_rows`, the function `build_compliance_report` uses for the screen,
+the spreadsheet and the executive email -- so a snapshot can never disagree
 with the report it is supposed to be the history of.
+
+LV-372 (F-08): writes one row per cost center (with its tenant) and one
+consolidated row **per tenant**; codes are only unique within a tenant.
 
 Idempotent: rerunning for the same date **overwrites** that date instead of
 adding rows, so a job that fires twice cannot corrupt a trend. `--date` targets
@@ -23,8 +26,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.compliance.models import ComplianceSnapshot
-from apps.compliance.reports import build_compliance_report
+from apps.compliance.reports import documentary_rows
 from apps.core.jobs import record_job_run
+from apps.core.models import OperationalTenant
 from apps.registry.models import CostCenter
 
 logger = logging.getLogger("compliance.alerts")
@@ -70,53 +74,46 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def _run(self, day, dry_run):
-        report = build_compliance_report()
-        # The report identifies cost centers by code (it is a display
-        # structure); the snapshot needs the FK, so resolve them in one query
-        # rather than one per row.
-        by_code = {
-            cost_center.code: cost_center
-            for cost_center in CostCenter.objects.filter(is_active=True)
-        }
-
-        rows = []
-        for row in report["by_cost_center"]:
-            cost_center = by_code.get(row["code"])
-            if cost_center is None:
-                # An archived center can still appear in a report built before
-                # it was archived; skip rather than guess.
-                continue
-            rows.append((cost_center, row))
-        # The consolidated row (cost_center=None) is not the sum of the rows
-        # above when a doc_type filter is involved -- here it is unfiltered, so
-        # the report's own totals are authoritative.
-        rows.append((None, report["totals"]))
-
-        if dry_run:
-            for cost_center, values in rows:
-                scope = cost_center.code if cost_center else "TOTAL"
-                self.stdout.write(
-                    f"[dry-run] {scope}: {values['valid']}/{values['total']} "
-                    f"valid, {values['expired']} expired"
-                )
-            return len(rows)
-
-        for cost_center, values in rows:
-            ComplianceSnapshot.objects.update_or_create(
-                date=day,
-                cost_center=cost_center,
-                defaults={
-                    "total": values["total"],
-                    "valid": values["valid"],
-                    "expired": values["expired"],
-                    "due_7": values["due_7"],
-                    "due_15": values["due_15"],
-                    "due_30": values["due_30"],
-                    "is_active": True,
-                },
+        # LV-372 (F-08): una consolidada **por empresa**, y cada fila por faena con su empresa.
+        # Antes el comando sumaba todas las empresas en una sola fila bajo la empresa por defecto
+        # y buscaba la faena por `code`, que sólo es único dentro de una empresa.
+        today = timezone.localdate()
+        written = 0
+        for tenant in OperationalTenant.objects.filter(is_active=True).order_by("name"):
+            centers = CostCenter.objects.filter(is_active=True, tenant=tenant).order_by(
+                "code"
             )
-        logger.info(
-            "compliance_snapshot_written",
-            extra={"item_count": len(rows), "snapshot_date": day.isoformat()},
-        )
-        return len(rows)
+            pairs, totals = documentary_rows(centers, None, today)
+            # The consolidated row is unfiltered, so the sum of the centers is
+            # authoritative (the doc_type filter is the only thing that would
+            # make the two differ, and it is not involved here).
+            rows = [*pairs, (None, totals)]
+            written += len(rows)
+            for cost_center, values in rows:
+                if dry_run:
+                    scope = cost_center.code if cost_center else "TOTAL"
+                    self.stdout.write(
+                        f"[dry-run] {scope}: {values['valid']}/{values['total']} "
+                        f"valid, {values['expired']} expired"
+                    )
+                    continue
+                ComplianceSnapshot.objects.update_or_create(
+                    tenant=tenant,
+                    date=day,
+                    cost_center=cost_center,
+                    defaults={
+                        "total": values["total"],
+                        "valid": values["valid"],
+                        "expired": values["expired"],
+                        "due_7": values["due_7"],
+                        "due_15": values["due_15"],
+                        "due_30": values["due_30"],
+                        "is_active": True,
+                    },
+                )
+        if not dry_run:
+            logger.info(
+                "compliance_snapshot_written",
+                extra={"item_count": written, "snapshot_date": day.isoformat()},
+            )
+        return written

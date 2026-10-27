@@ -1,0 +1,92 @@
+{
+ "left_margins": [
+  0.6
+ ],
+ "paragraphs": [
+  [
+   "Title",
+   "AeroControl — Reporte de estado documental"
+  ],
+  [
+   "Normal",
+   "Generado: 2026-10-26"
+  ],
+  [
+   "Normal",
+   "Período analizado: 2026-09-26 a 2026-10-26"
+  ],
+  [
+   "Normal",
+   "5 de 6 documentos vigentes están al día (83.3%). 1 vencidos, 3 por vencer en 30 días."
+  ],
+  [
+   "Heading 1",
+   "Por centro de costo"
+  ],
+  [
+   "Heading 1",
+   "Resolución de alertas en el período"
+  ],
+  [
+   "Normal",
+   "No se resolvieron alertas en este período."
+  ],
+  [
+   "Heading 1",
+   "Alertas abiertas"
+  ]
+ ],
+ "tables": [
+  [
+   [
+    "Centro de costo",
+    "Nombre",
+    "Documentos",
+    "Vigentes",
+    "% vigentes",
+    "Vencidos",
+    "Vence <=7d",
+    "Vence <=15d",
+    "Vence <=30d"
+   ],
+   [
+    "FAENA-01",
+    "=SENTINEL(1+1)",
+    "6",
+    "5",
+    "83.3",
+    "1",
+    "1",
+    "1",
+    "1"
+   ],
+   [
+    "FAENA-02",
+    "Faena Sur",
+    "0",
+    "0",
+    "0.0",
+    "0",
+    "0",
+    "0",
+    "0"
+   ]
+  ],
+  [
+   [
+    "Entidad",
+    "Tipo",
+    "Regla",
+    "Detectada",
+    "Antigüedad (días)"
+   ],
+   [
+    "en 3 dias",
+    "Documento",
+    "Documentos por vencer",
+    "2026-10-26",
+    "0"
+   ]
+  ]
+ ]
+}
