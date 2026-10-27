@@ -1,5 +1,18 @@
 # HANDOFF — AeroControl
 
+## 🟡 2026-10-27 — tanda fusionada, **pendiente de un despliegue** (`main` en `934c926`, producción en `1dfde39`)
+
+`p340` corre **`1dfde39`** (informe mensual v2, desplegado y verificado; timer de cierre del 1-11 06:30 UTC registrado). Desde ahí se fusionaron 60 commits **sin desplegar**: aislamiento por empresa (F-08), alertas por empresa, Informes F1/F2, Cumplimiento v4 (`compliance.css`), capa de permisos en trámite del mapa (`LV-379`), adjuntos en la ficha de mantención (`LV-382`), navegación lateral nueva (`LV-381`, F0–F5), msgpack 1.2.4 y gunicorn 26.
+
+**Qué lleva el despliegue:** **sin migración** (ninguna en el rango); **con estáticos** (`collectstatic`) y **con `uv sync`** (cambian `msgpack` y `gunicorn` en `uv.lock`). Se dicta con `bash scripts/deploy.sh --dry-run` y luego `bash scripts/deploy.sh`; no se da por desplegado sin el hash final igual a `origin/main`.
+
+**Pendiente — del usuario**
+- Desplegar la tanda y revisar con recarga forzada: navegación (tema oscuro incluido), Cumplimiento v4 y la capa de permisos en trámite del mapa (nadie los ha visto en pantalla).
+- Cargar por la interfaz las 5 mantenciones de los RPA (tras desplegar los adjuntos); antes, confirmar contra el certificado DGAC la serie de CC717.
+- No crear una segunda `OperationalTenant` hasta tener desplegadas las fases de aislamiento; si se crea, correr `seed_alert_rules --tenant`.
+
+**Pendiente — del código:** prueba de aislamiento de `cost_center_filter` con usuario; chip `sites_without_permit` del panel; contraste 1.83:1 de la capa «vigentes» del mapa; SIGO por modalidades (`LV-278`, bloque B espera las capturas del portal); `T1.4` espera visto bueno; orden por columna (`LV-280`).
+
 ## ✅ 2026-10-26 — tanda del 21 al 23 de octubre y emisión con corte anticipado **desplegadas** (`32dce41`)
 
 `p340` corre **`32dce41`**. Se desplegó en dos pasadas, leídas de la salida pegada: (1) `d42c0f1` (la tanda tiempo/AIP/permiso/credencial/baja/visual v3 de la entrada de abajo, ya fusionada el 23) y (2) `32dce41`: **emisión del informe mensual con corte anticipado** (`LV-375`) y **todos los centros de costo visibles** en la tabla de permisos de Cumplimiento (`LV-374`). Cada pasada con respaldo previo (`restorable.`), `git pull` + `migrate` (`reporting.0006_lv375_early_cutoff_permission`, solo el permiso), reinicio (`active`, hash leído), `health: 200` y `bootstrap_roles`. Los estáticos se copiaron en la primera pasada (la segunda no llevó). `WEATHER_USER_AGENT` ya está definido en la VM y el clima funciona con MET Norway.
