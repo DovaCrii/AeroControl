@@ -37,10 +37,12 @@ PERIOD = date(2026, 8, 1)
 @pytest.fixture
 def types(db):
     return [
-        DocumentType.objects.create(code=code, name=name, is_operational_record=True)
-        for code, name in (
-            ("flight-log", "Bitácora de vuelo (REG-015)"),
-            ("rpa-checklist", "Check list RPA (LVE-003)"),
+        DocumentType.objects.create(
+            code=code, name=name, reference_code=ref, is_operational_record=True
+        )
+        for code, name, ref in (
+            ("flight-log", "Bitácora de vuelo", "REG-015"),
+            ("rpa-checklist", "Lista de chequeo RPA", "LVE-003"),
         )
     ]
 
@@ -99,14 +101,17 @@ class TestOneRowPerOperatingCostCentre:
         assert row["missing_types"] == [checklist]
         assert row["records_total"] == 2
 
-    def test_the_chip_label_drops_the_form_code(self, types):
+    def test_the_chip_shows_the_name_and_the_form_code_goes_in_the_title(self, types):
         _centre("CC1")
 
         response = login_as("view_monthlycompliancereview").get(
             reverse("monthly-review"), {"month": MONTH}
         )
 
-        assert "Bitácora de vuelo · " in response.content.decode()
+        content = response.content.decode()
+        assert f"{types[0].name} · " in content
+        assert f'title="{types[0].name} · REG-015"' in content
+        assert "(REG-015)" not in content
 
     def test_it_stays_within_three_queries_whatever_the_number_of_centres(
         self, types, django_assert_max_num_queries

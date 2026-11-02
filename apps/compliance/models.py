@@ -60,17 +60,38 @@ class DocumentType(BaseModel):
     # "Other" is last on purpose -- it is where an unclassified type lands, not
     # a shelf anybody looks in first.
     CATEGORY_CHOICES = [
-        (CATEGORY_PERSONNEL, _("Personnel documents")),
-        (CATEGORY_AIRCRAFT, _("Aircraft documents")),
-        (CATEGORY_DGAC, _("DGAC filings and authorizations")),
+        (CATEGORY_PERSONNEL, _("Personnel")),
+        (CATEGORY_AIRCRAFT, pgettext_lazy("document category", "Aircraft")),
+        (CATEGORY_DGAC, _("DGAC filings")),
         (CATEGORY_OPERATIONAL, _("Operational records")),
         (CATEGORY_MAINTENANCE, _("Maintenance and calibration")),
-        (CATEGORY_COMPANY, _("Company documents")),
-        (CATEGORY_OTHER, _("Other")),
+        (CATEGORY_COMPANY, _("Company")),
+        (CATEGORY_OTHER, pgettext_lazy("document category", "Other")),
     ]
 
     name = models.CharField(max_length=150)
     code = models.CharField(max_length=50, unique=True)
+    # LV-385: the taxonomy of the catalog. `name` is a noun plus a qualifier with
+    # no parenthesis; the form code the paper carries (REG-015, LVE-003, .TXT)
+    # lives in `reference_code`, and `description` says in one line what the
+    # document is for. `sort_order` orders the types inside their category.
+    description = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name=_("Description"),
+        help_text=_("One line saying what this document is for."),
+    )
+    reference_code = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name=_("Form code"),
+        help_text=_("The code the paper carries, if any (for example REG-015)."),
+    )
+    sort_order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_("Sort order"),
+        help_text=_("Orders the types inside their category; lower comes first."),
+    )
     # Defaults to "other" so a type created without thinking about it is
     # visibly unclassified instead of silently filed under a real group.
     category = models.CharField(
@@ -107,6 +128,7 @@ class DocumentType(BaseModel):
     )
 
     class Meta:
+        ordering = ["sort_order", "name"]
         # LV-80: without these the screen title falls back to Django's English
         # derivation of the class name ("Document type" / "Document types").
         verbose_name = _("document type")
@@ -660,6 +682,7 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
     # `check_alert_effectiveness` escalates whatever is due and unverified.
 
     class Meta:
+        ordering = ["sort_order", "name"]
         # LV-80: without these the screen title falls back to Django's English
         # derivation of the class name.
         verbose_name = _("alert")

@@ -177,7 +177,8 @@ def selectable_document_types(current_pk=None):
             condition |= Q(pk=UUID(str(current_pk)))
         except (AttributeError, TypeError, ValueError):
             pass
-    return DocumentType.objects.filter(condition).order_by("name")
+    # LV-385: por `sort_order` y luego por nombre, que es el orden de cada sección.
+    return DocumentType.objects.filter(condition).order_by("sort_order", "name")
 
 
 DOCUMENTABLE_MODEL_LABELS = {
@@ -689,7 +690,16 @@ class DocumentTypeForm(AeroModelForm):
         # LV-95: `category` is here, not left to its default -- a type created
         # from this screen without one would land under "Other" and quietly
         # undo the grouping for the next person who looks for it.
-        fields = ["name", "code", "category", "requires_expiry", "is_insurance"]
+        fields = [
+            "name",
+            "code",
+            "category",
+            "description",
+            "reference_code",
+            "sort_order",
+            "requires_expiry",
+            "is_insurance",
+        ]
         # LV-22: without explicit labels Django auto-derives an English one
         # ("Requires expiry") whose msgid is in no catalog, so it renders in
         # English inside the Spanish UI.
