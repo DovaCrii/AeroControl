@@ -12997,6 +12997,69 @@ msgstr ""
 "El informe mensual DGAC es una foto a su propia fecha de corte, así que sus "
 "cifras pueden diferir de estas sin que ninguna esté mal."
 
+msgid "A cost center"
+msgstr "Un centro de costo"
+
+msgid "Head office"
+msgstr "Casa matriz"
+
+msgid "Unknown"
+msgstr "Se desconoce"
+
+msgid "workshop"
+msgstr "taller"
+
+msgid "workshop order"
+msgstr "orden de trabajo del taller"
+
+msgid "received at"
+msgstr "recibido el"
+
+msgid "sent by"
+msgstr "enviado por"
+
+msgid "sending cost center"
+msgstr "centro de costo que envía"
+
+msgid "delivered by"
+msgstr "entregado por"
+
+msgid "accessories"
+msgstr "accesorios"
+
+msgid "findings"
+msgstr "hallazgos"
+
+msgid "reader"
+msgstr "lector"
+
+msgid "source document"
+msgstr "documento de origen"
+
+msgid "workshop intake"
+msgstr "ingreso a taller"
+
+msgid "workshop intakes"
+msgstr "ingresos a taller"
+
+msgid "The maintenance record does not belong to this aircraft."
+msgstr "La mantención no pertenece a esta aeronave."
+
+msgid "This maintenance record is no longer open for an intake."
+msgstr "Esta mantención ya no admite un ingreso a taller."
+
+msgid "This maintenance record already has a workshop intake."
+msgstr "Esta mantención ya tiene un ingreso a taller."
+
+msgid "Choose the cost center that sent the equipment."
+msgstr "Elija el centro de costo que envió el equipo."
+
+msgid "A cost center only applies when the equipment was sent by one."
+msgstr "El centro de costo sólo corresponde cuando el equipo lo envió uno."
+
+msgid "An intake with this workshop and order number is already registered."
+msgstr "Ya hay un ingreso registrado con este taller y esta orden de trabajo."
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
