@@ -1,5 +1,13 @@
 # HANDOFF — AeroControl
 
+## ✅ 2026-11-02 — ingreso a taller: cancelar, documentos en la aeronave y anular ingreso **desplegado** (`262e9a5`)
+
+`p340` corre **`262e9a5`** (RESUMEN pegado: `DEPLOY OK`, 1 migración aplicada y 0 pendientes, respaldo restorable, sin dependencias ni estáticos, `active`, health 200, 16 timers, HEAD == origin/main). Antes `fb4f46a`; 6 commits. `LV-388`: «Cancelar» visible arriba y borrado del PDF provisional; los documentos del ingreso cuelgan de la **aeronave** (`maintenance 0012` movió los ya subidos); botón «Anular ingreso» (archiva, no borra; restaura el estado de la aeronave sólo si es seguro); la lista de mantenciones oculta las archivadas (`?is_active=archived`).
+
+**Pendiente — del usuario:** comprobar en pantalla que los dos PDF (CC 664 y CC 633) salen en «Documentos» de cada aeronave; anular con el botón nuevo el ingreso equivocado; generar el informe mensual de octubre.
+
+**Pendiente — del código:** el gate local falló en `test_detached_head_aborts` bajo `-n auto` dentro de un worktree (aislado pasa); el CI quedó verde.
+
 ## ✅ 2026-11-02 — tanda «ingreso a servicio técnico + documentos» **desplegada** (`fb4f46a`)
 
 `p340` corre **`fb4f46a`** (leído del RESUMEN pegado: `DEPLOY OK`, 3 migraciones aplicadas y 0 pendientes, respaldo restorable, `uv sync` instaló, 2 estáticos copiados, `active`, health 200, 16 timers, HEAD == origin/main). Antes corría `934c926`; se desplegaron 35 commits. Quedó pendiente de lo de abajo sólo la revisión en pantalla. Entraron: ingreso a servicio técnico (`LV-383`: modelo `WorkshopIntake`, lectores Geocom de recepción y cotización, pantalla «Registrar ingreso» con vista previa, distintivo y filtro «sin aviso a casa matriz»), prellenado seguro de documentos (`LV-384`), taxonomía y selector de tipos (`LV-385`/`LV-386`), menú «Subir…» en las fichas (`LV-387`) y pypdf 6.21.4.
