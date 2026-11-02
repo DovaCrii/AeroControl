@@ -13321,3 +13321,11 @@ msgstr "Sugeridos para este registro"
 #: .\templates\compliance\_documents_section.html
 msgid "Upload…"
 msgstr "Subir…"
+
+#: .\templates\maintenance\_record_rows.html
+msgid "Sent without notice to head office"
+msgstr "Enviado sin aviso a casa matriz"
+
+#: .\templates\maintenance\record_list.html
+msgid "All senders"
+msgstr "Todos los remitentes"

@@ -22,7 +22,7 @@ from apps.core.views import (
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.registry.models import Aircraft
 from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
-from .models import MaintenanceHistory, MaintenanceRecord
+from .models import MaintenanceHistory, MaintenanceRecord, WorkshopIntake
 
 
 # LV-372 (F-08): el tenant de una mantención es el de su aeronave.
@@ -74,9 +74,17 @@ class MaintenanceRecordList(MList):
         # LV-252: `select_related("aircraft")` porque cada fila dibuja su aeronave:
         # sin el join era una consulta por fila, hasta 25 de más por página, en una
         # lista que no tenía techo de consultas que lo notara.
-        queryset = super().get_queryset().select_related("aircraft")
+        # LV-383 PR 4: `workshop_intake` para el distintivo de cada fila.
+        queryset = super().get_queryset().select_related("aircraft", "workshop_intake")
         status = self.request.GET.get("status", "")
         maintenance_type = self.request.GET.get("maintenance_type", "")
+        sent_by = self.request.GET.get("sent_by", "")
+        # El valor inválido se ignora, como el estado y el tipo. Sólo cuentan los
+        # ingresos activos, igual que el distintivo.
+        if sent_by in dict(WorkshopIntake.SENT_BY_CHOICES):
+            queryset = queryset.filter(
+                workshop_intake__is_active=True, workshop_intake__sent_by=sent_by
+            )
         if status in dict(MaintenanceRecord.STATUSES):
             queryset = queryset.filter(status=status)
         if maintenance_type in dict(MaintenanceRecord.TYPES):
@@ -93,6 +101,10 @@ class MaintenanceRecordList(MList):
         )
         return queryset
 
+    def _valid_sent_by(self):
+        value = self.request.GET.get("sent_by", "")
+        return value if value in dict(WorkshopIntake.SENT_BY_CHOICES) else ""
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
@@ -100,6 +112,8 @@ class MaintenanceRecordList(MList):
             type_choices=MaintenanceRecord.TYPES,
             current_status=self.request.GET.get("status", ""),
             current_type=self.request.GET.get("maintenance_type", ""),
+            sent_by_choices=WorkshopIntake.SENT_BY_CHOICES,
+            current_sent_by=self._valid_sent_by(),
             cost_center_filter=self.cost_center_filter,
         )
         # LV-254: los dos filtros propios también cuentan como filtro, para que el
@@ -107,6 +121,7 @@ class MaintenanceRecordList(MList):
         context["is_filtered"] = context["is_filtered"] or bool(
             context["current_status"]
             or context["current_type"]
+            or context["current_sent_by"]
             or self.request.GET.get("needs_planning") == "1"
             or self.cost_center_filter
         )
