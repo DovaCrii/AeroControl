@@ -300,8 +300,9 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
     # dirección contraria a su propia documentación. Al fusionarlos el catálogo
     # recupera su tamaño, porque nunca hubo un papel nuevo — sólo un nombre que
     # engañaba.
-    # LV-290: **20**, no 19: suma `flight-log-txt` (el registro de vuelo .TXT de la DGAC).
-    assert DocumentType.objects.count() == 20
+    # LV-290: suma `flight-log-txt` (el registro de vuelo .TXT de la DGAC).
+    # LV-383: **21**, suma `workshop-intake-receipt` (la recepción del taller).
+    assert DocumentType.objects.count() == 21
     # LV-117: sigue siendo **uno** aunque ahora existan dos tipos que hablan del
     # seguro. La resolución de la JAC no lleva la bandera: dos tipos marcados
     # harían competir dos documentos por la columna de la lista de aeronaves.
@@ -344,8 +345,8 @@ def test_seed_document_types_creates_catalog_including_one_insurance_type():
 
     # Idempotent: a second run does not duplicate or touch existing rows.
     call_command("seed_document_types")
-    # LV-290: **20**, no 19: suma `flight-log-txt` (el registro de vuelo .TXT de la DGAC).
-    assert DocumentType.objects.count() == 20
+    # LV-383: **21** (suma `workshop-intake-receipt`).
+    assert DocumentType.objects.count() == 21
 
 
 @pytest.mark.django_db

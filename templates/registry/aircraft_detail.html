@@ -70,6 +70,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
       wait on picking a scheduled date or assignee first.{% endcomment %}
       <form method="post" action="{% url 'aircraft-report-incident' object.pk %}" onsubmit="return confirm('{% translate "Mark this aircraft as damaged and open an emergency maintenance record?" %}');">{% csrf_token %}<button type="submit" class="btn btn-sm btn-danger">{% translate "Report accident / damage" %}</button></form>
       {% endif %}
+      {% if perms.compliance.add_document %}<a href="{% url 'maintenance-intake-new' %}?aircraft={{ object.pk }}" hx-boost="false" class="btn btn-sm btn-outline-primary">{% translate "Register workshop intake" %}</a>{% endif %}
       <a href="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-get="{% url 'maintenance-create' %}?aircraft={{ object.pk }}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-warning">{% translate "Send to maintenance" %}</a>
     </div>
     {% endif %}

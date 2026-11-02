@@ -16,6 +16,9 @@ from apps.compliance.models import DocumentType
 from apps.core.testing import login_as
 
 MIGRATION = "apps.compliance.migrations.0028_lv385_document_type_taxonomy"
+# Tipos sembrados DESPUÉS de la migración 0028: el seed y la vista que los crea los
+# traen completos (nombre y guía), así que la migración no tiene nada que renombrar.
+CODES_AFTER_THE_MIGRATION = {"workshop-intake-receipt"}  # LV-383
 
 
 def _migration():
@@ -56,7 +59,8 @@ class TestTheSeededCatalogIsStandardised:
         taxonomy = _migration().TAXONOMY
         names = {row[0]: row[1] for row in DOCUMENT_TYPES}
 
-        assert set(taxonomy) == set(names)
+        assert set(taxonomy) | CODES_AFTER_THE_MIGRATION == set(names)
+        assert not set(taxonomy) & CODES_AFTER_THE_MIGRATION
         for code, (_old, new, description, ref, order) in taxonomy.items():
             assert new == names[code], code
             assert (description, ref, order) == DOCUMENT_TYPE_GUIDE[code], code

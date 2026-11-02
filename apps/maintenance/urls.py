@@ -1,7 +1,18 @@
 from django.urls import path
-from . import views
+from . import intake_views, views
 
 urlpatterns = [
+    # LV-383 (PR 3): register a workshop intake from the workshop's PDF.
+    path(
+        "intake/new/",
+        intake_views.WorkshopIntakeUpload.as_view(),
+        name="maintenance-intake-new",
+    ),
+    path(
+        "intake/confirm/",
+        intake_views.WorkshopIntakeConfirm.as_view(),
+        name="maintenance-intake-confirm",
+    ),
     path("records/", views.MaintenanceRecordList.as_view(), name="maintenance-list"),
     path(
         "records/new/",
