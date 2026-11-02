@@ -19,6 +19,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.compliance.models import DocumentType
+from apps.compliance.upload_context import resolve_doc_type
 from apps.core.testing import login_as
 from apps.operations.dossier import (
     SIGNED_AUTHORIZATION,
@@ -82,7 +83,7 @@ class TestWhereEachGapIsClosed:
         assert item.action_url.startswith(reverse("document-create"))
         assert f"entity_type={content_type.pk}" in item.action_url
         assert f"object_id={permission.pk}" in item.action_url
-        assert f"doc_type={doc_type.pk}" in item.action_url
+        assert f"doc_type={doc_type.code}" in item.action_url
 
     @pytest.mark.django_db
     def test_the_upload_link_survives_a_type_missing_from_the_catalog(self, permission):
@@ -94,7 +95,8 @@ class TestWhereEachGapIsClosed:
         item = _item(permission, "signed_authorization")
 
         assert item.action_url.startswith(reverse("document-create"))
-        assert "doc_type=" not in item.action_url
+        assert f"doc_type={SIGNED_AUTHORIZATION}" in item.action_url
+        assert resolve_doc_type(SIGNED_AUTHORIZATION) is None
 
     @pytest.mark.django_db
     def test_one_aircraft_without_insurance_links_to_that_aircraft(self, permission):

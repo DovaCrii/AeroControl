@@ -202,25 +202,20 @@ def _upload_action(permission, code, user):
     datos que la persona tendría que elegir a mano sabiendo cuál es el correcto
     —y "cuál es el correcto" es justo lo que `LV-64` demostró que se confunde.
 
-    Si el tipo no está en el catálogo el enlace va igual, sin prellenarlo: dejar
-    a alguien sin forma de subir el papel porque falta una fila de catálogo sería
-    peor que ofrecerle el formulario en blanco.
+    LV-387: el tipo viaja por su `code`, que es estable. Si no está en el
+    catálogo (o está archivado) el formulario lo ignora y se abre en blanco:
+    dejar a alguien sin forma de subir el papel porque falta una fila de
+    catálogo sería peor.
     """
     if not _allowed(user, "compliance.add_document"):
         return "", ""
     from django.contrib.contenttypes.models import ContentType
 
-    from apps.compliance.models import DocumentType
-
     params = {
         "entity_type": ContentType.objects.get_for_model(permission.__class__).pk,
         "object_id": str(permission.pk),
+        "doc_type": code,
     }
-    doc_type_pk = (
-        DocumentType.objects.filter(code=code).values_list("pk", flat=True).first()
-    )
-    if doc_type_pk:
-        params["doc_type"] = doc_type_pk
     return _("Upload it"), f"{reverse('document-create')}?{urlencode(params)}"
 
 

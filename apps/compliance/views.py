@@ -71,6 +71,7 @@ from .models import (
     document_upload_path,
 )
 from .storage import DocumentStorageNotFound, get_document_storage
+from .upload_context import resolve_doc_type
 from .watchables import alert_subject_querysets
 
 
@@ -888,12 +889,12 @@ def _drop_unusable_prefill(initial, user):
                 initial.pop(key, None)
     doc_type = initial.get("doc_type")
     if doc_type:
-        try:
-            usable = DocumentType.objects.filter(pk=doc_type, is_active=True).exists()
-        except (ValidationError, TypeError, ValueError):
-            usable = False
-        if not usable:
+        # LV-387: a code (what the links carry now) or a pk (what they carried).
+        resolved = resolve_doc_type(doc_type)
+        if resolved is None:
             initial.pop("doc_type", None)
+        else:
+            initial["doc_type"] = resolved.pk
 
 
 class DocumentCreate(SaveAndAddAnotherMixin, ComplianceCreate):

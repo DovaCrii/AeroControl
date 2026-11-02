@@ -261,7 +261,7 @@ class TestTheTextFlightLog:
 
         html = client.get(_url(permit)).content.decode()
 
-        assert f"doc_type={kind.pk}" in html
+        assert f"doc_type={kind.code}" in html
         assert ".TXT" in html
 
     def test_a_plain_text_file_is_accepted(self):

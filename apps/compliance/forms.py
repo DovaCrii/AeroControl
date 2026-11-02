@@ -19,6 +19,7 @@ from .models import (
     NonConformity,
 )
 from .security import scan_uploaded_file
+from .upload_context import suggested_codes_for
 from .watchables import (
     WATCHABLE_MODELS,
     entity_type_choices,
@@ -121,6 +122,9 @@ def _signature_matches(uploaded, extension):
     return any(header.startswith(signature) for signature in signatures)
 
 
+SUGGESTED_GROUP_LABEL = _("Suggested for this record")
+
+
 class CategorizedDocumentTypeIterator(ModelChoiceIterator):
     """The document-type options, as `<optgroup>`s in category order.
 
@@ -140,7 +144,23 @@ class CategorizedDocumentTypeIterator(ModelChoiceIterator):
         if self.field.empty_label is not None:
             yield ("", self.field.empty_label)
         grouped = {}
-        for document_type in self.queryset:
+        types = list(self.queryset)
+        # LV-387: the types usual for the record being filed come first, as their
+        # own group, and are *moved* out of their category -- an option value
+        # that appears twice would break which one is `selected`.
+        by_code = {document_type.code: document_type for document_type in types}
+        suggested = []
+        for code in getattr(self.field, "suggested_codes", ()):
+            document_type = by_code.get(code)
+            if document_type is not None and document_type not in suggested:
+                suggested.append(document_type)
+        if suggested:
+            yield (
+                SUGGESTED_GROUP_LABEL,
+                [self.choice(document_type) for document_type in suggested],
+            )
+            types = [t for t in types if t not in suggested]
+        for document_type in types:
             grouped.setdefault(document_type.category, []).append(
                 self.choice(document_type)
             )
@@ -190,6 +210,8 @@ class CategorizedDocumentTypeChoiceField(forms.ModelChoiceField):
 
     iterator = CategorizedDocumentTypeIterator
     widget = DocumentTypeSelect
+    # Codes offered first (LV-387); set per form instance, never shared.
+    suggested_codes = ()
 
     def label_from_instance(self, obj):
         # LV-386: "Name · REF" when the paper carries a form code.
@@ -530,6 +552,7 @@ class DocumentForm(DocTypeHintMixin, EntityScopeMixin, AeroModelForm):
         )
         if raw_entity_type:
             self._populate_object_choices(raw_entity_type)
+            self._suggest_document_types(raw_entity_type)
         # LV-1: an empty catalog makes the required "Document type" field look
         # broken (nothing to pick). Point at where to fix it instead of
         # leaving the picker to speak for itself.
@@ -537,6 +560,35 @@ class DocumentForm(DocTypeHintMixin, EntityScopeMixin, AeroModelForm):
             self.fields["doc_type"].help_text = _(
                 "No document types configured yet. Create one first."
             )
+
+    def _suggest_document_types(self, content_type_id):
+        """LV-387: offer first the types usual for the record's kind.
+
+        For an unbound form the entity comes from `initial`, which the view has
+        already limited to a record the user may see; with no record there is
+        no group. The type prefilled from the URL leads the group.
+        """
+        try:
+            content_type = ContentType.objects.filter(pk=content_type_id).first()
+        except (TypeError, ValueError, ValidationError):
+            content_type = None
+        if content_type is None:
+            return
+        codes = suggested_codes_for(content_type.app_label, content_type.model)
+        if not codes:
+            return
+        if not self.is_bound:
+            prefilled = self.initial.get("doc_type")
+            prefilled = getattr(prefilled, "pk", prefilled)
+            if prefilled:
+                try:
+                    chosen = self.fields["doc_type"].queryset.filter(pk=prefilled)
+                    code = chosen.values_list("code", flat=True).first()
+                except (TypeError, ValueError, ValidationError):
+                    code = None
+                if code:
+                    codes = [code] + [other for other in codes if other != code]
+        self.fields["doc_type"].suggested_codes = codes
 
     def _populate_object_choices(self, content_type_id):
         try:
