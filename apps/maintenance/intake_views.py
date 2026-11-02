@@ -356,8 +356,11 @@ class WorkshopIntakeConfirm(IntakePermissionMixin, View):
                 doc_type = _receipt_type()
                 document = Document.objects.create(
                     tenant_id=aircraft.tenant_id,
-                    content_type=ContentType.objects.get_for_model(MaintenanceRecord),
-                    object_id=intake.record_id,
+                    # LV-388: el documento es del equipo (la aeronave), no de
+                    # una mantención; la mantención lo apunta con
+                    # `source_document`/`quote_document`.
+                    content_type=ContentType.objects.get_for_model(Aircraft),
+                    object_id=aircraft.pk,
                     doc_type=doc_type,
                     title=self._title(doc_type, intake, is_quote),
                     file_path="",

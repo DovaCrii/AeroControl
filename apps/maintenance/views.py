@@ -1,5 +1,7 @@
 from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -7,7 +9,8 @@ from django.utils.translation import gettext_lazy
 from django.views.generic import CreateView, DetailView, ListView, View
 from django.utils.text import capfirst
 
-from apps.compliance.attachments import attached_documents_context
+from apps.compliance.attachments import attached_documents_context, category_rank
+from apps.compliance.models import Document
 from apps.core.audit import set_audit_context
 from apps.core.views import (
     apply_cost_center_filter,
@@ -181,7 +184,34 @@ class MaintenanceRecordDetail(
         # DOCUMENTABLE_MODELS) but the ficha never listed it. The helper hides
         # the section without compliance.view_document.
         context.update(attached_documents_context(self.request.user, self.object))
+        # LV-388: el ingreso a servicio técnico cuelga sus documentos de la
+        # aeronave; esta ficha los sigue mostrando por `source_document` y
+        # `quote_document`.
+        intake = self._active_intake()
+        context["intake"] = intake
+        if context["documents"] is not None and intake is not None:
+            ids = [
+                pk for pk in (intake.source_document_id, intake.quote_document_id) if pk
+            ]
+            if ids:
+                context["documents"] = (
+                    Document.objects.filter(
+                        Q(pk__in=context["documents"].values("pk")) | Q(pk__in=ids),
+                        is_current_version=True,
+                        is_active=True,
+                    )
+                    .select_related("doc_type")
+                    .annotate(category_rank=category_rank())
+                    .order_by("category_rank", "-issue_date")
+                )
         return context
+
+    def _active_intake(self):
+        try:
+            intake = self.object.workshop_intake
+        except ObjectDoesNotExist:
+            return None
+        return intake if intake.is_active else None
 
 
 class MaintenanceStart(StatusTransitionView):
