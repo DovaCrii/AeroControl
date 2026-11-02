@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags i18n %}
+{% block title %}{{ title }} - AeroControl{% endblock %}
+{% block content %}
+<div class="card p-4">
+  {% translate "Review the workshop intake" as page_title %}
+  <div class="page-header">{% include "generic/_page_header.html" %}</div>
+
+  {% comment %}LV-383: la lectura es del archivo guardado y la hace el servidor; lo que
+  se registra es lo que la persona confirma acá. Si no se pudo leer, el aviso es neutro
+  (ⓘ): el archivo quedó guardado y el formulario sirve igual a mano.
+
+  **Esta plantilla dibuja campo por campo, así que un campo de `Meta.fields` que no
+  esté acá llega vacío en cada POST y se guarda vacío** (lección de `LV-211`). Lo vigila
+  `test_the_template_draws_every_field`.{% endcomment %}
+  {% if readable %}
+  <p class="mb-3">{% translate "The document was read. Check each value against the paper before confirming. Nothing is saved until you confirm." %}</p>
+  {% else %}
+  <p class="mb-3" role="status" data-intake-unreadable>ⓘ {% translate "The document could not be read; fill in the details by hand." %}</p>
+  {% endif %}
+
+  {% if existing %}
+  <p class="mb-3" role="status" data-intake-existing>▲ {% translate "This workshop order is already registered. The form completes that intake; values already saved are not overwritten." %}
+    <a href="{{ existing_url }}">{% translate "Open the existing intake" %}</a></p>
+  {% endif %}
+
+  <form method="post" action="{% url 'maintenance-intake-confirm' %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+    {% include "generic/_form_errors.html" %}
+    {{ form.non_field_errors }}
+
+    <fieldset class="mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Aircraft" context "workshop intake" %}</legend>
+      {% if serial_state == "none" %}
+      <p class="mb-2" role="status" data-intake-serial="none">▲ {% blocktranslate with serial=serial %}Serial read: {{ serial }}, no matching aircraft.{% endblocktranslate %}</p>
+      {% elif serial_state == "match" %}
+      <p class="mb-2" role="status" data-intake-serial="match">ⓘ {% blocktranslate with serial=serial %}Serial read: {{ serial }}.{% endblocktranslate %}</p>
+      {% elif serial_state == "multiple" %}
+      <p class="mb-2" role="status" data-intake-serial="multiple">▲ {% blocktranslate with serial=serial %}Serial read: {{ serial }}, several aircraft match; choose one.{% endblocktranslate %}</p>
+      {% else %}
+      <p class="mb-2" role="status" data-intake-serial="unread">ⓘ {% translate "No serial could be read from the document." %}</p>
+      {% endif %}
+      {{ form.aircraft|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Workshop" %}</legend>
+      {{ form.workshop_name|as_crispy_field }}
+      {{ form.workshop_order|as_crispy_field }}
+      {{ form.received_at|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Origin of the equipment" %}</legend>
+      {{ form.sent_by|as_crispy_field }}
+      {{ form.sender_cost_center|as_crispy_field }}
+      {{ form.delivered_by|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Received equipment" %}</legend>
+      {{ form.accessories|as_crispy_field }}
+      {{ form.findings|as_crispy_field }}
+    </fieldset>
+
+    {% if form.has_quote %}
+    <fieldset class="mb-4" data-intake-quote>
+      <legend class="h6 section-title mb-1">{% translate "Quote" %}</legend>
+      <p class="small text-body-secondary">{% translate "Read from the document; shown for reference and saved as read." %}</p>
+      {{ form.quote_date|as_crispy_field }}
+      {{ form.quote_valid_until|as_crispy_field }}
+      {{ form.quote_net|as_crispy_field }}
+      {{ form.quote_vat|as_crispy_field }}
+      {{ form.quote_total|as_crispy_field }}
+      {{ form.quote_lead_time|as_crispy_field }}
+      {{ form.quote_warranty|as_crispy_field }}
+      {{ form.diagnosis|as_crispy_field }}
+    </fieldset>
+    {% endif %}
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "Confirm intake" %}</button>
+      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

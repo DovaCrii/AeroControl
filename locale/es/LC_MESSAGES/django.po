@@ -13089,6 +13089,139 @@ msgstr "El centro de costo sólo corresponde cuando el equipo lo envió uno."
 msgid "An intake with this workshop and order number is already registered."
 msgstr "Ya hay un ingreso registrado con este taller y esta orden de trabajo."
 
+msgctxt "workshop intake"
+msgid "Aircraft"
+msgstr "Aeronave"
+
+msgid "The serial is matched exactly. If none matches, choose the aircraft yourself."
+msgstr "La serie se compara de forma exacta. Si ninguna coincide, elija usted la aeronave."
+
+msgid "Select…"
+msgstr "Seleccione…"
+
+msgid "Sent by"
+msgstr "Enviado por"
+
+msgid "Confirm who sent the equipment to the workshop."
+msgstr "Confirme quién envió el equipo al taller."
+
+msgid "Workshop"
+msgstr "Taller"
+
+msgid "Workshop order"
+msgstr "Orden de trabajo del taller"
+
+msgid "Received at"
+msgstr "Recibido el"
+
+msgid "Sending cost center"
+msgstr "Centro de costo que envía"
+
+msgid "Delivered by"
+msgstr "Entregado por"
+
+msgid "Accessories"
+msgstr "Accesorios"
+
+msgid "Quote date"
+msgstr "Fecha de la cotización"
+
+msgid "Quote valid until"
+msgstr "Cotización válida hasta"
+
+msgid "Quote net amount"
+msgstr "Monto neto de la cotización"
+
+msgid "Quote VAT"
+msgstr "IVA de la cotización"
+
+msgid "Quote total"
+msgstr "Total de la cotización"
+
+msgid "Quote lead time"
+msgstr "Plazo de entrega de la cotización"
+
+msgid "Quote warranty"
+msgstr "Garantía de la cotización"
+
+msgid "Diagnosis"
+msgstr "Diagnóstico"
+
+msgid "Leave blank if the document has no reception date."
+msgstr "Déjelo en blanco si el documento no trae fecha de recepción."
+
+msgid "Review the workshop intake"
+msgstr "Revisar el ingreso a servicio técnico"
+
+msgid "Register workshop intake"
+msgstr "Registrar ingreso a servicio técnico"
+
+msgid "Choose the workshop document to upload."
+msgstr "Elija el documento del taller que desea subir."
+
+msgid "Only PDF documents are accepted here."
+msgstr "Aquí sólo se aceptan documentos PDF."
+
+msgid "The upload expired or is no longer valid. Upload the document again."
+msgstr "La subida venció o ya no es válida. Suba el documento de nuevo."
+
+msgid "Workshop intake saved."
+msgstr "Ingreso a servicio técnico guardado."
+
+msgid "Workshop quote"
+msgstr "Cotización del taller"
+
+msgid "Upload the workshop document (reception or quote) as a PDF. It is read and shown for you to review; nothing is saved until you confirm."
+msgstr "Suba el documento del taller (recepción o cotización) en PDF. Se lee y se muestra para que lo revise; no se guarda nada hasta que usted confirme."
+
+msgid "Workshop document (PDF)"
+msgstr "Documento del taller (PDF)"
+
+msgid "Upload and review"
+msgstr "Subir y revisar"
+
+msgid "The document was read. Check each value against the paper before confirming. Nothing is saved until you confirm."
+msgstr "Se leyó el documento. Compare cada valor con el papel antes de confirmar. No se guarda nada hasta que usted confirme."
+
+msgid "The document could not be read; fill in the details by hand."
+msgstr "No se pudo leer el documento; complete los datos a mano."
+
+msgid "This workshop order is already registered. The form completes that intake; values already saved are not overwritten."
+msgstr "Esta orden de trabajo ya está registrada. El formulario completa ese ingreso; los valores ya guardados no se sobrescriben."
+
+msgid "Open the existing intake"
+msgstr "Abrir el ingreso existente"
+
+#, python-format
+msgid "Serial read: %(serial)s, no matching aircraft."
+msgstr "Serie leída: %(serial)s, sin coincidencia."
+
+#, python-format
+msgid "Serial read: %(serial)s."
+msgstr "Serie leída: %(serial)s."
+
+#, python-format
+msgid "Serial read: %(serial)s, several aircraft match; choose one."
+msgstr "Serie leída: %(serial)s, coinciden varias aeronaves; elija una."
+
+msgid "No serial could be read from the document."
+msgstr "No se pudo leer una serie del documento."
+
+msgid "Origin of the equipment"
+msgstr "Origen del equipo"
+
+msgid "Received equipment"
+msgstr "Equipo recibido"
+
+msgid "Quote"
+msgstr "Cotización"
+
+msgid "Read from the document; shown for reference and saved as read."
+msgstr "Leído del documento; se muestra como referencia y se guarda tal como se leyó."
+
+msgid "Confirm intake"
+msgstr "Confirmar ingreso"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

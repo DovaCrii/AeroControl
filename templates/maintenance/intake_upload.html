@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ title }} - AeroControl{% endblock %}
+{% block content %}
+<div class="card p-4">
+  {% translate "Register workshop intake" as page_title %}
+  <div class="page-header">{% include "generic/_page_header.html" %}</div>
+  <p class="text-body-secondary">{% translate "Upload the workshop document (reception or quote) as a PDF. It is read and shown for you to review; nothing is saved until you confirm." %}</p>
+
+  {% if errors %}
+  <div class="alert alert-danger" role="alert">
+    <ul class="mb-0">{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if aircraft %}<input type="hidden" name="aircraft" value="{{ aircraft }}">{% endif %}
+    <div class="mb-3">
+      <label class="form-label" for="id_file">{% translate "Workshop document (PDF)" %}</label>
+      <input class="form-control" type="file" name="file" id="id_file" accept=".pdf,application/pdf" required>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "Upload and review" %}</button>
+      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -9,6 +9,7 @@ cada mañana. Entra por los bloques `list_*` con sus mismas columnas.{% endcomme
 
 {% block list_primary_actions %}
 <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+{% if perms.maintenance.add_maintenancerecord and perms.compliance.add_document %}<a class="btn btn-outline-primary" href="{% url 'maintenance-intake-new' %}">{% translate "Register workshop intake" %}</a>{% endif %}
 <a class="btn btn-primary" href="new/">+ {% translate "New" %}</a>
 {% endblock %}
 

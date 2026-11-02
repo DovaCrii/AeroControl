@@ -195,6 +195,17 @@ DOCUMENT_TYPES = [
         False,
         MAINTENANCE,
     ),
+    # LV-383: el papel con que un taller recibe un equipo (o su cotización): cuelga
+    # de la mantención que registra el ingreso a servicio técnico. Es un hecho que
+    # ocurrió, no una vigencia -- requires_expiry=False.
+    (
+        "workshop-intake-receipt",
+        "Recepción en servicio técnico",
+        False,
+        False,
+        False,
+        MAINTENANCE,
+    ),
     # R7.3 (ISO 7.1.5): GNSS/RTK and camera calibration certificates. A real
     # "Certificado Calibración.pdf" already sits in Z:\CC706-...\04.- Mantenciones
     # waiting for a place to live. requires_expiry=True -- unlike
@@ -293,6 +304,11 @@ DOCUMENT_TYPE_GUIDE = {
         "GNSS/RTK/cámara; la norma exige que esté vigente",
         "",
         20,
+    ),
+    "workshop-intake-receipt": (
+        "Respalda el ingreso de un equipo a un taller; no vence",
+        "",
+        30,
     ),
     "aoc-certificate": ("Documento único de la empresa; no se renueva", "", 10),
     "company-procedure": (
