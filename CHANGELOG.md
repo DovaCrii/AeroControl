@@ -20,6 +20,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 - **Barra lateral fija y modo icono completo (`LV-381` F0, `codex/nav-fija-y-rail`).** El menú y la barra superior ya no se van con el scroll: la barra lateral cuelga de la altura real de la superior (medida en `app.js`, también con el aviso sin conexión), se desplaza sólo en la zona de grupos y deja Administración fija abajo. El modo icono muestra los 24 destinos (antes 7: la regla de `LV-170` perdía contra `[hidden]` de Bootstrap) con una línea entre grupos, y las burbujas con el nombre ya no las recorta el contenedor. Vuelve la línea que separa los títulos de grupo. Sin migración; lleva estáticos.
 ### Security
 
+- **`pypdf` 6.21.2 -> 6.21.4 (CVE-2026-119203 a 119209).** `pip-audit` volvió a fallar en el CI por siete avisos de `pypdf`; se sube sólo ese paquete en `uv.lock` (el rango `>=6,<7` de `pyproject.toml` no cambia). Sin migración ni estáticos; lleva `uv sync` en el siguiente despliegue.
 - **`msgpack` 1.2.1 -> 1.2.4 (CVE-2026-114613).** `pip-audit` fallaba por esta dependencia transitiva de desarrollo (`pip-audit[filecache]` -> `cachecontrol` -> `msgpack`); se sube sólo ese paquete en `uv.lock` (corrección desde 1.2.3). Sin migración ni estáticos; no afecta a producción (grupo dev).
 
 ### Changed
