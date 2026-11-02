@@ -4,7 +4,16 @@
 {% block content %}
 <div class="card p-4">
   {% translate "Review the workshop intake" as page_title %}
-  <div class="page-header">{% include "generic/_page_header.html" %}</div>
+  <div class="page-header">
+    {% include "generic/_page_header.html" %}
+    <button type="submit" form="intake-cancel-form" class="btn btn-outline-secondary" formnovalidate>{% translate "Cancel" %}</button>
+  </div>
+  {% comment %}LV-388: «Cancelar» hace POST con el token (borra el PDF provisional). El
+  botón de arriba y el del pie apuntan a este form aparte con `form=`.{% endcomment %}
+  <form id="intake-cancel-form" method="post" action="{% url 'maintenance-intake-cancel' %}">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ token }}">
+  </form>
 
   {% comment %}LV-383: la lectura es del archivo guardado y la hace el servidor; lo que
   se registra es lo que la persona confirma acá. Si no se pudo leer, el aviso es neutro
@@ -81,7 +90,7 @@
 
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-primary">{% translate "Confirm intake" %}</button>
-      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Cancel" %}</a>
+      <button type="submit" form="intake-cancel-form" class="btn btn-outline-secondary" formnovalidate>{% translate "Cancel" %}</button>
     </div>
   </form>
 </div>

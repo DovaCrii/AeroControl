@@ -247,10 +247,9 @@ class TestReception:
         assert document.doc_type.code == RECEIPT_TYPE_CODE
         assert document.doc_type.requires_expiry is False
         assert document.expiry_date is None
-        assert document.content_type == ContentType.objects.get_for_model(
-            MaintenanceRecord
-        )
-        assert document.object_id == record.pk
+        # LV-388: el sujeto es la aeronave (el equipo), no la mantención.
+        assert document.content_type == ContentType.objects.get_for_model(Aircraft)
+        assert document.object_id == plane.pk
         assert document.tenant_id == plane.tenant_id
         assert intake.source_document == document and intake.quote_document is None
         assert get_document_storage().exists(document.file_path)
@@ -335,7 +334,7 @@ class TestQuote:
         assert intake.quote_document is not None
         assert intake.source_document is not None
         assert intake.quote_document != intake.source_document
-        assert Document.objects.filter(object_id=intake.record_id).count() == 2
+        assert Document.objects.filter(object_id=plane.pk).count() == 2
         assert MaintenanceRecord.objects.count() == 1
 
 
