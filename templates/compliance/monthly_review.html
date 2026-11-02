@@ -56,9 +56,9 @@ la no conformidad sola; la nota escrita pasa a ser su descripción.{% endcomment
             <div class="d-flex flex-wrap gap-1">
               {% for item in row.records %}
               {% if item.count %}
-              <a class="close-chip close-chip-ok" href="{% url 'operational-records' %}?cost_center={{ row.cost_center.pk }}&amp;doc_type={{ item.doc_type.pk }}&amp;month={{ period|date:'Y-m' }}" title="{{ item.doc_type.name }}">{{ item.doc_type.short }} · {{ item.count }}</a>
+              <a class="close-chip close-chip-ok" href="{% url 'operational-records' %}?cost_center={{ row.cost_center.pk }}&amp;doc_type={{ item.doc_type.pk }}&amp;month={{ period|date:'Y-m' }}" title="{{ item.doc_type.name }}{% if item.doc_type.reference_code %} · {{ item.doc_type.reference_code }}{% endif %}">{{ item.doc_type.name }} · {{ item.count }}</a>
               {% else %}
-              <span class="close-chip close-chip-missing" title="{{ item.doc_type.name }}">{{ item.doc_type.short }} · {% translate "missing" %}</span>
+              <span class="close-chip close-chip-missing" title="{{ item.doc_type.name }}{% if item.doc_type.reference_code %} · {{ item.doc_type.reference_code }}{% endif %}">{{ item.doc_type.name }} · {% translate "missing" %}</span>
               {% endif %}
               {% empty %}
               <span class="text-body-secondary small">{% translate "No operational record types are configured." %}</span>
