@@ -1,7 +1,7 @@
 import re
 import unicodedata
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
@@ -104,6 +104,17 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
         return self.status != "completed" and (
             self.maintenance_type == "to_be_defined" or self.scheduled_date is None
         )
+
+    @property
+    def sent_without_head_office_notice(self):
+        """LV-383 PR 4: True when the active workshop intake says a cost center
+        sent the unit by itself. False with no intake (the reverse one-to-one
+        raises when absent, even after `select_related`)."""
+        try:
+            intake = self.workshop_intake
+        except ObjectDoesNotExist:
+            return False
+        return intake.was_sent_without_head_office_notice
 
     @property
     def is_at_workshop_stage(self):
@@ -355,8 +366,9 @@ class WorkshopIntake(BaseModel):
     in the database, never in `__str__`, logs or messages.
     """
 
+    SENT_BY_COST_CENTER = "cost_center"
     SENT_BY_CHOICES = [
-        ("cost_center", _("A cost center")),
+        (SENT_BY_COST_CENTER, _("A cost center")),
         ("head_office", _("Head office")),
         ("unknown", _("Unknown")),
     ]
@@ -442,6 +454,13 @@ class WorkshopIntake(BaseModel):
     def __str__(self):
         # Deliberately without `delivered_by` (personal data).
         return f"{self.workshop_name} · {self.record_id}"
+
+    @property
+    def was_sent_without_head_office_notice(self):
+        """LV-383 PR 4: a cost center sent the unit on its own, so head office
+        was not told. `head_office` and `unknown` do not count: the second one
+        is "nobody knows", which is not the same as "nobody was told"."""
+        return self.is_active and self.sent_by == self.SENT_BY_COST_CENTER
 
     # Fields `merge_proposal` may fill; `sent_by`/`sender_cost_center` go together.
     MERGEABLE_FIELDS = (

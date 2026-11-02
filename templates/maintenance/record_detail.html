@@ -21,6 +21,7 @@
     <tr><th scope="row">{% translate "Type" %}</th><td>{{ record.get_maintenance_type_display }}</td></tr>
     <tr><th scope="row">{% translate "Status" %}</th><td>
       <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ record.get_status_display }}</span>
+      {% if record.sent_without_head_office_notice %}<span class="badge sev-caution ms-1" data-intake-badge="no-notice">{% translate "Sent without notice to head office" %}</span>{% endif %}
       {% if record.workshop_dwell_is_overdue %}<span class="badge bg-danger ms-1">{% blocktranslate count days=record.days_in_current_status %}{{ days }} day in this status{% plural %}{{ days }} days in this status{% endblocktranslate %}</span>{% endif %}
     </td></tr>
     <tr><th scope="row">{% translate "Description" %}</th><td>{{ record.description }}</td></tr>
