@@ -18,6 +18,11 @@ urlpatterns = [
         intake_views.WorkshopIntakeCancel.as_view(),
         name="maintenance-intake-cancel",
     ),
+    path(
+        "records/<uuid:pk>/void-intake/",
+        views.WorkshopIntakeVoid.as_view(),
+        name="maintenance-void-intake",
+    ),
     path("records/", views.MaintenanceRecordList.as_view(), name="maintenance-list"),
     path(
         "records/new/",

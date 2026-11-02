@@ -258,6 +258,88 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
                 record.save()
             return intake
 
+    # Outcomes of `void_workshop_intake` for the aircraft's state.
+    VOID_AIRCRAFT_RESTORED = "restored"
+    VOID_AIRCRAFT_KEPT = "kept"
+    VOID_AIRCRAFT_UNTOUCHED = "untouched"
+
+    def void_workshop_intake(self, user=None):
+        """LV-388: annul the workshop intake of this record (archive, never delete).
+
+        The intake and the record are archived (`is_active=False`); nothing is
+        deleted and the documents stay on the aircraft. Returns one of the
+        `VOID_AIRCRAFT_*` outcomes:
+
+        * `untouched`: the record never moved the aircraft out (it is not in a
+          workshop state), so the aircraft is left alone.
+        * `restored`: the record was in a workshop state, no other active record
+          keeps the aircraft there and the aircraft is still marked away
+          (`maintenance`/`maintenance`): it goes back to `headquarters`/`active`,
+          the same edge `sync_maintenance_status_transition` applies when a
+          record completes from `in_transit`. The previous state is not stored
+          anywhere, so that edge is the only certain value.
+        * `kept`: anything else (another open workshop record, or somebody
+          already changed the aircraft by hand): the aircraft is not touched and
+          the caller should say so.
+
+        Raises `ValidationError` when there is no active intake to annul.
+        """
+        from apps.compliance.alerts import resolve_open_alerts_for
+
+        with transaction.atomic():
+            record = type(self).objects.select_for_update().get(pk=self.pk)
+            intake = (
+                WorkshopIntake.objects.select_for_update()
+                .filter(record=record, is_active=True)
+                .first()
+            )
+            if intake is None or not record.is_active:
+                raise ValidationError(_("This record has no active workshop intake."))
+            intake.is_active = False
+            intake.save(update_fields=["is_active", "updated_at"])
+            record.is_active = False
+            record.save(update_fields=["is_active", "updated_at"])
+            resolve_open_alerts_for(record)
+            outcome = record._release_aircraft(user)
+        self.is_active = False
+        return outcome
+
+    def _release_aircraft(self, user):
+        if self.status not in self.WORKSHOP_STATUSES:
+            return self.VOID_AIRCRAFT_UNTOUCHED
+        aircraft = (
+            type(self.aircraft).objects.select_for_update().get(pk=self.aircraft_id)
+        )
+        still_held = (
+            type(self)
+            .objects.filter(
+                aircraft_id=self.aircraft_id,
+                is_active=True,
+                status__in=self.WORKSHOP_STATUSES,
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        )
+        if (
+            still_held
+            or aircraft.current_location != "maintenance"
+            or aircraft.status != "maintenance"
+        ):
+            return self.VOID_AIRCRAFT_KEPT
+        aircraft.current_location = "headquarters"
+        aircraft.current_site = None
+        aircraft.status = "active"
+        aircraft._changed_by_user = user
+        aircraft.save(
+            update_fields=[
+                "current_location",
+                "current_site",
+                "status",
+                "updated_at",
+            ]
+        )
+        return self.VOID_AIRCRAFT_RESTORED
+
     @classmethod
     def _record_for_intake(cls, aircraft, data, existing_record):
         if existing_record is not None:

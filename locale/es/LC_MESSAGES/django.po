@@ -13171,6 +13171,36 @@ msgstr "Ingreso a servicio técnico guardado."
 msgid "Intake cancelled; nothing was saved."
 msgstr "Ingreso cancelado; no se guardó nada."
 
+msgid "This record has no active workshop intake."
+msgstr "Este registro no tiene un ingreso a servicio técnico vigente."
+
+msgid ""
+"Intake voided. The aircraft is back at headquarters and active; its documents "
+"were kept."
+msgstr ""
+"Ingreso anulado. La aeronave volvió a la casa matriz y quedó activa; sus "
+"documentos se conservaron."
+
+msgid ""
+"Intake voided and its documents were kept, but the aircraft status was not "
+"changed: check its location and status."
+msgstr ""
+"Ingreso anulado y sus documentos se conservaron, pero no se cambió el estado "
+"de la aeronave: conviene revisar su ubicación y su estado."
+
+msgid "Intake voided; its documents were kept."
+msgstr "Ingreso anulado; sus documentos se conservaron."
+
+msgid ""
+"Void this workshop intake? The record is archived (nothing is deleted) and its "
+"documents stay on the aircraft."
+msgstr ""
+"¿Anular este ingreso a servicio técnico? El registro se archiva (no se borra "
+"nada) y sus documentos permanecen en la aeronave."
+
+msgid "Void intake"
+msgstr "Anular ingreso"
+
 msgid "Workshop quote"
 msgstr "Cotización del taller"
 

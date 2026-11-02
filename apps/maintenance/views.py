@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -79,6 +79,10 @@ class MaintenanceRecordList(MList):
         # lista que no tenía techo de consultas que lo notara.
         # LV-383 PR 4: `workshop_intake` para el distintivo de cada fila.
         queryset = super().get_queryset().select_related("aircraft", "workshop_intake")
+        # LV-388: un registro archivado (por ejemplo, un ingreso anulado) no sale
+        # en la lista; `?is_active=archived` sigue mostrándolo.
+        if not self.request.GET.get("is_active"):
+            queryset = queryset.filter(is_active=True)
         status = self.request.GET.get("status", "")
         maintenance_type = self.request.GET.get("maintenance_type", "")
         sent_by = self.request.GET.get("sent_by", "")
@@ -189,6 +193,9 @@ class MaintenanceRecordDetail(
         # `quote_document`.
         intake = self._active_intake()
         context["intake"] = intake
+        context["can_void_intake"] = intake is not None and self.request.user.has_perm(
+            "maintenance.change_maintenancerecord"
+        )
         if context["documents"] is not None and intake is not None:
             ids = [
                 pk for pk in (intake.source_document_id, intake.quote_document_id) if pk
@@ -212,6 +219,56 @@ class MaintenanceRecordDetail(
         except ObjectDoesNotExist:
             return None
         return intake if intake.is_active else None
+
+
+class WorkshopIntakeVoid(ModelPermissionRequiredMixin, View):
+    """LV-388: «Anular ingreso» -- archiva el ingreso y su mantención, sin borrar.
+
+    Permiso `change_maintenancerecord`: es un archivado (`is_active=False`), no un
+    borrado, y los documentos quedan intactos en la aeronave, así que no pide
+    `delete_*` ni permisos de documentos. Acotada por empresa como el resto de la
+    ficha. Sólo POST; la confirmación es el `data-confirm` del formulario.
+    """
+
+    model = MaintenanceRecord
+    permission_action = "change"
+    http_method_names = ["post", "options"]
+
+    def post(self, request, pk):
+        record = get_object_or_404(
+            scope_queryset_to_tenant(
+                MaintenanceRecord._default_manager.all(),
+                request.user,
+                MAINTENANCE_TENANT_PATH,
+            ),
+            pk=pk,
+            is_active=True,
+        )
+        try:
+            outcome = record.void_workshop_intake(user=request.user)
+        except ValidationError:
+            messages.error(request, _("This record has no active workshop intake."))
+            return redirect(record)
+        set_audit_context(request, record, action="workshop_intake_voided", metadata={})
+        if outcome == MaintenanceRecord.VOID_AIRCRAFT_RESTORED:
+            messages.success(
+                request,
+                _(
+                    "Intake voided. The aircraft is back at headquarters and "
+                    "active; its documents were kept."
+                ),
+            )
+        elif outcome == MaintenanceRecord.VOID_AIRCRAFT_KEPT:
+            messages.warning(
+                request,
+                _(
+                    "Intake voided and its documents were kept, but the aircraft "
+                    "status was not changed: check its location and status."
+                ),
+            )
+        else:
+            messages.success(request, _("Intake voided; its documents were kept."))
+        return redirect("maintenance-list")
 
 
 class MaintenanceStart(StatusTransitionView):
