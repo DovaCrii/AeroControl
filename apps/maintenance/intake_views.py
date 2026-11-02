@@ -285,6 +285,33 @@ class WorkshopIntakeUpload(IntakePermissionMixin, View):
             return _render_preview(request, pending, token, form)
 
 
+class WorkshopIntakeCancel(IntakePermissionMixin, View):
+    """Cancelar el ingreso: borra el PDF provisional y vuelve a la lista.
+
+    Un token inválido, vencido o de otra persona **no falla**: sólo no borra nada.
+    `read_token` ya exige `PENDING_PREFIX`, así que el token nunca alcanza archivos
+    fuera de la zona provisional.
+    """
+
+    http_method_names = ["post", "options"]
+
+    def post(self, request):
+        token = request.POST.get("token", "")
+        with suppress(IntakeTokenError):
+            path, _sha = read_token(token, request.user)
+            with suppress(DocumentStorageError, OSError):
+                get_document_storage().delete(path)
+            # Sin datos personales: ni la ruta, ni el taller, ni quien entrega.
+            set_audit_context(
+                request,
+                request.user,
+                action="workshop_intake_cancelled",
+                metadata={},
+            )
+        messages.info(request, _("Intake cancelled; nothing was saved."))
+        return redirect("maintenance-list")
+
+
 class WorkshopIntakeConfirm(IntakePermissionMixin, View):
     """Paso 3: validar, registrar el ingreso y colgar el documento de la mantención."""
 

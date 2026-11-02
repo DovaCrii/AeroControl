@@ -13168,6 +13168,9 @@ msgstr "La subida venció o ya no es válida. Suba el documento de nuevo."
 msgid "Workshop intake saved."
 msgstr "Ingreso a servicio técnico guardado."
 
+msgid "Intake cancelled; nothing was saved."
+msgstr "Ingreso cancelado; no se guardó nada."
+
 msgid "Workshop quote"
 msgstr "Cotización del taller"
 

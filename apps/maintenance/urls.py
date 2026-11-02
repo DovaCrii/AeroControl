@@ -13,6 +13,11 @@ urlpatterns = [
         intake_views.WorkshopIntakeConfirm.as_view(),
         name="maintenance-intake-confirm",
     ),
+    path(
+        "intake/cancel/",
+        intake_views.WorkshopIntakeCancel.as_view(),
+        name="maintenance-intake-cancel",
+    ),
     path("records/", views.MaintenanceRecordList.as_view(), name="maintenance-list"),
     path(
         "records/new/",
