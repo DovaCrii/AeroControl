@@ -15,8 +15,8 @@ FAKE_RUT = "11.111.111-1"
 PAGE_1 = [
     "DOCUMENTO DE RECEPCION DE EQUIPOS",
     "Fecha: 01/01/2026",
-    "Para consultas escriba a serviciotecnico@geocomsa.cl",
-    "CLIENTE: Empresa Ejemplo   RUT: 99.999.999-9   CONTACTO: Persona Contacto",
+    "Para consultas escriba a serviciotecnico@example.test (Geocom)",
+    "CLIENTE: Empresa Ejemplo   RUT: 11.111.111-1   CONTACTO: Persona Contacto",
     "ENTREGADOS POR:",
     "Persona Ejemplo",
     FAKE_RUT,
