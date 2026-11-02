@@ -127,8 +127,9 @@ def upload_cancel_url(request):
     ).first()
     object_id = request.GET.get("object_id")
     if content_type and object_id:
-        model = content_type.model_class()
-        record = model._default_manager.filter(pk=object_id).first() if model else None
+        record = _visible_subject(
+            content_type, object_id, request.user, active_only=False
+        )
         if record is not None:
             document = Document(content_type=content_type, object_id=record.pk)
             with suppress(Exception):
@@ -845,6 +846,56 @@ class OperationalRecordsView(
         return queryset.order_by("code")
 
 
+def _visible_subject(content_type, object_id, user, active_only=True):
+    """The active record `content_type`/`object_id` names, if `user` may see it.
+
+    Scoped to the user's companies, so a pk from another company resolves to
+    `None` exactly like one that does not exist: no error that reveals it.
+    """
+    model = content_type.model_class()
+    if model is None:
+        return None
+    queryset = scope_queryset_for_model(model._default_manager.all(), user)
+    if active_only:
+        queryset = queryset.filter(is_active=True)
+    try:
+        return queryset.filter(pk=object_id).first()
+    except (ValidationError, TypeError, ValueError):
+        return None
+
+
+def _drop_unusable_prefill(initial, user):
+    """Ignore, silently, query-string prefills the user may not use.
+
+    A subject outside the user's companies is dropped (with its dates), and a
+    document type that is archived or not a valid key is not offered as the
+    initial one.
+    """
+    from django.contrib.contenttypes.models import ContentType
+
+    entity_type, object_id = initial.get("entity_type"), initial.get("object_id")
+    if entity_type or object_id:
+        content_type = None
+        if entity_type and object_id:
+            try:
+                content_type = ContentType.objects.filter(pk=entity_type).first()
+            except (ValidationError, TypeError, ValueError):
+                content_type = None
+        if content_type is None or (
+            _visible_subject(content_type, object_id, user) is None
+        ):
+            for key in ("entity_type", "object_id"):
+                initial.pop(key, None)
+    doc_type = initial.get("doc_type")
+    if doc_type:
+        try:
+            usable = DocumentType.objects.filter(pk=doc_type, is_active=True).exists()
+        except (ValidationError, TypeError, ValueError):
+            usable = False
+        if not usable:
+            initial.pop("doc_type", None)
+
+
 class DocumentCreate(SaveAndAddAnotherMixin, ComplianceCreate):
     """`UX-22`: cargar documentos es lo otro que se hace de a muchos.
 
@@ -868,6 +919,7 @@ class DocumentCreate(SaveAndAddAnotherMixin, ComplianceCreate):
             value = self.request.GET.get(field)
             if value:
                 initial[field] = value
+        _drop_unusable_prefill(initial, self.request.user)
         self._prefill_dates_from_record(initial)
         return initial
 
@@ -909,10 +961,7 @@ class DocumentCreate(SaveAndAddAnotherMixin, ComplianceCreate):
         source = date_sources.get((content_type.app_label, content_type.model))
         if source is None:
             return
-        model = content_type.model_class()
-        if model is None:
-            return
-        record = model._default_manager.filter(pk=object_id, is_active=True).first()
+        record = _visible_subject(content_type, object_id, self.request.user)
         if record is None:
             return
 
@@ -1227,6 +1276,7 @@ class DocumentBulkUpload(
             value = self.request.GET.get(field)
             if value:
                 initial[field] = value
+        _drop_unusable_prefill(initial, self.request.user)
         return initial
 
     def get_context_data(self, **kwargs):
@@ -1289,6 +1339,12 @@ class DocumentReplace(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, Fo
             is_active=True,
         )
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Keep the replaced document's own type even if it was archived since.
+        kwargs["current_doc_type"] = self.document.doc_type_id
+        return kwargs
 
     def get_initial(self):
         return {
