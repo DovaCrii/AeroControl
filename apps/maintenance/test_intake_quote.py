@@ -15,8 +15,8 @@ import pytest
 from django.utils import timezone
 from reportlab.pdfgen import canvas
 
-from apps.core.pdf_text import text_from_pdf
 from apps.maintenance.intake_readers import READERS, read_intake
+from apps.maintenance.intake_readers.pdf import intake_text
 from apps.maintenance.intake_readers.geocom_quote import (
     SUMMARY_LIMIT,
     GeocomQuoteReader,
@@ -26,31 +26,59 @@ from apps.maintenance.test_intake_readers import FULL_TEXT as RECEPTION_TEXT
 from apps.maintenance.test_workshop_intake import _aircraft
 
 FAKE_RUT = "11.111.111-1"
+# Structure of the real Geocom quote with fictitious data: the OT/equipment/serial
+# table row on ONE line, an "<equipment> SN <serial>" line under the proposal, the
+# conditions as "label: value", and a "Resumen" whose items are blocks separated by
+# blank lines (some wrapped on two lines) with a footer after it.
 QUOTE_LINES = [
-    "GEOCOM   COTIZACION DE SERVICIO TECNICO",
+    "serviciotecnico@example.test | +562 0000 0000",
     "Santiago, 01/01/2026",
-    "Atencion: Persona Contacto  (contacto@example.test)",
-    f"Cliente: Empresa Ejemplo   RUT: {FAKE_RUT}",
-    "OT: TEST-00002",
-    "1.0 Identificacion",
-    "Equipo: 00_DJI TEST   N DE SERIE TESTSERIAL00000002",
-    "4.0 Resumen",
-    "- Observaciones: se detecta juego en el gimbal y",
-    "  conector de bateria con desgaste.",
-    "- Horas de vuelo: 120",
-    "- Numero de vuelos: 340",
-    "- Ciclos de baterias: 85",
-    "- Firmware: v00.00.0000",
-    "- Mantencion recomendada: cambio de gimbal.",
-    "5.0 Condiciones comerciales",
-    "Neto $ 100.000",
-    "IVA (19%) $ 19.000",
-    "Total $ 119.000",
-    "Validez de la Cotizacion: 10 dias",
-    "Plazo de entrega: 15 dias habiles",
-    "Garantia: 30 dias",
-    f"Pago a Banco Ejemplo, cuenta corriente 000000000, RUT {FAKE_RUT}, "
-    "pagos@example.test",
+    "Ref.: Envia cotizacion",
+    "Att. Sr. Persona Contacto",
+    "O.T EQUIPO SERIE",
+    "TEST - 00002 00_DJI - TEST TESTSERIAL00000002",
+    "E-MAIL CONTACTO",
+    "contacto@example.test,otro@example.test",
+    "CONDICIONES COMERCIALES",
+    "Validez de la Cotizacion:  10 dias, para su aceptacion.",
+    "Plazo de Entrega:  15 dias habiles, a contar de la aceptacion",
+    "Enviar Orden de Compra a nombre de GEOCOM S.A.",
+    "Garantia:  30 dias",
+    "Forma de Pago:    OC 30 DIAS",
+    f"RUT:   {FAKE_RUT}",
+    "BANCO:  BANCO EJEMPLO",
+    "CUENTA:  CORRIENTE 000000000",
+    "PROPUESTA COMERCIAL",
+    "00_DJI - TEST SN TESTSERIAL00000002",
+    "11000404-ST - EVALUACION Y MANTENIMIENTO $ 80,000",
+    "NETO $ 100,000",
+    "IVA $ 19,000",
+    "TOTAL $ 119,000",
+    "DIAGNOSTICO TEST - 00002 00_DJI - TEST SN TESTSERIAL00000002",
+    "1.0. INSPECCION FISICA",
+    "4.0.",
+    "Resumen",
+    "",
+    "Comentarios del cliente: ingresa a revision",
+    "",
+    "Se detecta juego en el gimbal y",
+    "conector de bateria con desgaste.",
+    "",
+    "Horas de vuelo: 120h 10min",
+    "",
+    "Numero total de vuelos: 340",
+    "",
+    "Ciclos de baterias:",
+    "",
+    "SN: TESTBATTERY0001 (85 ciclos)",
+    "",
+    "Firmware: UAS: 00.00.0000 --> 00.00.0001 (actualizable)",
+    "",
+    "Mantencion recomendada: cambio de gimbal.",
+    "",
+    "serviciotecnico@example.test | +562 0000 0000",
+    "SOLUCION TECNICA",
+    "Inspeccion fisica.",
 ]
 QUOTE_TEXT = "\n".join(QUOTE_LINES)
 
@@ -61,7 +89,7 @@ def make_pdf(lines):
     y = 800
     for line in lines:
         pdf.drawString(40, y, line)
-        y -= 16
+        y -= 15 if line else 18
     pdf.showPage()
     pdf.save()
     buffer.seek(0)
@@ -96,15 +124,15 @@ def _data(proposal, **extra):
 
 
 class TestQuoteReader:
-    def test_complete_quote_from_a_real_pdf(self):
-        text = text_from_pdf(make_pdf(QUOTE_LINES))
+    def test_complete_quote_end_to_end_from_a_pdf(self):
+        text = intake_text(make_pdf(QUOTE_LINES))
         proposal = read_intake(text)
         assert proposal is not None
         assert proposal.reader == "geocom_quote"
         assert proposal.workshop_name == "Geocom"
         assert proposal.workshop_order == "TEST-00002"
         assert proposal.serial_number == "TESTSERIAL00000002"
-        assert proposal.equipment_label == "00_DJI TEST"
+        assert proposal.equipment_label == "00_DJI - TEST"
         assert proposal.quote_date == date(2026, 1, 1)
         assert proposal.quote_valid_until == date(2026, 1, 11)
         assert (proposal.quote_net, proposal.quote_vat, proposal.quote_total) == (
@@ -115,31 +143,58 @@ class TestQuoteReader:
         assert proposal.quote_lead_time == "15 días hábiles"
         assert proposal.quote_warranty == "30 días"
 
-    def test_the_summary_flattens_the_bullets(self):
+    def test_the_summary_flattens_blocks_and_wrapped_lines(self):
         proposal = read_intake(QUOTE_TEXT)
         summary = proposal.diagnosis
-        assert "\n" not in summary and "- " not in summary
+        assert "\n" not in summary
         for expected in (
+            "ingresa a revision",
             "juego en el gimbal y conector de bateria con desgaste",
-            "Horas de vuelo: 120",
-            "Numero de vuelos: 340",
-            "Ciclos de baterias: 85",
-            "Firmware: v00.00.0000",
+            "Horas de vuelo: 120h 10min",
+            "Numero total de vuelos: 340",
+            "Ciclos de baterias:",
+            "(85 ciclos)",
+            "Firmware: UAS: 00.00.0000 --> 00.00.0001",
             "Mantencion recomendada: cambio de gimbal",
         ):
             assert expected in summary
-        # The section after the summary is not part of it.
-        assert "Neto" not in summary and "Condiciones" not in summary
+        # Neither the footer nor the next section is part of it.
+        assert "@" not in summary and "SOLUCION" not in summary
+        assert "NETO" not in summary
+
+    def test_symbol_font_bullets_are_dropped(self):
+        text = QUOTE_TEXT.replace(
+            "4.0.\nResumen\n", "4.0.\nResumen\n\uf0b7 \n\n\uf0b7 \n\uf0b7 Nota: uno\n"
+        )
+        summary = read_intake(text).diagnosis
+        assert "\uf0b7" not in summary and summary.startswith("Nota: uno")
+
+    def test_the_table_row_in_three_blocks_and_the_sn_line_alone(self):
+        blocks = QUOTE_TEXT.replace(
+            "O.T EQUIPO SERIE\nTEST - 00002 00_DJI - TEST TESTSERIAL00000002",
+            "O.T\n\nEQUIPO\n\nSERIE\n\nTEST - 00002\n\n00_DJI - TEST\n\nTESTSERIAL00000002",
+        )
+        proposal = read_intake(blocks)
+        assert proposal.workshop_order == "TEST-00002"
+        assert proposal.serial_number == "TESTSERIAL00000002"
+        assert proposal.equipment_label == "00_DJI - TEST"
+        # Without the table row the "<equipment> SN <serial>" line is enough.
+        no_row = QUOTE_TEXT.replace(
+            "O.T EQUIPO SERIE\nTEST - 00002 00_DJI - TEST TESTSERIAL00000002\n", ""
+        )
+        proposal = read_intake(no_row)
+        assert proposal.serial_number == "TESTSERIAL00000002"
+        assert proposal.equipment_label == "00_DJI - TEST"
 
     def test_a_long_summary_is_capped(self):
         long = QUOTE_TEXT.replace(
-            "- Horas de vuelo: 120", "- Nota: " + "palabra " * 400
+            "Horas de vuelo: 120h 10min", "Nota: " + "palabra " * 400
         )
         assert len(read_intake(long).diagnosis) <= SUMMARY_LIMIT + 1
 
     def test_broken_encoding_and_wrapped_lines_are_tolerated(self):
         text = (
-            QUOTE_TEXT.replace("COTIZACION", "COTIZACI�N")
+            QUOTE_TEXT.replace("PROPUESTA", "PROPUESTA\n")
             .replace(
                 "Validez de la Cotizacion: 10 dias",
                 "Validez de la\nCotizaci�n: 10 d�as",
@@ -149,8 +204,6 @@ class TestQuoteReader:
                 "Plazo de\nentrega: 15 d�as h�biles",
             )
             .replace("Garantia: 30 dias", "Garant�a: 30 d�as")
-            .replace("N DE SERIE", "N� DE\nSERIE")
-            .replace("GEOCOM   COTIZACI", "GEOCOM\nCOTIZACI")
         )
         proposal = read_intake(text)
         assert proposal.reader == "geocom_quote"
@@ -159,10 +212,8 @@ class TestQuoteReader:
         assert proposal.quote_lead_time == "15 días hábiles"
         assert proposal.quote_warranty == "30 días"
 
-    def test_commercial_proposal_title_is_also_recognized(self):
-        text = QUOTE_TEXT.replace(
-            "COTIZACION DE SERVICIO TECNICO", "PROPUESTA COMERCIAL"
-        )
+    def test_the_quotation_title_is_also_recognized(self):
+        text = QUOTE_TEXT.replace("PROPUESTA COMERCIAL", "COTIZACI�N DE SERVICIO")
         assert read_intake(text).reader == "geocom_quote"
 
     def test_not_geocom_gives_none(self):
@@ -197,9 +248,9 @@ class TestQuoteReader:
     )
     def test_amounts_with_any_thousands_separator(self, net, vat, total):
         text = (
-            QUOTE_TEXT.replace("$ 100.000", f"$ {net}")
-            .replace("$ 19.000", f"$ {vat}")
-            .replace("$ 119.000", f"$ {total}")
+            QUOTE_TEXT.replace("$ 100,000", f"$ {net}")
+            .replace("$ 19,000", f"$ {vat}")
+            .replace("$ 119,000", f"$ {total}")
         )
         proposal = read_intake(text)
         assert (proposal.quote_net, proposal.quote_vat, proposal.quote_total) == (
@@ -209,7 +260,7 @@ class TestQuoteReader:
         )
 
     def test_the_order_is_normalized_like_the_reception_reader(self):
-        text = QUOTE_TEXT.replace("OT: TEST-00002", "OT: CE - 71797")
+        text = QUOTE_TEXT.replace("TEST - 00002 00_DJI", "CE - 71797 00_DJI")
         assert read_intake(text).workshop_order == "CE-71797"
 
     def test_the_serial_is_kept_as_read(self):
@@ -249,7 +300,7 @@ class TestQuoteAndReceptionMerge:
         assert intake.quote_lead_time == "15 días hábiles"
         assert "Horas de vuelo" in intake.diagnosis
         assert intake.record.status == "at_workshop"
-        assert intake.record.description.startswith("Observaciones")
+        assert intake.record.description.startswith("Comentarios del cliente")
 
     def test_a_quote_over_an_existing_intake_completes_it_without_overwriting(self):
         aircraft = _aircraft()
@@ -269,7 +320,7 @@ class TestQuoteAndReceptionMerge:
         assert second.delivered_by == "Persona Ejemplo"
         assert second.received_at == self._reception()["received_at"]
         assert second.quote_net == Decimal("100000")
-        assert second.diagnosis.startswith("Observaciones")
+        assert second.diagnosis.startswith("Comentarios del cliente")
 
     def test_a_reception_after_the_quote_fills_received_at(self):
         aircraft = _aircraft()
@@ -329,3 +380,54 @@ class TestQuoteAndReceptionMerge:
         for private in (FAKE_RUT, "example.test", "000000000", "Persona Contacto"):
             assert private not in values
             assert private not in caplog.text
+
+
+class TestIntakeText:
+    def test_bytes_and_files_are_both_accepted(self):
+        pdf = make_pdf(QUOTE_LINES)
+        assert "PROPUESTA COMERCIAL" in intake_text(pdf.getvalue())
+        assert "PROPUESTA COMERCIAL" in intake_text(pdf)
+
+    @pytest.mark.parametrize("source", [None, b"", b"not a pdf", 42, io.BytesIO(b"x")])
+    def test_garbage_gives_none_without_raising(self, source):
+        assert intake_text(source) is None
+
+    def test_if_pdfminer_fails_the_other_extractor_is_used(self, monkeypatch):
+        from apps.maintenance.intake_readers import pdf
+
+        monkeypatch.setattr(pdf, "_pdfminer_text", lambda data: None)
+        text = intake_text(make_pdf(QUOTE_LINES))
+        assert read_intake(text).quote_total == 119000
+
+    def test_if_pypdf_fails_pdfminer_is_used(self, monkeypatch):
+        from apps.maintenance.intake_readers import pdf
+
+        monkeypatch.setattr(pdf, "_pypdf_text", lambda data: None)
+        assert read_intake(intake_text(make_pdf(QUOTE_LINES))).diagnosis
+
+    def test_a_reception_pdf_keeps_its_sections_apart(self):
+        lines = [
+            "DOCUMENTO DE RECEPCION DE EQUIPOS",
+            "II.- EQUIPOS RECEPCIONADOS",
+            "EQUIPO",
+            "00_DJI TEST",
+            "OT",
+            "TEST-00002",
+            "SERIE",
+            "TESTSERIAL00000002",
+            "ESTADO DE SU OT",
+            "1. INFORMACION DEL INSTRUMENTO:",
+            "ACCESORIOS 1 maleta, 1 control",
+            "2. OBSERVACIONES:",
+            "Ingresa con helice danada.",
+            "CONSIDERACIONES:",
+            "-Para proceder el cliente debe confirmar via e-mail",
+            "serviciotecnico@example.test / +56 0 0000 0000",
+            "PAG 2/2",
+            "GEOCOM",
+        ]
+        proposal = read_intake(intake_text(make_pdf(lines)))
+        assert proposal.reader == "geocom"
+        assert proposal.workshop_order == "TEST-00002"
+        assert proposal.findings == "Ingresa con helice danada."
+        assert proposal.accessories == "1 maleta, 1 control"

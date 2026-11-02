@@ -37,7 +37,14 @@ _FIELD_EQUIPMENT = re.compile(r"\bEQUIPO\s*:?\s*(.+?)\s+" + _SERIAL_LABEL, _FLAG
 _ACCESSORIES = re.compile(
     r"ACCESORIOS\s*:?\s*(.*?)\s*(?:\d\s*\.\s*)?OBSERVACIONES\s*:", _FLAGS
 )
-_FINDINGS = re.compile(r"OBSERVACIONES\s*:\s*(.*)", _FLAGS)
+# Findings end where the boilerplate of the page begins (CONSIDERACIONES, the page
+# counter or the footer e-mail); otherwise they would drag the next section along.
+_FINDINGS = re.compile(
+    r"OBSERVACIONES\s*:\s*(.*?)"
+    r"(?=\s*(?:\d\s*\.\s*)?CONSIDERACIONES\b|\s*PAG\s+\d+\s*/\s*\d+|\s+\S+@\S+|\s+DOCUMENTO\s+DE\s+RECEPCI|\Z)",
+    _FLAGS,
+)
+_ORDER_LABELED = re.compile(r"\bOT\s*:?\s*([A-Z]{2,8})\s*-\s*(\d+)\b", re.DOTALL)
 _DELIVERED = re.compile(r"ENTREGADOS\s+POR\s*:\s*(.+)", _FLAGS)
 
 
@@ -108,6 +115,9 @@ class GeocomReader:
             proposal.workshop_order = row.group(1).upper()
             proposal.equipment_label = _or_none(_squash(row.group(2)))
             proposal.serial_number = row.group(3).upper()
+        elif (labeled := _ORDER_LABELED.search(flat)) is not None:
+            # Another extractor gives the equipment before the OT, so no row matches.
+            proposal.workshop_order = f"{labeled.group(1).upper()}-{labeled.group(2)}"
 
     @staticmethod
     def _instrument(flat: str, proposal: IntakeProposal) -> None:
