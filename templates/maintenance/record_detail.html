@@ -13,11 +13,11 @@
       then lands on an earlier render of this page instead of the list, so
       "Back" needed two clicks. This link already has one fixed
       destination.{% endcomment %}
-      {% if can_void_intake %}
-      {% translate "Void this workshop intake? The record is archived (nothing is deleted) and its documents stay on the aircraft." as void_intake_confirm %}
-      <form method="post" action="{% url 'maintenance-void-intake' record.pk %}" style="display:inline" data-confirm="{{ void_intake_confirm }}" data-void-intake>
+      {% if can_void %}
+      {% if void_is_intake %}{% translate "Void this workshop intake? The record is archived (nothing is deleted) and its documents stay on the aircraft." as void_confirm %}{% else %}{% translate "Void this maintenance? It was never started or sent: it is archived and nothing is deleted." as void_confirm %}{% endif %}
+      <form method="post" action="{% url 'maintenance-void' record.pk %}" style="display:inline" data-confirm="{{ void_confirm }}" data-void-intake>
         {% csrf_token %}
-        <button class="btn btn-outline-danger">{% translate "Void intake" %}</button>
+        <button class="btn btn-outline-danger">{% if void_is_intake %}{% translate "Void intake" %}{% else %}{% translate "Void" %}{% endif %}</button>
       </form>
       {% endif %}
       <a href="{% url 'maintenance-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>

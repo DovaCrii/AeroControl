@@ -78,7 +78,12 @@ class MaintenanceRecordList(MList):
         # sin el join era una consulta por fila, hasta 25 de más por página, en una
         # lista que no tenía techo de consultas que lo notara.
         # LV-383 PR 4: `workshop_intake` para el distintivo de cada fila.
-        queryset = super().get_queryset().select_related("aircraft", "workshop_intake")
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("aircraft", "workshop_intake")
+            .prefetch_related("history")
+        )
         # LV-388: un registro archivado (por ejemplo, un ingreso anulado) no sale
         # en la lista; `?is_active=archived` sigue mostrándolo.
         if not self.request.GET.get("is_active"):
@@ -193,9 +198,11 @@ class MaintenanceRecordDetail(
         # `quote_document`.
         intake = self._active_intake()
         context["intake"] = intake
-        context["can_void_intake"] = intake is not None and self.request.user.has_perm(
+        void_kind = self.object.void_kind()
+        context["can_void"] = void_kind is not None and self.request.user.has_perm(
             "maintenance.change_maintenancerecord"
         )
+        context["void_is_intake"] = void_kind == MaintenanceRecord.VOID_KIND_INTAKE
         if context["documents"] is not None and intake is not None:
             ids = [
                 pk for pk in (intake.source_document_id, intake.quote_document_id) if pk
@@ -221,13 +228,15 @@ class MaintenanceRecordDetail(
         return intake if intake.is_active else None
 
 
-class WorkshopIntakeVoid(ModelPermissionRequiredMixin, View):
-    """LV-388: «Anular ingreso» -- archiva el ingreso y su mantención, sin borrar.
+class MaintenanceVoid(ModelPermissionRequiredMixin, View):
+    """LV-388/LV-389: «Anular» -- archiva la mantención, sin borrar nada.
 
-    Permiso `change_maintenancerecord`: es un archivado (`is_active=False`), no un
-    borrado, y los documentos quedan intactos en la aeronave, así que no pide
-    `delete_*` ni permisos de documentos. Acotada por empresa como el resto de la
-    ficha. Sólo POST; la confirmación es el `data-confirm` del formulario.
+    Dos casos (`MaintenanceRecord.void_kind`): un ingreso a taller activo, o una
+    mantención pendiente que nunca se inició ni se envió. Cualquier otro estado
+    no se anula. Permiso `change_maintenancerecord`: es un archivado
+    (`is_active=False`), no un borrado, y los documentos quedan intactos. Acotada
+    por empresa como el resto de la ficha. Sólo POST; la confirmación es el
+    `data-confirm` del formulario.
     """
 
     model = MaintenanceRecord
@@ -245,12 +254,19 @@ class WorkshopIntakeVoid(ModelPermissionRequiredMixin, View):
             is_active=True,
         )
         try:
-            outcome = record.void_workshop_intake(user=request.user)
+            kind, outcome = record.void(user=request.user)
         except ValidationError:
-            messages.error(request, _("This record has no active workshop intake."))
+            messages.error(request, _("This record cannot be voided."))
             return redirect(record)
-        set_audit_context(request, record, action="workshop_intake_voided", metadata={})
-        if outcome == MaintenanceRecord.VOID_AIRCRAFT_RESTORED:
+        action = (
+            "workshop_intake_voided"
+            if kind == MaintenanceRecord.VOID_KIND_INTAKE
+            else "maintenance_voided"
+        )
+        set_audit_context(request, record, action=action, metadata={})
+        if kind == MaintenanceRecord.VOID_KIND_PENDING:
+            messages.success(request, _("Maintenance voided."))
+        elif outcome == MaintenanceRecord.VOID_AIRCRAFT_RESTORED:
             messages.success(
                 request,
                 _(

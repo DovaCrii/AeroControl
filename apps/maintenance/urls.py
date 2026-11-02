@@ -18,10 +18,16 @@ urlpatterns = [
         intake_views.WorkshopIntakeCancel.as_view(),
         name="maintenance-intake-cancel",
     ),
+    # LV-388 alias, kept so what is deployed does not break (LV-389).
     path(
         "records/<uuid:pk>/void-intake/",
-        views.WorkshopIntakeVoid.as_view(),
+        views.MaintenanceVoid.as_view(),
         name="maintenance-void-intake",
+    ),
+    path(
+        "records/<uuid:pk>/void/",
+        views.MaintenanceVoid.as_view(),
+        name="maintenance-void",
     ),
     path("records/", views.MaintenanceRecordList.as_view(), name="maintenance-list"),
     path(
