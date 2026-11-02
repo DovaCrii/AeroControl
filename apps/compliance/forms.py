@@ -3,6 +3,7 @@ from uuid import UUID
 
 from django import forms
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms.models import ModelChoiceIterator
 from django.urls import reverse
@@ -155,10 +156,59 @@ class CategorizedDocumentTypeIterator(ModelChoiceIterator):
                 yield (label, options)
 
 
+DOC_TYPE_HINT_ID = "doc-type-hint"
+
+
+class DocumentTypeSelect(forms.Select):
+    """A native `<select>` whose options carry what the hint under it needs.
+
+    LV-386: each option gets `data-description` and `data-expiry` (yes/no) so
+    `static/js/doc-type-hint.js` can update the hint without a round trip. The
+    select stays native -- keyboard, screen reader and theme come for free.
+    """
+
+    def __init__(self, attrs=None, choices=()):
+        merged = {"aria-describedby": DOC_TYPE_HINT_ID, "data-doc-type-select": ""}
+        merged.update(attrs or {})
+        super().__init__(merged, choices)
+
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index, subindex=subindex, attrs=attrs
+        )
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-description"] = instance.description
+            option["attrs"]["data-expiry"] = "yes" if instance.requires_expiry else "no"
+        return option
+
+
 class CategorizedDocumentTypeChoiceField(forms.ModelChoiceField):
     """A document-type picker grouped by `DocumentType.category`."""
 
     iterator = CategorizedDocumentTypeIterator
+    widget = DocumentTypeSelect
+
+    def label_from_instance(self, obj):
+        # LV-386: "Name · REF" when the paper carries a form code.
+        if obj.reference_code:
+            return f"{obj.name} · {obj.reference_code}"
+        return obj.name
+
+
+class DocTypeHintMixin:
+    """Gives the template the type to describe under the picker (no JS needed)."""
+
+    def selected_doc_type(self):
+        value = self["doc_type"].value()
+        if not value:
+            return None
+        try:
+            return self.fields["doc_type"].queryset.filter(pk=value).first()
+        except (TypeError, ValueError, ValidationError):
+            return None
 
 
 def selectable_document_types(current_pk=None):
@@ -177,7 +227,8 @@ def selectable_document_types(current_pk=None):
             condition |= Q(pk=UUID(str(current_pk)))
         except (AttributeError, TypeError, ValueError):
             pass
-    return DocumentType.objects.filter(condition).order_by("name")
+    # LV-385: por `sort_order` y luego por nombre, que es el orden de cada sección.
+    return DocumentType.objects.filter(condition).order_by("sort_order", "name")
 
 
 DOCUMENTABLE_MODEL_LABELS = {
@@ -243,7 +294,7 @@ class EntityScopeMixin:
         )
 
 
-class DocumentBulkUploadForm(EntityScopeMixin, forms.Form):
+class DocumentBulkUploadForm(DocTypeHintMixin, EntityScopeMixin, forms.Form):
     """LV-86: several files onto the same record, in one action.
 
     Deliberately **one record and one document type per batch**, not a free
@@ -374,7 +425,7 @@ class DocumentBulkUploadForm(EntityScopeMixin, forms.Form):
         ]
 
 
-class DocumentForm(EntityScopeMixin, AeroModelForm):
+class DocumentForm(DocTypeHintMixin, EntityScopeMixin, AeroModelForm):
     # LV-2: free-text titles drifted (same document type worded differently
     # session to session). Optional here; clean() fills it in from the
     # document type, the related record and the issue date when left blank,
@@ -689,7 +740,16 @@ class DocumentTypeForm(AeroModelForm):
         # LV-95: `category` is here, not left to its default -- a type created
         # from this screen without one would land under "Other" and quietly
         # undo the grouping for the next person who looks for it.
-        fields = ["name", "code", "category", "requires_expiry", "is_insurance"]
+        fields = [
+            "name",
+            "code",
+            "category",
+            "description",
+            "reference_code",
+            "sort_order",
+            "requires_expiry",
+            "is_insurance",
+        ]
         # LV-22: without explicit labels Django auto-derives an English one
         # ("Requires expiry") whose msgid is in no catalog, so it renders in
         # English inside the Spanish UI.

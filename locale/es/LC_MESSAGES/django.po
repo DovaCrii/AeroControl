@@ -498,17 +498,14 @@ msgstr "mes"
 msgid "AeroControl · executive compliance report (%(period)s)"
 msgstr "AeroControl · informe ejecutivo de cumplimiento (%(period)s)"
 
-#: .\apps\compliance\models.py:63
-msgid "Personnel documents"
-msgstr "Documentos del personal"
-
 #: .\apps\compliance\models.py:64
-msgid "Aircraft documents"
-msgstr "Documentos de la aeronave"
+msgctxt "document category"
+msgid "Aircraft"
+msgstr "Aeronave"
 
 #: .\apps\compliance\models.py:65
-msgid "DGAC filings and authorizations"
-msgstr "Presentaciones y autorizaciones DGAC"
+msgid "DGAC filings"
+msgstr "Trámites ante la DGAC"
 
 #: .\apps\compliance\models.py:66 .\apps\compliance\views.py:658
 #: .\templates\base.html:188 .\templates\compliance\operational_records.html:3
@@ -520,7 +517,7 @@ msgstr "Registros operacionales"
 msgid "Maintenance and calibration"
 msgstr "Mantención y calibración"
 
-#: .\apps\compliance\models.py:68 .\apps\compliance\views.py:562
+#: .\apps\compliance\views.py:562
 #: .\templates\base.html:198 .\templates\compliance\company_documents.html:3
 #: .\templates\compliance\company_documents.html:9
 msgid "Company documents"
@@ -530,6 +527,11 @@ msgstr "Documentos de la empresa"
 #: .\apps\geo\models.py:103
 msgid "Other"
 msgstr "Otro"
+
+#: .\apps\compliance\models.py:69
+msgctxt "document category"
+msgid "Other"
+msgstr "Otros"
 
 #: .\apps\compliance\models.py:81
 msgid "Groups this type inside the document-type picker."
@@ -13150,3 +13152,31 @@ msgstr "Ya hay un ingreso registrado con este taller y esta orden de trabajo."
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+#: .\apps\compliance\models.py:113
+msgid "One line saying what this document is for."
+msgstr "Una línea que dice para qué sirve este documento."
+
+#: .\apps\compliance\models.py:119
+msgid "Form code"
+msgstr "Código del formulario"
+
+#: .\apps\compliance\models.py:120
+msgid "The code the paper carries, if any (for example REG-015)."
+msgstr "El código que lleva el papel, si lo tiene (por ejemplo REG-015)."
+
+#: .\apps\compliance\models.py:125
+msgid "Sort order"
+msgstr "Orden"
+
+#: .\apps\compliance\models.py:127
+msgid "Orders the types inside their category; lower comes first."
+msgstr "Ordena los tipos dentro de su categoría; el menor va primero."
+
+#: .\templates\compliance\_doc_type_hint.html:7 .\templates\compliance\_doc_type_hint.html:8
+msgid "Asks for an expiry date: yes"
+msgstr "Pide fecha de vencimiento: sí"
+
+#: .\templates\compliance\_doc_type_hint.html:8
+msgid "Asks for an expiry date: no"
+msgstr "Pide fecha de vencimiento: no"

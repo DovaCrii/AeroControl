@@ -824,7 +824,7 @@ class OperationalRecordsView(
         context["cost_centers"] = cost_centers
         context["operational_doc_types"] = DocumentType.objects.filter(
             is_operational_record=True, is_active=True
-        ).order_by("name")
+        ).order_by("sort_order", "name")
         context["cost_center_content_type_id"] = self._cost_center_ct().pk
         context["selected_cost_center"] = self.request.GET.get("cost_center", "")
         context["selected_doc_type"] = self.request.GET.get("doc_type", "")
@@ -2076,10 +2076,9 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
                 is_operational_record=True, is_active=True
             ).order_by("name")
         )
-        # El rótulo del chip: «Bitácora de vuelo» y no «Bitácora de vuelo
-        # (REG-015)». El nombre completo queda en el `title`.
-        for doc_type in doc_types:
-            doc_type.short = doc_type.name.split(" (")[0]
+        # LV-385: el nombre ya no lleva el código del formulario entre paréntesis
+        # (vive en `reference_code`), así que el chip muestra `name` tal cual y el
+        # código va en el `title`.
         return doc_types, monthly_close_rows(period, self._cost_centers(), doc_types)
 
     def get(self, request, *args, **kwargs):

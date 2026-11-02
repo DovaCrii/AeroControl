@@ -23,8 +23,8 @@ COMPANY = DocumentType.CATEGORY_COMPANY
 
 # (code, name, requires_expiry, is_insurance, is_operational_record, category)
 DOCUMENT_TYPES = [
-    ("dgac-credential", "Credencial DGAC", True, False, False, PERSONNEL),
-    ("medical-cert", "Certificado médico / aptitud", True, False, False, PERSONNEL),
+    ("dgac-credential", "Credencial DGAC de operador", True, False, False, PERSONNEL),
+    ("medical-cert", "Certificado de aptitud médica", True, False, False, PERSONNEL),
     # LV-121: `requires_expiry=False` desde el 2026-08-20, con el papel a la
     # vista. El "Certificado del Registro Nacional de RPA" que emite la DGAC
     # **no trae fecha de término**: es una inscripción —marca, modelo, serie,
@@ -37,7 +37,7 @@ DOCUMENT_TYPES = [
     # `code`, así que por sí solo no toca una fila ya creada.
     (
         "aircraft-registration",
-        "Registro / matrícula de aeronave",
+        "Certificado de inscripción RPA",
         False,
         False,
         False,
@@ -53,7 +53,7 @@ DOCUMENT_TYPES = [
     ),
     (
         "liability-insurance",
-        "Seguro de responsabilidad civil",
+        "Póliza de responsabilidad civil",
         True,
         True,
         False,
@@ -77,7 +77,7 @@ DOCUMENT_TYPES = [
     # dos documentos compitiendo por la misma columna (gana el que venza antes).
     (
         "jac-insurance-approval",
-        "Resolución Exenta JAC (aprueba seguro RPA)",
+        "Resolución JAC que aprueba el seguro",
         True,
         False,
         False,
@@ -95,7 +95,7 @@ DOCUMENT_TYPES = [
     # `flight-request` y los registros operacionales.
     (
         "jac-insurance-request",
-        "Solicitud de aprobación de seguro RPA (a la JAC)",
+        "Solicitud de aprobación de seguro a la JAC",
         False,
         False,
         False,
@@ -121,7 +121,7 @@ DOCUMENT_TYPES = [
     # que la gente lee es el nombre, y el nombre ya dice la verdad.
     (
         "dgac-flight-permit",
-        "Carta del mandante (autorización para operar)",
+        "Carta del mandante",
         False,
         False,
         False,
@@ -136,7 +136,7 @@ DOCUMENT_TYPES = [
     # authorization actually certifies DGAC approval.
     (
         "dgac-rpa-operation-authorization",
-        "Autorización de Operación RPA (DGAC aprobada)",
+        "Autorización de operación RPA",
         True,
         False,
         False,
@@ -156,7 +156,7 @@ DOCUMENT_TYPES = [
     #
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
-    ("flight-log", "Bitácora de vuelo (REG-015)", False, False, True, OPERATIONAL),
+    ("flight-log", "Bitácora de vuelo", False, False, True, OPERATIONAL),
     # LV-290: el **registro de vuelo `.TXT`** que el portal de la DGAC pide adjuntar
     # al registrar las operaciones de una solicitud. No es la bitácora de arriba
     # (el formulario interno REG-015): es el archivo técnico que genera el control
@@ -164,11 +164,11 @@ DOCUMENT_TYPES = [
     # `is_operational_record=False`: esa bandera lo contaría en el cierre mensual
     # como un registro operacional más, y no lo es. No vence (ocurrió).
     # La migración `compliance/0027` lo crea también donde el sembrado ya corrió.
-    ("flight-log-txt", "Registro de vuelo DGAC (.TXT)", False, False, False, DGAC),
-    ("rpa-checklist", "Check list RPA (LVE-003)", False, False, True, OPERATIONAL),
+    ("flight-log-txt", "Archivo de registro de vuelo", False, False, False, DGAC),
+    ("rpa-checklist", "Lista de chequeo RPA", False, False, True, OPERATIONAL),
     (
         "drone-inspection",
-        "Inspección de dron (LVE-002)",
+        "Inspección de RPA",
         False,
         False,
         True,
@@ -178,10 +178,10 @@ DOCUMENT_TYPES = [
     # cannot classify anything under the Z: repository's "02.-"/"03.-"/"04.-"
     # subfolders without them. Historical records, not validities that lapse
     # -- requires_expiry=False, same reasoning as the flight-log group above.
-    ("flight-request", "Solicitud de vuelo (histórico)", False, False, False, DGAC),
+    ("flight-request", "Solicitud de vuelo presentada", False, False, False, DGAC),
     (
         "incident-investigation-record",
-        "Registro de investigación de incidente",
+        "Investigación de incidente",
         False,
         False,
         False,
@@ -202,7 +202,7 @@ DOCUMENT_TYPES = [
     # lapsed calibration should watch and alert like airworthiness-cert does.
     (
         "calibration-certificate",
-        "Certificado de calibración (GNSS/RTK/cámara)",
+        "Certificado de calibración",
         True,
         False,
         False,
@@ -223,7 +223,7 @@ DOCUMENT_TYPES = [
     # maintenance-certificate above.
     (
         "company-procedure",
-        "Procedimiento o manual de la empresa",
+        "Procedimiento o manual",
         False,
         False,
         False,
@@ -233,13 +233,74 @@ DOCUMENT_TYPES = [
     # activity. A historical record of what (did not) happen, not a validity.
     (
         "monthly-non-operation-notice",
-        "Aviso Mensual de No Operación",
+        "Aviso mensual de no operación",
         False,
         False,
         False,
         DGAC,
     ),
 ]
+
+
+# LV-385: la guía de cada tipo -- {code: (description, reference_code, sort_order)}.
+# Va aparte de la tupla de arriba (cuya forma no cambia) y es **dato en español**,
+# no un msgid: no pasa por gettext. `sort_order` es único dentro de su categoría y
+# sigue el orden en que cada sección se lee. Es el mismo contenido que lleva la
+# migración `compliance/0028`; un guardián los cruza.
+DOCUMENT_TYPE_GUIDE = {
+    "dgac-credential": ("Habilita al piloto; vence", "", 10),
+    "medical-cert": ("Acredita la aptitud médica del piloto; vence", "", 20),
+    "aircraft-registration": (
+        "Inscripción DGAC; no vence ni autoriza a operar",
+        "",
+        10,
+    ),
+    "airworthiness-cert": (
+        "Acredita que la aeronave está en condiciones de volar; vence",
+        "",
+        20,
+    ),
+    "liability-insurance": ("Cubre los daños a terceros; vence", "", 30),
+    "jac-insurance-request": (
+        "Se envía a la JAC para que apruebe el seguro; no vence",
+        "",
+        40,
+    ),
+    "jac-insurance-approval": ("Respuesta de la JAC; vence con la póliza", "", 50),
+    "dgac-flight-permit": ("La firma el cliente; acompaña la solicitud", "", 10),
+    "dgac-rpa-operation-authorization": (
+        "La entrega la DGAC al aprobar la operación; vence",
+        "",
+        20,
+    ),
+    "flight-log-txt": ("El archivo que pide el portal DGAC", ".TXT", 30),
+    "flight-request": ("Solicitud ya presentada ante la DGAC; no vence", "", 40),
+    "monthly-non-operation-notice": (
+        "Se presenta a la DGAC el mes en que no hubo operación",
+        "",
+        50,
+    ),
+    "flight-log": ("Registro interno de cada vuelo realizado", "REG-015", 10),
+    "rpa-checklist": ("Verificación del RPA antes del vuelo", "LVE-003", 20),
+    "drone-inspection": ("Revisión del estado del RPA", "LVE-002", 30),
+    "incident-investigation-record": (
+        "Análisis de un incidente y de sus causas",
+        "",
+        40,
+    ),
+    "maintenance-certificate": ("Respalda una mantención realizada; no vence", "", 10),
+    "calibration-certificate": (
+        "GNSS/RTK/cámara; la norma exige que esté vigente",
+        "",
+        20,
+    ),
+    "aoc-certificate": ("Documento único de la empresa; no se renueva", "", 10),
+    "company-procedure": (
+        "Procedimientos y manuales; se revisan por versión",
+        "",
+        20,
+    ),
+}
 
 
 class Command(BaseCommand):
@@ -256,7 +317,7 @@ class Command(BaseCommand):
             is_op_record,
             category,
         ) in DOCUMENT_TYPES:
-            _obj, created = DocumentType.objects.get_or_create(
+            obj, created = DocumentType.objects.get_or_create(
                 code=code,
                 defaults={
                     "name": name,
@@ -267,6 +328,21 @@ class Command(BaseCommand):
                 },
             )
             created_count += int(created)
+            # LV-385: la guía sólo llena lo que está vacío -- lo editado desde la
+            # interfaz se respeta, igual que el nombre.
+            description, reference_code, sort_order = DOCUMENT_TYPE_GUIDE[code]
+            changed = []
+            if not obj.description:
+                obj.description = description
+                changed.append("description")
+            if not obj.reference_code and reference_code:
+                obj.reference_code = reference_code
+                changed.append("reference_code")
+            if not obj.sort_order:
+                obj.sort_order = sort_order
+                changed.append("sort_order")
+            if changed:
+                obj.save(update_fields=[*changed, "updated_at"])
         self.stdout.write(
             self.style.SUCCESS(
                 f"Ensured {len(DOCUMENT_TYPES)} document types "
