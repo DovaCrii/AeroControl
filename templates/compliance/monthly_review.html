@@ -74,7 +74,7 @@ la no conformidad sola; la nota escrita pasa a ser su descripción.{% endcomment
           <td class="text-end">
             <div class="close-actions">
               {% if can_upload %}
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}&amp;object_id={{ row.cost_center.pk }}{% if row.missing_types %}&amp;doc_type={{ row.missing_types.0.pk }}{% endif %}">+ {% translate "Upload" %}</a>
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'document-create' %}?entity_type={{ cost_center_content_type_id }}&amp;object_id={{ row.cost_center.pk }}{% if row.missing_types %}&amp;doc_type={{ row.missing_types.0.code }}{% endif %}">+ {% translate "Upload" %}</a>
               {% endif %}
               {% if can_review %}
               <form method="post" action="{% url 'monthly-close-mark' %}" class="d-flex gap-1 align-items-center">

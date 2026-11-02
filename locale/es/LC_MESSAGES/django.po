@@ -13313,3 +13313,11 @@ msgstr "Pide fecha de vencimiento: sí"
 #: .\templates\compliance\_doc_type_hint.html:8
 msgid "Asks for an expiry date: no"
 msgstr "Pide fecha de vencimiento: no"
+
+#: .\apps\compliance\forms.py
+msgid "Suggested for this record"
+msgstr "Sugeridos para este registro"
+
+#: .\templates\compliance\_documents_section.html
+msgid "Upload…"
+msgstr "Subir…"
