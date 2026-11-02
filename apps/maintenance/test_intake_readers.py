@@ -10,6 +10,7 @@ from reportlab.pdfgen import canvas
 from apps.core.pdf_text import text_from_pdf
 from apps.maintenance.intake_readers import READERS, IntakeProposal, read_intake
 from apps.maintenance.intake_readers.geocom import GeocomReader
+from apps.maintenance.intake_readers.geocom_quote import GeocomQuoteReader
 
 FAKE_RUT = "11.111.111-1"
 PAGE_1 = [
@@ -152,8 +153,11 @@ def test_delivered_by_without_rut_takes_only_the_first_line():
     assert read_intake(text).delivered_by == "Persona Ejemplo"
 
 
-def test_registry_lists_the_geocom_reader():
-    assert [type(reader) for reader in READERS] == [GeocomReader]
+def test_registry_lists_the_geocom_readers():
+    assert [type(reader) for reader in READERS] == [
+        GeocomReader,
+        GeocomQuoteReader,
+    ]
 
 
 def test_end_to_end_from_a_pdf():

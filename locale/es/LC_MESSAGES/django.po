@@ -13038,6 +13038,33 @@ msgstr "lector"
 msgid "source document"
 msgstr "documento de origen"
 
+msgid "quote date"
+msgstr "fecha de la cotización"
+
+msgid "quote valid until"
+msgstr "cotización válida hasta"
+
+msgid "quote net amount"
+msgstr "monto neto de la cotización"
+
+msgid "quote VAT"
+msgstr "IVA de la cotización"
+
+msgid "quote total"
+msgstr "total de la cotización"
+
+msgid "quote lead time"
+msgstr "plazo de entrega de la cotización"
+
+msgid "quote warranty"
+msgstr "garantía de la cotización"
+
+msgid "diagnosis"
+msgstr "diagnóstico"
+
+msgid "quote document"
+msgstr "documento de la cotización"
+
 msgid "workshop intake"
 msgstr "ingreso a taller"
 

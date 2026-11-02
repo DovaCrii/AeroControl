@@ -33,6 +33,7 @@ dependencies = [
     # Python y cumple el mismo criterio, con `pip-audit` vigilándolo como exige
     # `SECURITY.md`.
     "pypdf>=6,<7",
+    "pdfminer-six>=20260107",
 ]
 
 [dependency-groups]

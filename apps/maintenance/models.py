@@ -211,11 +211,29 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
         `sent`/`at_workshop` is not walked again.
 
         `data` holds the `WorkshopIntake` fields (workshop_name, received_at,
-        sent_by, ...). Returns the saved `WorkshopIntake`.
+        sent_by, quote_*, ...). If an active intake with the same (workshop,
+        order) exists for this aircraft it is COMPLETED (`merge_proposal`: only
+        empty fields are filled), not duplicated. Returns the saved `WorkshopIntake`.
         """
         with transaction.atomic():
-            record = cls._record_for_intake(aircraft, data, existing_record)
-            intake = WorkshopIntake(record=record, **data)
+            intake = WorkshopIntake.find_by_order(
+                data.get("workshop_name", ""), data.get("workshop_order", "")
+            )
+            if intake is not None:
+                # Same job already registered (e.g. its quote arrived first):
+                # complete it instead of failing on the duplicate.
+                record = cls.objects.select_for_update().get(pk=intake.record_id)
+                if record.aircraft_id != aircraft.pk:
+                    raise ValidationError(
+                        _(
+                            "An intake with this workshop and order number is "
+                            "already registered."
+                        )
+                    )
+                intake.merge_proposal(**data)
+            else:
+                record = cls._record_for_intake(aircraft, data, existing_record)
+                intake = WorkshopIntake(record=record, **data)
             intake.full_clean()
             intake.save()
             actor = user.get_username() if user is not None else "system"
@@ -259,7 +277,7 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
         )
         if record is not None:
             return record
-        findings = (data.get("findings") or "").strip()
+        findings = (data.get("findings") or data.get("diagnosis") or "").strip()
         return cls.objects.create(
             aircraft=aircraft,
             maintenance_type="unscheduled",
@@ -350,7 +368,9 @@ class WorkshopIntake(BaseModel):
     # Derived from `workshop_name` in save(); the duplicate guard compares it.
     workshop_key = models.CharField(max_length=150, editable=False)
     workshop_order = models.CharField(_("workshop order"), max_length=60, blank=True)
-    received_at = models.DateTimeField(_("received at"))
+    # Optional since PR 2b: a team that goes straight to the workshop first
+    # produces a quote, with no reception document and so no reception date.
+    received_at = models.DateTimeField(_("received at"), null=True, blank=True)
     sent_by = models.CharField(
         _("sent by"), max_length=20, choices=SENT_BY_CHOICES, default="unknown"
     )
@@ -366,6 +386,29 @@ class WorkshopIntake(BaseModel):
     accessories = models.TextField(_("accessories"), blank=True)
     findings = models.TextField(_("findings"), blank=True)
     reader = models.CharField(_("reader"), max_length=30, blank=True)
+    # Quote of the workshop (all optional). Amounts are Chilean pesos, no decimals.
+    quote_date = models.DateField(_("quote date"), null=True, blank=True)
+    quote_valid_until = models.DateField(_("quote valid until"), null=True, blank=True)
+    quote_net = models.DecimalField(
+        _("quote net amount"), max_digits=12, decimal_places=0, null=True, blank=True
+    )
+    quote_vat = models.DecimalField(
+        _("quote VAT"), max_digits=12, decimal_places=0, null=True, blank=True
+    )
+    quote_total = models.DecimalField(
+        _("quote total"), max_digits=12, decimal_places=0, null=True, blank=True
+    )
+    quote_lead_time = models.CharField(_("quote lead time"), max_length=120, blank=True)
+    quote_warranty = models.CharField(_("quote warranty"), max_length=60, blank=True)
+    diagnosis = models.TextField(_("diagnosis"), blank=True)
+    quote_document = models.ForeignKey(
+        "compliance.Document",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("quote document"),
+    )
     source_document = models.ForeignKey(
         "compliance.Document",
         on_delete=models.PROTECT,
@@ -399,6 +442,65 @@ class WorkshopIntake(BaseModel):
     def __str__(self):
         # Deliberately without `delivered_by` (personal data).
         return f"{self.workshop_name} · {self.record_id}"
+
+    # Fields `merge_proposal` may fill; `sent_by`/`sender_cost_center` go together.
+    MERGEABLE_FIELDS = (
+        "delivered_by",
+        "accessories",
+        "findings",
+        "reader",
+        "received_at",
+        "source_document",
+        "quote_date",
+        "quote_valid_until",
+        "quote_net",
+        "quote_vat",
+        "quote_total",
+        "quote_lead_time",
+        "quote_warranty",
+        "diagnosis",
+        "quote_document",
+    )
+
+    @classmethod
+    def find_by_order(cls, workshop_name, workshop_order):
+        """The active intake of this (workshop, order), or `None` without an order."""
+        order = normalize_workshop_order(workshop_order)
+        if not order:
+            return None
+        return (
+            cls.objects.select_for_update()
+            .filter(
+                workshop_key=normalize_workshop_name(workshop_name),
+                workshop_order=order,
+                is_active=True,
+            )
+            .first()
+        )
+
+    def merge_proposal(self, **data):
+        """Fill the EMPTY fields from `data`; never overwrite what is already there.
+
+        A second document of the same job (the quote after the reception, or the
+        other way round) completes the intake. Empty means `None` or `""`; the
+        origin (`sent_by` + cost center) is only taken while it is `unknown`.
+        Returns the names of the fields that changed (not saved: the caller
+        validates and saves).
+        """
+        changed = []
+        for name in self.MERGEABLE_FIELDS:
+            value = data.get(name)
+            if value in (None, ""):
+                continue
+            if getattr(self, name) in (None, ""):
+                setattr(self, name, value)
+                changed.append(name)
+        new_origin = data.get("sent_by", "unknown")
+        if self.sent_by == "unknown" and new_origin != "unknown":
+            self.sent_by = new_origin
+            self.sender_cost_center = data.get("sender_cost_center")
+            changed += ["sent_by", "sender_cost_center"]
+        return changed
 
     def _normalize(self):
         self.workshop_key = normalize_workshop_name(self.workshop_name)
