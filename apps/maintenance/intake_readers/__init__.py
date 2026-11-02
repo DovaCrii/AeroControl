@@ -1,13 +1,14 @@
-"""Registry of workshop reception readers and the entry point `read_intake`."""
+"""Registry of workshop document readers (reception and quote) and the entry point `read_intake`."""
 
 import logging
 
 from .base import IntakeProposal, IntakeReader
 from .geocom import GeocomReader
+from .geocom_quote import GeocomQuoteReader
 
 logger = logging.getLogger(__name__)
 
-READERS: list[IntakeReader] = [GeocomReader()]
+READERS: list[IntakeReader] = [GeocomReader(), GeocomQuoteReader()]
 
 
 def read_intake(text) -> IntakeProposal | None:
