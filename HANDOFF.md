@@ -1,13 +1,12 @@
 # HANDOFF — AeroControl
 
-## 🟡 2026-11-02 — tanda «ingreso a servicio técnico + documentos» **fusionada, pendiente de desplegar** (`d9a3903`)
+## ✅ 2026-11-02 — tanda «ingreso a servicio técnico + documentos» **desplegada** (`fb4f46a`)
 
-`main` = `d9a3903`; `p340` sigue en `934c926`. Entran: ingreso a servicio técnico (`LV-383`: modelo `WorkshopIntake`, lectores Geocom de recepción y cotización, pantalla «Registrar ingreso» con vista previa, distintivo y filtro «sin aviso a casa matriz»), prellenado seguro de documentos (`LV-384`), taxonomía y selector de tipos (`LV-385`/`LV-386`), menú «Subir…» en las fichas (`LV-387`) y pypdf 6.21.4.
+`p340` corre **`fb4f46a`** (leído del RESUMEN pegado: `DEPLOY OK`, 3 migraciones aplicadas y 0 pendientes, respaldo restorable, `uv sync` instaló, 2 estáticos copiados, `active`, health 200, 16 timers, HEAD == origin/main). Antes corría `934c926`; se desplegaron 35 commits. Quedó pendiente de lo de abajo sólo la revisión en pantalla. Entraron: ingreso a servicio técnico (`LV-383`: modelo `WorkshopIntake`, lectores Geocom de recepción y cotización, pantalla «Registrar ingreso» con vista previa, distintivo y filtro «sin aviso a casa matriz»), prellenado seguro de documentos (`LV-384`), taxonomía y selector de tipos (`LV-385`/`LV-386`), menú «Subir…» en las fichas (`LV-387`) y pypdf 6.21.4.
 
 **Lleva migraciones** (el despliegue las aplica): `maintenance 0010`, `maintenance 0011` y `compliance 0028` (siembra tipos de documento, idempotente por `code`). **Lleva estáticos** (`doc-type-hint.js`) y **`uv sync`** (`pypdf`, `pdfminer.six`). Respaldo antes de migrar. Al final, `git log --oneline -1` en la VM debe ser `d9a3903`.
 
 **Pendiente — del usuario**
-- Desplegar en cuatro bloques cortos (skill de despliegue de p340) y pegar el `=== RESUMEN`.
 - Ver en pantalla (recarga forzada): «Registrar ingreso a servicio técnico» con los PDF reales de CC 664 (OT 71876) y CC 633 (cotización 71797), el selector de documentos con ayuda y el menú «Subir…».
 - Decidir el permiso 706 (centro desplazado 1,2 km y sin radio en el permiso, contra el círculo de 6,5 km del plan) y confirmar si la serie de la cotización es la aeronave de CC 633 y si fue aceptada.
 - Decisiones UX pendientes (plan de ~12 PR).
