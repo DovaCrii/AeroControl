@@ -13145,3 +13145,11 @@ msgstr "Orden"
 #: .\apps\compliance\models.py:127
 msgid "Orders the types inside their category; lower comes first."
 msgstr "Ordena los tipos dentro de su categoría; el menor va primero."
+
+#: .\templates\compliance\_doc_type_hint.html:7 .\templates\compliance\_doc_type_hint.html:8
+msgid "Asks for an expiry date: yes"
+msgstr "Pide fecha de vencimiento: sí"
+
+#: .\templates\compliance\_doc_type_hint.html:8
+msgid "Asks for an expiry date: no"
+msgstr "Pide fecha de vencimiento: no"

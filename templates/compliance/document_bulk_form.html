@@ -27,6 +27,7 @@
 
     <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "What documents they are" %}</h2>
     {{ form.doc_type|as_crispy_field }}
+{% include "compliance/_doc_type_hint.html" %}
 
     <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "The files" %}</h2>
     {{ form.files|as_crispy_field }}

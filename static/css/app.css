@@ -1311,6 +1311,8 @@ main {
 }
 .form-control:focus, .form-select:focus { border-color: var(--ac-primary); box-shadow: 0 0 0 0.2rem rgba(8, 127, 120, 0.15); }
 .form-text, .invalid-feedback { color: var(--ac-text-secondary); }
+/* LV-386: .form-shell .form-text es flex y pisaría el atributo hidden. */
+.form-text[hidden] { display: none; }
 .requiredField .asteriskField { color: var(--ac-danger); }
 
 .table { --bs-table-color: var(--ac-text); --bs-table-bg: var(--ac-surface); --bs-table-border-color: var(--ac-border); }

@@ -48,6 +48,7 @@ registro del documento original.{% endcomment %}
 
 <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "What document it is" %}</h2>
 {{ form.doc_type|as_crispy_field }}
+{% include "compliance/_doc_type_hint.html" %}
 
 <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "The file" %}</h2>
 {{ form.file|as_crispy_field }}
