@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Case, IntegerField, Value, When
 
 from .models import Document, DocumentType
+from .upload_context import suggested_upload_types
 
 
 def category_rank():
@@ -42,8 +43,23 @@ def attached_documents_context(user, obj):
     documents; otherwise it is the object's current, active documents.
     """
     if not user.has_perm("compliance.view_document"):
-        return {"documents": None, "document_content_type_id": None}
+        return {
+            "documents": None,
+            "document_content_type_id": None,
+            "suggested_upload_types": [],
+        }
     content_type = ContentType.objects.get_for_model(obj)
+    suggested = []
+    if user.has_perm("compliance.add_document"):
+        # The operator's credential has its own flow on the page, which also
+        # needs `change_operator`; without it the generic form is the way.
+        suggested = suggested_upload_types(
+            content_type,
+            can_use_own_flow=lambda _code: bool(
+                getattr(obj, "is_active", True)
+                and user.has_perm("registry.change_operator")
+            ),
+        )
     documents = (
         Document.objects.filter(
             content_type=content_type,
@@ -60,4 +76,8 @@ def attached_documents_context(user, obj):
         .annotate(category_rank=category_rank())
         .order_by("category_rank", "-issue_date")
     )
-    return {"documents": documents, "document_content_type_id": content_type.pk}
+    return {
+        "documents": documents,
+        "document_content_type_id": content_type.pk,
+        "suggested_upload_types": suggested,
+    }
