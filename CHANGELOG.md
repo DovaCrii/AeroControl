@@ -19,6 +19,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 - **Barra lateral fija y modo icono completo (`LV-381` F0, `codex/nav-fija-y-rail`).** El menú y la barra superior ya no se van con el scroll: la barra lateral cuelga de la altura real de la superior (medida en `app.js`, también con el aviso sin conexión), se desplaza sólo en la zona de grupos y deja Administración fija abajo. El modo icono muestra los 24 destinos (antes 7: la regla de `LV-170` perdía contra `[hidden]` de Bootstrap) con una línea entre grupos, y las burbujas con el nombre ya no las recorta el contenedor. Vuelve la línea que separa los títulos de grupo. Sin migración; lleva estáticos.
 ### Security
 
+- **El prellenado del formulario de subida de documentos respeta la empresa y los tipos activos (LV-383, codex/doc-prefill-tenant-scope).** Un `object_id` de otra empresa en la URL ya no prellena el sujeto ni sus fechas, y un tipo de documento archivado en `doc_type` ya no queda elegible; la carga masiva y el enlace «Cancelar» siguen la misma regla. Sin migración ni estáticos.
 - **`msgpack` 1.2.1 -> 1.2.4 (CVE-2026-114613).** `pip-audit` fallaba por esta dependencia transitiva de desarrollo (`pip-audit[filecache]` -> `cachecontrol` -> `msgpack`); se sube sólo ese paquete en `uv.lock` (corrección desde 1.2.3). Sin migración ni estáticos; no afecta a producción (grupo dev).
 
 ### Changed

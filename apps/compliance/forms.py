@@ -426,7 +426,10 @@ class DocumentForm(EntityScopeMixin, AeroModelForm):
             "expiry_date": _("Expiry date"),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, current_doc_type=None, **kwargs):
+        # `current_doc_type`: the type of the document being replaced, which may
+        # have been archived since (DocumentReplace passes it). Never read from
+        # the initial data: that can come from the query string.
         super().__init__(*args, **kwargs)
         # LV-79: DocumentCreate proposes the dates the linked record already
         # holds. Say where they came from, or a pre-filled field reads as a
@@ -467,9 +470,7 @@ class DocumentForm(EntityScopeMixin, AeroModelForm):
             self.fields["entity_type"].initial = self.instance.content_type
         # The type already on the document survives even if it was archived
         # (DocumentReplace prefills it) -- see selectable_document_types.
-        current_type = self.initial.get("doc_type") or getattr(
-            self.instance, "doc_type_id", None
-        )
+        current_type = current_doc_type or getattr(self.instance, "doc_type_id", None)
         self.fields["doc_type"].queryset = selectable_document_types(
             current_pk=getattr(current_type, "pk", current_type)
         )
