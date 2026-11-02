@@ -1,4 +1,8 @@
-from django.db import models
+import re
+import unicodedata
+
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -192,6 +196,78 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
             choices=self.STATUSES, flow=self.status_flow(), current=self.status
         )
 
+    @classmethod
+    def register_workshop_intake(cls, aircraft, data, user=None, existing_record=None):
+        """Record that `aircraft` was received at a workshop and move the file along.
+
+        The business rule lives here (fat model), not in a view: the intake is
+        hung on the open record when there is one (`existing_record`, or the
+        aircraft's latest open `pending`/`sent` record that has no intake yet),
+        and a new `unscheduled` record is created only when there is none.
+        The record is then walked pending -> sent -> at_workshop with a
+        `save()` per state: creating a record straight in `sent` would NOT move
+        the aircraft (the pre_save signal needs a real transition) and the
+        history mixin writes nothing on creation. A record that is already in
+        `sent`/`at_workshop` is not walked again.
+
+        `data` holds the `WorkshopIntake` fields (workshop_name, received_at,
+        sent_by, ...). Returns the saved `WorkshopIntake`.
+        """
+        with transaction.atomic():
+            record = cls._record_for_intake(aircraft, data, existing_record)
+            intake = WorkshopIntake(record=record, **data)
+            intake.full_clean()
+            intake.save()
+            actor = user.get_username() if user is not None else "system"
+            for source, target in (("pending", "sent"), ("sent", "at_workshop")):
+                if record.status != source:
+                    continue
+                record._changed_by = actor
+                record._changed_by_user = user
+                record._transition_notes = ""
+                record.status = target
+                record.save()
+            return intake
+
+    @classmethod
+    def _record_for_intake(cls, aircraft, data, existing_record):
+        if existing_record is not None:
+            record = cls.objects.select_for_update().get(pk=existing_record.pk)
+            if record.aircraft_id != aircraft.pk:
+                raise ValidationError(
+                    _("The maintenance record does not belong to this aircraft.")
+                )
+            if record.status not in ("pending", "sent", "at_workshop"):
+                raise ValidationError(
+                    _("This maintenance record is no longer open for an intake.")
+                )
+            if WorkshopIntake.objects.filter(record=record).exists():
+                raise ValidationError(
+                    _("This maintenance record already has a workshop intake.")
+                )
+            return record
+        record = (
+            cls.objects.select_for_update()
+            .filter(
+                aircraft=aircraft,
+                is_active=True,
+                status__in=["pending", "sent"],
+                workshop_intake__isnull=True,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if record is not None:
+            return record
+        findings = (data.get("findings") or "").strip()
+        return cls.objects.create(
+            aircraft=aircraft,
+            maintenance_type="unscheduled",
+            status="pending",
+            description=findings or "Received at workshop (intake)",
+            performed_by=data.get("workshop_name", ""),
+        )
+
 
 class MaintenanceHistory(BaseModel):
     # LV-82: same tie-breaker as PermissionHistory/InsuranceHistory. `created_at`
@@ -239,4 +315,124 @@ class MaintenanceHistory(BaseModel):
         if self._state.adding:
             latest = MaintenanceHistory.objects.order_by("-sequence").first()
             self.sequence = (latest.sequence if latest else 0) + 1
+        return super().save(*args, **kwargs)
+
+
+def normalize_workshop_name(value):
+    """Lowercase, accents stripped, whitespace collapsed: the duplicate-guard key."""
+    text = unicodedata.normalize("NFKD", value or "")
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def normalize_workshop_order(value):
+    """Upper case with every whitespace character removed."""
+    return re.sub(r"\s+", "", value or "").upper()
+
+
+class WorkshopIntake(BaseModel):
+    """What was received when an aircraft entered a workshop (service intake).
+
+    One per maintenance record. `delivered_by` is personal data: it lives only
+    in the database, never in `__str__`, logs or messages.
+    """
+
+    SENT_BY_CHOICES = [
+        ("cost_center", _("A cost center")),
+        ("head_office", _("Head office")),
+        ("unknown", _("Unknown")),
+    ]
+
+    record = models.OneToOneField(
+        MaintenanceRecord, on_delete=models.PROTECT, related_name="workshop_intake"
+    )
+    workshop_name = models.CharField(_("workshop"), max_length=150)
+    # Derived from `workshop_name` in save(); the duplicate guard compares it.
+    workshop_key = models.CharField(max_length=150, editable=False)
+    workshop_order = models.CharField(_("workshop order"), max_length=60, blank=True)
+    received_at = models.DateTimeField(_("received at"))
+    sent_by = models.CharField(
+        _("sent by"), max_length=20, choices=SENT_BY_CHOICES, default="unknown"
+    )
+    sender_cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("sending cost center"),
+    )
+    delivered_by = models.CharField(_("delivered by"), max_length=150, blank=True)
+    accessories = models.TextField(_("accessories"), blank=True)
+    findings = models.TextField(_("findings"), blank=True)
+    reader = models.CharField(_("reader"), max_length=30, blank=True)
+    source_document = models.ForeignKey(
+        "compliance.Document",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("source document"),
+    )
+
+    class Meta:
+        verbose_name = _("workshop intake")
+        verbose_name_plural = _("workshop intakes")
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(sent_by="cost_center", sender_cost_center__isnull=False)
+                    | (
+                        ~models.Q(sent_by="cost_center")
+                        & models.Q(sender_cost_center__isnull=True)
+                    )
+                ),
+                name="workshop_intake_cc_matches_sent_by",
+            ),
+            models.UniqueConstraint(
+                fields=["workshop_key", "workshop_order"],
+                condition=models.Q(is_active=True) & ~models.Q(workshop_order=""),
+                name="workshop_intake_unique_order",
+            ),
+        ]
+
+    def __str__(self):
+        # Deliberately without `delivered_by` (personal data).
+        return f"{self.workshop_name} · {self.record_id}"
+
+    def _normalize(self):
+        self.workshop_key = normalize_workshop_name(self.workshop_name)
+        self.workshop_order = normalize_workshop_order(self.workshop_order)
+
+    def clean(self):
+        super().clean()
+        self._normalize()
+        errors = {}
+        if self.sent_by == "cost_center" and self.sender_cost_center_id is None:
+            errors["sender_cost_center"] = _(
+                "Choose the cost center that sent the equipment."
+            )
+        elif self.sent_by != "cost_center" and self.sender_cost_center_id is not None:
+            errors["sender_cost_center"] = _(
+                "A cost center only applies when the equipment was sent by one."
+            )
+        if self.workshop_order and self.is_active:
+            clash = WorkshopIntake.objects.filter(
+                workshop_key=self.workshop_key,
+                workshop_order=self.workshop_order,
+                is_active=True,
+            ).exclude(pk=self.pk)
+            if clash.exists():
+                errors["workshop_order"] = _(
+                    "An intake with this workshop and order number is already "
+                    "registered."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self._normalize()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = {*update_fields, "workshop_key", "workshop_order"}
         return super().save(*args, **kwargs)
