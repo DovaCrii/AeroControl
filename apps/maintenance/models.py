@@ -304,6 +304,61 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
         self.is_active = False
         return outcome
 
+    # Kinds of annulment `void_kind` can report (LV-389).
+    VOID_KIND_INTAKE = "intake"
+    VOID_KIND_PENDING = "pending"
+
+    def void_kind(self):
+        """What annulling this record would mean, or `None` when it cannot be.
+
+        * `intake`: an active workshop intake (LV-388).
+        * `pending`: a `pending` record that was never started nor sent: no status
+          history and no workshop intake, so nothing ever happened to it.
+
+        Anything else (in progress, sent, completed, or a pending record with
+        history) is not annullable: those carry real work that must be closed
+        through its own flow. Uses `history.all()` so a list can prefetch it.
+        """
+        if not self.is_active or not self.pk:
+            return None
+        try:
+            intake = self.workshop_intake
+        except ObjectDoesNotExist:
+            intake = None
+        if intake is not None and intake.is_active:
+            return self.VOID_KIND_INTAKE
+        if intake is None and self.status == "pending" and not self.history.all():
+            return self.VOID_KIND_PENDING
+        return None
+
+    @property
+    def can_be_voided(self):
+        return self.void_kind() is not None
+
+    def void(self, user=None):
+        """LV-389: annul the record (archive, never delete). Returns `(kind, outcome)`.
+
+        `outcome` is a `VOID_AIRCRAFT_*` value; a never-started pending record did
+        not move the aircraft, so it is always `untouched`. Raises
+        `ValidationError` when the record cannot be annulled.
+        """
+        from apps.compliance.alerts import resolve_open_alerts_for
+
+        kind = self.void_kind()
+        if kind == self.VOID_KIND_INTAKE:
+            return kind, self.void_workshop_intake(user=user)
+        if kind == self.VOID_KIND_PENDING:
+            with transaction.atomic():
+                record = type(self).objects.select_for_update().get(pk=self.pk)
+                if record.void_kind() != self.VOID_KIND_PENDING:
+                    raise ValidationError(_("This record cannot be voided."))
+                record.is_active = False
+                record.save(update_fields=["is_active", "updated_at"])
+                resolve_open_alerts_for(record)
+            self.is_active = False
+            return kind, self.VOID_AIRCRAFT_UNTOUCHED
+        raise ValidationError(_("This record cannot be voided."))
+
     def _release_aircraft(self, user):
         if self.status not in self.WORKSHOP_STATUSES:
             return self.VOID_AIRCRAFT_UNTOUCHED

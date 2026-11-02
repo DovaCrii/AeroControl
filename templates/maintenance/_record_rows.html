@@ -12,7 +12,13 @@ genéricas. `data-pk` es lo que habilita la selección múltiple.{% endcomment %
     {% if object.sent_without_head_office_notice %}<span class="badge sev-caution" data-intake-badge="no-notice">{% translate "Sent without notice to head office" %}</span>{% endif %}
     {% if object.workshop_dwell_is_overdue %}<span class="badge bg-danger" title="{% translate 'Dwelling in this status longer than usual' %}">⚠</span>{% endif %}
   </td>
-  <td class="text-end"><a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a></td>
+  <td class="text-end">
+    <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
+    {% if perms.maintenance.change_maintenancerecord and object.can_be_voided %}
+    {% if object.void_kind == "intake" %}{% translate "Void this workshop intake? The record is archived (nothing is deleted) and its documents stay on the aircraft." as void_confirm %}{% else %}{% translate "Void this maintenance? It was never started or sent: it is archived and nothing is deleted." as void_confirm %}{% endif %}
+    <form method="post" action="{% url 'maintenance-void' object.pk %}" style="display:inline" data-confirm="{{ void_confirm }}" data-void-row>{% csrf_token %}<button class="btn btn-sm btn-outline-danger">{% translate "Void" %}</button></form>
+    {% endif %}
+  </td>
 </tr>
 {% empty %}
 <tr>

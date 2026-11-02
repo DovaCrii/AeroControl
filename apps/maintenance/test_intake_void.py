@@ -167,7 +167,7 @@ class TestButton:
     def test_it_shows_for_an_active_intake_with_the_permission(self):
         _plane, record = _registered()
         html = _detail(_manager(), record).content.decode()
-        assert f'action="{reverse(VOID, args=[record.pk])}"' in html
+        assert f'action="{reverse("maintenance-void", args=[record.pk])}"' in html
 
     def test_it_is_absent_without_the_permission(self):
         _plane, record = _registered()

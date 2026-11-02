@@ -13201,6 +13201,22 @@ msgstr ""
 msgid "Void intake"
 msgstr "Anular ingreso"
 
+msgid "Void"
+msgstr "Anular"
+
+msgid "Maintenance voided."
+msgstr "Mantención anulada."
+
+msgid "This record cannot be voided."
+msgstr "Este registro no se puede anular."
+
+msgid ""
+"Void this maintenance? It was never started or sent: it is archived and "
+"nothing is deleted."
+msgstr ""
+"¿Anular esta mantención? Nunca se inició ni se envió: se archiva y no se "
+"borra nada."
+
 msgid "Workshop quote"
 msgstr "Cotización del taller"
 
