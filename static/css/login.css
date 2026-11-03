@@ -135,7 +135,7 @@
 }
 .login-card input:focus-visible,
 .login-card .btn-primary:focus-visible {
-  outline: 3px solid rgb(8 127 120 / 45%);
+  outline: 3px solid var(--ac-focus-ring);
   outline-offset: 2px;
 }
 [data-theme="dark"] .login-card input { background: #1b2737; color: #edf3fb; }
