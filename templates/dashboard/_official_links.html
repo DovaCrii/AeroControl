@@ -1,0 +1,24 @@
+{% load i18n static %}
+{% comment %}LV-396: tarjetas hacia los sistemas oficiales de la DGAC (SIGO y SIPA). El registro y las URL
+vienen de `apps/core/official_links.py` (context processor `official_links`): acá no se escribe ninguna
+dirección. Sin logos ni capturas de la DGAC (marcas de terceros; el CSP sólo admite imágenes propias): el
+icono es del sprite propio. Convención de enlace externo del repo: `target="_blank" rel="noopener noreferrer"`
+y aviso oculto «se abre en una pestaña nueva». Reutilizable en la página de inicio.{% endcomment %}
+{% if official_links %}
+<section class="ol-banners mb-3" aria-labelledby="ol-banners-title">
+  <h2 id="ol-banners-title" class="visually-hidden">{% translate "Official links" %}</h2>
+  <div class="ol-grid">
+    {% for link in official_links %}
+    <a class="ol-card" data-official-link="{{ link.key }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+      <svg class="ol-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg>
+      <span class="ol-body">
+        <strong class="ol-name">{{ link.name }}</strong>
+        <span class="ol-purpose">{{ link.purpose }}</span>
+      </span>
+      <span class="ol-go" aria-hidden="true">&#8599;</span>
+      <span class="visually-hidden">({% translate "opens in a new tab" %})</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

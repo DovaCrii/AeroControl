@@ -50,6 +50,8 @@ centros de costo.{% endcomment %}
   <noscript><div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div></noscript>
 </form>
 
+{% include "dashboard/_official_links.html" %}
+
 {% comment %}LV-358 (E2): la franja «Entorno hoy» reemplaza a las dos tarjetas de la fila anterior (el tiempo, LV-347, y el centelleo GNSS, LV-352). Se carga por htmx desde `/environment/strip/`, así que armar el panel NO sale a la red (el pronóstico se pide en ese fragmento, no acá) ni suma consultas a `test_lv237`. Sólo se dibuja el hueco si hay al menos una celda: la persona tiene el permiso de su fuente y su interruptor (`WEATHER_ENABLED`, `GNSS_SCINTILLATION_ENABLED`) está encendido; sin ninguna no hay franja, ni petición, ni hueco. La tarjeta completa del tiempo, con su escena del cielo, vive ahora en la pestaña Tiempo de «Entorno».{% endcomment %}
 {% load environment_tags %}{% environment_strip_enabled as strip_on %}
 {% if strip_on %}

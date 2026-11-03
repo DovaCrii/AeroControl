@@ -8,9 +8,11 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
-### Changed
+### Added
 
-- **Fecha de emisión opcional según el tipo y color propio para subir (`LV-395`, `codex/subir-color-y-fechas`).** `DocumentType.requires_issue_date` (por defecto sí) y `Document.issue_date` admite nulos; el certificado de inscripción RPA ya no pide emisión, y «Tipos de documento» deja configurarlo en otros. Formularios de carga, lote y tipo, con `data-issue` en el selector y `doc-type-hint.js` que oculta el campo y avisa. Los lectores aguantan el nulo: orden con nulos al final, cierre mensual por `Coalesce(issue_date, created_at)`, guion en fichas y listas. Las acciones de subir pasan a azul corporativo `#1E418C` (`#8FB0F0` en oscuro; 9,59:1 y 8,54:1 sobre el relleno): `.btn-upload`, `.btn-upload-outline` y el botón del selector de archivo, con guardián que descubre las plantillas. «Cancelar» duplicado de `intake_upload.html` fuera. **Lleva migración** (`compliance 0029`, idempotente y reversible) **y estáticos** (`app.css`, `doc-type-hint.js`).
+- **Enlaces oficiales de la DGAC en el panel y el menú (`LV-396`, `codex/banners-dgac`).** Dos tarjetas (SIGO, SIPA) bajo el encabezado del panel y un grupo «Enlaces oficiales» en el menú lateral, con el nombre oficial y para qué sirve cada sistema. Las URL son constantes (`apps/core/official_links.py`); enlaces externos con `rel="noopener noreferrer"`; sin logos de terceros ni cambio de CSP; estilos en `static/css/official-links.css`. Sin migración; lleva `collectstatic`.
+
+### Changed
 
 - **Confirmaciones sin JS en línea y glifos como controles reales (`LV-393`, `codex/confirmar-sin-inline`).** «Reportar accidente / daño» y «Desvincular» plan usan `data-confirm` en vez de `onsubmit` (con CSP estricto se habrían enviado sin preguntar); guardián que prohíbe manejadores `on*=` en `templates/`. El «×» de borrar vista guardada ahora sí pregunta (el atributo estaba en el botón, no en el formulario). «✎» de asignar responsable y «×» pasan a controles con `aria-label` y objetivo mínimo de 24×24 px; el «⚠» de permanencia muestra los días como texto. Sin migración; lleva `collectstatic` (`app.css`).
 - **Catálogo español sin tuteo y encabezados del panel en orden (`LV-394`, `codex/registro-catalogo`).** Unas cien cadenas pasan de tuteo a impersonal o trato de usted («Seleccione un centro de costo», «Hay %(count)s borrador…»); guardián nuevo en `apps/core/test_translations.py`. Los `<h4>` del panel pasan a `h3` (mismo tamaño) con prueba de jerarquía. Sin migración ni estáticos.

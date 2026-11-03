@@ -71,7 +71,7 @@ def reusable_documents(entity, doc_type_code):
     """
     from django.utils import timezone
 
-    from apps.compliance.models import Document, newest_first
+    from apps.compliance.models import Document
 
     centre = cost_centre_of(entity)
     if centre is None:
@@ -100,5 +100,5 @@ def reusable_documents(entity, doc_type_code):
         .exclude(file_path="")
         .exclude(expiry_date__lt=today)
         .select_related("doc_type")
-        .order_by(*newest_first())
+        .order_by("-issue_date")
     )

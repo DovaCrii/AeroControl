@@ -82,6 +82,7 @@ TEMPLATES = [
                 "apps.core.context_processors.role_shortcuts",
                 # LV-324: el módulo de la barra al que pertenece la pantalla (cabecera y fondo).
                 "apps.core.context_processors.nav_module",
+                "apps.core.official_links.official_links",
                 # LV-381 F1: el menú lateral como datos, con el permiso de cada entrada.
                 "apps.core.context_processors.sidebar_menu",
                 "apps.assistant.context_processors.assistant_panel",

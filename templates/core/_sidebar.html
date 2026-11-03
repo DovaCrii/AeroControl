@@ -50,6 +50,19 @@ colapsar y el tirador del ancho son controles de la barra, no enlaces del menú.
       </div>
     </div>
     {% endfor %}
+    {% comment %}LV-396: «Enlaces oficiales» (SIGO y SIPA). No pasan por `build_sidebar`: son externos, sin
+    permiso de modelo ni estado «actual», y salen del mismo registro que las tarjetas del panel
+    (`apps/core/official_links.py`). Convención de enlace externo del repo.{% endcomment %}
+    {% if official_links %}
+    <div class="nav-group">
+      <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="official-links" aria-expanded="true" aria-controls="nav-group-official-links">{% translate "Official links" %}<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      <div class="nav-group-items" id="nav-group-official-links">
+        {% for link in official_links %}
+        <a href="{{ link.url }}" class="nav-item nav-overview nav-external" target="_blank" rel="noopener noreferrer"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg><span class="nav-label">{{ link.acronym }}</span><span class="nav-go" aria-hidden="true">&#8599;</span><span class="visually-hidden">({% translate "opens in a new tab" %})</span></a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   {% if sidebar_menu.footer %}

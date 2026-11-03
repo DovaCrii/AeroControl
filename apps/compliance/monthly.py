@@ -11,15 +11,6 @@ import calendar
 from datetime import date, timedelta
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import DateField, F
-from django.db.models.functions import Coalesce, TruncDate
-
-
-def filed_on():
-    """LV-395: the day a document counts for -- its issue date, or, when the type
-    asks for none, the day it was uploaded. Without this a record with no issue
-    date would vanish from the month it was filed in."""
-    return Coalesce(F("issue_date"), TruncDate("created_at"), output_field=DateField())
 
 
 def month_start(day):
@@ -74,14 +65,14 @@ def operational_records_qs(cost_center, period):
 
     first, last = month_bounds(period)
     cc_ct = ContentType.objects.get_for_model(CostCenter)
-    return Document.objects.annotate(filed_on=filed_on()).filter(
+    return Document.objects.filter(
         is_active=True,
         is_current_version=True,
         doc_type__is_operational_record=True,
         content_type=cc_ct,
         object_id=cost_center.pk,
-        filed_on__gte=first,
-        filed_on__lte=last,
+        issue_date__gte=first,
+        issue_date__lte=last,
     )
 
 
@@ -131,15 +122,14 @@ def monthly_close_rows(period, cost_centers, doc_types):
     )
     records = {}
     for object_id, doc_type_id, total in (
-        Document.objects.annotate(filed_on=filed_on())
-        .filter(
+        Document.objects.filter(
             is_active=True,
             is_current_version=True,
             doc_type__is_operational_record=True,
             content_type=ContentType.objects.get_for_model(CostCenter),
             object_id__in=ids,
-            filed_on__gte=first,
-            filed_on__lte=last,
+            issue_date__gte=first,
+            issue_date__lte=last,
         )
         .values_list("object_id", "doc_type_id")
         .annotate(total=Count("pk"))

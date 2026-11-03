@@ -13322,18 +13322,23 @@ msgid "Task title"
 msgstr "Título de la tarea"
 
 
-#: apps/compliance/models.py
-msgid "Requires issue date"
-msgstr "Requiere fecha de emisión"
+#: .\apps\core\official_links.py
+msgid "Operational Safety Management System (SIGO)"
+msgstr "Sistema de Gestión de Seguridad Operacional (SIGO)"
 
-#: apps/compliance/models.py
-msgid ""
-"Untick for papers that carry no issue date worth recording (for example the "
-"RPA registration certificate)."
-msgstr ""
-"Desmarque en los papeles que no traen una fecha de emisión que valga la pena "
-"registrar (por ejemplo, el certificado de inscripción del RPA)."
+#: .\apps\core\official_links.py
+msgid "Use it to validate RPA operating authorizations and manage DGAC flight permits."
+msgstr "Sirve para validar las autorizaciones de operación RPA y gestionar los permisos de vuelo de la DGAC."
 
-#: templates/compliance/_doc_type_hint.html
-msgid "This type does not ask for an issue date."
-msgstr "Este tipo no pide fecha de emisión."
+#: .\apps\core\official_links.py
+msgid "Aeronautical Personnel Information System (SIPA)"
+msgstr "Sistema Informático de Personal Aeronáutico (SIPA)"
+
+#: .\apps\core\official_links.py
+msgid "Use it for the licenses and ratings of aeronautical personnel, and to verify licenses."
+msgstr "Sirve para consultar las licencias y habilitaciones del personal aeronáutico, y para verificar licencias."
+
+#: .\templates\dashboard\_official_links.html
+#: .\templates\core\_sidebar.html
+msgid "Official links"
+msgstr "Enlaces oficiales"

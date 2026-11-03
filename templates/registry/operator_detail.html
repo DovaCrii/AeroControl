@@ -164,7 +164,7 @@ con los dos permisos: subir un documento y cambiar al operador.{% endcomment %}
   <form method="post" enctype="multipart/form-data" action="{% url 'operator-credential-upload' object.pk %}" class="d-flex flex-wrap gap-2 align-items-center">
     {% csrf_token %}
     <input class="form-control w-auto" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required aria-label="{% translate 'DGAC credential file' %}">
-    <button type="submit" class="btn btn-upload">{% translate "Upload credential" %}</button>
+    <button type="submit" class="btn btn-primary">{% translate "Upload credential" %}</button>
   </form>
 </div>
 {% endif %}

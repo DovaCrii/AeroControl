@@ -60,14 +60,12 @@ from .forms import (
     NonConformityForm,
     OwnerForm,
 )
-from .monthly import filed_on
 from .models import (
     Alert,
     AlertRule,
     Deliverable,
     Document,
     DocumentType,
-    newest_first,
     MonthlyComplianceReview,
     NonConformity,
     document_upload_path,
@@ -691,7 +689,7 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
                 content_type=tenant_ct, is_current_version=True, is_active=True
             )
             .select_related("doc_type")
-            .order_by(*newest_first())
+            .order_by("-issue_date")
         )
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
@@ -802,7 +800,7 @@ class OperationalRecordsView(
                 is_active=True,
             )
             .select_related("doc_type")
-            .order_by(*newest_first())
+            .order_by("-issue_date")
         )
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
@@ -813,8 +811,8 @@ class OperationalRecordsView(
             queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
         month = self._parse_month(self.request.GET.get("month"))
         if month:
-            queryset = queryset.annotate(filed_on=filed_on()).filter(
-                filed_on__year=month.year, filed_on__month=month.month
+            queryset = queryset.filter(
+                issue_date__year=month.year, issue_date__month=month.month
             )
         return queryset
 

@@ -102,17 +102,6 @@ class DocumentType(BaseModel):
         help_text=_("Groups this type inside the document-type picker."),
     )
     requires_expiry = models.BooleanField(default=True)
-    # LV-395: some papers record an inscription, not an event in time (the RPA
-    # registration certificate), so asking for an issue date only invites an
-    # invented one. Defaults to True: every type keeps asking unless told not to.
-    requires_issue_date = models.BooleanField(
-        default=True,
-        verbose_name=_("Requires issue date"),
-        help_text=_(
-            "Untick for papers that carry no issue date worth recording "
-            "(for example the RPA registration certificate)."
-        ),
-    )
     # LV-4: flags the type whose expiry the Aircraft list surfaces as a
     # column (e.g. liability insurance). Not unique by design -- a fleet may
     # split insurance into more than one policy type -- the aircraft list
@@ -149,15 +138,6 @@ class DocumentType(BaseModel):
         return self.name
 
 
-def newest_first():
-    """LV-395: `Document` ordering, newest issue date first, undated ones last.
-
-    `issue_date` can now be null, and a plain `-issue_date` puts the nulls
-    **first** on PostgreSQL and last on SQLite. Ties fall back to the upload time.
-    """
-    return (models.F("issue_date").desc(nulls_last=True), "-created_at")
-
-
 class Document(BaseModel):
     # T3.2 Fase 0b: own tenant FK. A Document points at any entity through a
     # GenericForeignKey, so its tenant cannot be derived with a cheap join like
@@ -175,9 +155,7 @@ class Document(BaseModel):
     doc_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
     title = models.CharField(max_length=200)
     file_path = models.CharField(max_length=500)
-    # LV-395: optional, and only for the types that say so
-    # (`DocumentType.requires_issue_date`); the forms enforce it for the rest.
-    issue_date = models.DateField(null=True, blank=True)
+    issue_date = models.DateField()
     expiry_date = models.DateField(null=True, blank=True)
     is_current_version = models.BooleanField(default=True)
     # R4.2: idempotency and provenance for the Z: repository importer.
