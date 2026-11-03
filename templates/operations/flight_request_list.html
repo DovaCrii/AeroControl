@@ -31,16 +31,17 @@ así que sin esta línea las dos pantallas se parecen más de lo que se diferenc
 {% block list_filters %}
 {% translate "Search title, commune, area..." as request_search_placeholder %}
 {% if cost_center_filter %}<input type="hidden" name="cost_center" value="{{ request.GET.cost_center }}">{% endif %}
-<div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=request_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-<div class="col-md-3">
-  <select class="form-select" name="status">
+<div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path search_placeholder=request_search_placeholder input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="id-filter">
+  <label class="visually-hidden" for="id-filter-status">{% translate "Status" %}</label>
+  <select class="form-select" id="id-filter-status" name="status">
     <option value="">{% translate "All statuses" %}</option>
     {% for val, label in status_choices %}
     <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
 </div>
-<div class="col-auto">
+<div class="id-filter id-filter--action">
   <button class="btn btn-outline-primary">{% translate "Filter" %}</button>
   <a href="{{ request.path }}" class="btn btn-outline-secondary">{% translate "Clear" %}</a>
 </div>

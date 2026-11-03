@@ -17,11 +17,11 @@ cada mañana. Entra por los bloques `list_*` con sus mismas columnas.{% endcomme
 
 {% block list_filters %}
 {% if cost_center_filter %}<input type="hidden" name="cost_center" value="{{ request.GET.cost_center }}">{% endif %}
-<div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-<div class="col-md-2"><select class="form-select" name="status"><option value="">{% translate "All statuses" %}</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-<div class="col-md-2"><select class="form-select" name="maintenance_type"><option value="">{% translate "All types" %}</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-<div class="col-md-2"><select class="form-select" name="sent_by" aria-label="{% translate 'Sent by' %}"><option value="">{% translate "All senders" %}</option>{% for value,label in sent_by_choices %}<option value="{{ value }}" {% if current_sent_by == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-<div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+<div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="id-filter"><label class="visually-hidden" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="status"><option value="">{% translate "All statuses" %}</option>{% for value,label in status_choices %}<option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="visually-hidden" for="id-filter-maintenance_type">{% translate "Type" %}</label><select class="form-select" id="id-filter-maintenance_type" name="maintenance_type"><option value="">{% translate "All types" %}</option>{% for value,label in type_choices %}<option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><select class="form-select" name="sent_by" aria-label="{% translate 'Sent by' %}"><option value="">{% translate "All senders" %}</option>{% for value,label in sent_by_choices %}<option value="{{ value }}" {% if current_sent_by == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 {% endblock %}
 
 {% block list_table_class %}table-normalized{% endblock %}
