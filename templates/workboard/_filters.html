@@ -1,5 +1,5 @@
 {% load i18n %}
-<select class="form-select form-select-sm kanban-filter" name="operator"
+<select class="form-select form-select-sm kanban-filter" name="operator" aria-label="{% translate 'Assignee' %}"
         hx-get="/workboard/_board/"
         hx-target="#kanban-board"
         hx-push-url="true"
@@ -10,7 +10,7 @@
     <option value="{{ op.id }}" {% if request.GET.operator == op.id|stringformat:'s' %}selected{% endif %}>{{ op.full_name }}</option>
   {% endfor %}
 </select>
-<select class="form-select form-select-sm kanban-filter" name="priority"
+<select class="form-select form-select-sm kanban-filter" name="priority" aria-label="{% translate 'Priority' %}"
         hx-get="/workboard/_board/"
         hx-target="#kanban-board"
         hx-push-url="true"
@@ -22,12 +22,12 @@
   <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>{% translate "High" %}</option>
   <option value="critical" {% if request.GET.priority == 'critical' %}selected{% endif %}>{% translate "Critical" %}</option>
 </select>
-<select class="form-select form-select-sm kanban-filter" name="state" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='label'],[name='q'],[name='board']" hx-trigger="change">
+<select class="form-select form-select-sm kanban-filter" name="state" aria-label="{% translate 'State' %}" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='label'],[name='q'],[name='board']" hx-trigger="change">
   <option value="">{% translate "All states" %}</option>
   {% for value,label in states %}<option value="{{ value }}" {% if request.GET.state == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
 </select>
-<select class="form-select form-select-sm kanban-filter" name="label" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='q'],[name='board']" hx-trigger="change">
+<select class="form-select form-select-sm kanban-filter" name="label" aria-label="{% translate 'Label' %}" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='q'],[name='board']" hx-trigger="change">
   <option value="">{% translate "All labels" %}</option>
   {% for label in labels %}<option value="{{ label.id }}" {% if request.GET.label == label.id|stringformat:'s' %}selected{% endif %}>{{ label.name }}</option>{% endfor %}
 </select>
-<input class="form-control form-control-sm kanban-filter" name="q" value="{{ request.GET.q }}" placeholder="{% translate 'Search tasks' %}" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='label'],[name='board']" hx-trigger="keyup changed delay:400ms">
+<input class="form-control form-control-sm kanban-filter" name="q" aria-label="{% translate 'Search tasks' %}" value="{{ request.GET.q }}" placeholder="{% translate 'Search tasks' %}" hx-get="/workboard/_board/" hx-target="#kanban-board" hx-push-url="true" hx-include="[name='operator'],[name='priority'],[name='state'],[name='label'],[name='board']" hx-trigger="keyup changed delay:400ms">

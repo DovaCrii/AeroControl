@@ -12,15 +12,15 @@ principal por la que alguien abre esta lista.{% endcomment %}
 {% endblock %}
 {% block worktable_filters %}
 {% translate "Search title..." as document_search_placeholder %}
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="id-filterbar">
   {% include "generic/_sort_state.html" %}
-  <div class="col-md-3">{% include "generic/_search_input.html" with search_url=request.path search_placeholder=document_search_placeholder %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-  <div class="col-md-4"><select class="form-select" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
-  <div class="col-md-3"><select class="form-select" name="is_current_version"><option value="">{% translate "All versions" %}</option><option value="true" {% if request.GET.is_current_version == 'true' %}selected{% endif %}>{% translate "Current" %}</option><option value="false" {% if request.GET.is_current_version == 'false' %}selected{% endif %}>{% translate "Previous" %}</option></select></div>
+  <div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path search_placeholder=document_search_placeholder input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="id-filter"><label class="visually-hidden" for="id-filter-doc_type">{% translate "Document type" %}</label><select class="form-select" id="id-filter-doc_type" name="doc_type"><option value="">{% translate "All document types" %}</option>{% for item in document_types %}<option value="{{ item.pk }}" {% if request.GET.doc_type == item.pk|stringformat:'s' %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+  <div class="id-filter"><label class="visually-hidden" for="id-filter-is_current_version">{% translate "Version" %}</label><select class="form-select" id="id-filter-is_current_version" name="is_current_version"><option value="">{% translate "All versions" %}</option><option value="true" {% if request.GET.is_current_version == 'true' %}selected{% endif %}>{% translate "Current" %}</option><option value="false" {% if request.GET.is_current_version == 'false' %}selected{% endif %}>{% translate "Previous" %}</option></select></div>
   {% comment %}LV-105: mismo caso que "Documentos de la empresa" -- sin
   `align-self-start` la columna se estira hasta la altura de la de búsqueda, que
   es mayor por el "Buscando…".{% endcomment %}
-  <div class="col-md-2 d-grid align-self-start"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 {% endblock %}
 {% comment %}LV-254: reparto declarado. El título es la flexible —el texto libre más

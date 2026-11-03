@@ -34,7 +34,8 @@ centros de costo.{% endcomment %}
 
 <form method="get" class="row g-2 mb-4">
   <div class="col-md-4 col-sm-6">
-    <select class="form-select" name="cost_center" data-autosubmit>
+    <label class="visually-hidden" for="id-filter-cost_center">{% translate "Cost center" %}</label>
+    <select class="form-select" id="id-filter-cost_center" name="cost_center" data-autosubmit>
       <option value="">{% translate "All cost centers" %}</option>
       {% for cc in cost_centers %}
       <option value="{{ cc.pk }}" {% if selected_cost_center.pk == cc.pk %}selected{% endif %}>{{ cc }}</option>

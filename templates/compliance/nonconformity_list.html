@@ -8,22 +8,24 @@
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
 {% endblock %}
 {% block worktable_filters %}
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="id-filterbar">
   {% include "generic/_sort_state.html" %}
-  <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path %}</div>
-  <div class="col-md-3">
-    <select class="form-select" name="status">
+  <div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}</div>
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-status">{% translate "Status" %}</label>
+    <select class="form-select" id="id-filter-status" name="status">
       <option value="">{% translate "All statuses" %}</option>
       {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-md-3">
-    <select class="form-select" name="source">
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-source">{% translate "Source" %}</label>
+    <select class="form-select" id="id-filter-source" name="source">
       <option value="">{% translate "All sources" %}</option>
       {% for value, label in source_choices %}<option value="{{ value }}" {% if selected_source == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 {% endblock %}
 {% comment %}LV-254: reparto declarado. La flexible es la del título —texto libre y

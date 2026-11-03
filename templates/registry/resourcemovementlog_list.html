@@ -12,25 +12,27 @@ responderla con todo el registro desde el principio entierra las tres filas de
 esta semana bajo las ochenta del año pasado -- pero un listado que recorta sin
 decirlo es peor que uno largo.{% endcomment %}
 {% block worktable_filters %}
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="id-filterbar">
   {% include "generic/_sort_state.html" %}
-  <div class="col-md-4">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-  <div class="col-md-3">
-    <select class="form-select" name="resource_kind">
+  <div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-resource_kind">{% translate "Resource" %}</label>
+    <select class="form-select" id="id-filter-resource_kind" name="resource_kind">
       <option value="">{% translate "All resources" %}</option>
       <option value="operator" {% if selected_kind == "operator" %}selected{% endif %}>{% translate "Operator" %}</option>
       <option value="aircraft" {% if selected_kind == "aircraft" %}selected{% endif %}>{% translate "Aircraft" %}</option>
     </select>
   </div>
-  <div class="col-md-3">
-    <select class="form-select" name="days">
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-days">{% translate "Period" %}</label>
+    <select class="form-select" id="id-filter-days" name="days">
       {% for value, label in periods %}
       <option value="{{ value }}" {% if selected_days == value %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
       <option value="all" {% if selected_days == "all" %}selected{% endif %}>{% translate "Everything on record" %}</option>
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
 </form>
 
 <p class="text-muted small mb-2">
