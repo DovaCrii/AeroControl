@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Dock">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".55" stop-color="#d3d8e2"/><stop offset="1" stop-color="#9ea7b8"/></linearGradient>
+<linearGradient id="lid" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6eaf1"/><stop offset="1" stop-color="#aeb6c6"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#586277"/><stop offset="1" stop-color="#202636"/></linearGradient>
+<linearGradient id="pad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4357"/><stop offset="1" stop-color="#171c29"/></linearGradient>
+<radialGradient id="glowg"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.cups{transform-box:fill-box;transform-origin:center;animation:spin 1.4s linear infinite}
+.ready{animation:ready 2.6s ease-in-out infinite alternate}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ready{from{transform:translateY(0)}to{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.led,.cups,.ready{animation:none}}
+</style>
+<ellipse cx="160" cy="208" rx="128" ry="7" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- mástil con veleta y anemómetro -->
+  <path d="M276 132 V40" stroke-width="4"/>
+  <g class="cups"><path d="M262 40 H290 M276 26 V54" stroke-width="2.4"/><circle cx="262" cy="40" r="4" fill="#ffc93c" stroke-width="2"/><circle cx="290" cy="40" r="4" fill="#ffc93c" stroke-width="2"/><circle cx="276" cy="26" r="4" fill="#ffc93c" stroke-width="2"/><circle cx="276" cy="54" r="4" fill="#ffc93c" stroke-width="2"/></g>
+  <path d="M276 72 H296 L290 78 L296 84 H276" fill="#e6eaf1" stroke-width="2.4"/>
+  <!-- antena -->
+  <path d="M46 132 V70" stroke-width="3.4"/><rect x="40" y="56" width="12" height="18" rx="5" fill="url(#dark)" stroke-width="2.4"/>
+  <!-- tapas abiertas -->
+  <path d="M70 128 L30 82 L44 74 L92 120 Z" fill="url(#lid)"/>
+  <path d="M250 128 L290 82 L276 74 L228 120 Z" fill="url(#lid)"/>
+  <path d="M40 86 L80 124 M280 86 L240 124" fill="none" stroke="#8d97ab" stroke-width="2" opacity=".7"/>
+  <!-- cuerpo de la estación -->
+  <path d="M60 128 H260 V188 Q260 198 250 198 H70 Q60 198 60 188 Z" fill="url(#body)"/>
+  <path d="M72 140 H248" fill="none" stroke="#8d97ab" stroke-width="2" opacity=".7"/>
+  <path d="M78 156 H112 M78 166 H112 M78 176 H112 M208 156 H242 M208 166 H242 M208 176 H242" stroke="#7d869a" stroke-width="2.4" fill="none"/>
+  <rect x="132" y="168" width="56" height="14" rx="7" fill="url(#dark)" stroke-width="2.2"/>
+  <circle cx="146" cy="175" r="8" fill="url(#glowg)" stroke="none" class="led"/><circle class="led" cx="146" cy="175" r="3" fill="#4ade80" stroke-width="1.4"/>
+  <rect x="156" y="172" width="24" height="6" rx="3" fill="#2ec4b6" stroke="none"/>
+  <path d="M74 198 V206 H92 V198 M228 198 V206 H246 V198" fill="#3a4357" stroke-width="2.4"/>
+  <!-- plataforma con la marca de aterrizaje -->
+  <path d="M84 128 H236 L228 118 H92 Z" fill="url(#pad)"/>
+  <!-- el dron dentro, con los brazos plegados hacia el pad -->
+  <g class="ready">
+    <path d="M128 112 L104 104 M192 112 L216 104" stroke-width="7"/><path d="M128 112 L104 104 M192 112 L216 104" stroke="#8d97ab" stroke-width="3.6"/>
+    <ellipse cx="100" cy="102" rx="9" ry="6" fill="url(#dark)"/><ellipse cx="220" cy="102" rx="9" ry="6" fill="url(#dark)"/>
+    <path d="M78 98 H122 M198 98 H242" stroke-width="2.4" opacity=".75"/>
+    <path d="M132 112 Q130 92 146 88 H174 Q190 92 188 112 Z" fill="url(#body)"/>
+    <rect x="148" y="104" width="24" height="12" rx="5" fill="url(#dark)" stroke-width="2.2"/>
+    <circle cx="160" cy="110" r="4" fill="#22507a" stroke="#4cc9f0" stroke-width="1.8"/>
+  </g>
+</g>
+</svg>

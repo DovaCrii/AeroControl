@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="Matrice 4">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a8499"/><stop offset=".55" stop-color="#4a5368"/><stop offset="1" stop-color="#2a3142"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5368"/><stop offset="1" stop-color="#171c29"/></linearGradient>
+<linearGradient id="arm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d97ab"/><stop offset="1" stop-color="#3a4357"/></linearGradient>
+<radialGradient id="disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#4cc9f0" stop-opacity=".08"/><stop offset=".72" stop-color="#4cc9f0" stop-opacity=".4"/><stop offset="1" stop-color="#4cc9f0" stop-opacity=".1"/></radialGradient>
+<radialGradient id="lens" cx=".34" cy=".3" r=".85"><stop offset="0" stop-color="#8fdcff"/><stop offset=".22" stop-color="#22507a"/><stop offset="1" stop-color="#050f1b"/></radialGradient>
+<radialGradient id="glowg"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowr"><stop offset="0" stop-color="#ff5a4f" stop-opacity=".9"/><stop offset="1" stop-color="#ff5a4f" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.rotor{transform-box:fill-box;transform-origin:center;animation:blur .07s linear infinite alternate}
+.bob{animation:bob 3.3s ease-in-out infinite alternate}
+.shadow{animation:shade 3.3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes blur{from{transform:scaleX(.78)}to{transform:scaleX(1)}}
+@keyframes bob{from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+@keyframes shade{from{transform:scaleX(1.04);opacity:.28}to{transform:scaleX(.92);opacity:.18}}
+@media (prefers-reduced-motion:reduce){.rotor,.led,.bob,.shadow{animation:none}}
+</style>
+<ellipse class="shadow" cx="160" cy="205" rx="88" ry="8" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g class="bob" stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- brazos traseros, plegables, más altos -->
+  <path d="M122 100 L84 84 M198 100 L236 84" stroke-width="9"/><path d="M122 100 L84 84 M198 100 L236 84" stroke="url(#arm)" stroke-width="4.6"/>
+  <ellipse cx="80" cy="82" rx="12" ry="8" fill="url(#dark)"/><ellipse cx="240" cy="82" rx="12" ry="8" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="78" cy="73" rx="46" ry="6.5" fill="url(#disc)" stroke-width="1.4" opacity=".75"/>
+  <ellipse class="rotor" cx="242" cy="73" rx="46" ry="6.5" fill="url(#disc)" stroke-width="1.4" opacity=".75"/>
+  <!-- brazos delanteros, con la bisagra del pliegue -->
+  <path d="M114 116 L58 132 M206 116 L262 132" stroke-width="12"/><path d="M114 116 L58 132 M206 116 L262 132" stroke="url(#arm)" stroke-width="7"/>
+  <circle cx="98" cy="121" r="4.2" fill="#2a3142" stroke-width="2"/><circle cx="222" cy="121" r="4.2" fill="#2a3142" stroke-width="2"/>
+  <ellipse cx="52" cy="134" rx="15" ry="10.5" fill="url(#dark)"/><ellipse cx="268" cy="134" rx="15" ry="10.5" fill="url(#dark)"/>
+  <ellipse class="rotor" cx="50" cy="122" rx="54" ry="7.5" fill="url(#disc)" stroke-width="1.6"/>
+  <ellipse class="rotor" cx="270" cy="122" rx="54" ry="7.5" fill="url(#disc)" stroke-width="1.6"/>
+  <!-- patas cortas -->
+  <path d="M124 152 L116 170 M196 152 L204 170" fill="none" stroke-width="3.4"/>
+  <!-- cuerpo compacto -->
+  <path d="M106 120 Q104 92 130 86 H190 Q216 92 214 120 V138 Q214 156 194 158 H126 Q106 156 106 138 Z" fill="url(#body)"/>
+  <path d="M124 98 H196" fill="none" stroke="#a9b2c4" stroke-width="2" opacity=".6"/>
+  <!-- sensores de visión frontales -->
+  <rect x="128" y="120" width="64" height="10" rx="5" fill="#0b1b2b" stroke-width="2.2"/>
+  <circle cx="140" cy="125" r="2.4" fill="#7fe3ff" stroke="none"/><circle cx="180" cy="125" r="2.4" fill="#7fe3ff" stroke="none"/>
+  <!-- cardán con tres lentes y telémetro láser -->
+  <rect x="148" y="152" width="24" height="9" rx="3" fill="url(#dark)"/>
+  <rect x="118" y="158" width="84" height="40" rx="15" fill="url(#dark)"/>
+  <circle cx="138" cy="178" r="11" fill="url(#lens)" stroke="#4cc9f0" stroke-width="2.8"/>
+  <circle cx="134" cy="174" r="2.4" fill="#fff" stroke="none"/>
+  <circle cx="164" cy="178" r="13" fill="url(#lens)" stroke="#4cc9f0" stroke-width="3"/>
+  <circle cx="164" cy="178" r="7.5" fill="none" stroke="#0b1b2b" stroke-width="1.8"/>
+  <circle cx="159" cy="173" r="2.8" fill="#fff" stroke="none"/>
+  <circle cx="188" cy="172" r="7" fill="#0b1b2b" stroke="#ff8c42" stroke-width="2.4"/>
+  <circle cx="188" cy="188" r="4" fill="#0b1b2b" stroke-width="2"/>
+  <circle cx="188" cy="188" r="1.6" fill="#ff5a4f" stroke="none"/>
+  <!-- luces de posición -->
+  <circle cx="114" cy="140" r="8" fill="url(#glowr)" stroke="none" class="led"/><circle class="led" cx="114" cy="140" r="3.2" fill="#ff5a4f" stroke-width="1.4"/>
+  <circle cx="206" cy="140" r="8" fill="url(#glowg)" stroke="none" class="led"/><circle class="led" cx="206" cy="140" r="3.2" fill="#4ade80" stroke-width="1.4"/>
+</g>
+</svg>
