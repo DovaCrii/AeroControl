@@ -132,7 +132,7 @@ def test_the_empty_kanban_offers_to_create_a_board_only_with_permission(client):
 def test_uniform_focus_ring_is_declared_in_section_e():
     css = _section_e()
     block = re.search(r"summary:focus-visible\s*\{([^}]*)\}", css).group(1)
-    assert "outline: 2px solid var(--ac-primary)" in block
+    assert "outline: 2px solid var(--ac-focus-ring)" in block
     assert "outline-offset: 2px" in block
     for selector in ("a:focus-visible", "button:focus-visible", "input:focus-visible"):
         assert selector in css

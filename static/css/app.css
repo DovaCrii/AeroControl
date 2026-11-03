@@ -8,6 +8,8 @@ body {
 }
 
 /* ── Navbar ───────────────────────────────────────── */
+/* El anillo de foco sobre la barra superior azul marino usa el turquesa de marca (6,56:1); #087f78 daria 2,92:1. */
+.navbar-dark.navy { --ac-focus-ring: #2EC4B6; }
 .navbar-dark.navy {
   background: var(--ac-navy);
 }
@@ -107,7 +109,7 @@ body {
 }
 
 .sidebar-resizer:focus-visible {
-  outline: 2px solid var(--ac-primary);
+  outline: 2px solid var(--ac-focus-ring);
   outline-offset: 1px;
 }
 
@@ -275,7 +277,7 @@ body.is-resizing-sidebar {
 .nav-group-toggle:hover { color: var(--ac-text-secondary); }
 
 .nav-group-toggle:focus-visible {
-  outline: 2px solid var(--ac-primary);
+  outline: 2px solid var(--ac-focus-ring);
   outline-offset: -2px;
   border-radius: 6px;
 }
@@ -509,7 +511,7 @@ body.palette-open { overflow: hidden; }
 .skip-link:focus { transform: translateY(0); }
 
 :where(a, button, input, select, textarea):focus-visible {
-  outline: 3px solid var(--ac-turquoise);
+  outline: 3px solid var(--ac-focus-ring);
   outline-offset: 2px;
 }
 
@@ -1081,6 +1083,10 @@ body, .card, .form-control, .form-select, .page-link, .table,
   --ac-surface: #ffffff;
   --ac-surface-raised: #ffffff;
   --ac-border: #dbe3ee;
+  /* UX foco-y-bordes: borde de campos y casillas con >= 3:1 (WCAG 1.4.11); mismo valor que el borde de figuras de identity.css. --ac-border queda para tarjetas. */
+  --ac-control-border: #7d8aa0;
+  /* Un solo anillo de foco: >= 3:1 contra --ac-bg, --ac-surface, --ac-surface-raised y la superficie interna de tarjetas. */
+  --ac-focus-ring: #087f78;
   --ac-text: #172238;
   /* LV-333: #516079 -> #44526a. El gris de las ayudas se leía débil junto al texto; ahora da >=7:1 sobre fondo y superficie. */
   --ac-text-secondary: #44526a;
@@ -1302,7 +1308,7 @@ main {
 .form-control,
 .form-select {
   min-height: var(--ac-control-height);
-  border: 1px solid var(--ac-border);
+  border: 1px solid var(--ac-control-border);
   border-radius: 8px;
   /* background-color, not the `background` shorthand: the shorthand resets
      background-image, which is where Bootstrap draws the <select> caret. */
@@ -1310,6 +1316,7 @@ main {
   color: var(--ac-text);
 }
 .form-control:focus, .form-select:focus { border-color: var(--ac-primary); box-shadow: 0 0 0 0.2rem rgba(8, 127, 120, 0.15); }
+.form-check-input { border-color: var(--ac-control-border); }
 .form-text, .invalid-feedback { color: var(--ac-text-secondary); }
 /* LV-386: .form-shell .form-text es flex y pisaría el atributo hidden. */
 .form-text[hidden] { display: none; }
@@ -1414,6 +1421,8 @@ main {
   --ac-surface: #161f2d;
   --ac-surface-raised: #1b2737;
   --ac-border: #33435b;
+  --ac-control-border: #6c81a3;
+  --ac-focus-ring: #2EC4B6;
   --ac-text: #edf3fb;
   --ac-text-secondary: #b5c1d1;
   --ac-text-muted: #9aa7ba;
@@ -1453,7 +1462,7 @@ main {
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select,
 [data-bs-theme="dark"] .form-control,
-[data-bs-theme="dark"] .form-select { background-color: var(--ac-surface-raised); border-color: var(--ac-border); color: var(--ac-text); }
+[data-bs-theme="dark"] .form-select { background-color: var(--ac-surface-raised); border-color: var(--ac-control-border); color: var(--ac-text); }
 [data-theme="dark"] .form-control::placeholder,
 [data-bs-theme="dark"] .form-control::placeholder { color: var(--ac-text-muted); }
 [data-theme="dark"] .table,
@@ -3134,7 +3143,7 @@ a.admin-metric:hover { border-color: var(--ac-text-secondary); }
   opacity: 0;
 }
 .quiz-option-input:focus-visible + .quiz-option {
-  outline: 2px solid var(--ac-primary);
+  outline: 2px solid var(--ac-focus-ring);
   outline-offset: 2px;
 }
 .quiz-option-input:checked + .quiz-option {
