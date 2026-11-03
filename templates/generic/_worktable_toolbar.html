@@ -22,7 +22,7 @@ leer ni que guardar, y una barra con controles muertos es peor que ninguna.{% en
       {% comment %}Borrar sólo la propia. Compartir es ofrecer, no ceder: una
       vista que cualquiera puede borrar es una vista en la que nadie confía.{% endcomment %}
       {% if view.user_id == request.user.pk %}
-      <form method="post" action="{% url 'list-view-delete' view.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="worktable-view-delete" data-confirm="{% blocktranslate with name=view.name %}Delete the saved view “{{ name }}”?{% endblocktranslate %}" title="{% translate 'Delete this view' %}">&times;</button></form>
+      <form method="post" action="{% url 'list-view-delete' view.pk %}" class="d-inline" data-confirm="{% blocktranslate with name=view.name %}Delete the saved view “{{ name }}”?{% endblocktranslate %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="worktable-view-delete ac-glyph-control" aria-label="{% translate 'Delete this view' %}" title="{% translate 'Delete this view' %}"><span aria-hidden="true">&times;</span></button></form>
       {% endif %}
     </span>
     {% endfor %}

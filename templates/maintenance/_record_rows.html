@@ -10,7 +10,7 @@ genéricas. `data-pk` es lo que habilita la selección múltiple.{% endcomment %
   <td>
     <span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% elif object.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ object.get_status_display }}</span>
     {% if object.sent_without_head_office_notice %}<span class="badge sev-caution" data-intake-badge="no-notice">{% translate "Sent without notice to head office" %}</span>{% endif %}
-    {% if object.workshop_dwell_is_overdue %}<span class="badge bg-danger" title="{% translate 'Dwelling in this status longer than usual' %}">⚠</span>{% endif %}
+    {% if object.workshop_dwell_is_overdue %}<span class="badge bg-danger" data-dwell-badge title="{% translate 'Dwelling in this status longer than usual' %}"><span aria-hidden="true">⚠</span> {% blocktranslate count days=object.days_in_current_status %}{{ days }} day in this status{% plural %}{{ days }} days in this status{% endblocktranslate %}</span>{% endif %}
   </td>
   <td class="text-end">
     <a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>
