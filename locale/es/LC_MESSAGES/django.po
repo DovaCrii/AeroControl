@@ -13378,3 +13378,12 @@ msgstr "Enviado sin aviso a casa matriz"
 #: .\templates\maintenance\record_list.html
 msgid "All senders"
 msgstr "Todos los remitentes"
+
+#: .\templates\workboard\_filters.html
+msgid "Label"
+msgstr "Etiqueta"
+
+#: .\templates\workboard\_quick_form.html
+msgid "Task title"
+msgstr "Título de la tarea"
+

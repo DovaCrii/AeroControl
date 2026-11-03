@@ -108,7 +108,7 @@
   font: inherit;
 }
 .air-input:focus-visible, .air-tool:focus-visible, .air-row:focus-visible, .air-check input:focus-visible, .air-legend-item input:focus-visible, .air-legend-summary:focus-visible, .air-notam:focus-visible {
-  outline: 3px solid var(--ac-text);
+  outline: 3px solid var(--ac-focus-ring);
   outline-offset: 2px;
 }
 .air-help { margin: 0.3rem 0 0; font-size: 0.8125rem; color: var(--ac-text-secondary); }
@@ -314,7 +314,7 @@
   .air-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .air-strip, .air-panel, .air-mapcol, .air-side .air-fiche, .air-near-out { padding: var(--id-sp-2); }
 }
-.air-fiche:focus-visible { outline: 3px solid var(--ac-text); outline-offset: 2px; }
+.air-fiche:focus-visible { outline: 3px solid var(--ac-focus-ring); outline-offset: 2px; }
 .air-map .leaflet-airHalo-pane { z-index: 399; }
 .air-shape--prohibited.is-selected { fill: var(--id-air-line-prohibited); fill-opacity: 0.12; }
 .air-shape--restricted.is-selected { fill: var(--id-air-line-restricted); fill-opacity: 0.12; }

@@ -45,7 +45,7 @@ que va a fallar es peor que no ofrecerlo.{% endcomment %}
   {% endif %}
   {% if request_obj.status == 'filed' %}
   <form method="post" action="{% url 'flight-request-link' request_obj.pk %}" class="d-flex gap-2 align-items-center flex-wrap">{% csrf_token %}
-    <select class="form-select form-select-sm w-auto" name="permission" required>
+    <select class="form-select form-select-sm w-auto" name="permission" aria-label="{% translate 'Permit' %}" required>
       <option value="">{% translate "Choose the permit the DGAC answered with…" %}</option>
       {% for permission in linkable_permissions %}
       <option value="{{ permission.pk }}">{{ permission.internal_folio }}{% if permission.permission_number %} · {{ permission.permission_number }}{% endif %}</option>
