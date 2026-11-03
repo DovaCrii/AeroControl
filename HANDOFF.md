@@ -1,5 +1,13 @@
 # HANDOFF — AeroControl
 
+## ✅ 2026-11-03 — tanda UX (`LV-389` a `LV-394`) **desplegada** en `3fae539`
+
+`p340` corre **`3fae539`** (leído del RESUMEN pegado: `DEPLOY OK`, `597de8c` → `3fae539`, 11 commits, sin migraciones, 4 estáticos copiados, `active`, health 200, HEAD == origin/main).
+
+**Pendiente — del usuario:** revisar con Ctrl+F5 los bordes y el anillo de foco en los dos temas, los filtros rotulados, las confirmaciones y los glifos convertidos en controles.
+
+**Lo que viene lleva migración y estáticos.** El PR `codex/subir-color-y-fechas` (`LV-395`: fecha de emisión opcional según el tipo y azul corporativo para subir) trae **`compliance 0029`** (agrega `DocumentType.requires_issue_date` y vuelve nula `Document.issue_date`; apaga la exigencia sólo en `aircraft-registration`) y estáticos (`app.css`, `doc-type-hint.js`). Al desplegarlo: `migrate` con respaldo y `collectstatic`.
+
 ## ✅ 2026-11-02 — ingreso a taller: cancelar, documentos en la aeronave y anular ingreso **desplegado** (`262e9a5`)
 
 `p340` corre **`262e9a5`** (RESUMEN pegado: `DEPLOY OK`, 1 migración aplicada y 0 pendientes, respaldo restorable, sin dependencias ni estáticos, `active`, health 200, 16 timers, HEAD == origin/main). Antes `fb4f46a`; 6 commits. `LV-388`: «Cancelar» visible arriba y borrado del PDF provisional; los documentos del ingreso cuelgan de la **aeronave** (`maintenance 0012` movió los ya subidos); botón «Anular ingreso» (archiva, no borra; restaura el estado de la aeronave sólo si es seguro); la lista de mantenciones oculta las archivadas (`?is_active=archived`).
