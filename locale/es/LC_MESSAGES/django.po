@@ -92,7 +92,7 @@ msgstr "Empresa"
 
 #: .\apps\compliance\forms.py:220 .\apps\compliance\forms.py:351
 msgid "Select an entity type"
-msgstr "Selecciona un tipo de entidad"
+msgstr "Seleccione un tipo de entidad"
 
 #: .\apps\compliance\forms.py:221 .\apps\compliance\forms.py:352
 #: .\apps\compliance\forms.py:551 .\apps\compliance\views.py:1305
@@ -116,7 +116,7 @@ msgstr "Archivos"
 
 #: .\apps\compliance\forms.py:229
 msgid "Select several at once, or drop them here."
-msgstr "Selecciona varios de una vez, o suéltalos aquí."
+msgstr "Seleccione varios de una vez, o suéltelos aquí."
 
 #: .\apps\compliance\forms.py:232 .\apps\compliance\forms.py:384
 #: .\apps\registry\forms.py:828 .\templates\compliance\document_detail.html:16
@@ -134,7 +134,7 @@ msgstr "Se aplica a todos los archivos del lote."
 
 #: .\apps\compliance\forms.py:300 .\apps\compliance\forms.py:479
 msgid "Select an active existing record."
-msgstr "Selecciona un registro activo existente."
+msgstr "Seleccione un registro activo existente."
 
 #: .\apps\compliance\forms.py:307 .\apps\compliance\forms.py:492
 msgid "This document type requires an expiry date."
@@ -170,7 +170,7 @@ msgstr ""
 
 #: .\apps\compliance\forms.py:357
 msgid "Select an entity type first."
-msgstr "Selecciona primero un tipo de entidad."
+msgstr "Seleccione primero un tipo de entidad."
 
 #: .\apps\compliance\forms.py:362 .\apps\compliance\forms.py:383
 #: .\templates\geo\plan_list.html:55
@@ -186,11 +186,11 @@ msgstr ""
 
 #: .\apps\compliance\forms.py:438
 msgid "No document types configured yet. Create one first."
-msgstr "Aún no hay tipos de documento configurados. Crea uno primero."
+msgstr "Aún no hay tipos de documento configurados. Cree uno primero."
 
 #: .\apps\compliance\forms.py:455
 msgid "Select the operational record this document belongs to."
-msgstr "Selecciona el registro operativo al que pertenece este documento."
+msgstr "Seleccione el registro operativo al que pertenece este documento."
 
 #: .\apps\compliance\forms.py:457
 msgid "There are no active records of this type yet."
@@ -624,8 +624,7 @@ msgstr "Todos los centros de costo"
 
 #: .\apps\compliance\models.py:420
 msgid "Unknown entity type. Choose one of the watchable models."
-msgstr ""
-"Tipo de entidad desconocido. Elige uno de los modelos que se pueden vigilar."
+msgstr "Tipo de entidad desconocido. Elija uno de los modelos que se pueden vigilar."
 
 #: .\apps\compliance\models.py:426
 #, python-format
@@ -912,18 +911,13 @@ msgid ""
 "This file could not be checked for viruses because the antivirus is "
 "unavailable, so it was not saved. This is a server problem, not a problem "
 "with your file: tell an administrator."
-msgstr ""
-"No se pudo revisar este archivo en busca de virus porque el antivirus no "
-"está disponible, así que no se guardó. Es un problema del servidor, no de tu"
-" archivo: avisa a un administrador."
+msgstr "No se pudo revisar este archivo en busca de virus porque el antivirus no está disponible, así que no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
 
 #: .\apps\compliance\security.py:105
 msgid ""
 "The virus check took too long, so this file was not saved. This is a server "
 "problem, not a problem with your file: tell an administrator."
-msgstr ""
-"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es"
-" un problema del servidor, no de tu archivo: avisa a un administrador."
+msgstr "La revisión de virus demoró demasiado, así que este archivo no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
 
 #: .\apps\compliance\security.py:119
 msgid "The antivirus found a threat in this file, so it was not saved."
@@ -934,9 +928,7 @@ msgstr ""
 msgid ""
 "This file could not be checked for viruses, so it was not saved. This is a "
 "server problem, not a problem with your file: tell an administrator."
-msgstr ""
-"No se pudo revisar este archivo en busca de virus, así que no se guardó. Es "
-"un problema del servidor, no de tu archivo: avisa a un administrador."
+msgstr "No se pudo revisar este archivo en busca de virus, así que no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
 
 #: .\apps\compliance\signals.py:84
 #, python-format
@@ -1289,7 +1281,7 @@ msgstr "Organización"
 
 #: .\apps\core\views.py:953
 msgid "Define the operational scope and who can access it."
-msgstr "Define el alcance operativo y quién puede acceder a él."
+msgstr "Defina el alcance operativo y quién puede acceder a él."
 
 #: .\apps\core\views.py:956
 msgid "Operational tenants"
@@ -1305,7 +1297,7 @@ msgstr "Membresías de organización"
 
 #: .\apps\core\views.py:964
 msgid "Assign users to an operational tenant."
-msgstr "Asigna usuarios a una organización operativa."
+msgstr "Asigne usuarios a una organización operativa."
 
 #: .\apps\core\views.py:970 .\templates\core\users_roles.html:3
 #: .\templates\core\users_roles.html:8
@@ -1338,7 +1330,7 @@ msgstr "Reglas de alerta"
 
 #: .\apps\core\views.py:994
 msgid "Define when AeroControl should generate an alert."
-msgstr "Define cuándo AeroControl debe generar una alerta."
+msgstr "Defina cuándo AeroControl debe generar una alerta."
 
 #: .\apps\core\views.py:1000
 msgid "Qualification types"
@@ -1354,7 +1346,7 @@ msgstr "Respaldos y auditoría"
 
 #: .\apps\core\views.py:1017
 msgid "Review backups and trace changes without editing audit records."
-msgstr "Revisa respaldos y rastrea cambios sin editar la auditoría."
+msgstr "Revise respaldos y rastree cambios sin editar la auditoría."
 
 #: .\apps\core\views.py:1021
 msgid "Backup configuration"
@@ -1362,7 +1354,7 @@ msgstr "Configuración de respaldos"
 
 #: .\apps\core\views.py:1022
 msgid "Review the local backup destination and schedule."
-msgstr "Revisa el destino y la programación de respaldos locales."
+msgstr "Revise el destino y la programación de respaldos locales."
 
 #: .\apps\core\views.py:1028 .\templates\core\audit_log.html:3
 #: .\templates\core\audit_log.html:8
@@ -1449,7 +1441,7 @@ msgstr ""
 
 #: .\apps\geo\forms.py:89
 msgid "Select a cost center."
-msgstr "Selecciona un centro de costo."
+msgstr "Seleccione un centro de costo."
 
 #: .\apps\geo\forms.py:118
 msgid "Only .kml and .kmz files can be imported."
@@ -1494,7 +1486,7 @@ msgstr "planes geoespaciales"
 
 #: .\apps\geo\models.py:207 .\apps\geo\views.py:338
 msgid "Say what the other reason was."
-msgstr "Indica cuál fue el otro motivo."
+msgstr "Indique cuál fue el otro motivo."
 
 #: .\apps\geo\models.py:308 .\templates\registry\aircraft_list.html:4
 #: .\templates\registry\costcenter_list.html:4
@@ -1592,7 +1584,7 @@ msgstr[1] "%(count)s permisos ligados archivados también."
 
 #: .\apps\geo\views.py:336
 msgid "Choose why this plan is being closed."
-msgstr "Elige por qué se cierra este plan."
+msgstr "Elija por qué se cierra este plan."
 
 #: .\apps\geo\views.py:381
 msgid "Plan restored."
@@ -1651,9 +1643,7 @@ msgstr "Guardando…"
 msgid ""
 "The plan changed on the server. Reload to get the latest version, then "
 "reapply your changes."
-msgstr ""
-"El plan cambió en el servidor. Recarga para obtener la última versión y "
-"vuelve a aplicar tus cambios."
+msgstr "El plan cambió en el servidor. Recargue para obtener la última versión y vuelva a aplicar sus cambios."
 
 #: .\apps\geo\views.py:528
 msgid "This plan can no longer be edited."
@@ -1665,11 +1655,11 @@ msgstr "El cambio fue rechazado:"
 
 #: .\apps\geo\views.py:530
 msgid "Too many saves in a row. Wait a moment."
-msgstr "Demasiados guardados seguidos. Espera un momento."
+msgstr "Demasiados guardados seguidos. Espere un momento."
 
 #: .\apps\geo\views.py:531
 msgid "Download your local copy"
-msgstr "Descargar tu copia local"
+msgstr "Descargar su copia local"
 
 #: .\apps\geo\views.py:533
 msgid "Visible"
@@ -1685,7 +1675,7 @@ msgstr "Separar en partes"
 
 #: .\apps\geo\views.py:536
 msgid "Root — drop here or click to add new here"
-msgstr "Raíz — suelta aquí o haz clic para agregar aquí"
+msgstr "Raíz — suelte aquí o haga clic para agregar aquí"
 
 #. LV-215: la pantalla del fallo de CSRF. "Caducó" y no "falló": lo que pasó
 #. es
@@ -1708,9 +1698,7 @@ msgstr ""
 msgid ""
 "It happens when a tab stays open from one day to the next. Load the page "
 "again and it will work."
-msgstr ""
-"Pasa cuando una pestaña queda abierta de un día para otro. Vuelve a cargar "
-"la página y funcionará."
+msgstr "Pasa cuando una pestaña queda abierta de un día para otro. Vuelva a cargar la página y funcionará."
 
 #: .\templates\core\csrf_failure.html:4
 msgid "Load the page again"
@@ -1828,12 +1816,12 @@ msgstr ""
 #: .\templates\operations\permission_list.html:1
 #, python-format
 msgid "You have %(count)s unfinished draft in this browser."
-msgstr "Tienes %(count)s borrador sin terminar en este navegador."
+msgstr "Hay %(count)s borrador sin terminar en este navegador."
 
 #: .\templates\operations\permission_list.html:2
 #, python-format
 msgid "You have %(count)s unfinished drafts in this browser."
-msgstr "Tienes %(count)s borradores sin terminar en este navegador."
+msgstr "Hay %(count)s borradores sin terminar en este navegador."
 
 #. LV-198: vuelve al formulario de alta, donde el borrador se recupera.
 #: .\templates\operations\permission_list.html:3
@@ -2425,13 +2413,11 @@ msgstr "Motivo de la corrección"
 msgid ""
 "Why the recorded status was wrong. It stays in the permit's history, so "
 "write it for whoever reads this a year from now."
-msgstr ""
-"Por qué el estado anotado estaba equivocado. Queda en el historial del "
-"permiso, así que escríbelo pensando en quien lo lea dentro de un año."
+msgstr "Por qué el estado anotado estaba equivocado. Queda en el historial del permiso, así que escríbalo pensando en quien lo lea dentro de un año."
 
 #: .\apps\operations\forms.py:356
 msgid "Write why the status is being corrected."
-msgstr "Escribe por qué se está corrigiendo el estado."
+msgstr "Escriba por qué se está corrigiendo el estado."
 
 #: .\apps\operations\forms.py:373
 msgid "Flight date"
@@ -2583,7 +2569,7 @@ msgstr "La fecha final no puede ser anterior a la fecha inicial."
 #: .\apps\registry\forms.py:783 .\apps\registry\models.py:1019
 #: .\apps\registry\models.py:1373
 msgid "Describe the purpose when 'Other' is selected."
-msgstr "Describe el propósito cuando se selecciona 'Otro'."
+msgstr "Describa el propósito cuando se selecciona 'Otro'."
 
 #: .\apps\operations\models.py:320 .\apps\registry\models.py:199
 msgid "Latitude and longitude must be entered together."
@@ -2733,9 +2719,7 @@ msgstr ""
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "
 "permission was saved; review the operator's qualifications."
-msgstr ""
-"%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
-"permiso se guardó igual; revisa las habilitaciones del operador."
+msgstr "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El permiso se guardó igual; revise las habilitaciones del operador."
 
 #: .\apps\operations\views.py:305 .\apps\registry\views.py:174
 #, python-format
@@ -2754,17 +2738,13 @@ msgstr "Permiso aprobado."
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
-msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
-" de aprobar este permiso."
+msgstr "Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes de aprobar este permiso."
 
 #: .\apps\operations\views.py:486
 msgid ""
 "Enter the DGAC permit number before approving. It is on the authorization "
 "you just uploaded: edit the permit and type it in."
-msgstr ""
-"Ingresa el número del permiso de la DGAC antes de aprobar. Está en la "
-"autorización que acabas de cargar: edita el permiso y escríbelo."
+msgstr "Ingrese el número del permiso de la DGAC antes de aprobar. Está en la autorización que acaba de cargar: edite el permiso y escríbalo."
 
 #: .\apps\operations\views.py:495
 msgid "Permission denied."
@@ -2778,9 +2758,7 @@ msgstr "Permiso completado."
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
-msgstr ""
-"Sube la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
-" de completar este permiso."
+msgstr "Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes de completar este permiso."
 
 #: .\apps\operations\views.py:594
 msgid "Permit archived. Use the Archived filter to find or restore it."
@@ -2798,9 +2776,7 @@ msgstr "Corregir el estado"
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "correcting this permit to that status."
-msgstr ""
-"Sube la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) "
-"antes de corregir el permiso a ese estado."
+msgstr "Suba la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) antes de corregir el permiso a ese estado."
 
 #: .\apps\operations\views.py:702
 #, python-format
@@ -2843,9 +2819,7 @@ msgstr "No es circunferencia: el polígono no es circular y SIGO espera uno."
 msgid ""
 "Duplicate centre: another section has these same coordinates. Check the "
 "source table before filing."
-msgstr ""
-"Centro duplicado: otra sección tiene estas mismas coordenadas. Revisa la "
-"tabla de origen antes de presentar."
+msgstr "Centro duplicado: otra sección tiene estas mismas coordenadas. Revise la tabla de origen antes de presentar."
 
 #: .\apps\operations\views.py:1062
 msgid "Edit flight request"
@@ -2861,7 +2835,7 @@ msgstr "Nota agregada."
 
 #: .\apps\operations\views.py:1102
 msgid "Write the note before saving."
-msgstr "Escribe la nota antes de guardar."
+msgstr "Escriba la nota antes de guardar."
 
 #: .\apps\operations\views.py:1126
 msgid "That pair is already on the list."
@@ -2873,7 +2847,7 @@ msgstr "Par agregado."
 
 #: .\apps\operations\views.py:1131
 msgid "Choose a work area and an objective."
-msgstr "Elige un área de trabajo y un objetivo."
+msgstr "Elija un área de trabajo y un objetivo."
 
 #: .\apps\operations\views.py:1151
 msgid "Recorded as filed in SIGO."
@@ -2885,7 +2859,7 @@ msgstr "Solicitud cerrada."
 
 #: .\apps\operations\views.py:1186
 msgid "Choose a permit from this cost center."
-msgstr "Elige un permiso de este centro de costo."
+msgstr "Elija un permiso de este centro de costo."
 
 #: .\apps\operations\views.py:1203
 #, python-format
@@ -2899,7 +2873,7 @@ msgstr "Vinculada a %(folio)s. El permiso ya tenía su ubicación."
 
 #: .\apps\operations\views.py:1299
 msgid "Choose a plan from this cost center."
-msgstr "Elige un plan de este centro de costo."
+msgstr "Elija un plan de este centro de costo."
 
 #: .\apps\operations\views.py:1318
 #, python-format
@@ -2915,9 +2889,7 @@ msgstr "Se crearon %(count)s solicitudes de vuelo desde este plan."
 msgid ""
 "Your user is not linked to an operator record, so there is nowhere to file "
 "the result. Ask for the link to be set on the operator's record."
-msgstr ""
-"Tu usuario no está vinculado a una ficha de operador, así que el resultado "
-"no tiene dónde quedar. Pide que se haga el vínculo en la ficha del operador."
+msgstr "Su usuario no está vinculado a una ficha de operador, así que el resultado no tiene dónde quedar. Solicite que se haga el vínculo en la ficha del operador."
 
 #: .\apps\registry\assessment_views.py:80
 msgid "The question bank is not available right now."
@@ -2929,7 +2901,7 @@ msgstr "La evaluación expiró. Acá va un juego nuevo de preguntas."
 
 #: .\apps\registry\assessment_views.py:180
 msgid "You do not have permission to take the assessment."
-msgstr "No tienes permiso para rendir la evaluación."
+msgstr "No tiene permiso para rendir la evaluación."
 
 #: .\apps\registry\assessments.py:186
 msgid "This question is no longer in the bank."
@@ -2991,9 +2963,7 @@ msgstr "Tipo de responsable"
 msgid ""
 "Optional: pick this only if the day-to-day responsible contact differs from "
 "the contract administrator above."
-msgstr ""
-"Opcional: elige esto solo si el contacto responsable del día a día es "
-"distinto del administrador de contrato de arriba."
+msgstr "Opcional: elija esto solo si el contacto responsable del día a día es distinto del administrador de contrato de arriba."
 
 #: .\apps\registry\forms.py:96
 msgid "Contract status"
@@ -3055,7 +3025,7 @@ msgid ""
 "Recipient of expiry digests. Use when the responsible person is in the "
 "operator roster."
 msgstr ""
-"Destinatario de los resúmenes de vencimientos. Úsalo cuando el responsable "
+"Destinatario de los resúmenes de vencimientos. Úselo cuando el responsable "
 "está en el padrón de operadores."
 
 #: .\apps\registry\forms.py:119
@@ -3063,14 +3033,11 @@ msgid ""
 "Use instead of the operator when the responsible person is external to the "
 "system (an administrator, secretary, or safety officer). Also used for the "
 "digest if the operator above has no reachable email."
-msgstr ""
-"Úsalo en vez del operador cuando el responsable es externo al sistema (un "
-"administrador, secretaría o un SSO). También se usa para el resumen si el "
-"operador de arriba no tiene un correo válido."
+msgstr "Úselo en vez del operador cuando el responsable es externo al sistema (un administrador, secretaría o un SSO). También se usa para el resumen si el operador de arriba no tiene un correo válido."
 
 #: .\apps\registry\forms.py:126
 msgid "Enter the number only; the CC prefix is added automatically."
-msgstr "Ingresa solo el número; el prefijo CC se agrega automáticamente."
+msgstr "Ingrese solo el número; el prefijo CC se agrega automáticamente."
 
 #: .\apps\registry\forms.py:128
 msgid ""
@@ -3094,19 +3061,19 @@ msgstr ""
 
 #: .\apps\registry\forms.py:181
 msgid "Enter the contract administrator name."
-msgstr "Ingresa el nombre del administrador de contrato."
+msgstr "Ingrese el nombre del administrador de contrato."
 
 #: .\apps\registry\forms.py:186
 msgid "Select the responsible operator."
-msgstr "Selecciona el operador responsable."
+msgstr "Seleccione el operador responsable."
 
 #: .\apps\registry\forms.py:193
 msgid "Enter the external contact name."
-msgstr "Ingresa el nombre del contacto externo."
+msgstr "Ingrese el nombre del contacto externo."
 
 #: .\apps\registry\forms.py:214
 msgid "Enter the cost-center number."
-msgstr "Ingresa el número del centro de costo."
+msgstr "Ingrese el número del centro de costo."
 
 #: .\apps\registry\forms.py:231
 #, python-format
@@ -3205,7 +3172,7 @@ msgstr "Faena actual"
 
 #: .\apps\registry\forms.py:320
 msgid "Enter the registration."
-msgstr "Ingresa la matrícula."
+msgstr "Ingrese la matrícula."
 
 #: .\apps\registry\forms.py:326
 #, python-format
@@ -3344,17 +3311,13 @@ msgstr "La aeronave ya tiene una asignación confirmada en este período."
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an operator "
 "already assigned elsewhere is moved here."
-msgstr ""
-"Selecciona uno o más. Cada uno se asigna al centro de costo de arriba; un "
-"operador ya asignado en otro centro de costo se mueve aquí."
+msgstr "Seleccione uno o más. Cada uno se asigna al centro de costo de arriba; un operador ya asignado en otro centro de costo se mueve aquí."
 
 #: .\apps\registry\forms.py:753
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an aircraft "
 "already assigned elsewhere is moved here."
-msgstr ""
-"Selecciona una o más. Cada una se asigna al centro de costo de arriba; una "
-"aeronave ya asignada en otro centro de costo se mueve aquí."
+msgstr "Seleccione una o más. Cada una se asigna al centro de costo de arriba; una aeronave ya asignada en otro centro de costo se mueve aquí."
 
 #: .\apps\registry\forms.py:827
 msgid "Qualification type"
@@ -3362,11 +3325,11 @@ msgstr "Tipo de habilitación"
 
 #: .\apps\registry\forms.py:838
 msgid "No qualification types configured yet. Create one first."
-msgstr "Aún no hay tipos de habilitación configurados. Crea uno primero."
+msgstr "Aún no hay tipos de habilitación configurados. Cree uno primero."
 
 #: .\apps\registry\management\commands\notify_expiring_credentials.py:94
 msgid "AeroControl · your DGAC validities are expiring"
-msgstr "AeroControl · tus vigencias DGAC están por vencer"
+msgstr "AeroControl · sus vigencias DGAC están por vencer"
 
 #: .\apps\registry\models.py:78 .\apps\registry\models.py:277
 #: .\apps\registry\models.py:652 .\apps\registry\models.py:1322
@@ -3458,7 +3421,7 @@ msgstr "aeronave"
 
 #: .\apps\registry\models.py:446
 msgid "Select the site the aircraft is deployed to."
-msgstr "Selecciona la faena a la que está desplegada la aeronave."
+msgstr "Seleccione la faena a la que está desplegada la aeronave."
 
 #: .\apps\registry\models.py:449
 msgid "A site only applies when the aircraft is on site."
@@ -3530,11 +3493,11 @@ msgstr "operadores"
 
 #: .\apps\registry\models.py:861
 msgid "Enter the employee ID, or a valid RUT to derive it from."
-msgstr "Ingresa el ID de empleado, o un RUT válido del que derivarlo."
+msgstr "Ingrese el ID de empleado, o un RUT válido del que derivarlo."
 
 #: .\apps\registry\models.py:869
 msgid "Enter the RUT as 12345678-5, including its check digit."
-msgstr "Ingresa el RUT como 12345678-5, con su dígito verificador."
+msgstr "Ingrese el RUT como 12345678-5, con su dígito verificador."
 
 #: .\apps\registry\models.py:877
 #, python-format
@@ -3850,9 +3813,7 @@ msgstr "Seguro registrado como autorizado."
 #: .\apps\registry\views.py:797
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
-msgstr ""
-"Ingresa la fecha de vigencia de la póliza antes de registrar la autorización"
-" de la JAC."
+msgstr "Ingrese la fecha de vigencia de la póliza antes de registrar la autorización de la JAC."
 
 #: .\apps\registry\views.py:981
 msgid "Assign operators to a cost center"
@@ -3925,9 +3886,7 @@ msgstr "Creado"
 #: .\apps\registry\views.py:1363
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
-msgstr ""
-"%(count)s %(name)s importados. Puedes deshacerlo desde la página de "
-"importación."
+msgstr "%(count)s %(name)s importados. Puede deshacerlo desde la página de importación."
 
 #: .\apps\registry\views.py:1453
 #, python-format
@@ -4015,7 +3974,7 @@ msgid ""
 "Optional. Warn when this stage holds more active tasks than this number; "
 "does not block moving a task in."
 msgstr ""
-"Opcional. Avisa cuando esta etapa tiene más tareas activas que este número; "
+"Opcional. Avise cuando esta etapa tiene más tareas activas que este número; "
 "no bloquea mover una tarea aquí."
 
 #: .\apps\workboard\models.py:83
@@ -4968,9 +4927,8 @@ msgid "Review %(total)s cost center and mark it Compliant or Non-compliant:"
 msgid_plural ""
 "Review these %(total)s cost centers and mark each Compliant or Non-"
 "compliant:"
-msgstr[0] "Revisa %(total)s centro de costo y márcalo Cumple o No cumple:"
-msgstr[1] ""
-"Revisa estos %(total)s centros de costo y marca cada uno Cumple o No cumple:"
+msgstr[0] "Revise %(total)s centro de costo y márquelo Cumple o No cumple:"
+msgstr[1] "Revise estos %(total)s centros de costo y marque cada uno Cumple o No cumple:"
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:1
 #, python-format
@@ -4992,7 +4950,7 @@ msgstr[1] ""
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:8
 msgid "Mark each Compliant or Non-compliant:"
-msgstr "Marca cada uno Cumple o No cumple:"
+msgstr "Marque cada uno Cumple o No cumple:"
 
 #: .\templates\compliance\monthly_review.html:9
 msgid ""
@@ -5371,7 +5329,7 @@ msgstr "No hay módulos de administración disponibles"
 
 #: .\templates\core\administration.html:108
 msgid "Ask an administrator to grant the required permissions."
-msgstr "Solicita a un administrador los permisos necesarios."
+msgstr "Solicite a un administrador los permisos necesarios."
 
 #: .\templates\core\audit_log.html:13 .\templates\core\users_roles.html:14
 #: .\templates\maintenance\record_detail.html:17
@@ -5585,7 +5543,7 @@ msgstr "corrió por última vez el %(when)s, hace más de lo esperado"
 
 #: .\templates\core\email\scheduled_jobs.txt:10
 msgid "Check the situation panel:"
-msgstr "Revisa el panel de situación:"
+msgstr "Revise el panel de situación:"
 
 #: .\templates\core\email\scheduled_jobs.txt:13
 msgid "On the server:"
@@ -5612,7 +5570,7 @@ msgstr "No se encontraron resultados."
 
 #: .\templates\core\search.html:21
 msgid "Enter a term to search operational records."
-msgstr "Ingresa un término para buscar registros operativos."
+msgstr "Ingrese un término para buscar registros operativos."
 
 #: .\templates\core\users_roles.html:9
 msgid ""
@@ -5656,19 +5614,17 @@ msgstr "Nuevo permiso"
 
 #: .\templates\dashboard\index.html:43
 msgid "Start your operation"
-msgstr "Comienza tu operación"
+msgstr "Comience su operación"
 
 #: .\templates\dashboard\index.html:44
 msgid ""
 "Load the operational records below to activate indicators, alerts and "
 "planning."
-msgstr ""
-"Carga los registros operativos para activar indicadores, alertas y "
-"planificación."
+msgstr "Cargue los registros operativos para activar indicadores, alertas y planificación."
 
 #: .\templates\dashboard\index.html:46 .\templates\dashboard\index.html:49
 msgid "Create a cost center"
-msgstr "Crea un centro de costo"
+msgstr "Cree un centro de costo"
 
 #: .\templates\dashboard\index.html:50
 msgid "Register an aircraft and an operator"
@@ -5676,7 +5632,7 @@ msgstr "Registra una aeronave y un operador"
 
 #: .\templates\dashboard\index.html:51
 msgid "Create a flight permission to begin tracking operations"
-msgstr "Crea un permiso de vuelo para comenzar el seguimiento operativo"
+msgstr "Cree un permiso de vuelo para comenzar el seguimiento operativo"
 
 #: .\templates\dashboard\index.html:80 .\templates\dashboard\index.html:129
 #, python-format
@@ -5737,7 +5693,7 @@ msgstr "centros de costo al día"
 
 #: .\templates\dashboard\index.html:172
 msgid "Activate compliance monitoring"
-msgstr "Activa el monitoreo de cumplimiento"
+msgstr "Active el monitoreo de cumplimiento"
 
 #: .\templates\dashboard\index.html:173
 msgid ""
@@ -5752,7 +5708,7 @@ msgstr "Tipos de documento creados"
 
 #: .\templates\dashboard\index.html:176
 msgid "Create the document types"
-msgstr "Crea los tipos de documento"
+msgstr "Cree los tipos de documento"
 
 #: .\templates\dashboard\index.html:177
 msgid "Documents loaded"
@@ -5760,7 +5716,7 @@ msgstr "Documentos cargados"
 
 #: .\templates\dashboard\index.html:177
 msgid "Load the documents with their expiry dates"
-msgstr "Carga los documentos con sus fechas de vencimiento"
+msgstr "Cargue los documentos con sus fechas de vencimiento"
 
 #: .\templates\dashboard\index.html:178
 msgid "Alert rules defined"
@@ -5768,7 +5724,7 @@ msgstr "Reglas de alerta definidas"
 
 #: .\templates\dashboard\index.html:178
 msgid "Define an alert rule"
-msgstr "Define una regla de alerta"
+msgstr "Defina una regla de alerta"
 
 #: .\templates\dashboard\index.html:201
 msgid "Work on these in the alert tray"
@@ -5986,7 +5942,7 @@ msgstr "Aún no hay nada aquí."
 
 #: .\templates\generic\_table_body.html:28
 msgid "Create the first one"
-msgstr "Crea el primero"
+msgstr "Cree el primero"
 
 #: .\templates\generic\_traceability.html:24
 msgid "Traceability"
@@ -6103,7 +6059,7 @@ msgstr "Distancia (km)"
 
 #: .\templates\geo\_sigo_sheet.html:34
 msgid "Copy each value into its SIGO box."
-msgstr "Copia cada valor en su casilla de SIGO."
+msgstr "Copie cada valor en su casilla de SIGO."
 
 #: .\templates\geo\_sigo_sheet.html:60 .\templates\geo\plan_detail.html:49
 #: .\templates\geo\plan_detail.html:165
@@ -6214,10 +6170,7 @@ msgid ""
 "At least one of its requests is already filed in SIGO: the authority holds a"
 " file that this plan explains. Archive it only if you are sure nobody will "
 "need to look it up."
-msgstr ""
-"Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad "
-"tiene un expediente que este plan explica. Archívalo sólo si estás seguro de"
-" que nadie va a necesitar consultarlo."
+msgstr "Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad tiene un expediente que este plan explica. Archívelo sólo si está seguro de que nadie va a necesitar consultarlo."
 
 #: .\templates\geo\plan_archive_confirm.html:43
 msgid "Why is it being closed?"
@@ -6225,7 +6178,7 @@ msgstr "¿Por qué se cierra?"
 
 #: .\templates\geo\plan_archive_confirm.html:51
 msgid "If it is another reason, say which"
-msgstr "Si es otro motivo, indica cuál"
+msgstr "Si es otro motivo, indique cuál"
 
 #: .\templates\geo\plan_archive_confirm.html:66
 msgid "Close its linked permits too?"
@@ -6386,7 +6339,7 @@ msgstr "Guardar una nueva versión"
 
 #: .\templates\geo\plan_detail.html:322
 msgid "Describe your change"
-msgstr "Describe tu cambio"
+msgstr "Describa su cambio"
 
 #: .\templates\geo\plan_detail.html:335
 msgid "Versions"
@@ -6402,7 +6355,7 @@ msgstr "Exportar"
 
 #: .\templates\geo\plan_detail.html:386
 msgid "Download the current version to open in Google Earth."
-msgstr "Descarga la versión vigente para abrirla en Google Earth."
+msgstr "Descargue la versión vigente para abrirla en Google Earth."
 
 #: .\templates\geo\plan_detail.html:392
 msgid "Export KML"
@@ -6436,9 +6389,7 @@ msgstr "Importar KMZ/KML"
 #: .\templates\geo\plan_import.html:9
 msgid ""
 "Create a plan from a flight-planning file. The original is stored intact."
-msgstr ""
-"Crea un plan a partir de un archivo de planificación de vuelo. El original "
-"se guarda intacto."
+msgstr "Cree un plan a partir de un archivo de planificación de vuelo. El original se guarda intacto."
 
 #: .\templates\geo\plan_import.html:16
 msgid "Importing…"
@@ -6513,7 +6464,7 @@ msgstr "Todavía no hay solicitudes de vuelo."
 
 #: .\templates\operations\_flight_request_rows.html:34
 msgid "Open a geospatial plan"
-msgstr "Abre un plan geoespacial"
+msgstr "Abra un plan geoespacial"
 
 #: .\templates\operations\_flight_request_rows.html:34
 msgid ""
@@ -6610,7 +6561,7 @@ msgstr "Marcar como presentada en SIGO"
 
 #: .\templates\operations\flight_request_detail.html:51
 msgid "Choose the permit the DGAC answered with…"
-msgstr "Elige el permiso con que respondió la DGAC…"
+msgstr "Elija el permiso con que respondió la DGAC…"
 
 #: .\templates\operations\flight_request_detail.html:56
 msgid "Link to permit"
@@ -6631,7 +6582,7 @@ msgstr "Hoja del formulario SIGO"
 
 #: .\templates\operations\flight_request_detail.html:77
 msgid "Copy each value into its box in SIGO."
-msgstr "Copia cada valor en su casilla de SIGO."
+msgstr "Copie cada valor en su casilla de SIGO."
 
 #: .\templates\operations\flight_request_detail.html:84
 msgid "Work area / objective"
@@ -6840,9 +6791,7 @@ msgstr ""
 msgid ""
 "This permit is already approved by the authority: archiving it needs a "
 "written reason, which stays in the audit trail with your name and the date."
-msgstr ""
-"Este permiso ya está aprobado por la autoridad: archivarlo exige un motivo "
-"escrito, que queda en la auditoría con tu nombre y la fecha."
+msgstr "Este permiso ya está aprobado por la autoridad: archivarlo exige un motivo escrito, que queda en la auditoría con su nombre y la fecha."
 
 #: .\templates\operations\permission_archive_confirm.html:44
 msgid "Reason for archiving"
@@ -6850,11 +6799,11 @@ msgstr "Motivo para archivar"
 
 #: .\templates\operations\permission_archive_confirm.html:47
 msgid "Write the reason before archiving."
-msgstr "Escribe el motivo antes de archivar."
+msgstr "Escriba el motivo antes de archivar."
 
 #: .\templates\operations\permission_archive_confirm.html:49
 msgid "Write it for whoever reads this a year from now."
-msgstr "Escríbelo para quien lea esto en un año."
+msgstr "Escríbalo para quien lea esto en un año."
 
 #: .\templates\operations\permission_detail.html:19
 msgid "Change status"
@@ -6866,7 +6815,7 @@ msgstr "Notas (opcional)"
 
 #: .\templates\operations\permission_detail.html:59
 msgid "Fix a status that was recorded by mistake, with a reason on record"
-msgstr "Corrige un estado anotado por error, dejando el motivo registrado"
+msgstr "Corregir un estado anotado por error, dejando el motivo registrado"
 
 #: .\templates\operations\permission_detail.html:59
 msgid "Correct status"
@@ -6999,7 +6948,7 @@ msgstr "Ajustar según la resolución DGAC"
 
 #: .\templates\operations\permission_form.html:106
 msgid "You have a draft saved in this browser"
-msgstr "Tienes un borrador guardado en este navegador"
+msgstr "Hay un borrador guardado en este navegador"
 
 #: .\templates\operations\permission_form.html:109
 msgid "Recover it"
@@ -7020,8 +6969,7 @@ msgstr "Este navegador no está dejando guardar el borrador."
 #: .\templates\operations\permission_form.html:120
 msgid ""
 "It stays in this browser until you save or discard it. Nobody else sees it."
-msgstr ""
-"Queda en este navegador hasta que guardes o lo descartes. Nadie más lo ve."
+msgstr "Queda en este navegador hasta que guarde o lo descarte. Nadie más lo ve."
 
 #: .\templates\operations\permission_form.html:120
 msgid "Save draft"
@@ -7064,7 +7012,7 @@ msgstr "Contraseña actualizada"
 
 #: .\templates\registration\password_change_done.html:7
 msgid "Your password has been updated."
-msgstr "Tu contraseña ha sido actualizada."
+msgstr "Su contraseña ha sido actualizada."
 
 #: .\templates\registration\password_change_done.html:8
 msgid "Back to dashboard"
@@ -7306,9 +7254,7 @@ msgstr "Meses de vigencia"
 msgid ""
 "The result is filed on your record and feeds the same expiry warnings as "
 "your DGAC credential."
-msgstr ""
-"El resultado queda en tu ficha y entra al mismo aviso de vencimientos que tu"
-" credencial DGAC."
+msgstr "El resultado queda en su ficha y entra al mismo aviso de vencimientos que su credencial DGAC."
 
 #: .\templates\registry\assessment_take.html:102
 #, python-brace-format
@@ -7514,9 +7460,7 @@ msgstr ""
 msgid ""
 "%(count)s rows are valid. Select the same file again and apply to create "
 "them."
-msgstr ""
-"%(count)s filas son válidas. Vuelve a seleccionar el mismo archivo y aplica "
-"para crearlas."
+msgstr "%(count)s filas son válidas. Vuelva a seleccionar el mismo archivo y aplique para crearlas."
 
 #: .\templates\registry\costcenter_import.html:9
 msgid "CSV file"
@@ -7709,9 +7653,7 @@ msgstr "Seguimiento"
 msgid ""
 "Move operational work forward, keep ownership visible and follow every "
 "deadline."
-msgstr ""
-"Haz avanzar el trabajo operativo, mantén visible al responsable y cumple "
-"cada plazo."
+msgstr "Haga avanzar el trabajo operativo, mantenga visible al responsable y cumpla cada plazo."
 
 #: .\templates\workboard\kanban.html:17
 msgid "New task"
@@ -7751,7 +7693,7 @@ msgstr "Nueva etapa"
 
 #: .\templates\workboard\kanban.html:37
 msgid "You do not have permission to move this task."
-msgstr "No tienes permiso para mover esta tarea."
+msgstr "No tiene permiso para mover esta tarea."
 
 #: .\templates\workboard\kanban.html:38
 msgid "The task could not be moved. The board was refreshed."
@@ -7763,7 +7705,7 @@ msgstr "No hay ningún tablero configurado."
 
 #: .\templates\workboard\kanban.html:44
 msgid "Create a board to organize tasks, owners and deadlines."
-msgstr "Crea un tablero para organizar tareas, responsables y vencimientos."
+msgstr "Cree un tablero para organizar tareas, responsables y vencimientos."
 
 #: .\templates\workboard\kanban.html:46
 msgid "Create board"
@@ -7780,8 +7722,7 @@ msgstr "Lista de tareas"
 
 #: .\templates\workboard\task_list.html:6
 msgid "Review ownership, priorities and deadlines in a sortable list."
-msgstr ""
-"Revisa responsables, prioridades y vencimientos en una lista ordenable."
+msgstr "Revise responsables, prioridades y vencimientos en una lista ordenable."
 
 #: .\templates\workboard\task_list.html:6
 msgid "Export XLSX"
@@ -7848,9 +7789,7 @@ msgstr ""
 msgid ""
 "Enter the permit's validity window before approving. The DGAC sets it on the"
 " authorization you just uploaded: edit the permit and type the two dates in."
-msgstr ""
-"Ingresa la vigencia del permiso antes de aprobar. La DGAC la fija en la "
-"autorización que acabas de subir: edita el permiso y escribe las dos fechas."
+msgstr "Ingrese la vigencia del permiso antes de aprobar. La DGAC la fija en la autorización que acaba de subir: edite el permiso y escriba las dos fechas."
 
 #: templates/operations/_permission_rows.html
 #: templates/operations/permission_detail.html
@@ -7870,10 +7809,7 @@ msgid ""
 "The DGAC authorises three months at most, so this window cannot end after "
 "%(limit)s. If the authorisation really says otherwise, write the reason in "
 "the field below and it will be recorded."
-msgstr ""
-"La DGAC autoriza tres meses como máximo, así que esta vigencia no puede "
-"terminar después del %(limit)s. Si la autorización dice otra cosa, escribe "
-"el motivo en el campo de abajo y quedará registrado."
+msgstr "La DGAC autoriza tres meses como máximo, así que esta vigencia no puede terminar después del %(limit)s. Si la autorización dice otra cosa, escriba el motivo en el campo de abajo y quedará registrado."
 
 #: apps/operations/forms.py
 msgid ""
@@ -7907,13 +7843,11 @@ msgstr "Necesaria para renovar el permiso"
 msgid ""
 "Drag, or use the arrow keys, to set the navigation width. Double-click to "
 "reset it."
-msgstr ""
-"Arrastra, o usa las flechas del teclado, para ajustar el ancho de la "
-"navegación. Doble clic para volver al valor original."
+msgstr "Arrastre, o use las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
 
 #: templates/base.html
 msgid "Drag to set the width · double-click to reset"
-msgstr "Arrastra para ajustar el ancho · doble clic para restablecer"
+msgstr "Arrastre para ajustar el ancho · doble clic para restablecer"
 
 #: apps/operations/forms.py
 msgid "Maximum altitude (m)"
@@ -13278,7 +13212,7 @@ msgstr "Confirmar ingreso"
 #~ msgstr "Aún no hay habilitaciones registradas."
 
 #~ msgid "Enter the employee ID."
-#~ msgstr "Ingresa el ID de empleado."
+#~ msgstr "Ingrese el ID de empleado."
 
 #~ msgid "SIGO requests"
 #~ msgstr "Solicitudes SIGO"
@@ -13295,10 +13229,10 @@ msgstr "Confirmar ingreso"
 #~ "%(months)s months and is filed on your record."
 #~ msgstr[0] ""
 #~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en tu ficha."
+#~ "%(months)s meses y queda en su ficha."
 #~ msgstr[1] ""
 #~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en tu ficha."
+#~ "%(months)s meses y queda en su ficha."
 
 #~ msgid "Active Aircraft"
 #~ msgstr "Aeronaves activas"

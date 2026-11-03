@@ -499,3 +499,136 @@ def test_the_spanish_catalog_has_no_voseo(catalog):
                 break
 
     assert not offenders, "voseo en el catalogo espanol:\n  " + "\n  ".join(offenders)
+
+
+# --- Tuteo ------------------------------------------------------------------
+# El catalogo usa el impersonal ("ya se puede escribir") o el trato de usted
+# ("escriba"), nunca el tuteo: el voseo ya lo vigila `_VOSEO`, pero "Selecciona
+# un centro de costo" o "Tienes 2 borradores" no es voseo y pasaba. Se acumularon
+# un centenar de cadenas asi (LV-394) y las encontro una busqueda, no un test.
+#
+# Dos grupos. Las formas que no tienen otro significado van en cualquier parte
+# del texto. Los imperativos de segunda persona ("crea", "abre", "marca") son
+# tambien la tercera del presente ("la regla crea una alerta"), asi que solo
+# cuentan al comienzo de una oracion, que es donde se escribe una instruccion.
+_TUTEO_ANYWHERE = [
+    "tu",
+    "tus",
+    "tú",
+    "tienes",
+    "puedes",
+    "debes",
+    "quieres",
+    "necesitas",
+    "sabes",
+    "estás",
+    "acabas",
+    "haz",
+    "mantén",
+    "úsalo",
+    "escríbelo",
+    "archívalo",
+    "suéltalos",
+    "suelta",
+]
+_TUTEO_IMPERATIVE = [
+    "selecciona",
+    "escribe",
+    "ingresa",
+    "elige",
+    "revisa",
+    "indica",
+    "describe",
+    "sube",
+    "recarga",
+    "vuelve",
+    "arrastra",
+    "solicita",
+    "pide",
+    "edita",
+    "crea",
+    "define",
+    "asigna",
+    "carga",
+    "activa",
+    "marca",
+    "descarga",
+    "abre",
+    "corrige",
+    "comienza",
+    "espera",
+    "avisa",
+    "usa",
+    "guarda",
+    "cierra",
+    "agrega",
+    "busca",
+    "confirma",
+    "completa",
+    "verifica",
+    "comprueba",
+]
+# Inicios de oracion que son la tercera persona de una descripcion ("Abre el
+# dialogo de impresion", del `msgid` "Opens ..."), no una orden. Cada excepcion
+# lleva su msgid: una lista corta y justificada, no una puerta abierta.
+_TUTEO_THIRD_PERSON = {
+    "Opens the print dialog: choose “Save as PDF” as the destination.",
+    "Opens a non-conformity for this cost center and month",
+    "Touches the circle",
+    "Starts %(date)s",
+    "Starts on %(date)s.",
+    "Asks for an expiry date: yes",
+    "Asks for an expiry date: no",
+    "Waiting on the DGAC",
+    "Waiting on the operator",
+    "Orders the types inside their category; lower comes first.",
+}
+_TUTEO_SENTENCE_START = re.compile(r"(?:^|[.:;¿?!·—]\s+)\W*([^\W\d_]+)")
+
+
+def _tuteo_in(msgid, msgstr):
+    lowered = msgstr.lower()
+    for form in _TUTEO_ANYWHERE:
+        if re.search(rf"(?<![\wáéíóúñ]){re.escape(form)}(?![\wáéíóúñ])", lowered):
+            return form
+    if msgid in _TUTEO_THIRD_PERSON:
+        return None
+    for match in _TUTEO_SENTENCE_START.finditer(lowered):
+        if match.group(1) in _TUTEO_IMPERATIVE:
+            return match.group(1)
+    return None
+
+
+@pytest.mark.parametrize(
+    "msgstr, expected",
+    [
+        ("Selecciona un centro de costo.", "selecciona"),
+        ("Tienes 2 borradores.", "tienes"),
+        ("Listo. Crea uno primero.", "crea"),
+        ("Queda en tu ficha.", "tu"),
+        ("Seleccione un centro de costo.", None),
+        ("La regla crea una alerta.", None),
+        ("Hay 2 borradores sin terminar.", None),
+        ("Suéltelos aquí.", None),
+    ],
+)
+def test_the_tuteo_detector_flags_what_it_should(msgstr, expected):
+    assert _tuteo_in("x", msgstr) == expected
+
+
+def test_the_spanish_catalog_has_no_tuteo():
+    """Impersonal o de usted, nunca de tu (AGENTS.md, español neutral)."""
+    import polib
+
+    offenders = []
+    for entry in polib.pofile(str(PO_PATH)):
+        if entry.obsolete or "fuzzy" in entry.flags:
+            continue
+        values = list(entry.msgstr_plural.values()) or [entry.msgstr]
+        for value in values:
+            form = _tuteo_in(entry.msgid, value) if value else None
+            if form:
+                offenders.append(f"{form!r} en {entry.msgid[:60]!r}: {value[:80]!r}")
+                break
+
+    assert not offenders, "tuteo en el catalogo espanol:\n  " + "\n  ".join(offenders)

@@ -205,7 +205,7 @@ when the three are done.{% endcomment %}
       El enlace es lo que convierte "esto está pendiente" en "acá se
       trabaja".{% endcomment %}
       <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-        <h4 class="h6 section-title mb-0">{% translate "Expiries" %}</h4>
+        <h3 class="h6 section-title mb-0">{% translate "Expiries" %}</h3>
         {% if perms.compliance.view_alert %}<a class="small" href="{% url 'alert-list' %}">{% translate "Work on these in the alert tray" %}</a>{% endif %}
       </div>
       {% for item in expirations %}
@@ -272,7 +272,7 @@ resulta corto enseña a ignorar la sección.{% endcomment %}
 <div class="row g-3 mb-3">
   <div class="col-12">
     <div class="card p-3" id="awaiting-sigo">
-      <h4 class="h6 section-title mb-2">{% translate "Filed in SIGO, awaiting an answer" %}</h4>
+      <h3 class="h6 section-title mb-2">{% translate "Filed in SIGO, awaiting an answer" %}</h3>
       {% for item in awaiting_requests %}
       <a href="{{ item.get_absolute_url }}" class="d-flex justify-content-between align-items-center border-bottom py-1 text-decoration-none text-body">
         <span><span class="badge bg-secondary-subtle text-secondary-emphasis me-2">{{ item.cost_center.code }}</span>{{ item.title }}</span>
@@ -354,7 +354,7 @@ solo el gráfico.{% endcomment %}
   {% if chart_data.monthly_flights %}
   <div class="col-lg-4">
     <div class="card p-2 chart-container">
-      <h4 class="h6 section-title mb-2">{% translate "Monthly Flights (6 months)" %}</h4>
+      <h3 class="h6 section-title mb-2">{% translate "Monthly Flights (6 months)" %}</h3>
       <canvas id="chart-monthly-flights" data-label="{% translate 'Flights' %}"></canvas>
     </div>
   </div>

@@ -253,7 +253,7 @@ def test_one_circle_gets_the_field_sheet_and_not_the_table(center, author):
 
     body = _reader().get(reverse("geo-plan-detail", args=[plan.pk])).content.decode()
 
-    assert "Copia cada valor en su casilla de SIGO" in body
+    assert "Copie cada valor en su casilla de SIGO" in body
     assert "copy-btn" in body
     # La cabecera de la tabla es lo que distingue una forma de la otra.
     assert "Punto centro" not in body
@@ -270,7 +270,7 @@ def test_several_circles_keep_the_table(center, author):
     # "Punto centro", como está en el catálogo: afirmar sobre el valor real
     # prueba de paso que la cabecera sigue traducida.
     assert "Punto centro" in body
-    assert "Copia cada valor en su casilla de SIGO" not in body
+    assert "Copie cada valor en su casilla de SIGO" not in body
     # El botón de copiar entra sólo en la celda de coordenadas: un botón por
     # celda serían siete por fila y la tabla dejaría de leerse.
     assert body.count("copy-btn") == 4  # dos filas x (latitud + longitud)
