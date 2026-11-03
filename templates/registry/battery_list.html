@@ -12,17 +12,18 @@ la tabla, no la barra de acciones.{% endcomment %}
 {% block worktable_description %}<p class="page-description mb-0">{% translate "LiPo cycle count and health for ISO 7.1.3, synced from AeroLink." %}</p>{% endblock %}
 {% block worktable_actions %}<a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>{% endblock %}
 {% block worktable_filters %}
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="id-filterbar">
   {% include "generic/_sort_state.html" %}
-  <div class="col-md-5">{% include "generic/_search_input.html" with search_url=request.path %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-  <div class="col-md-3">
-    <select class="form-select" name="is_active">
+  <div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-is_active">{% translate "Status" %}</label>
+    <select class="form-select" id="id-filter-is_active" name="is_active">
       <option value="">{% translate "All statuses" %}</option>
       <option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option>
       <option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option>
     </select>
   </div>
-  <div class="col-auto"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
 </form>
 {% endblock %}
 {% block worktable_header %}

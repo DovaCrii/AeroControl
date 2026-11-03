@@ -1,4 +1,4 @@
-<select class="form-select form-select-sm kanban-filter" name="board"
+{% load i18n %}<select class="form-select form-select-sm kanban-filter" name="board" aria-label="{% translate 'Board' %}"
         hx-get="/workboard/_board/"
         hx-target="#kanban-board"
         hx-push-url="true"
