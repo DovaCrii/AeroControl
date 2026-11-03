@@ -12,7 +12,7 @@
   <div class="d-flex gap-2">
     <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     {% if perms.compliance.add_document and tenant %}
-    <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}" class="btn btn-upload">{% translate "Upload document" %}</a>
+    <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ tenant.pk }}" class="btn btn-primary">+ {% translate "Upload document" %}</a>
     {% endif %}
   </div>
 </div>

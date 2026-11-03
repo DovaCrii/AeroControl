@@ -9,6 +9,7 @@
         crossorigin="anonymous">
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/identity.css">
+  <link rel="stylesheet" href="/static/css/official-links.css">
   <script src="/static/vendor/htmx/htmx.min.js"
           integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
           crossorigin="anonymous"></script>
@@ -83,6 +84,13 @@
       <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="reports" aria-expanded="true" aria-controls="nav-group-reports">Informes<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
       <div class="nav-group-items" id="nav-group-reports">
         <a href="/reporting/monthly/" class="nav-item nav-reports"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-monthly-report"/></svg><span class="nav-label">Informe mensual RPA</span></a>
+      </div>
+    </div>
+    <div class="nav-group">
+      <button class="sidebar-label nav-group-toggle" type="button" data-nav-group="official-links" aria-expanded="true" aria-controls="nav-group-official-links">Enlaces oficiales<svg class="nav-group-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+      <div class="nav-group-items" id="nav-group-official-links">
+        <a href="https://servicios.dgac.gob.cl/sigo-web/#/" class="nav-item nav-overview nav-external" target="_blank" rel="noopener noreferrer"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-permission-list"/></svg><span class="nav-label">SIGO</span><span class="nav-go" aria-hidden="true">&#8599;</span><span class="visually-hidden">(se abre en una pestaña nueva)</span></a>
+        <a href="https://sipa.dgac.gob.cl/" class="nav-item nav-overview nav-external" target="_blank" rel="noopener noreferrer"><svg class="nav-icon" aria-hidden="true"><use href="/static/img/icons.svg#icon-operator-list"/></svg><span class="nav-label">SIPA</span><span class="nav-go" aria-hidden="true">&#8599;</span><span class="visually-hidden">(se abre en una pestaña nueva)</span></a>
       </div>
     </div>
   </div>

@@ -31,7 +31,9 @@ LINK = re.compile(r'<a href="([^"]+)" class="nav-item (?!nav-shortcut)[^"]*"')
 def _menu_hrefs(body):
     """Los enlaces del menú (no los atajos del rol) de una página renderizada."""
     sidebar = body[body.index('<aside class="sidebar') : body.index("</aside>")]
-    return LINK.findall(sidebar)
+    # LV-396: el grupo «Enlaces oficiales» (SIGO/SIPA) es externo y no sale del registro de
+    # permisos: se sale del conjunto y lo cubre `test_lv396_official_links.py`.
+    return [href for href in LINK.findall(sidebar) if not href.startswith("http")]
 
 
 def _client_for(group_name=None, *, staff=False, codenames=()):

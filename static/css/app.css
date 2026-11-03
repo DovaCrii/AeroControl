@@ -907,7 +907,16 @@ body.palette-open { overflow: hidden; }
   filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-/* LV-395: el botón del selector de archivo es global (.btn-upload), no sólo en modales. */
+[data-theme="dark"] .modal .form-control::file-selector-button {
+  background: var(--ac-surface-raised);
+  color: var(--ac-text);
+  border-color: var(--ac-border);
+}
+
+[data-theme="dark"] .modal .form-control::file-selector-button:hover {
+  background: #263246;
+}
+
 [data-theme="dark"] .page-link {
   background: #1a1f2e;
   border-color: #2a3040;
@@ -1090,11 +1099,6 @@ body, .card, .form-control, .form-select, .page-link, .table,
   --ac-primary: #087f78;
   --ac-primary-hover: #06655f;
   --ac-primary-soft: #d8f5f1;
-  /* LV-395: subir = azul corporativo J.E.J., distinto del turquesa de las demás acciones. */
-  --ac-upload: #1E418C;
-  --ac-upload-hover: #15306a;
-  --ac-upload-soft: #dfe7f7;
-  --ac-upload-ink: #ffffff;
   /* LV-185: los mismos dos colores en RGB, porque Bootstrap 5.3 arma el color
      de enlace con `rgba(var(--bs-link-color-rgb), …)` y **ignora**
      `--bs-link-color`. Comprobado en el navegador: fijar sólo la forma hex no
@@ -1283,13 +1287,6 @@ main {
 .btn-primary:hover, .btn-primary:focus-visible { background: var(--ac-primary-hover); border-color: var(--ac-primary-hover); color: #fff; }
 .btn-outline-primary { color: var(--ac-primary); border-color: var(--ac-primary); }
 .btn-outline-primary:hover, .btn-outline-primary:focus-visible { background: var(--ac-primary); border-color: var(--ac-primary); color: #fff; }
-.btn-upload { background: var(--ac-upload); border-color: var(--ac-upload); color: var(--ac-upload-ink); }
-.btn-upload:hover, .btn-upload:focus-visible, .btn-upload:active { background: var(--ac-upload-hover); border-color: var(--ac-upload-hover); color: var(--ac-upload-ink); }
-.btn-upload-outline { background: transparent; border-color: var(--ac-upload); color: var(--ac-upload); }
-.btn-upload-outline:hover, .btn-upload-outline:focus-visible, .btn-upload-outline:active, .btn-upload-outline.show { background: var(--ac-upload); border-color: var(--ac-upload); color: var(--ac-upload-ink); }
-.btn-upload::before, .btn-upload-outline::before { content: "\2191"; content: "\2191" / ""; margin-right: 0.4em; font-weight: 700; }
-input[type="file"]::file-selector-button { background: var(--ac-upload); border-color: var(--ac-upload); color: var(--ac-upload-ink); font-weight: 600; cursor: pointer; }
-input[type="file"]:hover:not(:disabled):not([readonly])::file-selector-button { background: var(--ac-upload-hover); }
 .btn-outline-secondary { color: var(--ac-text-secondary); border-color: var(--ac-border); }
 .btn-outline-secondary:hover, .btn-outline-secondary:focus-visible { background: var(--ac-surface-raised); border-color: var(--ac-primary); color: var(--ac-text); }
 
@@ -1433,10 +1430,6 @@ input[type="file"]:hover:not(:disabled):not([readonly])::file-selector-button { 
   --ac-primary: #42d4c6;
   --ac-primary-hover: #6be0d5;
   --ac-primary-soft: #193a43;
-  --ac-upload: #8FB0F0;
-  --ac-upload-hover: #b3caf6;
-  --ac-upload-soft: #1b2a47;
-  --ac-upload-ink: #0d131d;
   /* LV-185: en oscuro el par se invierte respecto al claro — acá el turquesa
      base ya da 8.24 sobre la superficie más clara, así que el enlace usa ése y
      el hover **aclara**. En claro no se podía: ahí el base roza el mínimo. */

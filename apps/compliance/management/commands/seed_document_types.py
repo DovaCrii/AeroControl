@@ -21,18 +21,6 @@ OPERATIONAL = DocumentType.CATEGORY_OPERATIONAL
 MAINTENANCE = DocumentType.CATEGORY_MAINTENANCE
 COMPANY = DocumentType.CATEGORY_COMPANY
 
-# LV-395: types whose paper carries no issue date worth recording. Kept apart from
-# the row tuples (which tests and `intake_views` unpack) so the catalog does not
-# have to be rewritten for one exception. `compliance/0029` applies the same
-# list to installations that already have the rows (the seed never edits them).
-CODES_WITHOUT_ISSUE_DATE = frozenset({"aircraft-registration"})
-
-
-def requires_issue_date(code):
-    """Whether a seeded type asks for an issue date (the default is yes)."""
-    return code not in CODES_WITHOUT_ISSUE_DATE
-
-
 # (code, name, requires_expiry, is_insurance, is_operational_record, category)
 DOCUMENT_TYPES = [
     ("dgac-credential", "Credencial DGAC de operador", True, False, False, PERSONNEL),
@@ -350,7 +338,6 @@ class Command(BaseCommand):
                 defaults={
                     "name": name,
                     "requires_expiry": requires_expiry,
-                    "requires_issue_date": requires_issue_date(code),
                     "is_insurance": is_insurance,
                     "is_operational_record": is_op_record,
                     "category": category,

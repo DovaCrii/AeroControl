@@ -5,7 +5,6 @@ Las dos frases de vencimiento viajan en `data-*` para que el JS no traduzca nada
 {% with doc_type=form.selected_doc_type %}
 <p id="doc-type-hint" class="form-text" aria-live="polite"
    data-expiry-yes="{% translate 'Asks for an expiry date: yes' %}"
-   data-expiry-no="{% translate 'Asks for an expiry date: no' %}"
-   data-issue-no="{% translate 'This type does not ask for an issue date.' %}"{% if not doc_type %} hidden{% endif %}>{% if doc_type %}<span>{% if doc_type.description %}<span data-doc-type-description>{{ doc_type.description }}</span> {% endif %}<span data-doc-type-expiry>{% if doc_type.requires_expiry %}{% translate 'Asks for an expiry date: yes' %}{% else %}{% translate 'Asks for an expiry date: no' %}{% endif %}</span>{% if not doc_type.requires_issue_date %} <span data-doc-type-issue>{% translate 'This type does not ask for an issue date.' %}</span>{% endif %}</span>{% endif %}</p>
+   data-expiry-no="{% translate 'Asks for an expiry date: no' %}"{% if not doc_type %} hidden{% endif %}>{% if doc_type %}<span>{% if doc_type.description %}<span data-doc-type-description>{{ doc_type.description }}</span> {% endif %}<span data-doc-type-expiry>{% if doc_type.requires_expiry %}{% translate 'Asks for an expiry date: yes' %}{% else %}{% translate 'Asks for an expiry date: no' %}{% endif %}</span></span>{% endif %}</p>
 {% endwith %}
 <script defer src="{% static 'js/doc-type-hint.js' %}"></script>

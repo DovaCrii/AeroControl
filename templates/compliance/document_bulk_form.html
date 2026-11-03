@@ -34,12 +34,12 @@
 
     <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "Validity" %}</h2>
     <div class="row">
-      <div class="col-md-6" data-issue-date-field>{{ form.issue_date|as_crispy_field }}</div>
+      <div class="col-md-6">{{ form.issue_date|as_crispy_field }}</div>
       <div class="col-md-6">{{ form.expiry_date|as_crispy_field }}</div>
     </div>
 
     <div class="mt-4">
-      <button class="btn btn-upload">{% translate "Upload the files" %}</button>
+      <button class="btn btn-primary">{% translate "Upload the files" %}</button>
       {% comment %}El destino lo calcula la vista desde los parámetros propios, no
       desde `HTTP_REFERER`: una cabecera que manda el navegador es entrada no
       confiable, y construir un enlace con ella pone una URL ajena dentro de

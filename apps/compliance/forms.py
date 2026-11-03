@@ -202,9 +202,6 @@ class DocumentTypeSelect(forms.Select):
         if instance is not None:
             option["attrs"]["data-description"] = instance.description
             option["attrs"]["data-expiry"] = "yes" if instance.requires_expiry else "no"
-            option["attrs"]["data-issue"] = (
-                "yes" if instance.requires_issue_date else "no"
-            )
         return option
 
 
@@ -221,15 +218,6 @@ class CategorizedDocumentTypeChoiceField(forms.ModelChoiceField):
         if obj.reference_code:
             return f"{obj.name} · {obj.reference_code}"
         return obj.name
-
-
-def issue_date_is_required(doc_type):
-    """LV-395: a missing type keeps the old rule (the date is asked for).
-
-    Only a type that says `requires_issue_date=False` lets the field stay empty;
-    with no type at all the form already carries its own error.
-    """
-    return doc_type is None or doc_type.requires_issue_date
 
 
 class DocTypeHintMixin:
@@ -356,12 +344,8 @@ class DocumentBulkUploadForm(DocTypeHintMixin, EntityScopeMixin, forms.Form):
         label=_("Files"),
         help_text=_("Select several at once, or drop them here."),
     )
-    # LV-395: not `required` at the field level -- whether it is needed depends on
-    # the document type, so `clean` decides (same as `expiry_date`).
     issue_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={"type": "date"}),
-        label=_("Issue date"),
+        widget=forms.DateInput(attrs={"type": "date"}), label=_("Issue date")
     )
     expiry_date = forms.DateField(
         required=False,
@@ -436,12 +420,6 @@ class DocumentBulkUploadForm(DocTypeHintMixin, EntityScopeMixin, forms.Form):
             self.add_error(
                 "expiry_date", _("This document type requires an expiry date.")
             )
-        if (
-            "issue_date" not in self.errors
-            and not cleaned.get("issue_date")
-            and issue_date_is_required(doc_type)
-        ):
-            self.add_error("issue_date", _("This field is required."))
 
         for uploaded in cleaned.get("files") or []:
             for error in upload_errors(uploaded):
@@ -660,9 +638,7 @@ class DocumentForm(DocTypeHintMixin, EntityScopeMixin, AeroModelForm):
 
         if "issue_date" in self.errors:
             pass
-        elif not cleaned.get("issue_date") and issue_date_is_required(
-            cleaned.get("doc_type")
-        ):
+        elif not cleaned.get("issue_date"):
             self.add_error("issue_date", _("This field is required."))
         uploaded = cleaned.get("file")
         if uploaded:
@@ -824,7 +800,6 @@ class DocumentTypeForm(AeroModelForm):
             "reference_code",
             "sort_order",
             "requires_expiry",
-            "requires_issue_date",
             "is_insurance",
         ]
         # LV-22: without explicit labels Django auto-derives an English one
@@ -835,7 +810,6 @@ class DocumentTypeForm(AeroModelForm):
             "code": _("Code"),
             "category": _("Category"),
             "requires_expiry": _("Requires expiry"),
-            "requires_issue_date": _("Requires issue date"),
             "is_insurance": _("Is insurance"),
         }
 

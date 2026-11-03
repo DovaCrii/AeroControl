@@ -55,7 +55,7 @@ registro del documento original.{% endcomment %}
 
 <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-3 mt-4">{% translate "Validity" %}</h2>
 <div class="row">
-  <div class="col-md-6" data-issue-date-field>{{ form.issue_date|as_crispy_field }}</div>
+  <div class="col-md-6">{{ form.issue_date|as_crispy_field }}</div>
   <div class="col-md-6">{{ form.expiry_date|as_crispy_field }}</div>
 </div>
 
