@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 0 348 220" role="img" aria-label="GNSS RTK">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6fa"/><stop offset=".55" stop-color="#d3d8e2"/><stop offset="1" stop-color="#9ea7b8"/></linearGradient>
+<linearGradient id="dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#586277"/><stop offset="1" stop-color="#202636"/></linearGradient>
+<linearGradient id="leg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd76a"/><stop offset="1" stop-color="#d9a21b"/></linearGradient>
+<radialGradient id="glowg"><stop offset="0" stop-color="#4ade80" stop-opacity=".9"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<style>
+.wave{transform-box:view-box;transform-origin:160px 40px;animation:wave 2.4s ease-out infinite}
+.wave2{animation-delay:.8s}.wave3{animation-delay:1.6s}
+.sat{animation:sat 6s ease-in-out infinite alternate}
+@keyframes wave{from{opacity:.9;transform:scale(.6)}to{opacity:0;transform:scale(1.3)}}
+@keyframes sat{from{transform:translate(0,0)}to{transform:translate(-10px,4px)}}
+@media (prefers-reduced-motion:reduce){.wave,.led,.sat{animation:none}}
+</style>
+<ellipse cx="160" cy="208" rx="96" ry="7" fill="#1f2430" opacity=".25" filter="url(#soft)"/>
+<g stroke="#1f2430" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- satélite -->
+  <g class="sat"><path d="M262 30 L282 50" stroke-width="3.4"/><rect x="252" y="12" width="16" height="10" rx="1.5" fill="#4cc9f0" stroke-width="2" transform="rotate(45 260 17)"/><rect x="276" y="36" width="16" height="10" rx="1.5" fill="#4cc9f0" stroke-width="2" transform="rotate(45 284 41)"/><rect x="266" y="34" width="12" height="12" rx="2" fill="url(#body)" stroke-width="2.2" transform="rotate(45 272 40)"/></g>
+  <path d="M254 52 Q238 56 226 64" fill="none" stroke="#2ec4b6" stroke-width="2" stroke-dasharray="4 6"/>
+  <!-- ondas de radio de la corrección RTK -->
+  <path class="wave" d="M140 30 Q160 14 180 30" fill="none" stroke="#2ec4b6" stroke-width="2.6"/>
+  <path class="wave wave2" d="M140 30 Q160 14 180 30" fill="none" stroke="#2ec4b6" stroke-width="2.6"/>
+  <path class="wave wave3" d="M140 30 Q160 14 180 30" fill="none" stroke="#2ec4b6" stroke-width="2.6"/>
+  <!-- trípode -->
+  <path d="M152 112 L96 196 M168 112 L224 196 M160 112 V200" fill="none" stroke-width="8"/>
+  <path d="M152 112 L96 196 M168 112 L224 196 M160 112 V200" fill="none" stroke="url(#leg)" stroke-width="4"/>
+  <path d="M92 198 H102 M218 198 H228 M155 202 H165" stroke-width="4"/>
+  <path d="M124 154 L160 164 L196 154" fill="none" stroke-width="2.2" opacity=".55"/>
+  <rect x="138" y="104" width="44" height="12" rx="4" fill="url(#dark)" stroke-width="2.4"/>
+  <!-- bastón y receptor -->
+  <path d="M160 104 V92" stroke-width="5"/>
+  <path d="M118 90 Q118 58 160 54 Q202 58 202 90 Z" fill="url(#body)"/>
+  <path d="M118 90 H202 V94 Q202 98 196 98 H124 Q118 98 118 94 Z" fill="url(#dark)"/>
+  <path d="M132 72 Q160 62 188 72" fill="none" stroke="#8d97ab" stroke-width="2" opacity=".8"/>
+  <circle cx="134" cy="93" r="7" fill="url(#glowg)" stroke="none" class="led"/><circle class="led" cx="134" cy="93" r="2.6" fill="#4ade80" stroke-width="1.2"/>
+  <rect x="150" y="91" width="20" height="4" rx="2" fill="#ffc93c" stroke="none"/>
+  <!-- antena de radio -->
+  <path d="M190 62 V30" stroke-width="3.4"/><circle cx="190" cy="28" r="3.4" fill="#ff8c42" stroke-width="2"/>
+  <!-- marca en el suelo -->
+  <path d="M150 206 L170 206 M160 200 V212" stroke="#e63946" stroke-width="2.2"/>
+</g>
+</svg>

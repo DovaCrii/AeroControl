@@ -163,8 +163,39 @@ def as_datetime(value):
 # dibujo propio por serie en `static/img/aircraft/` y, **si la persona deja una foto con derecho
 # de uso** en `static/img/equipment/<serie>.(webp|jpg|jpeg|png)`, esa foto manda. Nada de fotos
 # de terceros va en el repositorio: ver `static/img/illustrations/README.md`.
-AIRCRAFT_ART_SERIES = ("mavic", "matrice", "phantom", "elios")
+AIRCRAFT_ART_SERIES = (
+    "mavic",
+    "matrice",
+    "matrice-4",
+    "matrice-400",
+    "phantom",
+    "elios",
+    "dock",
+    "gnss-base",
+)
 AIRCRAFT_PHOTO_EXTENSIONS = ("webp", "jpg", "jpeg", "png")
+
+
+# LV-397: dibujos propios para los equipos que la flota tiene o va a tener y que no se parecen
+# al Matrice de siempre: el Matrice 4 (cuerpo compacto plegable), el Matrice 400 (plataforma
+# grande con tren alto), la estación Dock y la base GNSS/RTK. Se miran **antes** que la serie,
+# porque «Matrice 4 Enterprise» y «Matrice 400» comparten la primera palabra con el Matrice 300.
+# El orden importa: «400» antes que «4», y la estación antes que el dron que guarda. Sólo el
+# nombre escrito entero: «M4E» sigue en el genérico (ver `_SERIES_ABBREVIATIONS`).
+_MODEL_DRAWINGS = (
+    (re.compile(r"\bdock\b"), "dock"),
+    (re.compile(r"\bd-?rtk\b|\bgnss\b|\bbase\s+rtk\b|\brtk\s+base\b"), "gnss-base"),
+    (re.compile(r"\bmatrice\s*-?\s*400\b"), "matrice-400"),
+    (re.compile(r"\bmatrice\s*-?\s*4(e|t|td|d)?\b"), "matrice-4"),
+)
+
+
+def _model_drawing(aircraft):
+    text = (getattr(aircraft, "model", "") or "").strip().lower()
+    for pattern, key in _MODEL_DRAWINGS:
+        if pattern.search(text):
+            return key
+    return ""
 
 
 # Abreviaturas que el fabricante usa en el modelo y que no empiezan por el nombre de la serie
@@ -175,6 +206,8 @@ AIRCRAFT_PHOTO_EXTENSIONS = ("webp", "jpg", "jpeg", "png")
 _SERIES_ABBREVIATIONS = (
     (re.compile(r"^m(2|3)(e|ea|t|m|p|c)?$"), "mavic"),
     (re.compile(r"^m(30|100|200|210|300|350|600)(t|e|rtk)?$"), "matrice"),
+    # No hay un Mavic 400: «M400» es inequívoco.
+    (re.compile(r"^m400(rtk)?$"), "matrice-400"),
 )
 
 
@@ -201,7 +234,7 @@ def aircraft_art(aircraft):
 
     from apps.registry.selectors import aircraft_series
 
-    series = aircraft_series(aircraft)
+    series = _model_drawing(aircraft) or aircraft_series(aircraft)
     if series not in AIRCRAFT_ART_SERIES:
         series = _abbreviated_series(aircraft)
     key = series if series in AIRCRAFT_ART_SERIES else "generic"

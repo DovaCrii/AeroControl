@@ -29,5 +29,5 @@ solicitud presentada en SIGO que nadie contestó.{% endcomment %}
 las solicitudes, porque es cuando la persona no lo sabe. El enlace va acá y no en
 el encabezado: en el encabezado era un botón que parecía una acción.{% endcomment %}
 <tr><td colspan="6" class="text-muted py-3">
-    {% static 'img/illustrations/route-map.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No flight requests yet." %} <a href="{% url 'geo-plan-list' %}">{% translate "Open a geospatial plan" %}</a> {% translate "and split it into requests -- only needed when its KMZ has more than one circle." %}</td></tr>
+    {% static 'img/illustrations/kmz-area.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No flight requests yet." %} <a href="{% url 'geo-plan-list' %}">{% translate "Open a geospatial plan" %}</a> {% translate "and split it into requests -- only needed when its KMZ has more than one circle." %}</td></tr>
 {% endfor %}

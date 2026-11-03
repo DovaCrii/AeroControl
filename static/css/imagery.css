@@ -1,0 +1,30 @@
+/*
+ * LV-397: imágenes de aviación (fotos con licencia libre y dibujos propios).
+ *
+ * Vive aparte porque `app.css` + `identity.css` están al borde de su techo conjunto
+ * (`test_lv328_global_polish.py`); este archivo tiene el suyo, de 16 KB
+ * (`apps/core/test_lv397_aviation_imagery.py`). Sólo suma: no redefine tokens `--ac-*`
+ * ni `--sev-*`, y no enlaza nada de otro dominio (las fotos se sirven desde la app).
+ */
+
+/* Panel de marca del inicio de sesión: la cordillera desde la estación espacial, muy
+   atenuada bajo el degradado de siempre. Sólo en pantallas anchas, que es donde el panel
+   existe: en un teléfono la regla no aplica y el navegador no descarga la foto. El velo
+   oscuro es casi opaco a propósito: el texto claro del panel conserva su contraste. */
+@media (min-width: 992px) {
+  .login-showcase {
+    background:
+      radial-gradient(720px 440px at 18% 8%, rgb(34 211 197 / 22%), transparent 62%),
+      radial-gradient(640px 420px at 92% 92%, rgb(56 189 248 / 18%), transparent 62%),
+      linear-gradient(160deg, rgb(13 28 58 / 84%), rgb(7 15 32 / 92%)),
+      url("../img/photos/atacama-andes.webp") center 40% / cover no-repeat,
+      #070f20;
+  }
+}
+
+/* Con «más contraste» pedido por el sistema, la foto se retira: el panel vuelve al liso. */
+@media (min-width: 992px) and (prefers-contrast: more) {
+  .login-showcase {
+    background: linear-gradient(160deg, #0d1c3a, #070f20);
+  }
+}
