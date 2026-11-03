@@ -47,7 +47,7 @@ pueden decir cosas distintas.{% endcomment %}
 
   El enlace abre el mismo modal que "Resolver" y por la misma razón: una fila
   apretada no tiene sitio para un selector de personas.{% endcomment %}
-  <td>{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}<span class="al-flag">{% include "generic/_signal_icon.html" with kind="warn" %}{% translate "Unassigned" %}</span>{% endif %}{% if perms.compliance.change_alert %} <a class="small" href="{% url 'alert-assign' object.pk %}" hx-get="{% url 'alert-assign' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" title="{% translate 'Assign an owner' %}">✎</a>{% endif %}</td>
+  <td>{% if object.assigned_to %}{{ object.assigned_to.get_full_name|default:object.assigned_to.username }}{% else %}<span class="al-flag">{% include "generic/_signal_icon.html" with kind="warn" %}{% translate "Unassigned" %}</span>{% endif %}{% if perms.compliance.change_alert %} <a class="btn btn-sm btn-outline-secondary ac-glyph-control" data-alert-assign href="{% url 'alert-assign' object.pk %}" hx-get="{% url 'alert-assign' object.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" aria-label="{% translate 'Assign an owner' %}" title="{% translate 'Assign an owner' %}"><span aria-hidden="true">✎</span></a>{% endif %}</td>
   <td>{{ object.alert_rule.name }}</td>
   <td><span class="text-nowrap">{{ object.triggered_at|date:'Y-m-d' }}</span></td>
   {% comment %}LV-118: la fecha es la **congelada al crear la alerta**

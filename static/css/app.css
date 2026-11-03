@@ -3612,3 +3612,14 @@ tr[data-sev="advisory"] > td:first-child { box-shadow: inset 3px 0 0 0 var(--sev
     color: #555555;
   }
 }
+
+/* LV-393 · Glifos que son controles: objetivo mínimo de 24x24 px (WCAG 2.5.8).
+ * El glifo (✎, ×) es decoración; el nombre accesible va en `aria-label`. */
+.ac-glyph-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  line-height: 1;
+}
