@@ -165,7 +165,7 @@ msgid ""
 "Leave blank to generate it from the document type, the related record and "
 "the issue date."
 msgstr ""
-"Déjalo en blanco para generarlo con el tipo de documento, el registro "
+"Si se deja en blanco, se genera con el tipo de documento, el registro "
 "relacionado y la fecha de emisión."
 
 #: .\apps\compliance\forms.py:357
@@ -182,7 +182,7 @@ msgstr "Archivo"
 msgid ""
 "Taken from the linked record. Correct it if the document says otherwise."
 msgstr ""
-"Tomada del registro enlazado. Corrígela si el documento dice otra cosa."
+"Tomada del registro enlazado. Debe corregirse si el documento dice otra cosa."
 
 #: .\apps\compliance\forms.py:438
 msgid "No document types configured yet. Create one first."
@@ -947,6 +947,9 @@ msgid "Edit deliverable"
 msgstr "Editar entregable"
 
 #: .\apps\compliance\views.py:249
+msgid "This document was already replaced by a newer version."
+msgstr "Este documento ya fue reemplazado por una versión más reciente."
+
 msgid "Only a draft deliverable can be validated."
 msgstr "Sólo un entregable en borrador puede validarse."
 
@@ -1419,7 +1422,7 @@ msgid ""
 "Leave blank to generate it from the flight permission (or the cost center) "
 "and the file name."
 msgstr ""
-"Déjalo en blanco para generarlo a partir del permiso de vuelo (o del centro "
+"Si se deja en blanco, se genera a partir del permiso de vuelo (o del centro "
 "de costo) y el nombre del archivo."
 
 #: .\apps\geo\forms.py:46
@@ -1573,7 +1576,7 @@ msgstr "Reabrir para edición"
 
 #: .\apps\geo\views.py:312
 msgid "Plan archived. Use the Archived filter to find or restore it."
-msgstr "Plan archivado. Búscalo o restáuralo con el filtro Archivados."
+msgstr "Plan archivado. Puede buscarse o restaurarse con el filtro Archivados."
 
 #: .\apps\geo\views.py:318
 #, python-format
@@ -1775,7 +1778,7 @@ msgid ""
 "Uncheck for cost centers that only hold equipment and never fly: they stay "
 "out of the flight-permit status table."
 msgstr ""
-"Desmárcalo en las faenas que sólo tienen equipos a cargo y no vuelan: quedan"
+"Se desmarca en las faenas que sólo tienen equipos a cargo y no vuelan: quedan"
 " fuera de la tabla de estado de permisos de vuelo."
 
 #. LV-205: el aviso al archivar a alguien que se retira, con la faena de la
@@ -1851,7 +1854,7 @@ msgid ""
 "correct it by editing the permit if it is wrong."
 msgstr ""
 "Plan %(title)s desvinculado. La ubicación que rellenó se queda en el "
-"permiso: si está equivocada, corrígela editando el permiso."
+"permiso: si está equivocada, debe corregirse editando el permiso."
 
 #. LV-201: la cuarta fila de indicadores del panel y su tarjeta en el informe.
 #: .\apps\dashboard\views.py:1
@@ -1966,7 +1969,7 @@ msgstr "Realizado por"
 #: .\apps\maintenance\forms.py:29
 msgid "Leave blank for a 'to be defined' maintenance until it is planned."
 msgstr ""
-"Déjalo en blanco para una mantención 'por definir' hasta que se planifique."
+"Si se deja en blanco, la mantención queda 'por definir' hasta que se planifique."
 
 #: .\apps\maintenance\forms.py:47
 msgid "Record"
@@ -2540,7 +2543,7 @@ msgstr "Mixta (cruza ambas)"
 
 #: .\apps\operations\models.py:164 .\apps\operations\models.py:655
 msgid "Proposed by distance; confirm against the AIP chart."
-msgstr "Propuesto por distancia; confírmalo contra la carta AIP."
+msgstr "Propuesto por distancia; confírmelo contra la carta AIP."
 
 #: .\apps\operations\models.py:214
 msgid "flight permission"
@@ -2762,7 +2765,7 @@ msgstr "Suba la autorización de operación de la DGAC (el PDF firmado del SIGO)
 
 #: .\apps\operations\views.py:594
 msgid "Permit archived. Use the Archived filter to find or restore it."
-msgstr "Permiso archivado. Búscalo o restáuralo con el filtro Archivados."
+msgstr "Permiso archivado. Puede buscarse o restaurarse con el filtro Archivados."
 
 #: .\apps\operations\views.py:619
 msgid "Permit restored."
@@ -3082,7 +3085,7 @@ msgid ""
 "instead of creating a second one."
 msgstr ""
 "El centro de costo %(code)s existe como registro archivado (%(name)s). "
-"Restáuralo en vez de crear un segundo."
+"Conviene restaurarlo en vez de crear un segundo."
 
 #: .\apps\registry\forms.py:237
 #, python-format
@@ -3243,7 +3246,7 @@ msgstr "Cuenta de usuario vinculada"
 
 #: .\apps\registry\forms.py:416
 msgid "Leave it blank and it is derived from the RUT, as RUT-123456785."
-msgstr "Déjalo en blanco y se deriva del RUT, como RUT-123456785."
+msgstr "Si se deja en blanco, se deriva del RUT, como RUT-123456785."
 
 #: .\apps\registry\forms.py:419
 msgid ""
@@ -3264,7 +3267,7 @@ msgid ""
 "Copy them exactly as the DGAC credential states them. They are not "
 "standardised on purpose: the wording varies."
 msgstr ""
-"Cópialas tal como las dice la credencial de la DGAC. No se estandarizan a "
+"Deben copiarse tal como las dice la credencial de la DGAC. No se estandarizan a "
 "propósito: la redacción varía."
 
 #: .\apps\registry\forms.py:500
@@ -3564,7 +3567,7 @@ msgstr "Como lo lista SIGO, por ejemplo SCEL."
 #: .\apps\registry\models.py:1086
 msgid "Leave blank if unverified: it will not be used to compute AMC."
 msgstr ""
-"Déjalo en blanco si no está verificada: no se usará para calcular el AMC."
+"Si no está verificada, se deja en blanco: no se usará para calcular el AMC."
 
 #: .\apps\registry\models.py:1100
 msgid "aerodrome"
@@ -4346,8 +4349,7 @@ msgstr "Detalles opcionales"
 #: .\templates\compliance\_document_preview_modal.html:17
 msgid "This file type is not shown inside the page. Download it to open it."
 msgstr ""
-"Este tipo de archivo no se muestra dentro de la página. Descárgalo para "
-"abrirlo."
+"Este tipo de archivo no se muestra dentro de la página. Descárguelo para abrirlo."
 
 #: .\templates\compliance\_document_preview_modal.html:24
 msgid "Open the document page"
@@ -5504,7 +5506,7 @@ msgstr "Corre un respaldo nuevo ahora:"
 
 #: .\templates\core\email\backup_verification.txt:13
 msgid "Verify it:"
-msgstr "Verifícalo:"
+msgstr "Verifíquelo:"
 
 #: .\templates\core\email\backup_verification.txt:14
 msgid "Keep the older backups until the new one verifies."
@@ -6005,7 +6007,7 @@ msgstr "Ningún plan coincide con este filtro."
 
 #: .\templates\geo\_plan_rows.html:41
 msgid "Clear it"
-msgstr "Límpialo"
+msgstr "Límpielo"
 
 #: .\templates\geo\_plan_rows.html:43
 msgid "No plans yet. Import a KMZ or KML to create the first one."
@@ -6083,7 +6085,7 @@ msgid ""
 msgstr ""
 "La comuna, la provincia y la región salen de los límites administrativos de "
 "la BCN, que esa institución publica como referenciales: cerca de un límite "
-"la respuesta puede ser la comuna vecina. Confírmala antes de presentar."
+"la respuesta puede ser la comuna vecina. Confírmela antes de presentar."
 
 #: .\templates\geo\_sigo_sheet.html:103
 msgid "Circle and aerodrome"
@@ -6095,7 +6097,7 @@ msgid ""
 "— confirm it against the AIP chart before filing."
 msgstr ""
 "El aeródromo se propone por distancia, entre los que tienen coordenadas "
-"cargadas — confírmalo contra la carta AIP antes de presentar."
+"cargadas — confírmelo contra la carta AIP antes de presentar."
 
 #: .\templates\geo\_sigo_sheet.html:121 .\templates\geo\plan_detail.html:222
 msgid ""
@@ -6471,7 +6473,7 @@ msgid ""
 "and split it into requests -- only needed when its KMZ has more than one "
 "circle."
 msgstr ""
-"y sepáralo en solicitudes -- sólo hace falta cuando su KMZ trae más de una "
+"y sepárelo en solicitudes -- sólo hace falta cuando su KMZ trae más de una "
 "circunferencia."
 
 #: .\templates\operations\_permission_rows.html:4
@@ -6595,7 +6597,7 @@ msgstr "Aún no hay pares agregados."
 
 #: .\templates\operations\flight_request_detail.html:101
 msgid "Proposed by distance — confirm against the AIP chart."
-msgstr "Propuesto por distancia — confírmalo contra la carta AIP."
+msgstr "Propuesto por distancia — confírmelo contra la carta AIP."
 
 #: .\templates\operations\flight_request_detail.html:106
 msgid "Centre point — latitude"
@@ -7003,7 +7005,7 @@ msgstr "Centro de control de operaciones aéreas"
 
 #: .\templates\registration\login.html:44
 msgid "Invalid username or password. Try again."
-msgstr "Usuario o contraseña no válidos. Inténtalo nuevamente."
+msgstr "Usuario o contraseña no válidos. Inténtelo nuevamente."
 
 #: .\templates\registration\password_change_done.html:3
 #: .\templates\registration\password_change_done.html:6
@@ -7289,7 +7291,7 @@ msgstr "Planificaciones activas"
 msgid ""
 "There are assignments without a cost center. Review them before confirming."
 msgstr ""
-"Hay asignaciones sin centro de costo. Revísalas antes de confirmarlas."
+"Hay asignaciones sin centro de costo. Revíselas antes de confirmarlas."
 
 #: .\templates\registry\assignment_list.html:26
 msgid "Review pending assignments"
@@ -7499,7 +7501,7 @@ msgstr "ya vencida"
 
 #: .\templates\registry\email\credential_notice.txt:7
 msgid "Please renew them with the DGAC to keep operating."
-msgstr "Renuévalas ante la DGAC para seguir operando."
+msgstr "Renuévelas ante la DGAC para seguir operando."
 
 #: .\templates\registry\operator_detail.html:81
 msgid "Knowledge assessments"
@@ -7563,7 +7565,7 @@ msgid ""
 "Clear them to reorder tasks."
 msgstr ""
 "El orden por arrastre está desactivado mientras hay filtros o una búsqueda "
-"activos. Límpialos para reordenar las tareas."
+"activos. Límpielos para reordenar las tareas."
 
 #: .\templates\workboard\_board.html:11
 msgid "This board has no active stages."
@@ -7766,8 +7768,7 @@ msgid ""
 "Optional until the permission is approved. Leave it empty while the request "
 "is still with the DGAC."
 msgstr ""
-"Opcional hasta que el permiso esté aprobado. Déjalo vacío mientras la "
-"solicitud sigue en la DGAC."
+"Opcional hasta que el permiso esté aprobado. Puede dejarse vacío mientras la solicitud sigue en la DGAC."
 
 #: apps/operations/forms.py apps/operations/models.py
 msgid ""
@@ -7828,8 +7829,7 @@ msgid ""
 "Only if the DGAC granted a different term. Leave it empty for a normal "
 "three-month permit."
 msgstr ""
-"Solo si la DGAC otorgó un plazo distinto. Déjalo vacío para un permiso "
-"normal de tres meses."
+"Solo si la DGAC otorgó un plazo distinto. Si se deja vacío, rige un permiso normal de tres meses."
 
 #: apps/operations/dossier.py
 msgid "Client authorization letter on file"
@@ -14112,3 +14112,79 @@ msgstr "Lo vigente, lo que está por vencer y lo que ya venció."
 #: .\templates\core\start.html
 msgid "Incident"
 msgstr "Incidente"
+
+#: apps/registry/operator_intake.py
+msgid "Credential discarded; nothing was saved."
+msgstr "Credencial descartada; no se guardó nada."
+
+#: apps/registry/views.py
+msgid "The credential upload expired or is no longer valid. Upload it again."
+msgstr "La carga de la credencial venció o ya no es válida. Vuelva a cargarla."
+
+#: apps/registry/views.py
+msgid ""
+"The credential upload expired or is no longer valid, so no file was attached. "
+"Upload it again from the operator's record."
+msgstr ""
+"La carga de la credencial venció o ya no es válida, por lo que no se adjuntó "
+"ningún archivo. Vuelva a cargarla desde la ficha del operador."
+
+#: apps/registry/views.py
+msgid "The DGAC credential was saved with the operator."
+msgstr "La credencial DGAC se guardó junto con el operador."
+
+#: templates/registry/operator_form.html
+msgid "Upload the DGAC credential (PDF)"
+msgstr "Cargar credencial DGAC (PDF)"
+
+#: templates/registry/operator_form.html
+msgid ""
+"The file could not be read; fill in the form by hand. The file will still be "
+"attached when you save."
+msgstr ""
+"No se pudo leer el archivo; el formulario se completa a mano. El archivo se "
+"adjuntará igual al guardar."
+
+#: templates/registry/operator_form.html
+msgid ""
+"The credential was read and the form was filled in with what was found. "
+"Check each value against the paper before saving."
+msgstr ""
+"Se leyó la credencial y el formulario se completó con lo encontrado. "
+"Conviene revisar cada valor contra el papel antes de guardar."
+
+#: templates/registry/operator_form.html
+msgid "Doubtful, check these"
+msgstr "Dudosos, revíselos"
+
+#: templates/registry/operator_form.html
+msgid "The file is attached to the operator when you save."
+msgstr "El archivo se adjunta al operador al guardar."
+
+#: templates/registry/operator_form.html
+msgid "Discard credential"
+msgstr "Descartar credencial"
+
+#: templates/registry/operator_form.html
+msgid ""
+"It is read and the form is filled in for you to check. Nothing is saved until "
+"you press Save."
+msgstr ""
+"Se lee y el formulario se completa para que usted lo revise. No se guarda "
+"nada hasta presionar Guardar."
+
+#: apps/compliance/models.py
+msgid "Requires issue date"
+msgstr "Requiere fecha de emisión"
+
+#: apps/compliance/models.py
+msgid ""
+"Untick for papers that carry no issue date worth recording (for example the "
+"RPA registration certificate)."
+msgstr ""
+"Desmarque en los papeles que no traen una fecha de emisión que valga la pena "
+"registrar (por ejemplo, el certificado de inscripción del RPA)."
+
+#: templates/compliance/_doc_type_hint.html
+msgid "This type does not ask for an issue date."
+msgstr "Este tipo no pide fecha de emisión."

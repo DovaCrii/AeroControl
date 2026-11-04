@@ -10,7 +10,7 @@ from django.views.generic import CreateView, DetailView, ListView, View
 from django.utils.text import capfirst
 
 from apps.compliance.attachments import attached_documents_context, category_rank
-from apps.compliance.models import Document
+from apps.compliance.models import Document, newest_first
 from apps.core.audit import set_audit_context
 from apps.core.views import (
     apply_cost_center_filter,
@@ -216,7 +216,7 @@ class MaintenanceRecordDetail(
                     )
                     .select_related("doc_type")
                     .annotate(category_rank=category_rank())
-                    .order_by("category_rank", "-issue_date")
+                    .order_by("category_rank", *newest_first())
                 )
         return context
 

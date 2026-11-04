@@ -16,13 +16,13 @@ la descarga cuando no.{% endcomment %}
     <h2 class="h5 mb-0">{% translate "Documents" %}</h2>
     {% if perms.compliance.add_document and document_content_type_id %}
     <div class="d-flex gap-2">
-      <a href="{% url 'document-bulk-upload' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-outline-primary">{% translate "Upload several" %}</a>
+      <a href="{% url 'document-bulk-upload' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-upload-outline">{% translate "Upload several" %}</a>
       {% comment %}LV-387: un enlace por cada tipo que suele subirse para este
       registro; el formulario llega con el tipo ya elegido. La credencial del
       operador va a su flujo propio, que lee el PDF.{% endcomment %}
       {% if suggested_upload_types %}
       <div class="dropdown" data-upload-menu>
-        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% translate "Upload…" %}</button>
+        <button class="btn btn-sm btn-upload-outline dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">{% translate "Upload…" %}</button>
         <ul class="dropdown-menu dropdown-menu-end">
           {% for item in suggested_upload_types %}
           <li><a class="dropdown-item" data-upload-type="{{ item.code }}" href="{% if item.anchor %}{{ item.anchor }}{% else %}{% url 'document-create' %}?entity_type={{ document_content_type_id }}&amp;object_id={{ object.pk }}&amp;doc_type={{ item.code|urlencode }}{% endif %}">{{ item.name }}</a></li>
@@ -30,7 +30,7 @@ la descarga cuando no.{% endcomment %}
         </ul>
       </div>
       {% endif %}
-      <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-primary">+ {% translate "Upload document" %}</a>
+      <a href="{% url 'document-create' %}?entity_type={{ document_content_type_id }}&object_id={{ object.pk }}" class="btn btn-sm btn-upload">{% translate "Upload document" %}</a>
     </div>
     {% endif %}
   </div>
