@@ -1286,6 +1286,27 @@ class Operator(BaseModel):
             and self.credential_expiry < timezone.localdate()
         )
 
+    @property
+    def credential_state(self):
+        """LV-413: la banda del semáforo de la credencial, sus días y su clase.
+
+        La regla y los cortes viven en `selectors.credential_band` (los 30/60 de la
+        escala de documento); esto sólo los entrega listos para una plantilla.
+        """
+        from django.utils import timezone
+
+        from .selectors import CREDENTIAL_BAND_CSS, credential_band
+
+        band, days = credential_band(self.credential_expiry, timezone.localdate())
+        return {"band": band, "days": days, "css": CREDENTIAL_BAND_CSS[band]}
+
+    @property
+    def authorization_items(self):
+        """LV-413: las habilitaciones como piezas, tal como las escribe la DGAC."""
+        from .selectors import authorization_items
+
+        return authorization_items(self.authorizations)
+
     # LV-368: la credencial leída del PDF. La regla de negocio vive acá y no en la
     # vista: la pantalla de confirmación es una de las puertas, no la única.
 

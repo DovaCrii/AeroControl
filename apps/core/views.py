@@ -277,6 +277,19 @@ class SearchMixin(ListPreferenceMixin, SortableColumnsMixin):
         context["is_htmx"] = self.request.headers.get("HX-Request") == "true"
         return context
 
+    def search_filter(self, query_text):
+        """La condición de `?q=`: un `icontains` por cada `search_fields`, unidos por O.
+
+        LV-413: es un método para que una lista pueda sumar una forma más de encontrar
+        (el RUT sin puntos ni guion, en operadores) sin reescribir el resto.
+        """
+        from django.db.models import Q
+
+        query = Q()
+        for field in self.search_fields:
+            query |= Q(**{f"{field}__icontains": query_text})
+        return query
+
     def get_queryset(self):
         queryset = super().get_queryset()
         if self.tenant_scope:
@@ -290,12 +303,7 @@ class SearchMixin(ListPreferenceMixin, SortableColumnsMixin):
             )
         query_text = self.request.GET.get("q", "").strip()
         if query_text and self.search_fields:
-            from django.db.models import Q
-
-            query = Q()
-            for field in self.search_fields:
-                query |= Q(**{f"{field}__icontains": query_text})
-            queryset = queryset.filter(query)
+            queryset = queryset.filter(self.search_filter(query_text))
 
         active = self.request.GET.get("is_active")
         if active == "active":

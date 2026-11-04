@@ -58,6 +58,7 @@ from .forms import (
     QualificationTypeForm,
 )
 from .selectors import (
+    authorization_items,
     closed_centre_permit_warning,
     filter_by_credential,
     filter_by_insurance,
@@ -899,7 +900,148 @@ class OperatorList(RegistryList):
         "expiry": "credential_expiry",
         "cost_center": "cost_center__code",
     }
-    search_fields = ["full_name", "employee_id", "rut", "dgac_credential"]
+    # LV-413: también por faena (código y nombre) y por lo que dice la habilitación.
+    # El RUT sin puntos ni guion lo suma `search_filter`.
+    search_fields = [
+        "full_name",
+        "employee_id",
+        "rut",
+        "dgac_credential",
+        "cost_center__code",
+        "cost_center__name",
+        "authorizations",
+    ]
+    # LV-413: los filtros propios de esta lista (además de `q` y del estado). Son los
+    # que varían los atajos, y los que cuentan como «hay un filtro puesto».
+    FILTER_KEYS = ("credential", "pdf", "cost_center", "model")
+    CREDENTIAL_CHOICES = (
+        ("lapsed", gettext_lazy("Lapsed")),
+        ("soon", gettext_lazy("Expires in 30 days or less")),
+        ("warning", gettext_lazy("Expires in 31 to 60 days")),
+        ("current", gettext_lazy("In force (more than 60 days)")),
+        ("missing", gettext_lazy("No date on file")),
+        ("attention", gettext_lazy("Needs attention (lapsed or no date)")),
+    )
+
+    def search_filter(self, query_text):
+        """LV-413: un RUT se encuentra escrito con o sin puntos y guion.
+
+        El RUT se guarda canónico (`12345678-9`, LV-143), pero quedan fichas viejas
+        con puntos, y la gente lo tipea de las dos formas. Se compara sin separadores
+        de los dos lados; sólo cuando lo buscado parece un RUT (dígitos y quizá una K),
+        para no convertir cualquier búsqueda corta en una búsqueda de números.
+        """
+        import re
+
+        from django.db.models import Value
+        from django.db.models.functions import Replace
+        from django.db.models.lookups import IContains
+
+        query = super().search_filter(query_text)
+        plain = re.sub(r"[.\-\s]", "", query_text)
+        if len(plain) >= 3 and re.fullmatch(r"\d+[kK]?", plain):
+            rut_plain = Replace(
+                Replace("rut", Value("."), Value("")), Value("-"), Value("")
+            )
+            query |= Q(IContains(rut_plain, plain))
+        return query
+
+    def _filter_params(self):
+        """Los filtros pedidos, ya limpios: lo desconocido se ignora (convención del repo)."""
+        get = self.request.GET
+        return {key: get.get(key, "").strip() for key in self.FILTER_KEYS}
+
+    def apply_filters(self, queryset, params):
+        """LV-413: credencial, PDF, faena y modelo habilitado, combinables (Y)."""
+        from django.db.models import Exists, OuterRef
+
+        queryset = filter_by_credential(
+            queryset, params.get("credential"), timezone.localdate()
+        )
+        pdf = params.get("pdf")
+        if pdf == "yes":
+            queryset = queryset.filter(has_credential_pdf=True)
+        elif pdf == "no":
+            queryset = queryset.filter(has_credential_pdf=False)
+        cost_center = params.get("cost_center")
+        if cost_center == "none":
+            queryset = queryset.filter(cost_center__isnull=True)
+        elif cost_center:
+            from apps.core.views import lookup_by_pk
+
+            # Un pk malformado o de otra empresa no filtra por nada visible: lista vacía,
+            # no un 500 ni una fuga (la lista ya viene acotada por empresa).
+            chosen = lookup_by_pk(CostCenter.objects.all(), cost_center)
+            queryset = (
+                queryset.filter(cost_center=chosen) if chosen else queryset.none()
+            )
+        model = params.get("model")
+        if model:
+            # El texto de la DGAC manda (LV-152); el catálogo estructurado, si alguien lo
+            # cargó, también cuenta.
+            structured = Qualification.objects.filter(
+                operator=OuterRef("pk"),
+                is_active=True,
+                qualification_type__name__icontains=model,
+            )
+            queryset = queryset.filter(
+                Q(authorizations__icontains=model) | Q(Exists(structured))
+            )
+        return queryset
+
+    def _quick_filters(self):
+        """LV-413: los atajos con su conteo. El número es **el de filas que trae el clic**:
+        se cuenta con todos los filtros puestos y el del atajo encima (LV-242: una cifra
+        que no coincide con la lista deja de ser creíble). Un atajo activo se apaga con el
+        mismo clic."""
+        chips = (
+            ("credential", "lapsed", _("Credential lapsed")),
+            ("credential", "soon", _("About to expire")),
+            ("pdf", "no", _("No PDF")),
+            ("cost_center", "none", _("No cost center")),
+        )
+        current = self._filter_params()
+        result = []
+        for key, value, label in chips:
+            params = dict(current, **{key: value})
+            query = self.request.GET.copy()
+            for drop in ("page", "export"):
+                query.pop(drop, None)
+            active = current.get(key) == value
+            if active:
+                query.pop(key, None)
+            else:
+                query[key] = value
+            result.append(
+                {
+                    "label": label,
+                    "count": self.apply_filters(self._base_queryset, params).count(),
+                    "active": active,
+                    "url": f"?{query.urlencode()}",
+                }
+            )
+        return result
+
+    def _cost_center_options(self):
+        """Las faenas que aparecen en el padrón visible: código y nombre ya se ven en la
+        columna, así que el selector no muestra nada que la lista no muestre."""
+        return (
+            self.scope_by_tenant(CostCenter.objects.all())
+            .filter(operators__isnull=False)
+            .distinct()
+            .order_by(Length("code"), "code")
+        )
+
+    def _model_options(self):
+        """Los modelos habilitados, sacados del texto de la DGAC de las personas visibles
+        (sin repetir mayúsculas/minúsculas). Cada opción trae al menos una fila."""
+        seen = {}
+        texts = self.scope_by_tenant(Operator.objects.exclude(authorizations=""))
+        for text in texts.values_list("authorizations", flat=True):
+            for item in authorization_items(text):
+                if len(item) <= 40:
+                    seen.setdefault(item.casefold(), item)
+        return sorted(seen.values(), key=str.casefold)
 
     @property
     def csv_fields(self):
@@ -920,11 +1062,32 @@ class OperatorList(RegistryList):
         context["can_depart"] = user.has_perm("registry.delete_operator") and (
             user.has_perm("registry.change_operator")
         )
+        # LV-413: filtros, atajos y el camino de vuelta desde la ficha.
+        params = self._filter_params()
+        context["filters"] = params
+        context["credential_choices"] = self.CREDENTIAL_CHOICES
+        context["cost_center_options"] = self._cost_center_options()
+        context["model_options"] = self._model_options()
+        context["quick_filters"] = self._quick_filters()
+        context["is_filtered"] = context.get("is_filtered") or any(params.values())
+        back = self.request.GET.copy()
+        for drop in ("export", "back"):
+            back.pop(drop, None)
+        context["list_query"] = back.urlencode()
+        context["search_placeholder"] = _(
+            "Name, RUT, credential, cost center or model…"
+        )
+        # El atajo a «Cargar credencial» (LV-405/LV-368) exige lo mismo que el
+        # formulario de la ficha: subir un documento y cambiar al operador.
+        context["can_upload_credential"] = user.has_perm(
+            "compliance.add_document"
+        ) and user.has_perm("registry.change_operator")
+        context["can_view_documents"] = user.has_perm("compliance.view_document")
         return context
 
     def get_queryset(self):
         from django.contrib.contenttypes.models import ContentType
-        from django.db.models import Exists, OuterRef
+        from django.db.models import Exists, OuterRef, Subquery
 
         from apps.compliance.models import Document
 
@@ -951,6 +1114,12 @@ class OperatorList(RegistryList):
             # se ingresó", no "está bien". La columna muestra ahora el texto de
             # `authorizations`, que ya viene en la fila y no cuesta consulta.
             .annotate(has_credential_pdf=Exists(credential_pdf))
+            # LV-413: y cuál es, para que la celda enlace a la credencial.
+            .annotate(
+                credential_pdf_id=Subquery(
+                    credential_pdf.order_by("-created_at").values("pk")[:1]
+                )
+            )
             # R3.2: no Meta.ordering fell back to created_at (SearchMixin's
             # fallback), i.e. insertion order -- alphabetical by full name.
             #
@@ -987,9 +1156,11 @@ class OperatorList(RegistryList):
         # LV-242: ver `AircraftList`. La tarjeta "Credenciales al día" decía
         # *"1 vencido · 7 sin fecha cargada"* y llevaba al padrón entero: siete
         # personas que localizar a ojo entre cuarenta y cinco.
-        return filter_by_credential(
-            queryset, self.request.GET.get("credential"), timezone.localdate()
-        )
+        # LV-413: la credencial es uno de cuatro filtros combinables (`apply_filters`).
+        # Lo de antes —empresa, búsqueda y estado— queda guardado: es la base sobre la
+        # que se cuentan los atajos.
+        self._base_queryset = queryset
+        return self.apply_filters(queryset, self._filter_params())
 
 
 class CostCenterList(RegistryList):
@@ -1293,6 +1464,19 @@ class OperatorDetail(RegistryDetail):
         from .selectors import movements_for_resource
 
         context = super().get_context_data(**kwargs)
+        # LV-413: «Volver a la lista» vuelve a la búsqueda, los filtros y la página de
+        # donde se vino. `?back=` es sólo una cadena de consulta: se re-arma con
+        # `QueryDict` sobre la ruta fija de la lista, así que no puede apuntar a otro
+        # sitio (nada de redirección abierta).
+        back = self.request.GET.get("back", "")
+        if back:
+            from django.http import QueryDict
+
+            query = QueryDict(back, mutable=True)
+            for drop in ("back", "export"):
+                query.pop(drop, None)
+            if query:
+                context["list_url"] = f"{context['list_url']}?{query.urlencode()}"
         if self.request.user.has_perm("registry.view_resourcemovementlog"):
             context["movements"] = movements_for_resource("operator", self.object.pk)
         else:
