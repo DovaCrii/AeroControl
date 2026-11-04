@@ -57,6 +57,7 @@ _MONEY_GAP = r"\s*:?\s*(?:CLP)?\s*\$?\s*"
 _NET = re.compile(r"\bNeto\b" + _MONEY_GAP + _AMOUNT, _FLAGS)
 _VAT = re.compile(r"\bIVA\b\s*(?:\(\s*\d+\s*%\s*\))?" + _MONEY_GAP + _AMOUNT, _FLAGS)
 _TOTAL = re.compile(r"\bTotal\b" + _MONEY_GAP + _AMOUNT, _FLAGS)
+_SUB_BEFORE = re.compile(r"Sub[\s.\-]*$", re.IGNORECASE)
 _LEAD_TIME = re.compile(
     r"Plazo\s+de\s+entrega\s*:?\s*(?:de\s+)?(\d{1,3})\s*(d\S{0,3}as|semanas)"
     r"(?:\s+(h\S{0,3}biles|corridos|calendario))?",
@@ -87,6 +88,14 @@ def _amount(match) -> int | None:
         return None
     digits = re.sub(r"\D", "", match.group(1))
     return int(digits) if digits else None
+
+
+def _total(flat: str):
+    """First "Total" that is not the tail of "Sub total" (LV-417)."""
+    for match in _TOTAL.finditer(flat):
+        if not _SUB_BEFORE.search(flat[: match.start()]):
+            return match
+    return None
 
 
 def _days_label(number: str, unit: str) -> str:
@@ -194,7 +203,17 @@ class GeocomQuoteReader:
     def _amounts(flat: str, proposal: IntakeProposal) -> None:
         proposal.quote_net = _amount(_NET.search(flat))
         proposal.quote_vat = _amount(_VAT.search(flat))
-        proposal.quote_total = _amount(_TOTAL.search(flat))
+        total = _amount(_total(flat))
+        # net + VAT that do not add up to the total (±1 peso): a wrong reading
+        # is worse than an empty field, so the person types it.
+        if (
+            total is not None
+            and proposal.quote_net is not None
+            and proposal.quote_vat is not None
+            and abs(proposal.quote_net + proposal.quote_vat - total) > 1
+        ):
+            total = None
+        proposal.quote_total = total
 
     @staticmethod
     def _terms(flat: str, proposal: IntakeProposal) -> None:
