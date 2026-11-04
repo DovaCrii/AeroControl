@@ -9,6 +9,21 @@ propio `monkeypatch` (corre después de este) y las que usan el fixture del clie
 import urllib.request
 
 import pytest
+from django.utils import translation
+
+
+@pytest.fixture(autouse=True)
+def _reset_active_language():
+    """Cada prueba parte (y termina) con el idioma por omisión del proyecto.
+
+    `LocaleMiddleware` activa el idioma de la petición en el hilo y nadie lo desactiva, así que
+    una prueba con `Accept-Language: en` dejaba el hilo en inglés para la siguiente del mismo
+    worker. Con `-n auto` el orden cambia entre corridas: la prueba que afirma texto en español
+    sin cliente (LV-287, «día anterior») fallaba sólo a veces (LV-414).
+    """
+    translation.deactivate()
+    yield
+    translation.deactivate()
 
 
 @pytest.fixture(autouse=True)

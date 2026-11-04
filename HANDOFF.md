@@ -1,5 +1,22 @@
 # HANDOFF — AeroControl
 
+## ✅ 2026-11-04 — cuatro despliegues en `p340`; producción = `e9e225b`
+
+Constancia leída de los RESÚMENES que dio el usuario (no verificados por el agente en la VM).
+
+| Tramo | Commits | Migraciones | Contenido |
+|---|---|---|---|
+| `7cf8385` → `e47adf5` | 8 | `core 0009`, `registry 0043` | `LV-398` a `LV-400` |
+| `e47adf5` → `1e41bd5` | 19 | `compliance 0029` | `LV-401` a `LV-403`, `LV-407`, `LV-409`. La 0029 se aplicó recién ese día: se había perdido por la reversión de #214 y `LV-409` la restauró. Timer `aerocontrol-docbackup` creado y probado (17 timers). |
+| `1e41bd5` → `14ab972` | 16 | ninguna | `LV-404` a `LV-406` y `LV-408`. `load_official_link_images` corrido: SIGO ok, SIPA ok. |
+| `14ab972` → `e9e225b` | 8 | ninguna | `LV-410` a `LV-412` |
+
+**Fusionado y pendiente de despliegue:** `LV-413` (padrón de operadores; lleva estáticos: `operators.css`, o sea `collectstatic`).
+
+**Pendiente del usuario**
+- Revisar a ojo: mapa de permisos, tabla de permisos por centro y tarjeta de espacio aéreo.
+- Decidir el permiso 706 (centro desplazado sin radio frente al plan).
+- Pendientes de la auditoría que quedan: #4/#16 fechas locales, #6 total Geocom, #7 resumen SMTP, #10 CSV de cierre, #12 parámetros 500, #13/#14 auditoría, #15 umbrales, #17 limpieza de pendientes, #5/#11 aislamiento antes de una 2.ª empresa, #19/#20 limpieza.
 ## ✅ 2026-11-03 — tanda UX (`LV-389` a `LV-394`) **desplegada** en `3fae539`
 
 `p340` corre **`3fae539`** (leído del RESUMEN pegado: `DEPLOY OK`, `597de8c` → `3fae539`, 11 commits, sin migraciones, 4 estáticos copiados, `active`, health 200, HEAD == origin/main).
