@@ -1,5 +1,7 @@
 {% extends "generic/list.html" %}
-{% load i18n %}
+{% load i18n static %}
+
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/expiry-band.css' %}">{% endblock %}
 
 {% block list_table_class %}table-normalized{% endblock %}
 

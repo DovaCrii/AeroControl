@@ -305,7 +305,7 @@ class TestTrafficLight:
     def test_every_band_class_has_a_style(self):
         css = "".join(
             (Path(settings.BASE_DIR) / "static" / "css" / name).read_text("utf-8")
-            for name in ("app.css", "operators.css")
+            for name in ("app.css", "expiry-band.css")
         )
         for name in CREDENTIAL_BAND_CSS.values():
             assert f".badge.{name}" in css, name

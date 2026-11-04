@@ -1,0 +1,21 @@
+/* LV-416 · Semáforo de vencimiento compartido: padrón de operadores, habilitaciones y seguro
+ * de las aeronaves (`registry/_expiry_badge.html`, escala de `selectors.expiry_band`).
+ *
+ * Hoja propia: `app.css` + `identity.css` están a ~1,4 KB del techo de 256 KB. Sólo SUMA y no
+ * redefine tokens: lee `--id-ok-*` y `--ac-*`, que ya cambian con el tema. Las bandas
+ * crítica, por vencer y aviso usan las insignias `sev-*` de `app.css`. Contraste: `contrast.py`
+ * mide mal `--id-ok-*` (bloque de impresión), así que la prueba lo calcula aparte. */
+
+/* Vigente en el verde «correcto» de la app. */
+.badge.expiry-band-ok {
+  background-color: var(--id-ok-bg);
+  border-color: var(--id-ok-border);
+  color: var(--id-ok-text);
+}
+
+/* «Sin fecha»: neutro; un dato que falta no es ni bueno ni malo (LV-29). */
+.badge.expiry-band-none {
+  background-color: var(--ac-surface);
+  border-color: var(--ac-border);
+  color: var(--ac-text-secondary);
+}

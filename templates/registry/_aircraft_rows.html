@@ -23,12 +23,9 @@
     seguro **presentado en SIGO y esperando a la JAC** caía al "—" idéntico a
     una aeronave sin seguro alguno -- y "faltante" no se veía nunca, que es
     justamente lo que hay que poder barrer de un vistazo en la lista.{% endcomment %}
-    {% if object.insurance_expiry %}
-      {% if object.insurance_is_overdue %}<span class="badge sev-critical">⚠ {% translate "Overdue" %} · {{ object.insurance_expiry|date:'d-m-Y' }}</span>
-      {% else %}<span class="badge sev-caution">{{ object.insurance_expiry|date:'d-m-Y' }}</span>{% endif %}
-    {% endif %}
+    {% if object.insurance_expiry %}{% translate "Insurance in force" as in_force %}{% include "registry/_expiry_badge.html" with state=object.insurance_state expiry=object.insurance_expiry in_force_label=in_force %}{% endif %}
     {% if object.insurance_status != "active" %}<span class="badge bg-info-subtle text-info-emphasis">{{ object.get_insurance_status_display }}</span>
-    {% elif not object.insurance_expiry %}<span class="text-muted">—</span>{% endif %}
+    {% elif not object.insurance_expiry %}{% include "registry/_expiry_badge.html" with state=object.insurance_state expiry=None %}{% endif %}
   </td>
   <td class="text-end">
     <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
