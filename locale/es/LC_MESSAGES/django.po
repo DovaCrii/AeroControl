@@ -12878,7 +12878,7 @@ msgid "Requested; there is no answer yet."
 msgstr "Solicitado; todavía no hay respuesta."
 
 msgid "Starts later"
-msgstr "Empieza más adelante"
+msgstr "Inicia más adelante"
 
 msgid "Approved; it takes effect from its start date."
 msgstr "Aprobado; rige desde su fecha de inicio."
@@ -14188,6 +14188,62 @@ msgstr ""
 #: templates/compliance/_doc_type_hint.html
 msgid "This type does not ask for an issue date."
 msgstr "Este tipo no pide fecha de emisión."
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "Expires in ≤%(n)s days"
+msgstr "Vence en ≤%(n)s días"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "Expires in %(a)s–%(b)s days"
+msgstr "Vence en %(a)s–%(b)s días"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "over %(n)s days"
+msgstr "más de %(n)s días"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid ""
+"The bar shows the days left of the first permit to expire (0 to 90), with "
+"marks at %(a)s and %(b)s, in the color of its status; the word and the date "
+"carry the meaning."
+msgstr ""
+"La barra muestra los días que le quedan al primer permiso que vence (0 a "
+"90), con marcas en %(a)s y %(b)s, en el color de su estado; la palabra y la "
+"fecha llevan el significado."
+
+#: apps/dashboard/compliance_permits.py
+msgid "No permit in force"
+msgstr "Sin permiso vigente"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "%(n)s permit in force"
+msgid_plural "%(n)s permits in force"
+msgstr[0] "%(n)s permiso vigente"
+msgstr[1] "%(n)s permisos vigentes"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "%(n)s in progress with the DGAC"
+msgid_plural "%(n)s in progress with the DGAC"
+msgstr[0] "%(n)s en trámite ante la DGAC"
+msgstr[1] "%(n)s en trámite ante la DGAC"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "%(n)s approved, not started yet"
+msgid_plural "%(n)s approved, not started yet"
+msgstr[0] "%(n)s aprobado, aún sin empezar"
+msgstr[1] "%(n)s aprobados, aún sin empezar"
+
+#: apps/dashboard/compliance_permits.py
+#, python-format
+msgid "Requested on %(date)s: follow up with the DGAC"
+msgstr "Solicitado el %(date)s: hacer seguimiento con la DGAC"
 
 #: apps/airspace/views.py
 msgid "no declared area: fill in the radius or link the KMZ"

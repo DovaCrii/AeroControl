@@ -19,7 +19,7 @@ PENDIENTE (de la persona, `MASTER_PLAN.md` LV-376): el MOTIVO DE NEGOCIO de que 
         <tbody>
           {% for state in cx_guide_states %}
           <tr data-cx-state="{{ state.kind }}">
-            <th scope="row"><span class="id-cx-state id-cx-state--{{ state.tone }}"><span aria-hidden="true">{{ state.symbol }}</span> {{ state.label }}</span></th>
+            <th scope="row"><span class="{{ state.css }}"><span aria-hidden="true">{{ state.symbol }}</span> {{ state.label }}</span></th>
             <td>{{ state.meaning }}</td>
             <td>{{ state.todo }}</td>
             <td>{% if state.url %}<a href="{{ state.url }}">{% translate "Open the screen" %} <span aria-hidden="true">→</span></a>{% endif %}</td>
