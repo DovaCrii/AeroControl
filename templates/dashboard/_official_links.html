@@ -4,15 +4,16 @@ vienen de `apps/core/official_links.py` (context processor `official_links`): ac
 dirección. Convención de enlace externo del repo: `target="_blank" rel="noopener noreferrer"` y aviso oculto
 «se abre en una pestaña nueva». Reutilizable en la página de inicio: LV-398 le pasa `ol_title_class` para que
 el título se vea allí (en el panel sigue oculto).
-LV-399: si quien administra cargó el banner oficial del sistema, se muestra (servido desde la app, desde el
-almacenamiento privado: el repo no lleva marcas de terceros); si no, el icono del sprite con `currentColor`.{% endcomment %}
+LV-399/LV-406: si `load_official_link_images` ya descargó la imagen oficial del sistema, se muestra arriba de la
+tarjeta, a todo su ancho (servida desde la app, desde el almacenamiento privado: el repo no lleva marcas de
+terceros); si no, el icono del sprite con `currentColor`.{% endcomment %}
 {% if official_links %}
 <section class="ol-banners mb-3" aria-labelledby="ol-banners-title">
   <h2 id="ol-banners-title" class="{{ ol_title_class|default:'visually-hidden' }}">{% translate "Official links" %}</h2>
   <div class="ol-grid">
     {% for link in official_link_cards %}
-    <a class="ol-card" data-official-link="{{ link.key }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
-      {% if link.image_url %}<img class="ol-logo" src="{{ link.image_url }}" alt="{{ link.acronym }}" width="72" height="44" loading="lazy">{% else %}<svg class="ol-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg>{% endif %}
+    <a class="ol-card{% if link.image_url %} ol-card-banner{% endif %}" data-official-link="{{ link.key }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+      {% if link.image_url %}<span class="ol-banner"><img class="ol-logo" src="{{ link.image_url }}" alt="{{ link.acronym }}" width="320" height="64" loading="lazy"></span>{% else %}<svg class="ol-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg>{% endif %}
       <span class="ol-body">
         <strong class="ol-name">{{ link.name }}</strong>
         <span class="ol-purpose">{{ link.purpose }}</span>
@@ -22,10 +23,5 @@ almacenamiento privado: el repo no lleva marcas de terceros); si no, el icono de
     </a>
     {% endfor %}
   </div>
-  {% if perms.core.change_officiallinkimage %}
-  <div class="ol-manage">
-    {% for link in official_links %}<a href="{% url 'official-link-image-upload' link.key %}">{% blocktranslate with system=link.acronym %}Load the {{ system }} banner{% endblocktranslate %}</a>{% endfor %}
-  </div>
-  {% endif %}
 </section>
 {% endif %}
