@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/identity.css">
   <link rel="stylesheet" href="/static/css/official-links.css">
+  <link rel="stylesheet" href="/static/css/htmx-state.css">
   <script src="/static/vendor/htmx/htmx.min.js"
           integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V"
           crossorigin="anonymous"></script>
@@ -101,6 +102,8 @@
         aria-label="Arrastre, o use las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
         title="Arrastre para ajustar el ancho · doble clic para restablecer"></button>
     </aside>
+    <div class="htmx-status d-print-none" id="htmx-status" role="alert"
+         data-error-label="No se pudo actualizar la lista. Vuelva a intentarlo."></div>
     <main class="container-fluid p-4" id="main-content" tabindex="-1">
 <div class="page-header d-print-none">
   <div>
@@ -590,6 +593,7 @@
           integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
           crossorigin="anonymous"></script>
   <script src="/static/js/app.js"></script>
+  <script src="/static/js/htmx-state.js"></script>
   <script src="/static/js/command-palette.js"></script>
   <script src="/static/js/pwa.js"></script>
   <script src="/static/js/ambient-motion.js" defer></script>
