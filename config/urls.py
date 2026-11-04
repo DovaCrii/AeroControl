@@ -18,6 +18,7 @@ from apps.core.views import (
     SignInView,
     UnifiedCalendarEventsView,
     UserRoleListView,
+    StartView,
     WorkTrayView,
 )
 
@@ -73,6 +74,8 @@ urlpatterns = [
     # cruza cuatro: colgarla de `compliance` diría que es de cumplimiento, y la
     # mitad de sus filas no lo son.
     path("bandeja/", WorkTrayView.as_view(), name="work-tray"),
+    # LV-398: «Cómo funciona», la guía de la operación RPA (sin datos de dominio).
+    path("inicio/", StartView.as_view(), name="start"),
     # UX-09/UX-12: las preferencias de lista. Fuera de cualquier app de negocio a
     # propósito -- no son datos de una faena ni de un permiso, son cómo una
     # persona mira cualquier listado, y colgarlas de `compliance` habría atado

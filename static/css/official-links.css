@@ -36,6 +36,20 @@
   width: 1.75rem;
   height: 1.75rem;
   color: var(--ac-primary);
+  /* LV-398: los símbolos del sprite no traen relleno ni trazo propios (UX-05); sin esto se
+     dibujaban rellenos de negro, un cuadrado y una silueta, en vez del icono de línea. */
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* LV-398: la tarjeta «¿Recién llega a AeroControl?» del panel. Vive acá porque esta hoja ya se
+   carga en toda página y el panel no tiene hoja propia; `.illus-tile img` ocupa el 100 % del
+   contenedor, así que la lámina necesita un ancho. */
+.start-card-art {
+  width: 4.5rem;
 }
 
 .ol-body {

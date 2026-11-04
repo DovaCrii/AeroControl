@@ -105,7 +105,12 @@ ALERTS = NavItem(
     badge=True,
 )
 
-NAV_TOP: tuple[NavItem, ...] = (DASHBOARD, WORK_TRAY, ALERTS)
+# LV-398: «Cómo funciona» (la guía de la operación RPA). Sin permiso de modelo, como
+# su vista: no lee datos de dominio. Va al final del bloque porque no es lo que se
+# abre todos los días, sino adonde se vuelve a mirar el proceso.
+START = NavItem("start", _("How it works"), "start", "overview")
+
+NAV_TOP: tuple[NavItem, ...] = (DASHBOARD, WORK_TRAY, ALERTS, START)
 
 # LV-358: un solo ítem «Entorno» (tiempo, centelleo GNSS, espacio aéreo). Aparece
 # sólo si la persona puede abrir alguna pestaña; quien tiene una sola entra directo.

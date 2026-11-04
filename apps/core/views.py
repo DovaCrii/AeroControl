@@ -2172,3 +2172,27 @@ def csrf_failure(request, reason=""):
         ),
         status=403,
     )
+
+
+class StartView(LoginRequiredMixin, TemplateView):
+    """`LV-398`: «Cómo funciona», la página que explica AeroControl.
+
+    `LoginRequiredMixin` a secas **y no un permiso `view_*`**, que es la excepción
+    al contrato de lectura de `AGENTS.md` y por eso se explica: la página no lee
+    ningún modelo. Es el resumen de la guía `JEJ-GRI-SS-INS-096` (qué se busca,
+    qué se requiere, el proceso, el semáforo y los roles), igual para todos.
+
+    Lo único que cambia según quién mira son los enlaces a pantallas reales, y
+    cada uno se ofrece sólo a quien tiene **todos** los permisos de su vista
+    (`apps/core/start_guide.py`): sin permiso, el enlace no se dibuja.
+    """
+
+    template_name = "core/start.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.core.start_guide import requirement_links_for, shortcuts_for
+
+        context = super().get_context_data(**kwargs)
+        context["shortcuts"] = shortcuts_for(self.request.user)
+        context["requirement_links"] = requirement_links_for(self.request.user)
+        return context

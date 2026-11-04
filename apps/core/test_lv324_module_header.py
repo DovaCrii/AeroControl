@@ -60,7 +60,8 @@ class TestEveryModuleHasItsMask:
         resolved = {
             item.url_name: module_for_url_name(item.url_name)
             for item in all_items()
-            if item.url_name not in ("dashboard", "environment-hub", "administration")
+            if item.url_name
+            not in ("dashboard", "environment-hub", "administration", "start")
             and item.url_name != "admin:index"
         }
         assert all(resolved.values()), sorted(k for k, v in resolved.items() if not v)

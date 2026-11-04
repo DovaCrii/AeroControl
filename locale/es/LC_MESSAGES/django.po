@@ -13240,8 +13240,6 @@ msgstr "Confirmar ingreso"
 #~ msgid "Active Operators"
 #~ msgstr "Operadores activos"
 
-#~ msgid "Incident"
-#~ msgstr "Incidente"
 
 #~ msgid "missing or lapsed"
 #~ msgstr "faltantes o vencidos"
@@ -13342,3 +13340,624 @@ msgstr "Sirve para consultar las licencias y habilitaciones del personal aeroná
 #: .\templates\core\_sidebar.html
 msgid "Official links"
 msgstr "Enlaces oficiales"
+
+#: .\templates\core\start.html
+#: .\templates\dashboard\index.html
+#: .\apps\core\navigation.py
+msgid "How it works"
+msgstr "Cómo funciona"
+
+#: .\templates\core\start.html
+msgid "How AeroControl works"
+msgstr "Cómo funciona AeroControl"
+
+#: .\templates\core\start.html
+msgid "No site flies without a permit in force"
+msgstr "Ninguna faena vuela sin permiso vigente"
+
+#: .\templates\core\start.html
+msgid "AeroControl keeps the RPA operation of J.E.J. in compliance with the DGAC: every permit, credential, insurance policy and maintenance job with its dates, and a warning before anything expires."
+msgstr "AeroControl mantiene la operación RPA de J.E.J. en cumplimiento ante la DGAC: cada permiso, credencial, seguro y mantención con sus fechas, y un aviso antes de que algo venza."
+
+#: .\templates\core\start.html
+msgid "What it is for"
+msgstr "Qué busca"
+
+#: .\templates\core\start.html
+msgid "What a flight requires"
+msgstr "Qué requiere un vuelo"
+
+#: .\templates\core\start.html
+msgid "The process"
+msgstr "El proceso"
+
+#: .\templates\core\start.html
+msgid "Traffic light"
+msgstr "Semáforo"
+
+#: .\templates\core\start.html
+msgid "Who does what"
+msgstr "Quién hace qué"
+
+#: .\templates\core\start.html
+msgid "What AeroControl is for"
+msgstr "Qué busca AeroControl"
+
+#: .\templates\core\start.html
+msgid "No flight without a permit"
+msgstr "Ningún vuelo sin permiso"
+
+#: .\templates\core\start.html
+msgid "Every site needs a DGAC permit in force before its first flight. AeroControl shows which permits are in force, which are about to expire and which already did."
+msgstr "Toda faena necesita un permiso DGAC vigente antes de su primer vuelo. AeroControl muestra qué permisos están vigentes, cuáles están por vencer y cuáles ya vencieron."
+
+#: .\templates\core\start.html
+msgid "Everything traceable"
+msgstr "Todo trazable"
+
+#: .\templates\core\start.html
+msgid "Permits, credentials, insurance, maintenance and logbooks are kept with their dates and their evidence, ready for an audit or the monthly report."
+msgstr "Permisos, credenciales, seguros, mantenciones y bitácoras quedan guardados con sus fechas y su respaldo, listos para una auditoría o para el informe mensual."
+
+#: .\templates\core\start.html
+msgid "Warnings in time"
+msgstr "Avisos a tiempo"
+
+#: .\templates\core\start.html
+msgid "Alerts arrive before something expires, with enough time to renew it without stopping the operation."
+msgstr "Las alertas llegan antes de que algo venza, con tiempo para renovarlo sin detener la operación."
+
+#: .\templates\core\start.html
+msgid "Before taking off, all of this has to be in force. Open each item to see what it means."
+msgstr "Antes de despegar, todo esto tiene que estar vigente. Abra cada ítem para ver qué significa."
+
+#: .\templates\core\start.html
+msgid "DGAC permit in force, in SIGO"
+msgstr "Permiso DGAC vigente, en SIGO"
+
+#: .\templates\core\start.html
+msgid "The Head of Air Safety processes it in SIGO. It covers an area, dates, aircraft and operators: flights stay inside what it authorises."
+msgstr "Lo tramita el Jefe de Seguridad Aérea en SIGO. Cubre un área, unas fechas, unos drones y unos operadores: se vuela sólo dentro de lo que autoriza."
+
+#: .\templates\core\start.html
+msgid "Client letter and KMZ of the area"
+msgstr "Carta del mandante y KMZ del área"
+
+#: .\templates\core\start.html
+msgid "The client's letter authorises the work and the KMZ draws the flight area. Without the letter the permit cannot be requested."
+msgstr "La carta del mandante autoriza el trabajo y el KMZ dibuja el área de vuelo. Sin la carta no se puede pedir el permiso."
+
+#: .\templates\core\start.html
+msgid "Operator's DGAC credential"
+msgstr "Credencial DGAC del operador"
+
+#: .\templates\core\start.html
+msgid "In force and enabled for the RPA model being flown: the credential lists the models."
+msgstr "Vigente y habilitada para el modelo de RPA que se vuela: la credencial indica los modelos."
+
+#: .\templates\core\start.html
+msgid "Aircraft insurance (JAC)"
+msgstr "Seguro del dron (JAC)"
+
+#: .\templates\core\start.html
+msgid "Renewed every year. It is one of the slowest steps, so it is requested two months ahead."
+msgstr "Se renueva cada año. Es de los trámites más lentos, así que se pide con dos meses de anticipación."
+
+#: .\templates\core\start.html
+msgid "Maintenance up to date"
+msgstr "Mantención al día"
+
+#: .\templates\core\start.html
+msgid "Every 6 or 12 months (or whatever the client asks for), and whenever the aircraft fails."
+msgstr "Cada 6 o 12 meses (o lo que pida el mandante), y siempre que el dron falle."
+
+#: .\templates\core\start.html
+msgid "Logbook and checklist"
+msgstr "Bitácora y check list"
+
+#: .\templates\core\start.html
+msgid "Checklist and inspection before each flight; the signed logbook is uploaded within 2 days."
+msgstr "Check list e inspección antes de cada vuelo; la bitácora firmada se sube dentro de 2 días."
+
+#: .\templates\core\start.html
+msgid "The process, step by step"
+msgstr "El proceso, paso a paso"
+
+#: .\templates\core\start.html
+msgid "Choose a procedure. The longer it takes, the earlier it has to be requested: if one document is late, everything after it moves too."
+msgstr "Elija un trámite. Mientras más demora, antes hay que pedirlo: si un documento se atrasa, todo lo que sigue se desplaza."
+
+#: .\templates\core\start.html
+msgid "Flight permit"
+msgstr "Permiso de vuelo"
+
+#: .\templates\core\start.html
+msgid "5 business days"
+msgstr "5 días hábiles"
+
+#: .\templates\core\start.html
+msgid "New contract"
+msgstr "Contrato nuevo"
+
+#: .\templates\core\start.html
+msgid "2 to 4 weeks"
+msgstr "2 a 4 semanas"
+
+#: .\templates\core\start.html
+msgid "New operator"
+msgstr "Operador nuevo"
+
+#: .\templates\core\start.html
+msgid "1 to 4 weeks"
+msgstr "1 a 4 semanas"
+
+#: .\templates\core\start.html
+msgid "Aircraft maintenance"
+msgstr "Mantención del dron"
+
+#: .\templates\core\start.html
+msgid "Act now"
+msgstr "Actuar ya"
+
+#: .\templates\core\start.html
+msgid "DGAC flight permit (SIGO)"
+msgstr "Permiso de vuelo DGAC (SIGO)"
+
+#: .\templates\core\start.html
+msgid "The contract administrator (ADC) gathers and sends"
+msgstr "El Administrador de Contrato (ADC) reúne y envía"
+
+#: .\templates\core\start.html
+msgid "Client letter, KMZ of the flight area, aircraft serial number and licensed operators."
+msgstr "Carta del mandante, KMZ del área de vuelo, número de serie del dron y operadores con licencia."
+
+#: .\templates\core\start.html
+msgid "The Head of Air Safety processes it in SIGO"
+msgstr "El Jefe de Seguridad Aérea lo tramita en SIGO"
+
+#: .\templates\core\start.html
+msgid "5 business days to request and approve it."
+msgstr "5 días hábiles para solicitarlo y aprobarlo."
+
+#: .\templates\core\start.html
+msgid "Permit approved"
+msgstr "Permiso aprobado"
+
+#: .\templates\core\start.html
+msgid "It is filed in Nextcloud and registered in AeroControl, which starts counting its validity."
+msgstr "Se guarda en Nextcloud y se registra en AeroControl, que empieza a contar su vigencia."
+
+#: .\templates\core\start.html
+msgid "It lasts up to 3 months: when to request the next one"
+msgstr "Dura hasta 3 meses: cuándo pedir el siguiente"
+
+#: .\templates\core\start.html
+msgid "Month 1"
+msgstr "Mes 1"
+
+#: .\templates\core\start.html
+msgid "flying"
+msgstr "se vuela"
+
+#: .\templates\core\start.html
+msgid "Month 2"
+msgstr "Mes 2"
+
+#: .\templates\core\start.html
+msgid "Month 3"
+msgstr "Mes 3"
+
+#: .\templates\core\start.html
+msgid "request the renewal 2 weeks before expiry"
+msgstr "pedir la renovación 2 semanas antes de vencer"
+
+#: .\templates\core\start.html
+msgid "Expired permit"
+msgstr "Permiso vencido"
+
+#: .\templates\core\start.html
+msgid "no flying"
+msgstr "no se vuela"
+
+#: .\templates\core\start.html
+msgid "AeroControl warns 45 and 30 days before expiry. Example: if the permit expires on 31 May, the ADC re-sends the letter and the renewal is requested by 17 May at the latest."
+msgstr "AeroControl avisa 45 y 30 días antes del vencimiento. Ejemplo: si el permiso vence el 31 de mayo, el ADC reenvía la carta y la renovación se pide a más tardar el 17 de mayo."
+
+#: .\templates\core\start.html
+msgid "Changed the operator or the aircraft? Report it before flying: the permit may need to be updated."
+msgstr "¿Cambió el operador o el dron? Hay que avisar antes de volar: puede requerir actualizar el permiso."
+
+#: .\templates\core\start.html
+msgid "New contract: when can it fly?"
+msgstr "Contrato nuevo: ¿cuándo se puede volar?"
+
+#: .\templates\core\start.html
+msgid "From award to first flight: 2 to 4 weeks"
+msgstr "De la adjudicación al primer vuelo: 2 a 4 semanas"
+
+#: .\templates\core\start.html
+msgid "Day 1: the ADC requests"
+msgstr "Día 1: el ADC pide"
+
+#: .\templates\core\start.html
+msgid "Client letter, KMZ of the area and the operators' details."
+msgstr "Carta del mandante, KMZ del área y datos de los operadores."
+
+#: .\templates\core\start.html
+msgid "Week 1: site folder"
+msgstr "Semana 1: carpeta de la faena"
+
+#: .\templates\core\start.html
+msgid "IT and the Head of Air Safety open the Nextcloud folder."
+msgstr "TI y el Jefe de Seguridad Aérea abren la carpeta en Nextcloud."
+
+#: .\templates\core\start.html
+msgid "Operators onboarded"
+msgstr "Operadores incorporados"
+
+#: .\templates\core\start.html
+msgid "With their credential in force; training is optional."
+msgstr "Con su credencial vigente; la capacitación es opcional."
+
+#: .\templates\core\start.html
+#: .\apps\core\start_guide.py
+msgid "DGAC permit"
+msgstr "Permiso DGAC"
+
+#: .\templates\core\start.html
+msgid "5 business days once the client's letter is in."
+msgstr "5 días hábiles desde que llega la carta del mandante."
+
+#: .\templates\core\start.html
+msgid "First flight"
+msgstr "Primer vuelo"
+
+#: .\templates\core\start.html
+msgid "Between week 2 and week 4."
+msgstr "Entre la semana 2 y la 4."
+
+#: .\templates\core\start.html
+msgid "The client's letter is the bottleneck: if it is one week late, the permit and the first flight are one week late too."
+msgstr "La carta del mandante es el cuello de botella: si se atrasa una semana, el permiso y el primer vuelo también se corren una semana."
+
+#: .\templates\core\start.html
+msgid "1 to 2 weeks; up to 4 with training"
+msgstr "1 a 2 semanas; hasta 4 con capacitación"
+
+#: .\templates\core\start.html
+msgid "Send the DGAC credential in force"
+msgstr "Enviar la credencial DGAC vigente"
+
+#: .\templates\core\start.html
+msgid "1 day. It is mandatory and must be enabled for the model being flown."
+msgstr "1 día. Es obligatoria y tiene que estar habilitada para el modelo que se vuela."
+
+#: .\templates\core\start.html
+msgid "Training on the RPA model"
+msgstr "Capacitación en el modelo de RPA"
+
+#: .\templates\core\start.html
+msgid "Optional and recommended, through the distributor's training portals."
+msgstr "Opcional y recomendada, en los portales de capacitación del distribuidor."
+
+#: .\templates\core\start.html
+msgid "Added to the Operations Manual and the SIGO permit"
+msgstr "Se agrega al Manual de Operaciones y al permiso SIGO"
+
+#: .\templates\core\start.html
+msgid "1 to 2 weeks."
+msgstr "1 a 2 semanas."
+
+#: .\templates\core\start.html
+msgid "2 to 4 weeks, depending on the diagnosis"
+msgstr "2 a 4 semanas, según el diagnóstico"
+
+#: .\templates\core\start.html
+msgid "The ADC coordinates with the supplier"
+msgstr "El ADC coordina con el proveedor"
+
+#: .\templates\core\start.html
+msgid "And reports that the aircraft goes out of service."
+msgstr "Y avisa que el dron sale de servicio."
+
+#: .\templates\core\start.html
+msgid "Equipment diagnosis"
+msgstr "Diagnóstico del equipo"
+
+#: .\templates\core\start.html
+msgid "Maintenance or repair according to the diagnosis"
+msgstr "Mantención o reparación según el diagnóstico"
+
+#: .\templates\core\start.html
+msgid "Technical report filed"
+msgstr "Informe técnico archivado"
+
+#: .\templates\core\start.html
+msgid "And the aircraft returns to the site."
+msgstr "Y el dron vuelve a la faena."
+
+#: .\templates\core\start.html
+msgid "Coordinate maintenance one month ahead. If the service cannot stop, ask the Head of Air Safety for a backup aircraft."
+msgstr "La mantención se coordina con un mes de anticipación. Si el servicio no puede parar, se pide un dron de respaldo al Jefe de Seguridad Aérea."
+
+#: .\templates\core\start.html
+msgid "Did the aircraft crash or get damaged?"
+msgstr "¿Se cayó o se dañó el dron?"
+
+#: .\templates\core\start.html
+msgid "Stop the flight and secure the area. Phone the ADC and the specialist."
+msgstr "Detener el vuelo y asegurar el área. Avisar por teléfono al ADC y al especialista."
+
+#: .\templates\core\start.html
+msgid "Within 1 hour"
+msgstr "En 1 hora"
+
+#: .\templates\core\start.html
+msgid "The ADC notifies operations management, the Head of Air Safety and the Air Operations Manager."
+msgstr "El ADC avisa a la gerencia de operaciones, al Jefe de Seguridad Aérea y al Gerente de Operaciones Aéreas."
+
+#: .\templates\core\start.html
+msgid "Within 24 hours"
+msgstr "En 24 horas"
+
+#: .\templates\core\start.html
+msgid "Written report. The Head of Air Safety assesses notifying the DGAC and informs Risk Management."
+msgstr "Reporte escrito. El Jefe de Seguridad Aérea evalúa el aviso a la DGAC e informa a la Gerencia de Riesgo."
+
+#: .\templates\core\start.html
+msgid "Operator and Head of Air Safety"
+msgstr "Operador y Jefe de Seguridad Aérea"
+
+#: .\templates\core\start.html
+msgid "Within 5 days"
+msgstr "En 5 días"
+
+#: .\templates\core\start.html
+msgid "Preliminary analysis and documents in Nextcloud: logbook, photos and what happened."
+msgstr "Análisis preliminar y documentos en Nextcloud: bitácora, fotos y qué pasó."
+
+#: .\templates\core\start.html
+msgid "Specialist"
+msgstr "Especialista"
+
+#: .\templates\core\start.html
+msgid "Do not move or repair the aircraft"
+msgstr "No mover ni reparar el dron"
+
+#: .\templates\core\start.html
+msgid "Do not fly that aircraft again"
+msgstr "No volver a volar ese equipo"
+
+#: .\templates\core\start.html
+msgid "Do not erase the SD card or the photos"
+msgstr "No borrar la tarjeta SD ni las fotos"
+
+#: .\templates\core\start.html
+msgid "An incident is not only the site's: the DGAC assesses the whole company as an operator. Reporting in time protects the RPA operation of every contract."
+msgstr "Un incidente no es sólo de la faena: la DGAC evalúa a toda la compañía como operador. Avisar a tiempo protege la operación RPA de todos los contratos."
+
+#: .\templates\core\start.html
+msgid "The expiry traffic light"
+msgstr "El semáforo de vencimientos"
+
+#: .\templates\core\start.html
+msgid "Every document, credential and permit is marked with the same three states throughout AeroControl. The word and the shape say it as well as the colour."
+msgstr "Cada documento, credencial y permiso se marca con los mismos tres estados en todo AeroControl. La palabra y la forma lo dicen tanto como el color."
+
+#: .\templates\core\start.html
+msgid "Green"
+msgstr "Verde"
+
+#: .\templates\core\start.html
+msgid "More than 1 month in force."
+msgstr "Más de 1 mes de vigencia."
+
+#: .\templates\core\start.html
+msgid "Amber"
+msgstr "Amarillo"
+
+#: .\templates\core\start.html
+msgid "Expires in less than 1 month: start the renewal."
+msgstr "Vence en menos de 1 mes: hay que iniciar la renovación."
+
+#: .\templates\core\start.html
+#: .\templates\dashboard\index.html
+#: .\apps\core\navigation.py
+msgid "Red"
+msgstr "Rojo"
+
+#: .\templates\core\start.html
+msgid "Expired: no flying."
+msgstr "Vencido: no se vuela."
+
+#: .\templates\core\start.html
+msgid "What is reviewed and how often"
+msgstr "Qué se revisa y cada cuánto"
+
+#: .\templates\core\start.html
+msgid "Each flight"
+msgstr "Cada vuelo"
+
+#: .\templates\core\start.html
+msgid "Checklist and inspection; signed logbook, uploaded within 2 days."
+msgstr "Check list e inspección; bitácora firmada, subida dentro de 2 días."
+
+#: .\templates\core\start.html
+msgid "Each month"
+msgstr "Cada mes"
+
+#: .\templates\core\start.html
+msgid "Review permits, insurance and credentials; monthly RPA report in the first week."
+msgstr "Revisar permisos, seguros y credenciales; informe mensual RPA en la primera semana."
+
+#: .\templates\core\start.html
+msgid "Every 3 months"
+msgstr "Cada 3 meses"
+
+#: .\templates\core\start.html
+msgid "Renew the DGAC permit, requested 2 weeks before."
+msgstr "Renovar el permiso DGAC, pedido 2 semanas antes."
+
+#: .\templates\core\start.html
+msgid "Every 6 to 12 months"
+msgstr "Cada 6 a 12 meses"
+
+#: .\templates\core\start.html
+msgid "Preventive maintenance, coordinated 1 month before."
+msgstr "Mantención preventiva, coordinada 1 mes antes."
+
+#: .\templates\core\start.html
+msgid "Every year"
+msgstr "Cada año"
+
+#: .\templates\core\start.html
+msgid "Renew the JAC insurance and check the credentials per RPA model, 2 months before."
+msgstr "Renovar el seguro JAC y revisar las credenciales por modelo de RPA, 2 meses antes."
+
+#: .\templates\core\start.html
+msgid "Contract administrator (ADC)"
+msgstr "Administrador de Contrato (ADC)"
+
+#: .\templates\core\start.html
+msgid "Requests the aircraft and the client's letter."
+msgstr "Pedir el dron y la carta del mandante."
+
+#: .\templates\core\start.html
+msgid "Appoints the specialist and the operators."
+msgstr "Designar al especialista y a los operadores."
+
+#: .\templates\core\start.html
+msgid "Returns the aircraft when the contract ends."
+msgstr "Devolver el dron al cierre del contrato."
+
+#: .\templates\core\start.html
+msgid "Site document specialist"
+msgstr "Especialista documental del CC"
+
+#: .\templates\core\start.html
+msgid "Uploads every document."
+msgstr "Subir todos los documentos."
+
+#: .\templates\core\start.html
+msgid "Tracks the validity of insurance, credentials and permit."
+msgstr "Controlar la vigencia del seguro, las credenciales y el permiso."
+
+#: .\templates\core\start.html
+msgid "Reports changes and incidents."
+msgstr "Avisar cambios e incidentes."
+
+#: .\templates\core\start.html
+msgid "RPA operator"
+msgstr "Operador RPA"
+
+#: .\templates\core\start.html
+msgid "Keeps the credential in force."
+msgstr "Mantener su credencial vigente."
+
+#: .\templates\core\start.html
+msgid "Flies safely and fills in the logbook."
+msgstr "Volar seguro y llenar la bitácora."
+
+#: .\templates\core\start.html
+msgid "Reports incidents immediately."
+msgstr "Avisar los incidentes de inmediato."
+
+#: .\templates\core\start.html
+msgid "Head of Air Safety"
+msgstr "Jefe de Seguridad Aérea"
+
+#: .\templates\core\start.html
+msgid "Hands over the aircraft with its papers up to date."
+msgstr "Entregar el dron con los papeles al día."
+
+#: .\templates\core\start.html
+msgid "Processes DGAC permits in SIGO."
+msgstr "Tramitar los permisos DGAC en SIGO."
+
+#: .\templates\core\start.html
+msgid "Manages incidents."
+msgstr "Gestionar los incidentes."
+
+#: .\templates\core\start.html
+msgid "Air Operations Manager (DGAC)"
+msgstr "Gerente de Operaciones Aéreas (DGAC)"
+
+#: .\templates\core\start.html
+msgid "Official contact with the DGAC."
+msgstr "Contacto oficial con la DGAC."
+
+#: .\templates\core\start.html
+msgid "Oversees compliance."
+msgstr "Supervisar el cumplimiento."
+
+#: .\templates\core\start.html
+msgid "Issues the monthly report."
+msgstr "Emitir el informe mensual."
+
+#: .\templates\core\start.html
+msgid "Digital Surveying (head office)"
+msgstr "Levantamientos Digitales (casa matriz)"
+
+#: .\templates\core\start.html
+msgid "Defines which aircraft each service uses."
+msgstr "Definir qué dron se usa en cada servicio."
+
+#: .\templates\core\start.html
+msgid "Validates the equipment technically."
+msgstr "Validar técnicamente los equipos."
+
+#: .\templates\core\start.html
+msgid "Go to AeroControl"
+msgstr "Ir a AeroControl"
+
+#: .\templates\core\start.html
+msgid "Based on the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for reference."
+msgstr "Basado en la guía visual JEJ-GRI-SS-INS-096 Rev. 0. Tiempos referenciales."
+
+#: .\templates\core\start.html
+msgid "On this page"
+msgstr "En esta página"
+
+#: .\templates\core\start.html
+msgid "What must not be done"
+msgstr "Lo que no se hace"
+
+#: .\templates\dashboard\index.html
+msgid "New to AeroControl?"
+msgstr "¿Recién llega a AeroControl?"
+
+#: .\templates\dashboard\index.html
+msgid "See what it is for, what each flight requires and the process step by step."
+msgstr "Qué busca, qué requiere cada vuelo y el proceso paso a paso."
+
+#: .\templates\dashboard\index.html
+msgid "Hide this card"
+msgstr "Ocultar esta tarjeta"
+
+#: .\apps\core\start_guide.py
+msgid "DGAC permits by site, with their validity."
+msgstr "Permisos DGAC por faena, con su vigencia."
+
+#: .\apps\core\start_guide.py
+msgid "The fleet, its documents and its status."
+msgstr "La flota, sus documentos y su estado."
+
+#: .\apps\core\start_guide.py
+msgid "Pilots, credentials and ratings per model."
+msgstr "Pilotos, credenciales y habilitaciones por modelo."
+
+#: .\apps\core\start_guide.py
+msgid "Insurance, manuals and company certificates."
+msgstr "Seguros, manuales y certificados de la empresa."
+
+#: .\apps\core\start_guide.py
+msgid "Services, repairs and technical reports."
+msgstr "Servicios, reparaciones e informes técnicos."
+
+#: .\apps\core\start_guide.py
+msgid "What is in force, what is about to expire and what already did."
+msgstr "Lo vigente, lo que está por vencer y lo que ya venció."
+
+#: .\templates\core\start.html
+msgid "Incident"
+msgstr "Incidente"

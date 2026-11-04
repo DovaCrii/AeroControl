@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% comment %}LV-398 · «Cómo funciona»: qué busca AeroControl, qué se requiere para volar, el proceso, el
+semáforo de vencimientos y quién hace qué. Es el resumen de la guía visual JEJ-GRI-SS-INS-096 (Rev. 0) y
+no lee datos de dominio (ver `StartView`). Todo funciona sin JS: los requisitos son `<details>` y los
+procesos son pestañas hechas con radios (la flecha cambia de pestaña, cada `<label>` nombra su radio); sin
+CSS se ve todo seguido. Los enlaces a pantallas reales llegan filtrados por permiso desde la vista.
+Las cadenas fuente van en inglés y sin `%(x)s` (`{% translate %}` no las traduciría).{% endcomment %}
+{% block title %}{% translate "How it works" %} - AeroControl{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/imagery.css' %}">
+<link rel="stylesheet" href="{% static 'css/start.css' %}">
+{% endblock %}
+
+{% block content %}
+<article class="st">
+  <header class="st-hero">
+    <div class="st-hero-text">
+      <div class="st-brand">
+        <img class="brand-logo brand-logo--on-light" src="{% static 'img/jej-logo-blue.webp' %}" alt="J.E.J. Ingeniería" width="150" height="65">
+        <img class="brand-logo brand-logo--on-dark" src="{% static 'img/jej-logo-white.webp' %}" alt="J.E.J. Ingeniería" width="150" height="65">
+      </div>
+      {% comment %}El rótulo, el título y la entrada salen del parcial de encabezado (UX-04), como en el resto
+      de la aplicación; `start.css` sólo los agranda dentro de la cabecera.{% endcomment %}
+      {% translate "How AeroControl works" as page_eyebrow %}
+      {% translate "No site flies without a permit in force" as page_title %}
+      {% translate "AeroControl keeps the RPA operation of J.E.J. in compliance with the DGAC: every permit, credential, insurance policy and maintenance job with its dates, and a warning before anything expires." as page_description %}
+      {% include "generic/_page_header.html" %}
+      <nav class="st-jump" aria-label="{% translate 'On this page' %}">
+        <a href="#st-purpose">{% translate "What it is for" %}</a>
+        <a href="#st-requirements">{% translate "What a flight requires" %}</a>
+        <a href="#st-process">{% translate "The process" %}</a>
+        <a href="#st-lights">{% translate "Traffic light" %}</a>
+        <a href="#st-roles">{% translate "Who does what" %}</a>
+        <a href="#st-links">{% translate "Official links" %}</a>
+      </nav>
+    </div>
+    <div class="illus-tile st-hero-art" aria-hidden="true"><img src="{% static 'img/illustrations/fixed-wing-drone.svg' %}" alt="" width="260" height="260"></div>
+  </header>
+
+  <section class="st-section" id="st-purpose" aria-labelledby="st-purpose-title">
+    <h2 class="st-h2" id="st-purpose-title">{% translate "What AeroControl is for" %}</h2>
+    <div class="st-grid st-grid--3">
+      <div class="st-card">
+        <div class="illus-tile st-card-art" aria-hidden="true"><img src="{% static 'img/illustrations/compliance-shield.svg' %}" alt="" width="72" height="72" loading="lazy"></div>
+        <h3 class="st-h3">{% translate "No flight without a permit" %}</h3>
+        <p>{% translate "Every site needs a DGAC permit in force before its first flight. AeroControl shows which permits are in force, which are about to expire and which already did." %}</p>
+      </div>
+      <div class="st-card">
+        <div class="illus-tile st-card-art" aria-hidden="true"><img src="{% static 'img/illustrations/permit-clipboard.svg' %}" alt="" width="72" height="72" loading="lazy"></div>
+        <h3 class="st-h3">{% translate "Everything traceable" %}</h3>
+        <p>{% translate "Permits, credentials, insurance, maintenance and logbooks are kept with their dates and their evidence, ready for an audit or the monthly report." %}</p>
+      </div>
+      <div class="st-card">
+        <div class="illus-tile st-card-art" aria-hidden="true"><img src="{% static 'img/illustrations/control-tower.svg' %}" alt="" width="72" height="72" loading="lazy"></div>
+        <h3 class="st-h3">{% translate "Warnings in time" %}</h3>
+        <p>{% translate "Alerts arrive before something expires, with enough time to renew it without stopping the operation." %}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="st-section" id="st-requirements" aria-labelledby="st-requirements-title">
+    <h2 class="st-h2" id="st-requirements-title">{% translate "What a flight requires" %}</h2>
+    <p class="st-intro">{% translate "Before taking off, all of this has to be in force. Open each item to see what it means." %}</p>
+    <div class="st-req-wrap">
+      <ul class="st-reqs">
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "DGAC permit in force, in SIGO" %}</summary>
+          <p>{% translate "The Head of Air Safety processes it in SIGO. It covers an area, dates, aircraft and operators: flights stay inside what it authorises." %}</p>
+          {% with link=requirement_links.permit %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "Client letter and KMZ of the area" %}</summary>
+          <p>{% translate "The client's letter authorises the work and the KMZ draws the flight area. Without the letter the permit cannot be requested." %}</p>
+          {% with link=requirement_links.letter %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "Operator's DGAC credential" %}</summary>
+          <p>{% translate "In force and enabled for the RPA model being flown: the credential lists the models." %}</p>
+          {% with link=requirement_links.credential %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "Aircraft insurance (JAC)" %}</summary>
+          <p>{% translate "Renewed every year. It is one of the slowest steps, so it is requested two months ahead." %}</p>
+          {% with link=requirement_links.insurance %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "Maintenance up to date" %}</summary>
+          <p>{% translate "Every 6 or 12 months (or whatever the client asks for), and whenever the aircraft fails." %}</p>
+          {% with link=requirement_links.maintenance %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+        <li><details class="st-req">
+          <summary><span class="st-tick" aria-hidden="true"></span>{% translate "Logbook and checklist" %}</summary>
+          <p>{% translate "Checklist and inspection before each flight; the signed logbook is uploaded within 2 days." %}</p>
+          {% with link=requirement_links.logbook %}{% if link %}<a class="st-req-link" href="{{ link.url }}">{{ link.label }} &rarr;</a>{% endif %}{% endwith %}
+        </details></li>
+      </ul>
+      <div class="illus-tile st-req-art" aria-hidden="true"><img src="{% static 'img/illustrations/kmz-area.svg' %}" alt="" width="220" height="220" loading="lazy"></div>
+    </div>
+  </section>
+
+  <section class="st-section" id="st-process" aria-labelledby="st-process-title">
+    <h2 class="st-h2" id="st-process-title">{% translate "The process, step by step" %}</h2>
+    <p class="st-intro">{% translate "Choose a procedure. The longer it takes, the earlier it has to be requested: if one document is late, everything after it moves too." %}</p>
+    <div class="st-tabs">
+      <input class="st-tab-input" type="radio" name="st-process" id="st-tab-permit" aria-controls="st-panel-permit" checked>
+      <input class="st-tab-input" type="radio" name="st-process" id="st-tab-contract" aria-controls="st-panel-contract">
+      <input class="st-tab-input" type="radio" name="st-process" id="st-tab-operator" aria-controls="st-panel-operator">
+      <input class="st-tab-input" type="radio" name="st-process" id="st-tab-maintenance" aria-controls="st-panel-maintenance">
+      <input class="st-tab-input" type="radio" name="st-process" id="st-tab-incident" aria-controls="st-panel-incident">
+      <div class="st-tab-list">
+        <label class="st-tab" for="st-tab-permit">{% translate "Flight permit" %}<small>{% translate "5 business days" %}</small></label>
+        <label class="st-tab" for="st-tab-contract">{% translate "New contract" %}<small>{% translate "2 to 4 weeks" %}</small></label>
+        <label class="st-tab" for="st-tab-operator">{% translate "New operator" %}<small>{% translate "1 to 4 weeks" %}</small></label>
+        <label class="st-tab" for="st-tab-maintenance">{% translate "Aircraft maintenance" %}<small>{% translate "2 to 4 weeks" %}</small></label>
+        <label class="st-tab st-tab--alert" for="st-tab-incident">{% translate "Incident" %}<small>{% translate "Act now" %}</small></label>
+      </div>
+      <div class="st-panels">
+        <section class="st-panel" id="st-panel-permit" aria-labelledby="st-panel-permit-title">
+          <h3 class="st-h3" id="st-panel-permit-title">{% translate "DGAC flight permit (SIGO)" %}</h3>
+          <ol class="st-steps">
+            <li><strong>{% translate "The contract administrator (ADC) gathers and sends" %}</strong><span>{% translate "Client letter, KMZ of the flight area, aircraft serial number and licensed operators." %}</span></li>
+            <li><strong>{% translate "The Head of Air Safety processes it in SIGO" %}</strong><span>{% translate "5 business days to request and approve it." %}</span></li>
+            <li><strong>{% translate "Permit approved" %}</strong><span>{% translate "It is filed in Nextcloud and registered in AeroControl, which starts counting its validity." %}</span></li>
+          </ol>
+          <h4 class="st-h4">{% translate "It lasts up to 3 months: when to request the next one" %}</h4>
+          <ol class="st-months">
+            <li>{% translate "Month 1" %}<span>{% translate "flying" %}</span></li>
+            <li>{% translate "Month 2" %}<span>{% translate "flying" %}</span></li>
+            <li class="st-month--renew">{% translate "Month 3" %}<span>{% translate "request the renewal 2 weeks before expiry" %}</span></li>
+            <li class="st-month--off">{% translate "Expired permit" %}<span>{% translate "no flying" %}</span></li>
+          </ol>
+          <p class="st-note">{% translate "AeroControl warns 45 and 30 days before expiry. Example: if the permit expires on 31 May, the ADC re-sends the letter and the renewal is requested by 17 May at the latest." %}</p>
+          <p class="st-note st-note--warn">{% translate "Changed the operator or the aircraft? Report it before flying: the permit may need to be updated." %}</p>
+        </section>
+        <section class="st-panel" id="st-panel-contract" aria-labelledby="st-panel-contract-title">
+          <h3 class="st-h3" id="st-panel-contract-title">{% translate "New contract: when can it fly?" %}</h3>
+          <p class="st-badge">{% translate "From award to first flight: 2 to 4 weeks" %}</p>
+          <ol class="st-steps">
+            <li><strong>{% translate "Day 1: the ADC requests" %}</strong><span>{% translate "Client letter, KMZ of the area and the operators' details." %}</span></li>
+            <li><strong>{% translate "Week 1: site folder" %}</strong><span>{% translate "IT and the Head of Air Safety open the Nextcloud folder." %}</span></li>
+            <li><strong>{% translate "Operators onboarded" %}</strong><span>{% translate "With their credential in force; training is optional." %}</span></li>
+            <li><strong>{% translate "DGAC permit" %}</strong><span>{% translate "5 business days once the client's letter is in." %}</span></li>
+            <li><strong>{% translate "First flight" %}</strong><span>{% translate "Between week 2 and week 4." %}</span></li>
+          </ol>
+          <p class="st-note st-note--warn">{% translate "The client's letter is the bottleneck: if it is one week late, the permit and the first flight are one week late too." %}</p>
+        </section>
+        <section class="st-panel" id="st-panel-operator" aria-labelledby="st-panel-operator-title">
+          <h3 class="st-h3" id="st-panel-operator-title">{% translate "New operator" %}</h3>
+          <p class="st-badge">{% translate "1 to 2 weeks; up to 4 with training" %}</p>
+          <ol class="st-steps">
+            <li><strong>{% translate "Send the DGAC credential in force" %}</strong><span>{% translate "1 day. It is mandatory and must be enabled for the model being flown." %}</span></li>
+            <li><strong>{% translate "Training on the RPA model" %}</strong><span>{% translate "Optional and recommended, through the distributor's training portals." %}</span></li>
+            <li><strong>{% translate "Added to the Operations Manual and the SIGO permit" %}</strong><span>{% translate "1 to 2 weeks." %}</span></li>
+          </ol>
+        </section>
+        <section class="st-panel" id="st-panel-maintenance" aria-labelledby="st-panel-maintenance-title">
+          <h3 class="st-h3" id="st-panel-maintenance-title">{% translate "Aircraft maintenance" %}</h3>
+          <p class="st-badge">{% translate "2 to 4 weeks, depending on the diagnosis" %}</p>
+          <ol class="st-steps">
+            <li><strong>{% translate "The ADC coordinates with the supplier" %}</strong><span>{% translate "And reports that the aircraft goes out of service." %}</span></li>
+            <li><strong>{% translate "Equipment diagnosis" %}</strong></li>
+            <li><strong>{% translate "Maintenance or repair according to the diagnosis" %}</strong></li>
+            <li><strong>{% translate "Technical report filed" %}</strong><span>{% translate "And the aircraft returns to the site." %}</span></li>
+          </ol>
+          <p class="st-note st-note--warn">{% translate "Coordinate maintenance one month ahead. If the service cannot stop, ask the Head of Air Safety for a backup aircraft." %}</p>
+        </section>
+        <section class="st-panel" id="st-panel-incident" aria-labelledby="st-panel-incident-title">
+          <h3 class="st-h3" id="st-panel-incident-title">{% translate "Did the aircraft crash or get damaged?" %}</h3>
+          <ol class="st-clock">
+            <li><strong>{% translate "Now" %}</strong><span>{% translate "Stop the flight and secure the area. Phone the ADC and the specialist." %}</span><em>{% translate "Operator" %}</em></li>
+            <li><strong>{% translate "Within 1 hour" %}</strong><span>{% translate "The ADC notifies operations management, the Head of Air Safety and the Air Operations Manager." %}</span><em>ADC</em></li>
+            <li><strong>{% translate "Within 24 hours" %}</strong><span>{% translate "Written report. The Head of Air Safety assesses notifying the DGAC and informs Risk Management." %}</span><em>{% translate "Operator and Head of Air Safety" %}</em></li>
+            <li><strong>{% translate "Within 5 days" %}</strong><span>{% translate "Preliminary analysis and documents in Nextcloud: logbook, photos and what happened." %}</span><em>{% translate "Specialist" %}</em></li>
+          </ol>
+          <ul class="st-nos" aria-label="{% translate 'What must not be done' %}">
+            <li>{% translate "Do not move or repair the aircraft" %}</li>
+            <li>{% translate "Do not fly that aircraft again" %}</li>
+            <li>{% translate "Do not erase the SD card or the photos" %}</li>
+          </ul>
+          <div class="st-note st-note--art">
+            <div class="illus-tile" aria-hidden="true"><img src="{% static 'img/illustrations/helicopter.svg' %}" alt="" width="64" height="64" loading="lazy"></div>
+            <p>{% translate "An incident is not only the site's: the DGAC assesses the whole company as an operator. Reporting in time protects the RPA operation of every contract." %}</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="st-section" id="st-lights" aria-labelledby="st-lights-title">
+    <h2 class="st-h2" id="st-lights-title">{% translate "The expiry traffic light" %}</h2>
+    <p class="st-intro">{% translate "Every document, credential and permit is marked with the same three states throughout AeroControl. The word and the shape say it as well as the colour." %}</p>
+    <ul class="st-lights">
+      <li class="st-light st-light--ok"><span class="st-shape" aria-hidden="true"></span><strong>{% translate "Green" %}</strong><span>{% translate "More than 1 month in force." %}</span></li>
+      <li class="st-light st-light--warn"><span class="st-shape" aria-hidden="true"></span><strong>{% translate "Amber" %}</strong><span>{% translate "Expires in less than 1 month: start the renewal." %}</span></li>
+      <li class="st-light st-light--off"><span class="st-shape" aria-hidden="true"></span><strong>{% translate "Red" %}</strong><span>{% translate "Expired: no flying." %}</span></li>
+    </ul>
+    <div class="st-cadence-wrap">
+      <div class="illus-tile st-cadence-art" aria-hidden="true"><img src="{% static 'img/illustrations/light-aircraft.svg' %}" alt="" width="160" height="160" loading="lazy"></div>
+      <div>
+        <h3 class="st-h3">{% translate "What is reviewed and how often" %}</h3>
+        <dl class="st-cadence">
+          <div><dt>{% translate "Each flight" %}</dt><dd>{% translate "Checklist and inspection; signed logbook, uploaded within 2 days." %}</dd></div>
+          <div><dt>{% translate "Each month" %}</dt><dd>{% translate "Review permits, insurance and credentials; monthly RPA report in the first week." %}</dd></div>
+          <div><dt>{% translate "Every 3 months" %}</dt><dd>{% translate "Renew the DGAC permit, requested 2 weeks before." %}</dd></div>
+          <div><dt>{% translate "Every 6 to 12 months" %}</dt><dd>{% translate "Preventive maintenance, coordinated 1 month before." %}</dd></div>
+          <div><dt>{% translate "Every year" %}</dt><dd>{% translate "Renew the JAC insurance and check the credentials per RPA model, 2 months before." %}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="st-section" id="st-roles" aria-labelledby="st-roles-title">
+    <h2 class="st-h2" id="st-roles-title">{% translate "Who does what" %}</h2>
+    <div class="st-grid st-grid--roles">
+      <div class="st-role"><h3 class="st-h3">{% translate "Contract administrator (ADC)" %}</h3><ul><li>{% translate "Requests the aircraft and the client's letter." %}</li><li>{% translate "Appoints the specialist and the operators." %}</li><li>{% translate "Returns the aircraft when the contract ends." %}</li></ul></div>
+      <div class="st-role"><h3 class="st-h3">{% translate "Site document specialist" %}</h3><ul><li>{% translate "Uploads every document." %}</li><li>{% translate "Tracks the validity of insurance, credentials and permit." %}</li><li>{% translate "Reports changes and incidents." %}</li></ul></div>
+      <div class="st-role"><h3 class="st-h3">{% translate "RPA operator" %}</h3><ul><li>{% translate "Keeps the credential in force." %}</li><li>{% translate "Flies safely and fills in the logbook." %}</li><li>{% translate "Reports incidents immediately." %}</li></ul></div>
+      <div class="st-role"><h3 class="st-h3">{% translate "Head of Air Safety" %}</h3><ul><li>{% translate "Hands over the aircraft with its papers up to date." %}</li><li>{% translate "Processes DGAC permits in SIGO." %}</li><li>{% translate "Manages incidents." %}</li></ul></div>
+      <div class="st-role"><h3 class="st-h3">{% translate "Air Operations Manager (DGAC)" %}</h3><ul><li>{% translate "Official contact with the DGAC." %}</li><li>{% translate "Oversees compliance." %}</li><li>{% translate "Issues the monthly report." %}</li></ul></div>
+      <div class="st-role"><h3 class="st-h3">{% translate "Digital Surveying (head office)" %}</h3><ul><li>{% translate "Defines which aircraft each service uses." %}</li><li>{% translate "Validates the equipment technically." %}</li></ul></div>
+    </div>
+  </section>
+
+  <section class="st-section" id="st-links">
+    {% include "dashboard/_official_links.html" with ol_title_class="st-h2" %}
+    {% if shortcuts %}
+    <h2 class="st-h2" id="st-shortcuts-title">{% translate "Go to AeroControl" %}</h2>
+    <ul class="st-shortcuts" aria-labelledby="st-shortcuts-title">
+      {% for link in shortcuts %}
+      <li><a class="st-shortcut" data-shortcut="{{ link.key }}" href="{{ link.url }}"><svg class="st-shortcut-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg><span><strong>{{ link.label }}</strong>{% if link.description %}<small>{{ link.description }}</small>{% endif %}</span></a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
+  <p class="st-source">{% translate "Based on the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for reference." %}</p>
+</article>
+{% endblock %}
