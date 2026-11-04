@@ -431,3 +431,30 @@ class TestIntakeText:
         assert proposal.workshop_order == "TEST-00002"
         assert proposal.findings == "Ingresa con helice danada."
         assert proposal.accessories == "1 maleta, 1 control"
+
+
+class TestQuoteTotalLV417:
+    HEAD = "COTIZACION Geocom\n"
+
+    def _read(self, body):
+        return read_intake(self.HEAD + body)
+
+    def test_sub_total_is_not_taken_as_the_total(self):
+        proposal = self._read(
+            "Sub total $ 100.000\nNeto $ 100.000\nIVA $ 19.000\nTotal $ 119.000\n"
+        )
+        assert proposal.quote_total == 119000
+
+    def test_sub_total_alone_gives_no_total(self):
+        assert self._read("Sub total $ 100.000\n").quote_total is None
+
+    def test_amounts_that_do_not_add_up_leave_the_total_empty(self):
+        proposal = self._read(
+            "Sub total $ 100.000\nNeto $ 100.000\nIVA $ 19.000\nTotal $ 150.000\n"
+        )
+        assert proposal.quote_total is None
+        assert (proposal.quote_net, proposal.quote_vat) == (100000, 19000)
+
+    def test_one_peso_of_rounding_is_tolerated(self):
+        proposal = self._read("Neto $ 100.001\nIVA $ 19.000\nTotal $ 119.000\n")
+        assert proposal.quote_total == 119000
