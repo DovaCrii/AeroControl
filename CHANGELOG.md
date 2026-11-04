@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Reemplazar un documento deja una sola versión vigente (`LV-402`, `codex/reemplazo-documento-vigente`).** `DocumentReplace` da 404 si la versión ya no es vigente, la reclama con un `UPDATE` condicional (una pestaña vieja o un doble clic ya no dejan dos vigentes ni un archivo huérfano) y el documento nuevo hereda la empresa del reemplazado. Sin migración ni estáticos.
 - **Escrituras concurrentes en SQLite (`LV-403`, `codex/sqlite-escrituras-concurrentes`).** SQLite abre ahora cada transacción con `BEGIN IMMEDIATE` (`transaction_mode`), así que leer-luego-escribir ya no da «database is locked» inmediato y los folios que dependían de `select_for_update()` quedan realmente serializados; y el «último + 1» de las ocho secuencias (`AuditEvent`, historiales, `ResourceMovementLog`) se lee e inserta dentro de `transaction.atomic()`. Guardián con `ast` para que no vuelva. Sin migración ni estáticos.
 
 - **Respaldo de los documentos y retención por cantidad (`LV-401`, `codex/respaldo-documentos`).** Comando `backup_documents`: `tar.gz` completo de `DOCUMENTS_DIR` (sin `workshop-intake-pending/`) con manifiesto (archivos, bytes, `sha256`), registrado como `JobRun` y vigilado por `check_scheduled_jobs` (48 h). `backup` y `backup_documents` conservan los 14 últimos (`--keep N` / `BACKUP_KEEP`): por cantidad, nunca el más reciente, sólo con manifiesto válido. Sin migración; hay que crear el timer `aerocontrol-docbackup` en la VM (`docs/dev/ubuntu-vm-deploy.md` H.1b).
