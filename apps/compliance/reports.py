@@ -504,8 +504,10 @@ def _open_alerts(cost_center, today, user=None):
                 "entity": str(entity or "—"),
                 "entity_type": alert.entity_label,
                 "rule": alert.alert_rule.name,
-                "triggered_at": alert.triggered_at.date(),
-                "age_days": (today - alert.triggered_at.date()).days,
+                "triggered_at": timezone.localtime(alert.triggered_at).date(),
+                "age_days": (
+                    today - timezone.localtime(alert.triggered_at).date()
+                ).days,
             }
         )
     return rows
