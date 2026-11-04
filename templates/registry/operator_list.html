@@ -1,7 +1,7 @@
 {% extends "generic/list.html" %}
 {% load aero_tags i18n static %}
 
-{% block extrahead %}<link rel="stylesheet" href="{% static 'css/operators.css' %}">{% endblock %}
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/operators.css' %}"><link rel="stylesheet" href="{% static 'css/expiry-band.css' %}">{% endblock %}
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'operator-import' %}">{% translate "Import" %}</a>{% endblock %}
 

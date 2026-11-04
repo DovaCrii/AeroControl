@@ -93,7 +93,9 @@ class Command(BaseCommand):
                 "entity": str(alert.content_object or _("Record unavailable")),
                 "rule": alert.alert_rule.name,
                 "resolved_on": (
-                    alert.resolved_at.date().isoformat() if alert.resolved_at else "—"
+                    timezone.localtime(alert.resolved_at).date().isoformat()
+                    if alert.resolved_at
+                    else "—"
                 ),
                 # The reason is the whole point of the follow-up: the reader has
                 # to judge whether *that* action can be expected to have held.
@@ -115,7 +117,9 @@ class Command(BaseCommand):
                 "entity": finding.title,
                 "rule": finding.get_source_display(),
                 "resolved_on": (
-                    finding.closed_at.date().isoformat() if finding.closed_at else "—"
+                    timezone.localtime(finding.closed_at).date().isoformat()
+                    if finding.closed_at
+                    else "—"
                 ),
                 "reason": finding.corrective_action or "—",
             }
