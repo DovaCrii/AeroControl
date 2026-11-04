@@ -17,6 +17,7 @@ from apps.registry.models import (
 )
 from apps.workboard.models import KanbanTask
 from .models import Alert, AlertRule
+from .views import AlertList
 
 
 @pytest.fixture
@@ -673,3 +674,21 @@ class TestLaEntidadLlevaASuFicha:
 
         assert aeronave.get_absolute_url() in cuerpo
         assert "RPA-5534" in cuerpo
+
+
+@pytest.mark.django_db
+def test_lv410_alert_list_page_two_by_htmx_uses_the_alert_rows(qualification):
+    """LV-410: la página 2 por htmx devolvía las filas genéricas (otras columnas)."""
+    for _ in range(26):
+        _alert_for(qualification)
+    User.objects.create_superuser("admin", "a@test.com", "password")
+    client = Client()
+    assert client.login(username="admin", password="password")
+
+    response = client.get(
+        reverse("alert-list"), {"page": 2, "resolved": "all"}, HTTP_HX_REQUEST="true"
+    )
+
+    assert response.status_code == 200
+    assert AlertList.htmx_template_name in [t.name for t in response.templates]
+    assert "generic/_table_body.html" not in [t.name for t in response.templates]
