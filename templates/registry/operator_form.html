@@ -1,0 +1,37 @@
+{% extends "generic/form.html" %}
+{% load i18n %}
+
+{% block form_top %}
+{% comment %}LV-405: cargar la credencial al dar de alta. Va **fuera** del formulario
+principal (no se anidan formularios) y sólo con permiso de subir documentos. La lectura
+es una propuesta: el alta sale prellenada y se confirma con «Save».{% endcomment %}
+{% if can_upload_credential %}
+<section class="card p-3 mb-3" id="credential-intake" aria-labelledby="credential-intake-title">
+  <h2 class="h6 mb-1" id="credential-intake-title">{% translate "Upload the DGAC credential (PDF)" %}</h2>
+  {% if credential_token %}
+  {% if credential_unreadable %}
+  <p class="small mb-2" role="status" data-credential-unreadable>ⓘ {% translate "The file could not be read; fill in the form by hand. The file will still be attached when you save." %}</p>
+  {% else %}
+  <p class="small mb-1" role="status" data-credential-read>ⓘ {% translate "The credential was read and the form was filled in with what was found. Check each value against the paper before saving." %}</p>
+  {% if credential_read %}<p class="small text-body-secondary mb-1">{% translate "Read from the file" %}: {{ credential_read|join:", " }}.</p>{% endif %}
+  {% if credential_doubtful %}<p class="small mb-1" data-credential-doubtful>▲ {% translate "Doubtful, check these" %}: {{ credential_doubtful|join:", " }}.</p>{% endif %}
+  {% endif %}
+  <p class="small text-body-secondary mb-2">{% translate "The file is attached to the operator when you save." %}</p>
+  <form method="post" action="{% url 'operator-credential-intake-cancel' %}" class="d-inline">
+    {% csrf_token %}
+    <input type="hidden" name="token" value="{{ credential_token }}">
+    <button type="submit" class="btn btn-outline-secondary btn-sm">{% translate "Discard credential" %}</button>
+  </form>
+  {% else %}
+  <p class="text-body-secondary small mb-2">{% translate "It is read and the form is filled in for you to check. Nothing is saved until you press Save." %}</p>
+  <form method="post" enctype="multipart/form-data" action="{% url 'operator-credential-intake' %}" class="d-flex flex-wrap gap-2 align-items-center">
+    {% csrf_token %}
+    <input class="form-control w-auto" type="file" name="file" accept=".pdf" required aria-label="{% translate 'DGAC credential file' %}">
+    <button type="submit" class="btn btn-primary btn-upload">{% translate "Upload credential" %}</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
+
+{% block form_hidden %}{% if credential_token %}<input type="hidden" name="credential_token" value="{{ credential_token }}">{% endif %}{% endblock %}
