@@ -132,11 +132,12 @@ def test_sites_and_movements_hold_where_each_thing_is(groups):
 
 def test_the_menu_keeps_exactly_the_same_destinations(groups):
     """F2 reagrupa y renombra; **no suma ni quita** un destino. Son los
-    veinticuatro de siempre (entre ellos, «Entorno»)."""
+    veinticuatro de siempre (entre ellos, «Entorno»), más «Cómo funciona», que
+    LV-398 sumó al bloque de arriba a propósito."""
     everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
     everything |= set().union(*groups.values())
 
-    assert len(everything) == 24
+    assert len(everything) == 25
 
 
 def test_no_menu_row_is_left_outside_a_group(markup, groups):
@@ -152,11 +153,12 @@ def test_no_menu_row_is_left_outside_a_group(markup, groups):
     everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
     grouped = set().union(*groups.values())
     # Fuera de grupo sólo el bloque sin título de arriba (panel, bandeja y
-    # alertas, LV-381 F2) y el pie de administración.
+    # alertas, LV-381 F2; «Cómo funciona», LV-398) y el pie de administración.
     assert everything == {
         "dashboard",
         "work-tray",
         "alert-list",
+        "start",
         "administration",
         "admin:index",
     }

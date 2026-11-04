@@ -80,13 +80,17 @@ def test_the_roles_are_the_ones_that_bootstrap_creates(roles):
 
 
 @pytest.mark.django_db
-def test_a_user_without_permissions_sees_only_the_dashboard_and_the_work_tray(roles):
+def test_a_user_without_permissions_sees_only_the_pages_without_a_model(roles):
     """El panel y la bandeja sólo piden iniciar sesión (cada fuente de la bandeja
-    se gatea sola). Todo lo demás exige un permiso."""
+    se gatea sola); «Cómo funciona» (LV-398) no lee datos de dominio. Todo lo demás exige un permiso."""
     client = _client_for()
     body = client.get(reverse("dashboard")).content.decode()
 
-    assert _menu_hrefs(body) == [reverse("dashboard"), reverse("work-tray")]
+    assert _menu_hrefs(body) == [
+        reverse("dashboard"),
+        reverse("work-tray"),
+        reverse("start"),
+    ]
 
 
 @pytest.mark.django_db

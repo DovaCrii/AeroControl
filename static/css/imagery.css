@@ -28,3 +28,27 @@
     background: linear-gradient(160deg, #0d1c3a, #070f20);
   }
 }
+
+/* LV-398: el logo oficial de J.E.J. en par, uno por tema. El azul va sobre fondos claros y el
+   blanco sobre fondos oscuros; la regla sigue el atributo `data-theme` que pone `theme-init.js`
+   (no `prefers-color-scheme`, que no se entera del botón de tema). Los dos llevan el mismo `alt`:
+   el que no corresponde sale con `display: none`, que también lo saca del árbol de accesibilidad. */
+.brand-logo--on-dark { display: none; }
+[data-theme="dark"] .brand-logo--on-dark { display: inline-block; }
+[data-theme="dark"] .brand-logo--on-light { display: none; }
+
+/* Panel de marca del inicio de sesión (siempre azul marino): el logo blanco, al pie del texto. */
+.showcase-jej {
+  display: block;
+  width: 132px;
+  height: auto;
+  margin-top: 2rem;
+  opacity: 0.92;
+}
+
+/* Pie de la tarjeta de acceso: el logo junto al rótulo de sistema interno. */
+.login-footer-brand img {
+  width: 96px;
+  height: auto;
+  margin-bottom: 0.35rem;
+}

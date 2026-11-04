@@ -32,6 +32,8 @@
           <li><span class="pt-ico"><svg class="nav-icon"><use href="{% static 'img/icons.svg' %}#icon-aircraft-list"/></svg></span><span>{% translate "Fleet, operators and qualifications up to date" %}</span></li>
           <li><span class="pt-ico"><svg class="nav-icon"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg></span><span>{% translate "Alerts before anything expires" %}</span></li>
         </ul>
+        {% comment %}LV-398: el logo oficial de J.E.J., blanco sobre el panel azul marino. Decorativo (el panel es `aria-hidden`).{% endcomment %}
+        <img class="showcase-jej" src="{% static 'img/jej-logo-white.webp' %}" alt="" width="132" height="57">
       </div>
       <div class="illus-tile showcase-art"><img src="{% static 'img/illustrations/drone-scan.svg' %}" alt="" width="360" height="360" loading="lazy"></div>
     </aside>
@@ -85,7 +87,14 @@
         {% endif %}
       </div>
 
-      <div class="login-footer">{% translate "Internal system" %} · J.E.J. Ingeniería S.A.</div>
+      {% comment %}LV-398: el logo oficial en lugar de la razón social escrita; uno por tema (`imagery.css`), con la razón social en el `alt`.{% endcomment %}
+      <div class="login-footer">
+        <div class="login-footer-brand">
+          <img class="brand-logo brand-logo--on-light" src="{% static 'img/jej-logo-blue.webp' %}" alt="J.E.J. Ingeniería S.A." width="96" height="41">
+          <img class="brand-logo brand-logo--on-dark" src="{% static 'img/jej-logo-white.webp' %}" alt="J.E.J. Ingeniería S.A." width="96" height="41">
+        </div>
+        {% translate "Internal system" %}
+      </div>
     </div>
     </div>
   </div>

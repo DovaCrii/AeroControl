@@ -69,6 +69,11 @@ LOGIN_ONLY = {
     "django.contrib.auth.views.PasswordChangeDoneView": (
         "la confirmación de ese cambio: sólo muestra un mensaje."
     ),
+    "apps.core.views.StartView": (
+        "`LV-398`: «Cómo funciona» no lee ningún modelo (es la guía INS-096, igual "
+        "para todos); los enlaces a pantallas reales se ofrecen sólo con los permisos "
+        "de su vista (`apps/core/start_guide.py`)."
+    ),
     "apps.core.views.WorkTrayView": (
         "la bandeja cruza cuatro modelos y no tiene uno propio; **cada fuente se "
         "lee sólo si quien mira puede verla** (`tray.SOURCES`). No resuelve nada."
