@@ -312,9 +312,10 @@ def node_run(snapshot):
         capture_output=True,
         text=True,
         cwd=ROOT,
-        timeout=60,
-        check=True,
+        timeout=180,  # bajo carga (otro gate en paralelo) 60 s no alcanzaba (LV-414)
+        check=False,
     )
+    assert result.returncode == 0, result.stderr[-2000:]
     return json.loads(result.stdout)
 
 
