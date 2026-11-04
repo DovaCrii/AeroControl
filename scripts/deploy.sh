@@ -75,8 +75,10 @@ fail() {
     echo "Rollback sugerido (NO se ejecuta; revisar antes):"
     echo "  cd ${ROOT} && git checkout ${OLD} && sudo systemctl restart ${SERVICE}"
     if [[ "${MIGRATE_STARTED}" == "1" ]]; then
-      echo "  y, como se corrio migrate, restaurar el respaldo previo:"
+      echo "  y, como se corrio migrate, restaurar el respaldo previo con el servicio detenido:"
+      echo "  sudo systemctl stop ${SERVICE}"
       echo "  manage.py restore_backup <respaldo> <destino>  (con --force solo si se decide)"
+      echo "  sudo systemctl start ${SERVICE}"
     fi
     echo "Volver a main el MISMO dia: git checkout main && git pull --ff-only"
   else
