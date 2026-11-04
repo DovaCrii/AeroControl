@@ -651,10 +651,13 @@ class InsuranceHistory(BaseModel):
         return f"{self.aircraft}: {self.previous_status} → {self.new_status}"
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = InsuranceHistory.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = InsuranceHistory.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 class Battery(BaseModel):
@@ -2002,14 +2005,13 @@ class ResourceMovementLog(BaseModel):
     def save(self, *args, **kwargs):
         if not self._state.adding:
             raise ValidationError("ResourceMovementLog records are append-only.")
-        # No uniqueness is enforced on this value: a rare race between two
-        # concurrent writers computing the same "latest + 1" just means two
-        # rows tie, no worse than the wall-clock collision this replaces, and
-        # this app's write volume for movement events is low (docs/postgresql-
-        # readiness.md: single-writer scale until real concurrency arrives).
-        latest = ResourceMovementLog.objects.order_by("-sequence").first()
-        self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # No uniqueness is enforced on this value (LV-403 did not add one): the
+        # read of "latest + 1" and the insert share one write transaction, which
+        # on SQLite (`transaction_mode=IMMEDIATE`) serialises concurrent writers.
+        with transaction.atomic():
+            latest = ResourceMovementLog.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         raise ValidationError("ResourceMovementLog records are append-only.")
