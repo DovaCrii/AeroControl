@@ -254,6 +254,7 @@ class DeliverableList(ComplianceList):
     """R7.4: survey deliverables and their quality verdict (ISO 9001 8.6)."""
 
     model = Deliverable
+    htmx_template_name = "compliance/_deliverable_rows.html"
     template_name = "compliance/deliverable_list.html"
     search_fields = ["title", "cost_center__code", "cost_center__name"]
     tenant_scope = COST_CENTER_TENANT_PATH
@@ -462,6 +463,7 @@ class NonConformityList(ComplianceList):
     """R7.6: reflights, rejected surveys, incidents and audit findings."""
 
     model = NonConformity
+    htmx_template_name = "compliance/_nonconformity_rows.html"
     template_name = "compliance/nonconformity_list.html"
     search_fields = ["title", "description", "root_cause"]
     tenant_scope = COST_CENTER_TENANT_PATH
@@ -1494,6 +1496,8 @@ def _tenant_alerts(user):
 class AlertList(ComplianceList):
     model = Alert
     template_name = "compliance/alert_list.html"
+    # LV-410: sin esto, la página 2 / búsqueda / orden por htmx caía en las filas genéricas.
+    htmx_template_name = "compliance/_alert_rows.html"
     search_fields = ["message"]
     # UX-07: qué columnas ordenan, declarado acá y no en la plantilla. La lista
     # es una **lista blanca**: `?sort=` viene de la URL y termina en `order_by`,
