@@ -159,6 +159,7 @@ def _receipt_type():
     from apps.compliance.management.commands.seed_document_types import (
         DOCUMENT_TYPE_GUIDE,
         DOCUMENT_TYPES,
+        requires_issue_date,
     )
 
     (_code, name, requires_expiry, is_insurance, is_record, category) = next(
@@ -170,6 +171,7 @@ def _receipt_type():
         defaults={
             "name": name,
             "requires_expiry": requires_expiry,
+            "requires_issue_date": requires_issue_date(RECEIPT_TYPE_CODE),
             "is_insurance": is_insurance,
             "is_operational_record": is_record,
             "category": category,
