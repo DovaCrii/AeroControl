@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **LV-395 restaurado (`LV-409`, `codex/restaurar-lv395`).** El PR de los banners (#214) había borrado sin avisar la fecha de emisión opcional, la migración `compliance 0029` y el color de subida; vuelven tal cual. Sin migración nueva; lleva estáticos.
+
 - **Agente `auditor-remediacion` versionado (`LV-407`, `codex/auditor-veredicto`).** `.gitignore` deja de ignorar `.claude/agents/` (el agente de LV-400 nunca había llegado al repo). Cada hallazgo de auditoría cierra con veredicto `verified`/`partial`/`failed`, y las decisiones del usuario se marcan `[NEEDS CLARIFICATION: …]`, también en `openspec/config.yaml`.
 - **Reemplazar un documento deja una sola versión vigente (`LV-402`, `codex/reemplazo-documento-vigente`).** `DocumentReplace` da 404 si la versión ya no es vigente, la reclama con un `UPDATE` condicional (una pestaña vieja o un doble clic ya no dejan dos vigentes ni un archivo huérfano) y el documento nuevo hereda la empresa del reemplazado. Sin migración ni estáticos.
 - **Escrituras concurrentes en SQLite (`LV-403`, `codex/sqlite-escrituras-concurrentes`).** SQLite abre ahora cada transacción con `BEGIN IMMEDIATE` (`transaction_mode`), así que leer-luego-escribir ya no da «database is locked» inmediato y los folios que dependían de `select_for_update()` quedan realmente serializados; y el «último + 1» de las ocho secuencias (`AuditEvent`, historiales, `ResourceMovementLog`) se lee e inserta dentro de `transaction.atomic()`. Guardián con `ast` para que no vuelva. Sin migración ni estáticos.
