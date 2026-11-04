@@ -1879,7 +1879,7 @@ class CalendarView(CalendarAccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        today = timezone.now().date()
+        today = timezone.localdate()
         try:
             selected = datetime.strptime(
                 self.request.GET.get("month", ""), "%Y-%m"

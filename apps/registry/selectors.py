@@ -285,20 +285,25 @@ CREDENTIAL_CURRENT = "current"
 CREDENTIAL_MISSING = "missing"
 
 # Banda -> clase de la insignia. `current` no usa la escala `sev-*` (no hay verde ahí):
-# toma el «correcto» de `identity.css` (`--id-ok-*`) a través de `operators.css`, y
+# toma el «correcto» de `identity.css` (`--id-ok-*`) a través de `expiry-band.css`, y
 # `missing` es neutro: una fecha que nunca se cargó no es ni buena ni mala, es un dato
 # que falta (LV-29).
-CREDENTIAL_BAND_CSS = {
+EXPIRY_BAND_CSS = {
     CREDENTIAL_LAPSED: "sev-critical",
     CREDENTIAL_SOON: "sev-warning",
     CREDENTIAL_WARNING: "sev-advisory",
-    CREDENTIAL_CURRENT: "op-band-ok",
-    CREDENTIAL_MISSING: "op-band-none",
+    CREDENTIAL_CURRENT: "expiry-band-ok",
+    CREDENTIAL_MISSING: "expiry-band-none",
 }
 
 
-def credential_band(expiry, today):
-    """`(banda, días que quedan)` de una credencial; `días` es `None` sin fecha."""
+def expiry_band(expiry, today):
+    """`(banda, días que quedan)` de un vencimiento; `días` es `None` sin fecha.
+
+    LV-416: es la misma escala para la credencial del operador (LV-413) y para el seguro
+    JAC de la aeronave: la guía INS-096 lo avisa con dos meses de anticipación, que son
+    los 60 días de `PERMIT_WARNING_DAYS`, así que no hay un corte propio del seguro.
+    """
     from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
 
     if expiry is None:
@@ -311,6 +316,11 @@ def credential_band(expiry, today):
     if days <= PERMIT_WARNING_DAYS:
         return CREDENTIAL_WARNING, days
     return CREDENTIAL_CURRENT, days
+
+
+# Nombres de LV-413: la credencial es el primer uso de la escala y sus pruebas la importan así.
+credential_band = expiry_band
+CREDENTIAL_BAND_CSS = EXPIRY_BAND_CSS
 
 
 def filter_by_credential(queryset, key, today):
