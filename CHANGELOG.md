@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Escrituras concurrentes en SQLite (`LV-403`, `codex/sqlite-escrituras-concurrentes`).** SQLite abre ahora cada transacción con `BEGIN IMMEDIATE` (`transaction_mode`), así que leer-luego-escribir ya no da «database is locked» inmediato y los folios que dependían de `select_for_update()` quedan realmente serializados; y el «último + 1» de las ocho secuencias (`AuditEvent`, historiales, `ResourceMovementLog`) se lee e inserta dentro de `transaction.atomic()`. Guardián con `ast` para que no vuelva. Sin migración ni estáticos.
+
 - **Respaldo de los documentos y retención por cantidad (`LV-401`, `codex/respaldo-documentos`).** Comando `backup_documents`: `tar.gz` completo de `DOCUMENTS_DIR` (sin `workshop-intake-pending/`) con manifiesto (archivos, bytes, `sha256`), registrado como `JobRun` y vigilado por `check_scheduled_jobs` (48 h). `backup` y `backup_documents` conservan los 14 últimos (`--keep N` / `BACKUP_KEEP`): por cantidad, nunca el más reciente, sólo con manifiesto válido. Sin migración; hay que crear el timer `aerocontrol-docbackup` en la VM (`docs/dev/ubuntu-vm-deploy.md` H.1b).
 - **`restore_backup` ya no daña la base en WAL (`LV-400`, `codex/restore-seguro`).** Restaura con la API de respaldo de SQLite en vez de `shutil.copy2`, que dejaba el `-wal`/`-shm` anterior junto al archivo restaurado. Si el destino es la base configurada exige `--force` y avisa que hay que detener `aerocontrol` antes; el rollback de `scripts/deploy.sh` y de `docs/dev/ubuntu-vm-deploy.md` dice ahora `stop`, restaurar, `start`. Agente de proyecto `auditor-remediacion`. Sin migración ni estáticos.
 
