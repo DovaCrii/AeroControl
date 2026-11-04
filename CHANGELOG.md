@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Reemplazar un documento deja una sola versión vigente (`LV-402`, `codex/reemplazo-documento-vigente`).** `DocumentReplace` da 404 si la versión ya no es vigente, la reclama con un `UPDATE` condicional (una pestaña vieja o un doble clic ya no dejan dos vigentes ni un archivo huérfano) y el documento nuevo hereda la empresa del reemplazado. Sin migración ni estáticos.
+
 - **Página «Cómo funciona» y logos oficiales de J.E.J. (`LV-398`, `codex/pagina-inicio`).** `/inicio/` explica qué busca AeroControl, qué requiere un vuelo, el proceso (permiso SIGO, contrato nuevo, operador nuevo, mantención, incidente), el semáforo de vencimientos y quién hace qué, según la guía `JEJ-GRI-SS-INS-096`; interactiva sin JS (`<details>` y pestañas con radios), en los dos temas, con atajos sólo a las pantallas que la persona puede abrir. Entrada en el menú y tarjeta en el panel que se puede cerrar (`static/js/start-card.js`). Logos oficiales de J.E.J. en WebP, uno por tema, en «Cómo funciona» y en el acceso. Estilos en `static/css/start.css`. Sin migración; lleva `collectstatic`.
 
 - **Enlaces oficiales de la DGAC en el panel y el menú (`LV-396`, `codex/banners-dgac`).** Dos tarjetas (SIGO, SIPA) bajo el encabezado del panel y un grupo «Enlaces oficiales» en el menú lateral, con el nombre oficial y para qué sirve cada sistema. Las URL son constantes (`apps/core/official_links.py`); enlaces externos con `rel="noopener noreferrer"`; sin logos de terceros ni cambio de CSP; estilos en `static/css/official-links.css`. Sin migración; lleva `collectstatic`.

@@ -947,6 +947,9 @@ msgid "Edit deliverable"
 msgstr "Editar entregable"
 
 #: .\apps\compliance\views.py:249
+msgid "This document was already replaced by a newer version."
+msgstr "Este documento ya fue reemplazado por una versión más reciente."
+
 msgid "Only a draft deliverable can be validated."
 msgstr "Sólo un entregable en borrador puede validarse."
 
