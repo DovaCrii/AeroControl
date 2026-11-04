@@ -9,6 +9,7 @@ resumen corto), así que después se puede comprobar si realmente corrieron.
 | `generate_alerts` | Genera alertas de vencimiento y sus tareas de seguimiento en el tablero | Diario, temprano |
 | `send_alert_digest` | Envía por correo el resumen de vencimientos a cada responsable de centro de costo | Diario, después de las alertas |
 | `backup` | Crea un respaldo de la base con manifiesto y checksum | Diario, fuera de horario |
+| `backup_documents` (LV-401) | Crea un `tar.gz` completo de los **PDF de `DOCUMENTS_DIR`** con manifiesto (archivos, bytes, `sha256`); excluye `workshop-intake-pending/`. Aplica la retención: conserva los **14** últimos (`--keep N` / `BACKUP_KEEP`), por cantidad, sin borrar el más reciente ni respaldos sin manifiesto válido. `backup` aplica la misma retención a las bases. Timer `aerocontrol-docbackup`; instalarlo con `mkjob docbackup "backup_documents" "*-*-* 22:15:00"` | Diario, después de `backup` |
 | `send_executive_report` | Envía el informe ejecutivo con KPIs del período vs el anterior y el XLSX adjunto | Semanal (lunes) |
 | `notify_expiring_credentials` (opcional, LV-29) | Avisa por correo a **cada operador** de sus vigencias DGAC por vencer o ya vencidas (credencial + habilitaciones, ≤30 días) | Diario o semanal, si se quiere el aviso directo al operador |
 | `check_monthly_records` (LV-30) | El último día del mes, crea la **revisión de cumplimiento** pendiente por cada centro de costo que voló y avisa al grupo Dirección (vuelos vs registros del mes) | Diario (actúa solo el último día 28/29/30/31) |
@@ -142,8 +143,9 @@ mkjob digest "send_alert_digest"        "*-*-* 07:00:00"
 mkjob backup "backup"                   "*-*-* 22:00:00"
 mkjob watchdog "check_scheduled_jobs"   "*-*-* 09:00:00"
 mkjob verifybak "verify_backup"         "*-*-* 22:30:00"
+mkjob docbackup "backup_documents"      "*-*-* 22:15:00"
 systemctl daemon-reload
-systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer aerocontrol-watchdog.timer aerocontrol-verifybak.timer
+systemctl enable --now aerocontrol-expire.timer aerocontrol-alerts.timer aerocontrol-digest.timer aerocontrol-backup.timer aerocontrol-watchdog.timer aerocontrol-verifybak.timer aerocontrol-docbackup.timer
 '
 ```
 

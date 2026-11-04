@@ -6,8 +6,9 @@ from pathlib import Path
 
 from decouple import config
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
+from apps.core.backups import DB_PATTERN, apply_retention
 from apps.core.jobs import record_job_run
 
 
@@ -21,10 +22,27 @@ def backups_dir():
 class Command(BaseCommand):
     help = "Create a timestamped SQLite backup."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--keep",
+            type=int,
+            default=None,
+            help="Backups to keep (default: settings.BACKUP_KEEP, 14).",
+        )
+
     def handle(self, *args, **options):
+        keep = options["keep"]
+        if keep is None:
+            keep = getattr(settings, "BACKUP_KEEP", 14)
+        if keep < 1:
+            raise CommandError("--keep must be at least 1.")
         with record_job_run("backup") as run:
             destination, manifest = self._create_backup()
-            run["summary"] = f"{destination.name} ({destination.stat().st_size} bytes)"
+            removed = apply_retention(destination.parent, DB_PATTERN, keep)
+            run["summary"] = (
+                f"{destination.name} ({destination.stat().st_size} bytes)"
+                + (f"; {len(removed)} old removed" if removed else "")
+            )
         self.stdout.write(
             self.style.SUCCESS(f"Backup created: {destination} (manifest: {manifest})")
         )

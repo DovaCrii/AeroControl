@@ -335,6 +335,60 @@ Repetir periódicamente (a mano por ahora; automatizar con el Programador de
 tareas de Windows es un paso posterior, no bloqueante). Un respaldo que solo
 vive en `p340` no sobrevive a perder la VM.
 
+### H.1b — Documentos (PDF) y retención (LV-401)
+
+`backup` copia **sólo la base**. Los PDF de `DOCUMENTS_DIR`
+(`/srv/aerocontrol-data/documents`) los respalda `backup_documents`: un
+`aero_docs_<fecha>.tar.gz` completo en la misma carpeta de respaldos, con su
+manifiesto `.json` (archivos, bytes, `sha256`). Excluye `workshop-intake-pending/`
+(subidas del taller sin revisar). El timer `aerocontrol-docbackup` se crea **una
+vez** en la VM con el mismo `mkjob` de la Parte G:
+
+```bash
+sudo bash -c '
+mkjob() {  # misma función de la Parte G
+  cat >/etc/systemd/system/aerocontrol-$1.service <<EOF
+[Unit]
+Description=AeroControl $1
+After=network.target
+
+[Service]
+Type=oneshot
+User=example
+WorkingDirectory=/opt/aerocontrol
+EnvironmentFile=/etc/aerocontrol.env
+ExecStart=/home/example/.local/bin/uv run python manage.py $2
+EOF
+  cat >/etc/systemd/system/aerocontrol-$1.timer <<EOF
+[Unit]
+Description=AeroControl $1 (scheduled)
+
+[Timer]
+OnCalendar=$3
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+}
+mkjob docbackup "backup_documents" "*-*-* 22:15:00"
+systemctl daemon-reload
+systemctl enable --now aerocontrol-docbackup.timer
+'
+```
+
+**Retención por cantidad, no por antigüedad:** `backup` y `backup_documents`
+conservan los **14** últimos (`--keep N`, o `BACKUP_KEEP` en `/etc/aerocontrol.env`).
+Nunca borran el más reciente, sólo tocan archivos con su patrón
+(`aero_ops_*.sqlite3`, `aero_docs_*.tar.gz`) y **no borran un respaldo sin
+manifiesto válido**. Por cantidad porque, si un timer se cae, una retención por
+días iría vaciando la carpeta. Probar a mano:
+`uv run python manage.py backup_documents --keep 14`.
+
+Para traer los PDF a OneDrive (H.1), sumar `aero_docs_*.tar.gz` y
+`aero_docs_*.json` a los `scp`. Para recuperarlos, extraer el `.tar.gz` en la
+carpeta de documentos (comprobar antes el `sha256` contra el manifiesto).
+
 ### H.2 — Ensayo de restauración
 
 En `p340`, restaurar a una ruta de ensayo — **nunca** sobre

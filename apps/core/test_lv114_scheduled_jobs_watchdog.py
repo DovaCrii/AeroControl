@@ -22,7 +22,7 @@ from django.core.management import call_command
 from django.utils import timezone
 
 from apps.core.groups import REPORT_RECIPIENTS
-from apps.core.jobs import failing_jobs
+from apps.core.jobs import WATCHED_JOBS, failing_jobs
 from apps.core.models import JobRun
 
 NOW = timezone.now()
@@ -51,13 +51,11 @@ def _all_current():
     # LV-267: `check_client_letters` también se vigila (el escalamiento que el
     # informe promete a la DGAC).
     # LV-294: y `sync_batteries`, el espejo del inventario de AeroLink.
-    for command in (
-        "generate_alerts",
-        "send_alert_digest",
-        "backup",
-        "check_client_letters",
-        "sync_batteries",
-    ):
+    # LV-401: y `backup_documents`. La lista se deriva de `WATCHED_JOBS` en vez de
+    # teclearse: una copia a mano se desincroniza cada vez que se suma un trabajo.
+    for command in WATCHED_JOBS:
+        if command in ("send_executive_report", "generate_monthly_report"):
+            continue
         _run(command, when=NOW - timedelta(hours=2))
     _run("send_executive_report", when=NOW - timedelta(days=6))
     # LV-250: el borrador del informe mensual también se vigila. Corre el día 1, así
@@ -73,6 +71,15 @@ class TestWhatCountsAsNeedingAttention:
         rows = {row["command"]: row for row in failing_jobs()}
 
         assert rows["backup"]["never_ran"] is True
+        assert rows["backup_documents"]["never_ran"] is True
+
+    def test_a_stale_documents_backup_is_reported(self):
+        _all_current()
+        JobRun.objects.filter(command="backup_documents").update(
+            started_at=NOW - timedelta(days=5), finished_at=NOW - timedelta(days=5)
+        )
+
+        assert [row["command"] for row in failing_jobs()] == ["backup_documents"]
 
     def test_a_stale_job_is_reported(self):
         _all_current()
@@ -123,6 +130,19 @@ class TestWhatCountsAsNeedingAttention:
 
 @pytest.mark.django_db
 class TestWhoFindsOut:
+    def test_a_missed_documents_backup_is_mailed(self, direccion):
+        """LV-401: un respaldo de documentos que nadie vigila es el hueco que
+        este trabajo existe para cerrar."""
+        _all_current()
+        JobRun.objects.filter(command="backup_documents").update(
+            started_at=NOW - timedelta(days=5), finished_at=NOW - timedelta(days=5)
+        )
+
+        call_command("check_scheduled_jobs")
+
+        assert len(mail.outbox) == 1
+        assert "backup_documents" in mail.outbox[0].body
+
     def test_it_mails_direccion_when_something_needs_attention(self, direccion):
         _all_current()
         JobRun.objects.filter(command="backup").update(
@@ -173,7 +193,6 @@ def test_the_admin_panel_and_the_watchdog_read_the_same_source(direccion, client
     """Extraído de la vista a `core.jobs` justo para esto: dos copias de "qué se
     vigila" se desincronizan en silencio, y así es como un trabajo deja de estar
     vigilado sin que nadie lo note."""
-    from apps.core.jobs import WATCHED_JOBS
     from apps.core.views import AdministrationCenterView
 
     assert not hasattr(AdministrationCenterView, "WATCHED_JOBS")
