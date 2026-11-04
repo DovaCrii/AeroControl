@@ -18,10 +18,9 @@ from django.utils.translation import gettext
 from PIL import Image
 
 from apps.core import official_images as service
-from apps.core.models import AuditEvent, OfficialLinkImage
+from apps.core.models import OfficialLinkImage
 from apps.core.official_images import OfficialImageError
 from apps.core.test_lv315_identity_foundation import ROOT
-from apps.core.testing import login_as
 
 DJI = ["dji.com", "www.dji.com", "enterprise.dji.com", "dl.djicdn.com"]
 DGAC = ["dgac.gob.cl"]
@@ -274,78 +273,11 @@ class TestNormalization:
 
 def _cards(content):
     section = content.split('id="ol-banners-title"')[-1].split("</section>")[0]
-    return re.findall(r'<a class="ol-card".*?</a>', section, flags=re.S)
+    return re.findall(r'<a class="ol-card[ "].*?</a>', section, flags=re.S)
 
 
 @pytest.mark.django_db
 class TestOfficialLinkBanner:
-    def upload_url(self, key="sigo"):
-        return reverse("official-link-image-upload", args=[key])
-
-    def test_loading_needs_the_permission(self, documents_root):
-        client = login_as("view_aircraft")
-        assert client.get(self.upload_url()).status_code == 403
-        upload = SimpleUploadedFile("a.png", png_bytes(), content_type="image/png")
-        assert client.post(self.upload_url(), {"image": upload}).status_code == 403
-        assert not OfficialLinkImage.objects.exists()
-
-    def test_an_unknown_system_is_404(self):
-        client = login_as("change_officiallinkimage")
-        assert client.get(self.upload_url("other")).status_code == 404
-
-    def test_an_upload_is_stored_privately_and_audited(self, documents_root):
-        client = login_as("change_officiallinkimage")
-        upload = SimpleUploadedFile("a.png", png_bytes(), content_type="image/png")
-
-        response = client.post(self.upload_url(), {"image": upload})
-
-        assert response.status_code == 302
-        image = OfficialLinkImage.objects.get(link_key="sigo")
-        assert image.storage_key.startswith("official-images/official-links/")
-        assert (documents_root / image.storage_key).read_bytes()[8:12] == b"WEBP"
-        event = AuditEvent.objects.filter(object_id=str(image.pk)).latest("created_at")
-        assert event.action == "official_image_loaded"
-        assert event.metadata["source"] == "upload"
-
-    def test_a_dji_host_is_not_allowed_for_the_dgac_banner(
-        self, documents_root, network
-    ):
-        client = login_as("change_officiallinkimage")
-        response = client.post(
-            self.upload_url(), {"source_url": "https://www.dji.com/logo.png"}
-        )
-        assert response.status_code == 200
-        assert (
-            said(
-                "The host %(host)s is not on the list of allowed sources.",
-                host="www.dji.com",
-            )
-            in response.content.decode()
-        )
-        assert network.opened == []
-        assert not OfficialLinkImage.objects.exists()
-
-    def test_a_dgac_url_is_downloaded_and_its_host_audited(
-        self, documents_root, network
-    ):
-        client = login_as("change_officiallinkimage")
-        response = client.post(
-            self.upload_url("sipa"),
-            {"source_url": "https://sipa.dgac.gob.cl/img/logo.png"},
-        )
-        assert response.status_code == 302
-        image = OfficialLinkImage.objects.get(link_key="sipa")
-        assert image.source_host == "sipa.dgac.gob.cl"
-        event = AuditEvent.objects.filter(object_id=str(image.pk)).latest("created_at")
-        assert event.metadata["source_host"] == "sipa.dgac.gob.cl"
-
-    def test_both_or_neither_source_is_an_error(self, documents_root):
-        client = login_as("change_officiallinkimage")
-        response = client.post(self.upload_url(), {})
-        assert said("Upload a file or paste an address, one of the two.") in (
-            response.content.decode()
-        )
-
     def test_the_card_shows_the_icon_without_a_banner(self, client, django_user_model):
         user = django_user_model.objects.create_user("ol-plain", password="x")
         client.force_login(user)

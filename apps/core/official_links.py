@@ -6,8 +6,8 @@ mueve. El mismo registro alimenta las tarjetas del panel, el grupo «Enlaces ofi
 del menú lateral y (después) la página de inicio, y por eso llega por context processor.
 
 El repo no lleva logos ni capturas de la DGAC: son marcas de terceros y el repo es público.
-Desde LV-399 quien administra puede cargar el banner de cada sistema (archivo o URL de
-`dgac.gob.cl`), que se guarda en el almacenamiento privado y la app sirve con sesión, así que
+Desde LV-406 `load_official_link_images` descarga la imagen de cada sistema (`source_image_url`,
+de `dgac.gob.cl`), la guarda en el almacenamiento privado y la app la sirve con sesión, así que
 el CSP sigue admitiendo sólo imágenes propias. Los msgid van en inglés; el español vive en el
 catálogo.
 """
@@ -20,6 +20,16 @@ SIGO_URL = "https://servicios.dgac.gob.cl/sigo-web/#/"
 # Sistema Informático de Personal Aeronáutico: licencias y habilitaciones del personal.
 SIPA_URL = "https://sipa.dgac.gob.cl/"
 
+# LV-406: imagen característica de cada sitio (verificadas a mano el 2026-11-04). No van al repo
+# (material de terceros): `load_official_link_images` las descarga a `DOCUMENTS_DIR`. Si la DGAC
+# las cambia, se actualiza la constante y se corre el comando con `--force`.
+# Logo DGAC del pie del portal SIGO (PNG, ~25 KB).
+SIGO_IMAGE_URL = (
+    "https://servicios.dgac.gob.cl/sigo-web/assets/img/dgac-logotipo-footer.png"
+)
+# Cabecera oficial de SIPA (JPG 2100 x 250, con el logo DGAC y el nombre del sistema).
+SIPA_IMAGE_URL = "https://sipa.dgac.gob.cl/public/img/header.jpg"
+
 OFFICIAL_LINKS = (
     {
         "key": "sigo",
@@ -29,6 +39,7 @@ OFFICIAL_LINKS = (
             "Use it to validate RPA operating authorizations and manage DGAC flight permits."
         ),
         "url": SIGO_URL,
+        "source_image_url": SIGO_IMAGE_URL,
         "icon": "permission-list",
     },
     {
@@ -39,6 +50,7 @@ OFFICIAL_LINKS = (
             "Use it for the licenses and ratings of aeronautical personnel, and to verify licenses."
         ),
         "url": SIPA_URL,
+        "source_image_url": SIPA_IMAGE_URL,
         "icon": "operator-list",
     },
 )
