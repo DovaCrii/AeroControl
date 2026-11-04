@@ -17,6 +17,7 @@ target, so the signal is a no-op -- no fabricated movement-log entry.
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from apps.registry.models import (
     Aircraft,
@@ -55,7 +56,7 @@ class Command(BaseCommand):
                 continue
             assignment_model.objects.create(
                 status="active",
-                start_date=resource.created_at.date(),
+                start_date=timezone.localtime(resource.created_at).date(),
                 cost_center=resource.cost_center,
                 **{field: resource},
             )
