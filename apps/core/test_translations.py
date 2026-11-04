@@ -585,9 +585,32 @@ _TUTEO_THIRD_PERSON = {
 }
 _TUTEO_SENTENCE_START = re.compile(r"(?:^|[.:;¿?!·—]\s+)\W*([^\W\d_]+)")
 
+# Imperativos de tu con pronombre enclitico ("Dejalo en blanco", LV-404): la
+# forma de tu de un verbo en -ar termina en `a`+pronombre y la de un verbo en
+# -er/-ir en `e`+pronombre, y la de usted es justo la contraria ("Dejelo",
+# "Escribalo"), asi que no hay regla sin lexico: se listan las raices de los
+# verbos que el catalogo usa para dar ordenes. Un verbo nuevo que se cuele se
+# suma aqui; la raiz va con su tilde, que es lo que distingue "dejalo" de la
+# palabra comun.
+_ENCLITIC_PRONOUNS = "(?:lo|la|los|las|le|les|me|te|se|nos)"
+_TUTEO_ENCLITIC_AR = (
+    "déj|revís|cámbi|confírm|restáur|búsc|sepár|intént|límpi|desmárc|descárg|"
+    "cópi|verifíc|ús|archív|márc|cárg|guárd|actív|desactív|"
+    "compár|impórt|expórt|vincúl|desvincúl|reincorpór|renuév|"
+    "contrást|asígn|indíc|agrég|elimín"
+)
+_TUTEO_ENCLITIC_ER = "elíg|súb|escríb|corríg|ábr|reábr|resuélv|vuélv"
+_TUTEO_ENCLITIC = re.compile(
+    rf"(?<![\wáéíóúñ])(?:(?:{_TUTEO_ENCLITIC_AR})a|(?:{_TUTEO_ENCLITIC_ER})e)"
+    rf"{_ENCLITIC_PRONOUNS}(?![\wáéíóúñ])"
+)
+
 
 def _tuteo_in(msgid, msgstr):
     lowered = msgstr.lower()
+    enclitic = _TUTEO_ENCLITIC.search(lowered)
+    if enclitic:
+        return enclitic.group(0)
     for form in _TUTEO_ANYWHERE:
         if re.search(rf"(?<![\wáéíóúñ]){re.escape(form)}(?![\wáéíóúñ])", lowered):
             return form
@@ -610,6 +633,16 @@ def _tuteo_in(msgid, msgstr):
         ("La regla crea una alerta.", None),
         ("Hay 2 borradores sin terminar.", None),
         ("Suéltelos aquí.", None),
+        ("Déjalo en blanco para generarlo.", "déjalo"),
+        ("Corrígela si está mal.", "corrígela"),
+        ("Elígelo de la lista.", "elígelo"),
+        ("Súbelo de nuevo.", "súbelo"),
+        ("Revísalas antes de seguir.", "revísalas"),
+        ("Cámbialo por otro.", "cámbialo"),
+        ("Déjelo en blanco.", None),
+        ("Escríbalo con cuidado.", None),
+        ("Revíselas antes de seguir.", None),
+        ("Corríjala si está mal.", None),
     ],
 )
 def test_the_tuteo_detector_flags_what_it_should(msgstr, expected):

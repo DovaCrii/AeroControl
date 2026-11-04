@@ -775,9 +775,107 @@ class CostCenterDetail(RegistryDetail):
 _AircraftAutoList, _AircraftAutoDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )
-_OperatorAutoList, _OperatorAutoDetail, OperatorCreate, OperatorUpdate = make_views(
-    Operator, OperatorForm, "Operator"
-)
+(
+    _OperatorAutoList,
+    _OperatorAutoDetail,
+    _OperatorAutoCreate,
+    OperatorUpdate,
+) = make_views(Operator, OperatorForm, "Operator")
+
+
+class OperatorCreate(_OperatorAutoCreate):
+    """LV-405: «Nuevo: operador», con la opción de cargar la credencial DGAC (PDF).
+
+    Ver `operator_intake`: el PDF queda provisional con un token firmado, el alta sale
+    prellenada con lo leído (una propuesta) y, al guardar, el operador y su documento
+    de credencial se crean en la misma transacción. Sin token, es el alta de siempre.
+    """
+
+    template_name = "registry/operator_form.html"
+
+    def _token(self):
+        return self.request.POST.get("credential_token") or self.request.GET.get(
+            "credential", ""
+        )
+
+    def _pending(self):
+        from .operator_intake import pending_or_none
+
+        user = self.request.user
+        if not user.has_perm("compliance.add_document"):
+            return None
+        if not hasattr(self, "_pending_cache"):
+            self._pending_cache = pending_or_none(self._token(), user)
+        return self._pending_cache
+
+    def get_initial(self):
+        from .operator_intake import initial_from
+
+        initial = super().get_initial()
+        pending = self._pending()
+        if pending is not None and self.request.method == "GET":
+            initial.update(initial_from(pending.proposals))
+        return initial
+
+    def get(self, request, *args, **kwargs):
+        if self._token() and self._pending() is None:
+            messages.warning(
+                request,
+                _(
+                    "The credential upload expired or is no longer valid. Upload it again."
+                ),
+            )
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        from .operator_intake import read_summary
+
+        context = super().get_context_data(**kwargs)
+        pending = self._pending()
+        context["can_upload_credential"] = self.request.user.has_perm(
+            "compliance.add_document"
+        )
+        context["credential_token"] = self._token() if pending else ""
+        if pending is not None:
+            read, doubtful = read_summary(pending.proposals)
+            context["credential_unreadable"] = pending.proposals is None
+            context["credential_read"] = read
+            context["credential_doubtful"] = doubtful
+        return context
+
+    def form_valid(self, form):
+        from apps.compliance.views import uploaded_file_cleanup
+
+        from .operator_intake import attach_credential, delete_pending
+
+        pending = self._pending()
+        if pending is None:
+            if self._token():
+                messages.warning(
+                    self.request,
+                    _(
+                        "The credential upload expired or is no longer valid, so no "
+                        "file was attached. Upload it again from the operator's record."
+                    ),
+                )
+            return super().form_valid(form)
+        with uploaded_file_cleanup() as stored, transaction.atomic():
+            response = super().form_valid(form)
+            document, stored["path"] = attach_credential(
+                self.object, pending, self.request.user
+            )
+        delete_pending(pending.path)
+        if document is not None:
+            set_audit_context(
+                self.request,
+                self.object,
+                action="operator_created_with_credential",
+                metadata={"document": str(document.pk)},
+            )
+            messages.success(
+                self.request, _("The DGAC credential was saved with the operator.")
+            )
+        return response
 
 
 class OperatorList(RegistryList):
