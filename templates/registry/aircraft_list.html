@@ -1,7 +1,9 @@
 {% extends "generic/list.html" %}
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'aircraft-import' %}">{% translate "Import" %}</a>{% endblock %}
+
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/expiry-band.css' %}">{% endblock %}
 
 {% block list_table_class %}table-normalized{% endblock %}
 
