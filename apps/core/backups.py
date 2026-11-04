@@ -8,9 +8,10 @@ es lo que se escribió, no lo que hoy hay en el disco.
 
 Y hay una razón técnica para no conformarse con el checksum. Un `sha256` prueba
 que **el archivo no cambió desde que se escribió**; no prueba que sea una base
-usable. `backup` copia el `.sqlite3` con `shutil.copy2` mientras la aplicación
-puede estar escribiendo, y ése es el caso que SQLite documenta como riesgoso:
-la copia puede capturar un estado a medias. El checksum de un archivo roto
+usable. Antes `backup` copiaba el `.sqlite3` con `shutil.copy2` (LV-116 lo
+cambió por la API de respaldo en línea de SQLite, igual que `restore_backup`
+desde LV-400): ése es el caso que SQLite documenta como riesgoso, porque la
+copia puede capturar un estado a medias. El checksum de un archivo roto
 coincide perfectamente consigo mismo.
 
 Por eso la verificación **abre** el respaldo y le corre `PRAGMA integrity_check`
@@ -24,6 +25,62 @@ import sqlite3
 from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
+
+
+# LV-401: respaldos de documentos (tar.gz) y retención por cantidad.
+DOCS_PREFIX = "aero_docs_"
+DOCS_SUFFIX = ".tar.gz"
+DOCS_PATTERN = f"{DOCS_PREFIX}*{DOCS_SUFFIX}"
+DB_PATTERN = "aero_ops_*.sqlite3"
+
+
+def docs_manifest_path(archive):
+    """`aero_docs_X.tar.gz` -> `aero_docs_X.json` (`with_suffix` dejaría `.tar.json`)."""
+    archive = Path(archive)
+    return archive.with_name(archive.name[: -len(DOCS_SUFFIX)] + ".json")
+
+
+def _manifest_for(path):
+    path = Path(path)
+    if path.name.endswith(DOCS_SUFFIX):
+        return docs_manifest_path(path)
+    return path.with_suffix(".json")
+
+
+def _has_valid_manifest(path):
+    try:
+        manifest = json.loads(_manifest_for(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return (
+        isinstance(manifest, dict)
+        and manifest.get("backup") == path.name
+        and "sha256" in manifest
+    )
+
+
+def apply_retention(directory, pattern, keep):
+    """Borra los respaldos más viejos de `pattern` dejando los `keep` últimos.
+
+    Por **cantidad**, no por antigüedad: si el timer deja de correr, la
+    retención por días iría vaciando la carpeta hasta no dejar nada; por
+    cantidad, los últimos N quedan siempre. Reglas: nunca el más reciente
+    (`keep` mínimo 1), sólo archivos con el patrón propio, y un respaldo sin
+    manifiesto válido no se toca (no se sabe qué es). Devuelve los borrados.
+    """
+    keep = max(1, int(keep))
+    # El nombre lleva la fecha, así que ordenar por nombre es ordenar por tiempo
+    # sin depender de mtime (que un `scp` o un restore alteran).
+    found = sorted(Path(directory).glob(pattern), key=lambda p: p.name, reverse=True)
+    removed = []
+    for path in found[keep:]:
+        if not _has_valid_manifest(path):
+            continue
+        manifest = _manifest_for(path)
+        path.unlink(missing_ok=True)
+        manifest.unlink(missing_ok=True)
+        removed.append(path.name)
+    return removed
 
 
 def latest_backup():
@@ -49,7 +106,9 @@ def latest_backup():
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        if "sha256" not in manifest:
+        if "sha256" not in manifest or manifest.get("kind") == "documents":
+            # LV-401: el respaldo de documentos no es una base; `verify` lo
+            # abriría con SQLite y lo daría por corrupto.
             continue
         return {
             "name": manifest.get("backup", manifest_path.stem),

@@ -10,7 +10,7 @@ from datetime import date
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
@@ -171,10 +171,12 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         mecanismos distintos para numerar dos cosas del mismo flujo es cómo uno
         de los dos termina con un hueco que nadie explica.
 
-        `select_for_update()` bloquea las filas del año dentro de esta
-        transacción, así que dos planes creados en el mismo instante no pueden
-        calcular el mismo número: el segundo espera a que el primero confirme.
-        El único hueco que no cierra es el primer plan de un año nuevo —no hay
+        En SQLite `select_for_update()` no bloquea nada (se ignora): lo que
+        serializa a los escritores es `"transaction_mode": "IMMEDIATE"` en
+        `config/settings/base.py` (LV-403), que toma el bloqueo de escritura al
+        abrir esta transacción, así que dos planes creados en el mismo instante
+        no pueden calcular el mismo número: el segundo espera a que el primero
+        confirme. En PostgreSQL sí bloquea las filas del año. El único hueco que no cierra es el primer plan de un año nuevo —no hay
         nada que bloquear todavía— y ahí la restricción `unique` convierte esa
         carrera rarísima en un guardado que falla en vez de un duplicado
         silencioso.
@@ -516,10 +518,13 @@ class GeoPlanHistory(BaseModel):
         return f"{self.plan_id}: {self.previous_status} -> {self.new_status}"
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = GeoPlanHistory.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = GeoPlanHistory.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 class GeoPlanPermissionLink(BaseModel):
@@ -569,10 +574,13 @@ class GeoPlanPermissionLink(BaseModel):
         )
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = GeoPlanPermissionLink.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = GeoPlanPermissionLink.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 class WeatherReview(BaseModel):

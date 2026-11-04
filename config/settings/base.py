@@ -122,6 +122,12 @@ else:
             # documented safe synchronous level under WAL.
             "OPTIONS": {
                 "timeout": 20,
+                # LV-403: BEGIN IMMEDIATE takes the write lock at the start of
+                # every transaction. With the default (DEFERRED) a transaction
+                # that reads and then writes fails at once with "database is
+                # locked" when another writer got in between, ignoring
+                # busy_timeout, and `select_for_update()` is a no-op on SQLite.
+                "transaction_mode": "IMMEDIATE",
                 "init_command": (
                     "PRAGMA journal_mode=WAL;"
                     "PRAGMA synchronous=NORMAL;"
@@ -166,6 +172,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(config("DOCUMENTS_DIR", default=str(BASE_DIR / "media")))
 DOCUMENTS_ROOT = Path(config("DOCUMENTS_DIR", default=str(BASE_DIR / "media")))
+# LV-401: respaldos que se conservan (base y documentos), por cantidad.
+BACKUP_KEEP = config("BACKUP_KEEP", default=14, cast=int)
+# LV-401: respaldos que se conservan (base y documentos), por cantidad.
+BACKUP_KEEP = config("BACKUP_KEEP", default=14, cast=int)
 DOCUMENTS_STORAGE_BACKEND = config("DOCUMENTS_STORAGE_BACKEND", default="local")
 DOCUMENTS_STORAGE_BUCKET = config("DOCUMENTS_STORAGE_BUCKET", default="")
 DOCUMENTS_STORAGE_ENDPOINT_URL = config("DOCUMENTS_STORAGE_ENDPOINT_URL", default="")

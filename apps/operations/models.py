@@ -563,10 +563,12 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
     def _next_internal_folio():
         """Annual correlative, safe under concurrent creation.
 
-        `select_for_update()` locks the current-year rows within this
-        transaction so two permits created at the same moment cannot both
-        compute the same next number -- the second blocks until the first
-        commits. The one gap this does not close is the very first permit
+        On SQLite `select_for_update()` is a no-op: what serialises writers is
+        `"transaction_mode": "IMMEDIATE"` in `config/settings/base.py` (LV-403),
+        which takes the write lock when this transaction opens, so two permits
+        created at the same moment cannot both compute the same next number --
+        the second waits until the first commits. On PostgreSQL it also locks the
+        current-year rows. The one gap this does not close is the very first permit
         of a new year (nothing to lock yet); the `unique` constraint turns
         that rare race into a failed save instead of a silent duplicate.
         """
@@ -1068,10 +1070,13 @@ class PermissionHistory(BaseModel):
         return f"{self.permission}: {self.previous_status} → {self.new_status}"
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = PermissionHistory.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = PermissionHistory.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 class NotamReview(BaseModel):
@@ -1591,10 +1596,13 @@ class FlightRequestHistory(BaseModel):
         return f"{self.request}: {self.previous_status} → {self.new_status}"
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = FlightRequestHistory.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = FlightRequestHistory.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 class PreflightChecklist(BaseModel):
