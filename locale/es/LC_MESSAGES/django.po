@@ -182,7 +182,8 @@ msgstr "Archivo"
 msgid ""
 "Taken from the linked record. Correct it if the document says otherwise."
 msgstr ""
-"Tomada del registro enlazado. Debe corregirse si el documento dice otra cosa."
+"Tomada del registro enlazado. Debe corregirse si el documento dice otra "
+"cosa."
 
 #: .\apps\compliance\forms.py:438
 msgid "No document types configured yet. Create one first."
@@ -517,8 +518,8 @@ msgstr "Registros operacionales"
 msgid "Maintenance and calibration"
 msgstr "Mantención y calibración"
 
-#: .\apps\compliance\views.py:562
-#: .\templates\base.html:198 .\templates\compliance\company_documents.html:3
+#: .\apps\compliance\views.py:562 .\templates\base.html:198
+#: .\templates\compliance\company_documents.html:3
 #: .\templates\compliance\company_documents.html:9
 msgid "Company documents"
 msgstr "Documentos de la empresa"
@@ -624,7 +625,8 @@ msgstr "Todos los centros de costo"
 
 #: .\apps\compliance\models.py:420
 msgid "Unknown entity type. Choose one of the watchable models."
-msgstr "Tipo de entidad desconocido. Elija uno de los modelos que se pueden vigilar."
+msgstr ""
+"Tipo de entidad desconocido. Elija uno de los modelos que se pueden vigilar."
 
 #: .\apps\compliance\models.py:426
 #, python-format
@@ -911,13 +913,18 @@ msgid ""
 "This file could not be checked for viruses because the antivirus is "
 "unavailable, so it was not saved. This is a server problem, not a problem "
 "with your file: tell an administrator."
-msgstr "No se pudo revisar este archivo en busca de virus porque el antivirus no está disponible, así que no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
+msgstr ""
+"No se pudo revisar este archivo en busca de virus porque el antivirus no "
+"está disponible, así que no se guardó. Es un problema del servidor, no de su"
+" archivo: avise a un administrador."
 
 #: .\apps\compliance\security.py:105
 msgid ""
 "The virus check took too long, so this file was not saved. This is a server "
 "problem, not a problem with your file: tell an administrator."
-msgstr "La revisión de virus demoró demasiado, así que este archivo no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
+msgstr ""
+"La revisión de virus demoró demasiado, así que este archivo no se guardó. Es"
+" un problema del servidor, no de su archivo: avise a un administrador."
 
 #: .\apps\compliance\security.py:119
 msgid "The antivirus found a threat in this file, so it was not saved."
@@ -928,7 +935,9 @@ msgstr ""
 msgid ""
 "This file could not be checked for viruses, so it was not saved. This is a "
 "server problem, not a problem with your file: tell an administrator."
-msgstr "No se pudo revisar este archivo en busca de virus, así que no se guardó. Es un problema del servidor, no de su archivo: avise a un administrador."
+msgstr ""
+"No se pudo revisar este archivo en busca de virus, así que no se guardó. Es "
+"un problema del servidor, no de su archivo: avise a un administrador."
 
 #: .\apps\compliance\signals.py:84
 #, python-format
@@ -1576,7 +1585,8 @@ msgstr "Reabrir para edición"
 
 #: .\apps\geo\views.py:312
 msgid "Plan archived. Use the Archived filter to find or restore it."
-msgstr "Plan archivado. Puede buscarse o restaurarse con el filtro Archivados."
+msgstr ""
+"Plan archivado. Puede buscarse o restaurarse con el filtro Archivados."
 
 #: .\apps\geo\views.py:318
 #, python-format
@@ -1646,7 +1656,9 @@ msgstr "Guardando…"
 msgid ""
 "The plan changed on the server. Reload to get the latest version, then "
 "reapply your changes."
-msgstr "El plan cambió en el servidor. Recargue para obtener la última versión y vuelva a aplicar sus cambios."
+msgstr ""
+"El plan cambió en el servidor. Recargue para obtener la última versión y "
+"vuelva a aplicar sus cambios."
 
 #: .\apps\geo\views.py:528
 msgid "This plan can no longer be edited."
@@ -1701,7 +1713,9 @@ msgstr ""
 msgid ""
 "It happens when a tab stays open from one day to the next. Load the page "
 "again and it will work."
-msgstr "Pasa cuando una pestaña queda abierta de un día para otro. Vuelva a cargar la página y funcionará."
+msgstr ""
+"Pasa cuando una pestaña queda abierta de un día para otro. Vuelva a cargar "
+"la página y funcionará."
 
 #: .\templates\core\csrf_failure.html:4
 msgid "Load the page again"
@@ -1778,8 +1792,8 @@ msgid ""
 "Uncheck for cost centers that only hold equipment and never fly: they stay "
 "out of the flight-permit status table."
 msgstr ""
-"Se desmarca en las faenas que sólo tienen equipos a cargo y no vuelan: quedan"
-" fuera de la tabla de estado de permisos de vuelo."
+"Se desmarca en las faenas que sólo tienen equipos a cargo y no vuelan: "
+"quedan fuera de la tabla de estado de permisos de vuelo."
 
 #. LV-205: el aviso al archivar a alguien que se retira, con la faena de la
 #. que
@@ -1969,7 +1983,8 @@ msgstr "Realizado por"
 #: .\apps\maintenance\forms.py:29
 msgid "Leave blank for a 'to be defined' maintenance until it is planned."
 msgstr ""
-"Si se deja en blanco, la mantención queda 'por definir' hasta que se planifique."
+"Si se deja en blanco, la mantención queda 'por definir' hasta que se "
+"planifique."
 
 #: .\apps\maintenance\forms.py:47
 msgid "Record"
@@ -2416,7 +2431,9 @@ msgstr "Motivo de la corrección"
 msgid ""
 "Why the recorded status was wrong. It stays in the permit's history, so "
 "write it for whoever reads this a year from now."
-msgstr "Por qué el estado anotado estaba equivocado. Queda en el historial del permiso, así que escríbalo pensando en quien lo lea dentro de un año."
+msgstr ""
+"Por qué el estado anotado estaba equivocado. Queda en el historial del "
+"permiso, así que escríbalo pensando en quien lo lea dentro de un año."
 
 #: .\apps\operations\forms.py:356
 msgid "Write why the status is being corrected."
@@ -2722,7 +2739,9 @@ msgstr ""
 msgid ""
 "%(operator)s has no current qualification matching: %(aircraft)s. The "
 "permission was saved; review the operator's qualifications."
-msgstr "%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El permiso se guardó igual; revise las habilitaciones del operador."
+msgstr ""
+"%(operator)s no tiene una habilitación vigente que cubra: %(aircraft)s. El "
+"permiso se guardó igual; revise las habilitaciones del operador."
 
 #: .\apps\operations\views.py:305 .\apps\registry\views.py:174
 #, python-format
@@ -2741,13 +2760,17 @@ msgstr "Permiso aprobado."
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "approving this permit."
-msgstr "Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes de aprobar este permiso."
+msgstr ""
+"Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de aprobar este permiso."
 
 #: .\apps\operations\views.py:486
 msgid ""
 "Enter the DGAC permit number before approving. It is on the authorization "
 "you just uploaded: edit the permit and type it in."
-msgstr "Ingrese el número del permiso de la DGAC antes de aprobar. Está en la autorización que acaba de cargar: edite el permiso y escríbalo."
+msgstr ""
+"Ingrese el número del permiso de la DGAC antes de aprobar. Está en la "
+"autorización que acaba de cargar: edite el permiso y escríbalo."
 
 #: .\apps\operations\views.py:495
 msgid "Permission denied."
@@ -2761,11 +2784,14 @@ msgstr "Permiso completado."
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "completing this permit."
-msgstr "Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes de completar este permiso."
+msgstr ""
+"Suba la autorización de operación de la DGAC (el PDF firmado del SIGO) antes"
+" de completar este permiso."
 
 #: .\apps\operations\views.py:594
 msgid "Permit archived. Use the Archived filter to find or restore it."
-msgstr "Permiso archivado. Puede buscarse o restaurarse con el filtro Archivados."
+msgstr ""
+"Permiso archivado. Puede buscarse o restaurarse con el filtro Archivados."
 
 #: .\apps\operations\views.py:619
 msgid "Permit restored."
@@ -2779,7 +2805,9 @@ msgstr "Corregir el estado"
 msgid ""
 "Upload the DGAC operation authorization (the signed SIGO PDF) before "
 "correcting this permit to that status."
-msgstr "Suba la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) antes de corregir el permiso a ese estado."
+msgstr ""
+"Suba la Autorización de Operación RPA de la DGAC (el PDF firmado de SIGO) "
+"antes de corregir el permiso a ese estado."
 
 #: .\apps\operations\views.py:702
 #, python-format
@@ -2822,7 +2850,9 @@ msgstr "No es circunferencia: el polígono no es circular y SIGO espera uno."
 msgid ""
 "Duplicate centre: another section has these same coordinates. Check the "
 "source table before filing."
-msgstr "Centro duplicado: otra sección tiene estas mismas coordenadas. Revise la tabla de origen antes de presentar."
+msgstr ""
+"Centro duplicado: otra sección tiene estas mismas coordenadas. Revise la "
+"tabla de origen antes de presentar."
 
 #: .\apps\operations\views.py:1062
 msgid "Edit flight request"
@@ -2892,7 +2922,10 @@ msgstr "Se crearon %(count)s solicitudes de vuelo desde este plan."
 msgid ""
 "Your user is not linked to an operator record, so there is nowhere to file "
 "the result. Ask for the link to be set on the operator's record."
-msgstr "Su usuario no está vinculado a una ficha de operador, así que el resultado no tiene dónde quedar. Solicite que se haga el vínculo en la ficha del operador."
+msgstr ""
+"Su usuario no está vinculado a una ficha de operador, así que el resultado "
+"no tiene dónde quedar. Solicite que se haga el vínculo en la ficha del "
+"operador."
 
 #: .\apps\registry\assessment_views.py:80
 msgid "The question bank is not available right now."
@@ -2966,7 +2999,9 @@ msgstr "Tipo de responsable"
 msgid ""
 "Optional: pick this only if the day-to-day responsible contact differs from "
 "the contract administrator above."
-msgstr "Opcional: elija esto solo si el contacto responsable del día a día es distinto del administrador de contrato de arriba."
+msgstr ""
+"Opcional: elija esto solo si el contacto responsable del día a día es "
+"distinto del administrador de contrato de arriba."
 
 #: .\apps\registry\forms.py:96
 msgid "Contract status"
@@ -3036,7 +3071,10 @@ msgid ""
 "Use instead of the operator when the responsible person is external to the "
 "system (an administrator, secretary, or safety officer). Also used for the "
 "digest if the operator above has no reachable email."
-msgstr "Úselo en vez del operador cuando el responsable es externo al sistema (un administrador, secretaría o un SSO). También se usa para el resumen si el operador de arriba no tiene un correo válido."
+msgstr ""
+"Úselo en vez del operador cuando el responsable es externo al sistema (un "
+"administrador, secretaría o un SSO). También se usa para el resumen si el "
+"operador de arriba no tiene un correo válido."
 
 #: .\apps\registry\forms.py:126
 msgid "Enter the number only; the CC prefix is added automatically."
@@ -3267,8 +3305,8 @@ msgid ""
 "Copy them exactly as the DGAC credential states them. They are not "
 "standardised on purpose: the wording varies."
 msgstr ""
-"Deben copiarse tal como las dice la credencial de la DGAC. No se estandarizan a "
-"propósito: la redacción varía."
+"Deben copiarse tal como las dice la credencial de la DGAC. No se "
+"estandarizan a propósito: la redacción varía."
 
 #: .\apps\registry\forms.py:500
 #, python-format
@@ -3314,13 +3352,17 @@ msgstr "La aeronave ya tiene una asignación confirmada en este período."
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an operator "
 "already assigned elsewhere is moved here."
-msgstr "Seleccione uno o más. Cada uno se asigna al centro de costo de arriba; un operador ya asignado en otro centro de costo se mueve aquí."
+msgstr ""
+"Seleccione uno o más. Cada uno se asigna al centro de costo de arriba; un "
+"operador ya asignado en otro centro de costo se mueve aquí."
 
 #: .\apps\registry\forms.py:753
 msgid ""
 "Select one or more. Each is assigned to the cost center above; an aircraft "
 "already assigned elsewhere is moved here."
-msgstr "Seleccione una o más. Cada una se asigna al centro de costo de arriba; una aeronave ya asignada en otro centro de costo se mueve aquí."
+msgstr ""
+"Seleccione una o más. Cada una se asigna al centro de costo de arriba; una "
+"aeronave ya asignada en otro centro de costo se mueve aquí."
 
 #: .\apps\registry\forms.py:827
 msgid "Qualification type"
@@ -3816,7 +3858,9 @@ msgstr "Seguro registrado como autorizado."
 #: .\apps\registry\views.py:797
 msgid ""
 "Enter the policy's validity date before recording the JAC's authorization."
-msgstr "Ingrese la fecha de vigencia de la póliza antes de registrar la autorización de la JAC."
+msgstr ""
+"Ingrese la fecha de vigencia de la póliza antes de registrar la autorización"
+" de la JAC."
 
 #: .\apps\registry\views.py:981
 msgid "Assign operators to a cost center"
@@ -3889,7 +3933,9 @@ msgstr "Creado"
 #: .\apps\registry\views.py:1363
 #, python-format
 msgid "%(count)s %(name)s imported. You can undo this from the import page."
-msgstr "%(count)s %(name)s importados. Puede deshacerlo desde la página de importación."
+msgstr ""
+"%(count)s %(name)s importados. Puede deshacerlo desde la página de "
+"importación."
 
 #: .\apps\registry\views.py:1453
 #, python-format
@@ -4349,7 +4395,8 @@ msgstr "Detalles opcionales"
 #: .\templates\compliance\_document_preview_modal.html:17
 msgid "This file type is not shown inside the page. Download it to open it."
 msgstr ""
-"Este tipo de archivo no se muestra dentro de la página. Descárguelo para abrirlo."
+"Este tipo de archivo no se muestra dentro de la página. Descárguelo para "
+"abrirlo."
 
 #: .\templates\compliance\_document_preview_modal.html:24
 msgid "Open the document page"
@@ -4930,7 +4977,9 @@ msgid_plural ""
 "Review these %(total)s cost centers and mark each Compliant or Non-"
 "compliant:"
 msgstr[0] "Revise %(total)s centro de costo y márquelo Cumple o No cumple:"
-msgstr[1] "Revise estos %(total)s centros de costo y marque cada uno Cumple o No cumple:"
+msgstr[1] ""
+"Revise estos %(total)s centros de costo y marque cada uno Cumple o No "
+"cumple:"
 
 #: .\templates\compliance\email\monthly_review_deadline.txt:1
 #, python-format
@@ -5622,7 +5671,9 @@ msgstr "Comience su operación"
 msgid ""
 "Load the operational records below to activate indicators, alerts and "
 "planning."
-msgstr "Cargue los registros operativos para activar indicadores, alertas y planificación."
+msgstr ""
+"Cargue los registros operativos para activar indicadores, alertas y "
+"planificación."
 
 #: .\templates\dashboard\index.html:46 .\templates\dashboard\index.html:49
 msgid "Create a cost center"
@@ -6172,7 +6223,10 @@ msgid ""
 "At least one of its requests is already filed in SIGO: the authority holds a"
 " file that this plan explains. Archive it only if you are sure nobody will "
 "need to look it up."
-msgstr "Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad tiene un expediente que este plan explica. Archívelo sólo si está seguro de que nadie va a necesitar consultarlo."
+msgstr ""
+"Al menos una de sus solicitudes ya está presentada en SIGO: la autoridad "
+"tiene un expediente que este plan explica. Archívelo sólo si está seguro de "
+"que nadie va a necesitar consultarlo."
 
 #: .\templates\geo\plan_archive_confirm.html:43
 msgid "Why is it being closed?"
@@ -6391,7 +6445,9 @@ msgstr "Importar KMZ/KML"
 #: .\templates\geo\plan_import.html:9
 msgid ""
 "Create a plan from a flight-planning file. The original is stored intact."
-msgstr "Cree un plan a partir de un archivo de planificación de vuelo. El original se guarda intacto."
+msgstr ""
+"Cree un plan a partir de un archivo de planificación de vuelo. El original "
+"se guarda intacto."
 
 #: .\templates\geo\plan_import.html:16
 msgid "Importing…"
@@ -6793,7 +6849,9 @@ msgstr ""
 msgid ""
 "This permit is already approved by the authority: archiving it needs a "
 "written reason, which stays in the audit trail with your name and the date."
-msgstr "Este permiso ya está aprobado por la autoridad: archivarlo exige un motivo escrito, que queda en la auditoría con su nombre y la fecha."
+msgstr ""
+"Este permiso ya está aprobado por la autoridad: archivarlo exige un motivo "
+"escrito, que queda en la auditoría con su nombre y la fecha."
 
 #: .\templates\operations\permission_archive_confirm.html:44
 msgid "Reason for archiving"
@@ -6971,7 +7029,8 @@ msgstr "Este navegador no está dejando guardar el borrador."
 #: .\templates\operations\permission_form.html:120
 msgid ""
 "It stays in this browser until you save or discard it. Nobody else sees it."
-msgstr "Queda en este navegador hasta que guarde o lo descarte. Nadie más lo ve."
+msgstr ""
+"Queda en este navegador hasta que guarde o lo descarte. Nadie más lo ve."
 
 #: .\templates\operations\permission_form.html:120
 msgid "Save draft"
@@ -7256,7 +7315,9 @@ msgstr "Meses de vigencia"
 msgid ""
 "The result is filed on your record and feeds the same expiry warnings as "
 "your DGAC credential."
-msgstr "El resultado queda en su ficha y entra al mismo aviso de vencimientos que su credencial DGAC."
+msgstr ""
+"El resultado queda en su ficha y entra al mismo aviso de vencimientos que su"
+" credencial DGAC."
 
 #: .\templates\registry\assessment_take.html:102
 #, python-brace-format
@@ -7462,7 +7523,9 @@ msgstr ""
 msgid ""
 "%(count)s rows are valid. Select the same file again and apply to create "
 "them."
-msgstr "%(count)s filas son válidas. Vuelva a seleccionar el mismo archivo y aplique para crearlas."
+msgstr ""
+"%(count)s filas son válidas. Vuelva a seleccionar el mismo archivo y aplique"
+" para crearlas."
 
 #: .\templates\registry\costcenter_import.html:9
 msgid "CSV file"
@@ -7655,7 +7718,9 @@ msgstr "Seguimiento"
 msgid ""
 "Move operational work forward, keep ownership visible and follow every "
 "deadline."
-msgstr "Haga avanzar el trabajo operativo, mantenga visible al responsable y cumpla cada plazo."
+msgstr ""
+"Haga avanzar el trabajo operativo, mantenga visible al responsable y cumpla "
+"cada plazo."
 
 #: .\templates\workboard\kanban.html:17
 msgid "New task"
@@ -7724,7 +7789,8 @@ msgstr "Lista de tareas"
 
 #: .\templates\workboard\task_list.html:6
 msgid "Review ownership, priorities and deadlines in a sortable list."
-msgstr "Revise responsables, prioridades y vencimientos en una lista ordenable."
+msgstr ""
+"Revise responsables, prioridades y vencimientos en una lista ordenable."
 
 #: .\templates\workboard\task_list.html:6
 msgid "Export XLSX"
@@ -7768,7 +7834,8 @@ msgid ""
 "Optional until the permission is approved. Leave it empty while the request "
 "is still with the DGAC."
 msgstr ""
-"Opcional hasta que el permiso esté aprobado. Puede dejarse vacío mientras la solicitud sigue en la DGAC."
+"Opcional hasta que el permiso esté aprobado. Puede dejarse vacío mientras la"
+" solicitud sigue en la DGAC."
 
 #: apps/operations/forms.py apps/operations/models.py
 msgid ""
@@ -7790,7 +7857,9 @@ msgstr ""
 msgid ""
 "Enter the permit's validity window before approving. The DGAC sets it on the"
 " authorization you just uploaded: edit the permit and type the two dates in."
-msgstr "Ingrese la vigencia del permiso antes de aprobar. La DGAC la fija en la autorización que acaba de subir: edite el permiso y escriba las dos fechas."
+msgstr ""
+"Ingrese la vigencia del permiso antes de aprobar. La DGAC la fija en la "
+"autorización que acaba de subir: edite el permiso y escriba las dos fechas."
 
 #: templates/operations/_permission_rows.html
 #: templates/operations/permission_detail.html
@@ -7810,7 +7879,10 @@ msgid ""
 "The DGAC authorises three months at most, so this window cannot end after "
 "%(limit)s. If the authorisation really says otherwise, write the reason in "
 "the field below and it will be recorded."
-msgstr "La DGAC autoriza tres meses como máximo, así que esta vigencia no puede terminar después del %(limit)s. Si la autorización dice otra cosa, escriba el motivo en el campo de abajo y quedará registrado."
+msgstr ""
+"La DGAC autoriza tres meses como máximo, así que esta vigencia no puede "
+"terminar después del %(limit)s. Si la autorización dice otra cosa, escriba "
+"el motivo en el campo de abajo y quedará registrado."
 
 #: apps/operations/forms.py
 msgid ""
@@ -7829,7 +7901,8 @@ msgid ""
 "Only if the DGAC granted a different term. Leave it empty for a normal "
 "three-month permit."
 msgstr ""
-"Solo si la DGAC otorgó un plazo distinto. Si se deja vacío, rige un permiso normal de tres meses."
+"Solo si la DGAC otorgó un plazo distinto. Si se deja vacío, rige un permiso "
+"normal de tres meses."
 
 #: apps/operations/dossier.py
 msgid "Client authorization letter on file"
@@ -7843,7 +7916,9 @@ msgstr "Necesaria para renovar el permiso"
 msgid ""
 "Drag, or use the arrow keys, to set the navigation width. Double-click to "
 "reset it."
-msgstr "Arrastre, o use las flechas del teclado, para ajustar el ancho de la navegación. Doble clic para volver al valor original."
+msgstr ""
+"Arrastre, o use las flechas del teclado, para ajustar el ancho de la "
+"navegación. Doble clic para volver al valor original."
 
 #: templates/base.html
 msgid "Drag to set the width · double-click to reset"
@@ -11121,8 +11196,12 @@ msgstr "vigencia aún sin fijar por la DGAC"
 msgid "{n} in process without a location: not drawn."
 msgstr "{n} en trámite sin ubicación: no se dibujan."
 
-msgid "Dotted outline and hourglass: requested from the DGAC, not yet approved. Not an authorization to fly."
-msgstr "Contorno punteado y reloj de arena: solicitado a la DGAC, aún sin aprobar. No autoriza a volar."
+msgid ""
+"Dotted outline and hourglass: requested from the DGAC, not yet approved. Not"
+" an authorization to fly."
+msgstr ""
+"Contorno punteado y reloj de arena: solicitado a la DGAC, aún sin aprobar. "
+"No autoriza a volar."
 
 msgid "Measured (no threshold set)"
 msgstr "Medida (sin umbral definido)"
@@ -13027,8 +13106,12 @@ msgctxt "workshop intake"
 msgid "Aircraft"
 msgstr "Aeronave"
 
-msgid "The serial is matched exactly. If none matches, choose the aircraft yourself."
-msgstr "La serie se compara de forma exacta. Si ninguna coincide, elija usted la aeronave."
+msgid ""
+"The serial is matched exactly. If none matches, choose the aircraft "
+"yourself."
+msgstr ""
+"La serie se compara de forma exacta. Si ninguna coincide, elija usted la "
+"aeronave."
 
 msgid "Select…"
 msgstr "Seleccione…"
@@ -13109,8 +13192,8 @@ msgid "This record has no active workshop intake."
 msgstr "Este registro no tiene un ingreso a servicio técnico vigente."
 
 msgid ""
-"Intake voided. The aircraft is back at headquarters and active; its documents "
-"were kept."
+"Intake voided. The aircraft is back at headquarters and active; its "
+"documents were kept."
 msgstr ""
 "Ingreso anulado. La aeronave volvió a la casa matriz y quedó activa; sus "
 "documentos se conservaron."
@@ -13119,18 +13202,18 @@ msgid ""
 "Intake voided and its documents were kept, but the aircraft status was not "
 "changed: check its location and status."
 msgstr ""
-"Ingreso anulado y sus documentos se conservaron, pero no se cambió el estado "
-"de la aeronave: conviene revisar su ubicación y su estado."
+"Ingreso anulado y sus documentos se conservaron, pero no se cambió el estado"
+" de la aeronave: conviene revisar su ubicación y su estado."
 
 msgid "Intake voided; its documents were kept."
 msgstr "Ingreso anulado; sus documentos se conservaron."
 
 msgid ""
-"Void this workshop intake? The record is archived (nothing is deleted) and its "
-"documents stay on the aircraft."
+"Void this workshop intake? The record is archived (nothing is deleted) and "
+"its documents stay on the aircraft."
 msgstr ""
-"¿Anular este ingreso a servicio técnico? El registro se archiva (no se borra "
-"nada) y sus documentos permanecen en la aeronave."
+"¿Anular este ingreso a servicio técnico? El registro se archiva (no se borra"
+" nada) y sus documentos permanecen en la aeronave."
 
 msgid "Void intake"
 msgstr "Anular ingreso"
@@ -13154,8 +13237,12 @@ msgstr ""
 msgid "Workshop quote"
 msgstr "Cotización del taller"
 
-msgid "Upload the workshop document (reception or quote) as a PDF. It is read and shown for you to review; nothing is saved until you confirm."
-msgstr "Suba el documento del taller (recepción o cotización) en PDF. Se lee y se muestra para que lo revise; no se guarda nada hasta que usted confirme."
+msgid ""
+"Upload the workshop document (reception or quote) as a PDF. It is read and "
+"shown for you to review; nothing is saved until you confirm."
+msgstr ""
+"Suba el documento del taller (recepción o cotización) en PDF. Se lee y se "
+"muestra para que lo revise; no se guarda nada hasta que usted confirme."
 
 msgid "Workshop document (PDF)"
 msgstr "Documento del taller (PDF)"
@@ -13163,14 +13250,22 @@ msgstr "Documento del taller (PDF)"
 msgid "Upload and review"
 msgstr "Subir y revisar"
 
-msgid "The document was read. Check each value against the paper before confirming. Nothing is saved until you confirm."
-msgstr "Se leyó el documento. Compare cada valor con el papel antes de confirmar. No se guarda nada hasta que usted confirme."
+msgid ""
+"The document was read. Check each value against the paper before confirming."
+" Nothing is saved until you confirm."
+msgstr ""
+"Se leyó el documento. Compare cada valor con el papel antes de confirmar. No"
+" se guarda nada hasta que usted confirme."
 
 msgid "The document could not be read; fill in the details by hand."
 msgstr "No se pudo leer el documento; complete los datos a mano."
 
-msgid "This workshop order is already registered. The form completes that intake; values already saved are not overwritten."
-msgstr "Esta orden de trabajo ya está registrada. El formulario completa ese ingreso; los valores ya guardados no se sobrescriben."
+msgid ""
+"This workshop order is already registered. The form completes that intake; "
+"values already saved are not overwritten."
+msgstr ""
+"Esta orden de trabajo ya está registrada. El formulario completa ese "
+"ingreso; los valores ya guardados no se sobrescriben."
 
 msgid "Open the existing intake"
 msgstr "Abrir el ingreso existente"
@@ -13200,72 +13295,12 @@ msgid "Quote"
 msgstr "Cotización"
 
 msgid "Read from the document; shown for reference and saved as read."
-msgstr "Leído del documento; se muestra como referencia y se guarda tal como se leyó."
+msgstr ""
+"Leído del documento; se muestra como referencia y se guarda tal como se "
+"leyó."
 
 msgid "Confirm intake"
 msgstr "Confirmar ingreso"
-
-#~ msgid "Credential file"
-#~ msgstr "Credencial adjunta"
-
-#~ msgid "No qualifications recorded yet."
-#~ msgstr "Aún no hay habilitaciones registradas."
-
-#~ msgid "Enter the employee ID."
-#~ msgstr "Ingrese el ID de empleado."
-
-#~ msgid "SIGO requests"
-#~ msgstr "Solicitudes SIGO"
-
-#~ msgid "Search title or cost center..."
-#~ msgstr "Buscar título o centro de costo..."
-
-#, python-format
-#~ msgid ""
-#~ "%(counter)s question, %(percent)s%% to pass. The result is valid for "
-#~ "%(months)s months and is filed on your record."
-#~ msgid_plural ""
-#~ "%(counter)s questions, %(percent)s%% to pass. The result is valid for "
-#~ "%(months)s months and is filed on your record."
-#~ msgstr[0] ""
-#~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en su ficha."
-#~ msgstr[1] ""
-#~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
-#~ "%(months)s meses y queda en su ficha."
-
-#~ msgid "Active Aircraft"
-#~ msgstr "Aeronaves activas"
-
-#~ msgid "Active Operators"
-#~ msgstr "Operadores activos"
-
-
-#~ msgid "missing or lapsed"
-#~ msgstr "faltantes o vencidos"
-
-#~ msgid "Expiring in 30 days"
-#~ msgstr "Vence en 30 días"
-
-#~ msgid "No documents attached to this permission."
-#~ msgstr "No hay documentos adjuntos a este permiso."
-
-#~ msgid "Split a plan"
-#~ msgstr "Separar un plan"
-
-#~ msgid "No flight requests yet. Split a geospatial plan to create them."
-#~ msgstr ""
-#~ "Aún no hay solicitudes de vuelo. Separa un plan geoespacial para crearlas."
-
-#~ msgid "Smallest circle that encloses it"
-#~ msgstr "La circunferencia más chica que la encierra"
-
-#~ msgid ""
-#~ "The ↳ row appears when the drawn area is not a circle: SIGO accepts one "
-#~ "circle per request, and that is the smallest one covering the whole area."
-#~ msgstr ""
-#~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
-#~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
 
 #: .\apps\compliance\models.py:113
 msgid "One line saying what this document is for."
@@ -13287,7 +13322,8 @@ msgstr "Orden"
 msgid "Orders the types inside their category; lower comes first."
 msgstr "Ordena los tipos dentro de su categoría; el menor va primero."
 
-#: .\templates\compliance\_doc_type_hint.html:7 .\templates\compliance\_doc_type_hint.html:8
+#: .\templates\compliance\_doc_type_hint.html:7
+#: .\templates\compliance\_doc_type_hint.html:8
 msgid "Asks for an expiry date: yes"
 msgstr "Pide fecha de vencimiento: sí"
 
@@ -13319,25 +13355,31 @@ msgstr "Etiqueta"
 msgid "Task title"
 msgstr "Título de la tarea"
 
-
 #: .\apps\core\official_links.py
 msgid "Operational Safety Management System (SIGO)"
 msgstr "Sistema de Gestión de Seguridad Operacional (SIGO)"
 
 #: .\apps\core\official_links.py
-msgid "Use it to validate RPA operating authorizations and manage DGAC flight permits."
-msgstr "Sirve para validar las autorizaciones de operación RPA y gestionar los permisos de vuelo de la DGAC."
+msgid ""
+"Use it to validate RPA operating authorizations and manage DGAC flight "
+"permits."
+msgstr ""
+"Sirve para validar las autorizaciones de operación RPA y gestionar los "
+"permisos de vuelo de la DGAC."
 
 #: .\apps\core\official_links.py
 msgid "Aeronautical Personnel Information System (SIPA)"
 msgstr "Sistema Informático de Personal Aeronáutico (SIPA)"
 
 #: .\apps\core\official_links.py
-msgid "Use it for the licenses and ratings of aeronautical personnel, and to verify licenses."
-msgstr "Sirve para consultar las licencias y habilitaciones del personal aeronáutico, y para verificar licencias."
+msgid ""
+"Use it for the licenses and ratings of aeronautical personnel, and to verify"
+" licenses."
+msgstr ""
+"Sirve para consultar las licencias y habilitaciones del personal "
+"aeronáutico, y para verificar licencias."
 
-#: .\templates\dashboard\_official_links.html
-#: .\templates\core\_sidebar.html
+#: .\templates\dashboard\_official_links.html .\templates\core\_sidebar.html
 msgid "Official links"
 msgstr "Enlaces oficiales"
 
@@ -13380,7 +13422,8 @@ msgid "The image could not be downloaded."
 msgstr "No se pudo descargar la imagen."
 
 #: .\apps\core\official_images.py
-msgid "The address redirects to another one. Paste the final address of the image."
+msgid ""
+"The address redirects to another one. Paste the final address of the image."
 msgstr "La dirección redirige a otra. Pegue la dirección final de la imagen."
 
 #: .\apps\core\official_images.py
@@ -13492,8 +13535,7 @@ msgstr "Cargar la imagen oficial del modelo"
 msgid "Load the %(system)s banner"
 msgstr "Cargar el banner de %(system)s"
 
-#: .\templates\core\start.html
-#: .\templates\dashboard\index.html
+#: .\templates\core\start.html .\templates\dashboard\index.html
 #: .\apps\core\navigation.py
 msgid "How it works"
 msgstr "Cómo funciona"
@@ -13507,8 +13549,14 @@ msgid "No site flies without a permit in force"
 msgstr "Ninguna faena vuela sin permiso vigente"
 
 #: .\templates\core\start.html
-msgid "AeroControl keeps the RPA operation of J.E.J. in compliance with the DGAC: every permit, credential, insurance policy and maintenance job with its dates, and a warning before anything expires."
-msgstr "AeroControl mantiene la operación RPA de J.E.J. en cumplimiento ante la DGAC: cada permiso, credencial, seguro y mantención con sus fechas, y un aviso antes de que algo venza."
+msgid ""
+"AeroControl keeps the RPA operation of J.E.J. in compliance with the DGAC: "
+"every permit, credential, insurance policy and maintenance job with its "
+"dates, and a warning before anything expires."
+msgstr ""
+"AeroControl mantiene la operación RPA de J.E.J. en cumplimiento ante la "
+"DGAC: cada permiso, credencial, seguro y mantención con sus fechas, y un "
+"aviso antes de que algo venza."
 
 #: .\templates\core\start.html
 msgid "What it is for"
@@ -13539,84 +13587,130 @@ msgid "No flight without a permit"
 msgstr "Ningún vuelo sin permiso"
 
 #: .\templates\core\start.html
-msgid "Every site needs a DGAC permit in force before its first flight. AeroControl shows which permits are in force, which are about to expire and which already did."
-msgstr "Toda faena necesita un permiso DGAC vigente antes de su primer vuelo. AeroControl muestra qué permisos están vigentes, cuáles están por vencer y cuáles ya vencieron."
+msgid ""
+"Every site needs a DGAC permit in force before its first flight. AeroControl"
+" shows which permits are in force, which are about to expire and which "
+"already did."
+msgstr ""
+"Toda faena necesita un permiso DGAC vigente antes de su primer vuelo. "
+"AeroControl muestra qué permisos están vigentes, cuáles están por vencer y "
+"cuáles ya vencieron."
 
 #: .\templates\core\start.html
 msgid "Everything traceable"
 msgstr "Todo trazable"
 
 #: .\templates\core\start.html
-msgid "Permits, credentials, insurance, maintenance and logbooks are kept with their dates and their evidence, ready for an audit or the monthly report."
-msgstr "Permisos, credenciales, seguros, mantenciones y bitácoras quedan guardados con sus fechas y su respaldo, listos para una auditoría o para el informe mensual."
+msgid ""
+"Permits, credentials, insurance, maintenance and logbooks are kept with "
+"their dates and their evidence, ready for an audit or the monthly report."
+msgstr ""
+"Permisos, credenciales, seguros, mantenciones y bitácoras quedan guardados "
+"con sus fechas y su respaldo, listos para una auditoría o para el informe "
+"mensual."
 
 #: .\templates\core\start.html
 msgid "Warnings in time"
 msgstr "Avisos a tiempo"
 
 #: .\templates\core\start.html
-msgid "Alerts arrive before something expires, with enough time to renew it without stopping the operation."
-msgstr "Las alertas llegan antes de que algo venza, con tiempo para renovarlo sin detener la operación."
+msgid ""
+"Alerts arrive before something expires, with enough time to renew it without"
+" stopping the operation."
+msgstr ""
+"Las alertas llegan antes de que algo venza, con tiempo para renovarlo sin "
+"detener la operación."
 
 #: .\templates\core\start.html
-msgid "Before taking off, all of this has to be in force. Open each item to see what it means."
-msgstr "Antes de despegar, todo esto tiene que estar vigente. Abra cada ítem para ver qué significa."
+msgid ""
+"Before taking off, all of this has to be in force. Open each item to see "
+"what it means."
+msgstr ""
+"Antes de despegar, todo esto tiene que estar vigente. Abra cada ítem para "
+"ver qué significa."
 
 #: .\templates\core\start.html
 msgid "DGAC permit in force, in SIGO"
 msgstr "Permiso DGAC vigente, en SIGO"
 
 #: .\templates\core\start.html
-msgid "The Head of Air Safety processes it in SIGO. It covers an area, dates, aircraft and operators: flights stay inside what it authorises."
-msgstr "Lo tramita el Jefe de Seguridad Aérea en SIGO. Cubre un área, unas fechas, unos drones y unos operadores: se vuela sólo dentro de lo que autoriza."
+msgid ""
+"The Head of Air Safety processes it in SIGO. It covers an area, dates, "
+"aircraft and operators: flights stay inside what it authorises."
+msgstr ""
+"Lo tramita el Jefe de Seguridad Aérea en SIGO. Cubre un área, unas fechas, "
+"unos drones y unos operadores: se vuela sólo dentro de lo que autoriza."
 
 #: .\templates\core\start.html
 msgid "Client letter and KMZ of the area"
 msgstr "Carta del mandante y KMZ del área"
 
 #: .\templates\core\start.html
-msgid "The client's letter authorises the work and the KMZ draws the flight area. Without the letter the permit cannot be requested."
-msgstr "La carta del mandante autoriza el trabajo y el KMZ dibuja el área de vuelo. Sin la carta no se puede pedir el permiso."
+msgid ""
+"The client's letter authorises the work and the KMZ draws the flight area. "
+"Without the letter the permit cannot be requested."
+msgstr ""
+"La carta del mandante autoriza el trabajo y el KMZ dibuja el área de vuelo. "
+"Sin la carta no se puede pedir el permiso."
 
 #: .\templates\core\start.html
 msgid "Operator's DGAC credential"
 msgstr "Credencial DGAC del operador"
 
 #: .\templates\core\start.html
-msgid "In force and enabled for the RPA model being flown: the credential lists the models."
-msgstr "Vigente y habilitada para el modelo de RPA que se vuela: la credencial indica los modelos."
+msgid ""
+"In force and enabled for the RPA model being flown: the credential lists the"
+" models."
+msgstr ""
+"Vigente y habilitada para el modelo de RPA que se vuela: la credencial "
+"indica los modelos."
 
 #: .\templates\core\start.html
 msgid "Aircraft insurance (JAC)"
 msgstr "Seguro del dron (JAC)"
 
 #: .\templates\core\start.html
-msgid "Renewed every year. It is one of the slowest steps, so it is requested two months ahead."
-msgstr "Se renueva cada año. Es de los trámites más lentos, así que se pide con dos meses de anticipación."
+msgid ""
+"Renewed every year. It is one of the slowest steps, so it is requested two "
+"months ahead."
+msgstr ""
+"Se renueva cada año. Es de los trámites más lentos, así que se pide con dos "
+"meses de anticipación."
 
 #: .\templates\core\start.html
 msgid "Maintenance up to date"
 msgstr "Mantención al día"
 
 #: .\templates\core\start.html
-msgid "Every 6 or 12 months (or whatever the client asks for), and whenever the aircraft fails."
-msgstr "Cada 6 o 12 meses (o lo que pida el mandante), y siempre que el dron falle."
+msgid ""
+"Every 6 or 12 months (or whatever the client asks for), and whenever the "
+"aircraft fails."
+msgstr ""
+"Cada 6 o 12 meses (o lo que pida el mandante), y siempre que el dron falle."
 
 #: .\templates\core\start.html
 msgid "Logbook and checklist"
 msgstr "Bitácora y check list"
 
 #: .\templates\core\start.html
-msgid "Checklist and inspection before each flight; the signed logbook is uploaded within 2 days."
-msgstr "Check list e inspección antes de cada vuelo; la bitácora firmada se sube dentro de 2 días."
+msgid ""
+"Checklist and inspection before each flight; the signed logbook is uploaded "
+"within 2 days."
+msgstr ""
+"Check list e inspección antes de cada vuelo; la bitácora firmada se sube "
+"dentro de 2 días."
 
 #: .\templates\core\start.html
 msgid "The process, step by step"
 msgstr "El proceso, paso a paso"
 
 #: .\templates\core\start.html
-msgid "Choose a procedure. The longer it takes, the earlier it has to be requested: if one document is late, everything after it moves too."
-msgstr "Elija un trámite. Mientras más demora, antes hay que pedirlo: si un documento se atrasa, todo lo que sigue se desplaza."
+msgid ""
+"Choose a procedure. The longer it takes, the earlier it has to be requested:"
+" if one document is late, everything after it moves too."
+msgstr ""
+"Elija un trámite. Mientras más demora, antes hay que pedirlo: si un "
+"documento se atrasa, todo lo que sigue se desplaza."
 
 #: .\templates\core\start.html
 msgid "Flight permit"
@@ -13659,8 +13753,12 @@ msgid "The contract administrator (ADC) gathers and sends"
 msgstr "El Administrador de Contrato (ADC) reúne y envía"
 
 #: .\templates\core\start.html
-msgid "Client letter, KMZ of the flight area, aircraft serial number and licensed operators."
-msgstr "Carta del mandante, KMZ del área de vuelo, número de serie del dron y operadores con licencia."
+msgid ""
+"Client letter, KMZ of the flight area, aircraft serial number and licensed "
+"operators."
+msgstr ""
+"Carta del mandante, KMZ del área de vuelo, número de serie del dron y "
+"operadores con licencia."
 
 #: .\templates\core\start.html
 msgid "The Head of Air Safety processes it in SIGO"
@@ -13675,8 +13773,12 @@ msgid "Permit approved"
 msgstr "Permiso aprobado"
 
 #: .\templates\core\start.html
-msgid "It is filed in Nextcloud and registered in AeroControl, which starts counting its validity."
-msgstr "Se guarda en Nextcloud y se registra en AeroControl, que empieza a contar su vigencia."
+msgid ""
+"It is filed in Nextcloud and registered in AeroControl, which starts "
+"counting its validity."
+msgstr ""
+"Se guarda en Nextcloud y se registra en AeroControl, que empieza a contar su"
+" vigencia."
 
 #: .\templates\core\start.html
 msgid "It lasts up to 3 months: when to request the next one"
@@ -13711,12 +13813,22 @@ msgid "no flying"
 msgstr "no se vuela"
 
 #: .\templates\core\start.html
-msgid "AeroControl warns 45 and 30 days before expiry. Example: if the permit expires on 31 May, the ADC re-sends the letter and the renewal is requested by 17 May at the latest."
-msgstr "AeroControl avisa 45 y 30 días antes del vencimiento. Ejemplo: si el permiso vence el 31 de mayo, el ADC reenvía la carta y la renovación se pide a más tardar el 17 de mayo."
+msgid ""
+"AeroControl warns 45 and 30 days before expiry. Example: if the permit "
+"expires on 31 May, the ADC re-sends the letter and the renewal is requested "
+"by 17 May at the latest."
+msgstr ""
+"AeroControl avisa 45 y 30 días antes del vencimiento. Ejemplo: si el permiso"
+" vence el 31 de mayo, el ADC reenvía la carta y la renovación se pide a más "
+"tardar el 17 de mayo."
 
 #: .\templates\core\start.html
-msgid "Changed the operator or the aircraft? Report it before flying: the permit may need to be updated."
-msgstr "¿Cambió el operador o el dron? Hay que avisar antes de volar: puede requerir actualizar el permiso."
+msgid ""
+"Changed the operator or the aircraft? Report it before flying: the permit "
+"may need to be updated."
+msgstr ""
+"¿Cambió el operador o el dron? Hay que avisar antes de volar: puede requerir"
+" actualizar el permiso."
 
 #: .\templates\core\start.html
 msgid "New contract: when can it fly?"
@@ -13750,8 +13862,7 @@ msgstr "Operadores incorporados"
 msgid "With their credential in force; training is optional."
 msgstr "Con su credencial vigente; la capacitación es opcional."
 
-#: .\templates\core\start.html
-#: .\apps\core\start_guide.py
+#: .\templates\core\start.html .\apps\core\start_guide.py
 msgid "DGAC permit"
 msgstr "Permiso DGAC"
 
@@ -13768,8 +13879,12 @@ msgid "Between week 2 and week 4."
 msgstr "Entre la semana 2 y la 4."
 
 #: .\templates\core\start.html
-msgid "The client's letter is the bottleneck: if it is one week late, the permit and the first flight are one week late too."
-msgstr "La carta del mandante es el cuello de botella: si se atrasa una semana, el permiso y el primer vuelo también se corren una semana."
+msgid ""
+"The client's letter is the bottleneck: if it is one week late, the permit "
+"and the first flight are one week late too."
+msgstr ""
+"La carta del mandante es el cuello de botella: si se atrasa una semana, el "
+"permiso y el primer vuelo también se corren una semana."
 
 #: .\templates\core\start.html
 msgid "1 to 2 weeks; up to 4 with training"
@@ -13781,7 +13896,9 @@ msgstr "Enviar la credencial DGAC vigente"
 
 #: .\templates\core\start.html
 msgid "1 day. It is mandatory and must be enabled for the model being flown."
-msgstr "1 día. Es obligatoria y tiene que estar habilitada para el modelo que se vuela."
+msgstr ""
+"1 día. Es obligatoria y tiene que estar habilitada para el modelo que se "
+"vuela."
 
 #: .\templates\core\start.html
 msgid "Training on the RPA model"
@@ -13789,7 +13906,8 @@ msgstr "Capacitación en el modelo de RPA"
 
 #: .\templates\core\start.html
 msgid "Optional and recommended, through the distributor's training portals."
-msgstr "Opcional y recomendada, en los portales de capacitación del distribuidor."
+msgstr ""
+"Opcional y recomendada, en los portales de capacitación del distribuidor."
 
 #: .\templates\core\start.html
 msgid "Added to the Operations Manual and the SIGO permit"
@@ -13828,8 +13946,12 @@ msgid "And the aircraft returns to the site."
 msgstr "Y el dron vuelve a la faena."
 
 #: .\templates\core\start.html
-msgid "Coordinate maintenance one month ahead. If the service cannot stop, ask the Head of Air Safety for a backup aircraft."
-msgstr "La mantención se coordina con un mes de anticipación. Si el servicio no puede parar, se pide un dron de respaldo al Jefe de Seguridad Aérea."
+msgid ""
+"Coordinate maintenance one month ahead. If the service cannot stop, ask the "
+"Head of Air Safety for a backup aircraft."
+msgstr ""
+"La mantención se coordina con un mes de anticipación. Si el servicio no "
+"puede parar, se pide un dron de respaldo al Jefe de Seguridad Aérea."
 
 #: .\templates\core\start.html
 msgid "Did the aircraft crash or get damaged?"
@@ -13837,23 +13959,33 @@ msgstr "¿Se cayó o se dañó el dron?"
 
 #: .\templates\core\start.html
 msgid "Stop the flight and secure the area. Phone the ADC and the specialist."
-msgstr "Detener el vuelo y asegurar el área. Avisar por teléfono al ADC y al especialista."
+msgstr ""
+"Detener el vuelo y asegurar el área. Avisar por teléfono al ADC y al "
+"especialista."
 
 #: .\templates\core\start.html
 msgid "Within 1 hour"
 msgstr "En 1 hora"
 
 #: .\templates\core\start.html
-msgid "The ADC notifies operations management, the Head of Air Safety and the Air Operations Manager."
-msgstr "El ADC avisa a la gerencia de operaciones, al Jefe de Seguridad Aérea y al Gerente de Operaciones Aéreas."
+msgid ""
+"The ADC notifies operations management, the Head of Air Safety and the Air "
+"Operations Manager."
+msgstr ""
+"El ADC avisa a la gerencia de operaciones, al Jefe de Seguridad Aérea y al "
+"Gerente de Operaciones Aéreas."
 
 #: .\templates\core\start.html
 msgid "Within 24 hours"
 msgstr "En 24 horas"
 
 #: .\templates\core\start.html
-msgid "Written report. The Head of Air Safety assesses notifying the DGAC and informs Risk Management."
-msgstr "Reporte escrito. El Jefe de Seguridad Aérea evalúa el aviso a la DGAC e informa a la Gerencia de Riesgo."
+msgid ""
+"Written report. The Head of Air Safety assesses notifying the DGAC and "
+"informs Risk Management."
+msgstr ""
+"Reporte escrito. El Jefe de Seguridad Aérea evalúa el aviso a la DGAC e "
+"informa a la Gerencia de Riesgo."
 
 #: .\templates\core\start.html
 msgid "Operator and Head of Air Safety"
@@ -13864,8 +13996,11 @@ msgid "Within 5 days"
 msgstr "En 5 días"
 
 #: .\templates\core\start.html
-msgid "Preliminary analysis and documents in Nextcloud: logbook, photos and what happened."
-msgstr "Análisis preliminar y documentos en Nextcloud: bitácora, fotos y qué pasó."
+msgid ""
+"Preliminary analysis and documents in Nextcloud: logbook, photos and what "
+"happened."
+msgstr ""
+"Análisis preliminar y documentos en Nextcloud: bitácora, fotos y qué pasó."
 
 #: .\templates\core\start.html
 msgid "Specialist"
@@ -13884,16 +14019,24 @@ msgid "Do not erase the SD card or the photos"
 msgstr "No borrar la tarjeta SD ni las fotos"
 
 #: .\templates\core\start.html
-msgid "An incident is not only the site's: the DGAC assesses the whole company as an operator. Reporting in time protects the RPA operation of every contract."
-msgstr "Un incidente no es sólo de la faena: la DGAC evalúa a toda la compañía como operador. Avisar a tiempo protege la operación RPA de todos los contratos."
+msgid ""
+"An incident is not only the site's: the DGAC assesses the whole company as "
+"an operator. Reporting in time protects the RPA operation of every contract."
+msgstr ""
+"Un incidente no es sólo de la faena: la DGAC evalúa a toda la compañía como "
+"operador. Avisar a tiempo protege la operación RPA de todos los contratos."
 
 #: .\templates\core\start.html
 msgid "The expiry traffic light"
 msgstr "El semáforo de vencimientos"
 
 #: .\templates\core\start.html
-msgid "Every document, credential and permit is marked with the same three states throughout AeroControl. The word and the shape say it as well as the colour."
-msgstr "Cada documento, credencial y permiso se marca con los mismos tres estados en todo AeroControl. La palabra y la forma lo dicen tanto como el color."
+msgid ""
+"Every document, credential and permit is marked with the same three states "
+"throughout AeroControl. The word and the shape say it as well as the colour."
+msgstr ""
+"Cada documento, credencial y permiso se marca con los mismos tres estados en"
+" todo AeroControl. La palabra y la forma lo dicen tanto como el color."
 
 #: .\templates\core\start.html
 msgid "Green"
@@ -13911,8 +14054,7 @@ msgstr "Amarillo"
 msgid "Expires in less than 1 month: start the renewal."
 msgstr "Vence en menos de 1 mes: hay que iniciar la renovación."
 
-#: .\templates\core\start.html
-#: .\templates\dashboard\index.html
+#: .\templates\core\start.html .\templates\dashboard\index.html
 #: .\apps\core\navigation.py
 msgid "Red"
 msgstr "Rojo"
@@ -13938,8 +14080,12 @@ msgid "Each month"
 msgstr "Cada mes"
 
 #: .\templates\core\start.html
-msgid "Review permits, insurance and credentials; monthly RPA report in the first week."
-msgstr "Revisar permisos, seguros y credenciales; informe mensual RPA en la primera semana."
+msgid ""
+"Review permits, insurance and credentials; monthly RPA report in the first "
+"week."
+msgstr ""
+"Revisar permisos, seguros y credenciales; informe mensual RPA en la primera "
+"semana."
 
 #: .\templates\core\start.html
 msgid "Every 3 months"
@@ -13962,8 +14108,12 @@ msgid "Every year"
 msgstr "Cada año"
 
 #: .\templates\core\start.html
-msgid "Renew the JAC insurance and check the credentials per RPA model, 2 months before."
-msgstr "Renovar el seguro JAC y revisar las credenciales por modelo de RPA, 2 meses antes."
+msgid ""
+"Renew the JAC insurance and check the credentials per RPA model, 2 months "
+"before."
+msgstr ""
+"Renovar el seguro JAC y revisar las credenciales por modelo de RPA, 2 meses "
+"antes."
 
 #: .\templates\core\start.html
 msgid "Contract administrator (ADC)"
@@ -14062,8 +14212,11 @@ msgid "Go to AeroControl"
 msgstr "Ir a AeroControl"
 
 #: .\templates\core\start.html
-msgid "Based on the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for reference."
-msgstr "Basado en la guía visual JEJ-GRI-SS-INS-096 Rev. 0. Tiempos referenciales."
+msgid ""
+"Based on the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for "
+"reference."
+msgstr ""
+"Basado en la guía visual JEJ-GRI-SS-INS-096 Rev. 0. Tiempos referenciales."
 
 #: .\templates\core\start.html
 msgid "On this page"
@@ -14078,7 +14231,8 @@ msgid "New to AeroControl?"
 msgstr "¿Recién llega a AeroControl?"
 
 #: .\templates\dashboard\index.html
-msgid "See what it is for, what each flight requires and the process step by step."
+msgid ""
+"See what it is for, what each flight requires and the process step by step."
 msgstr "Qué busca, qué requiere cada vuelo y el proceso paso a paso."
 
 #: .\templates\dashboard\index.html
@@ -14119,15 +14273,16 @@ msgstr "Credencial descartada; no se guardó nada."
 
 #: apps/registry/views.py
 msgid "The credential upload expired or is no longer valid. Upload it again."
-msgstr "La carga de la credencial venció o ya no es válida. Vuelva a cargarla."
+msgstr ""
+"La carga de la credencial venció o ya no es válida. Vuelva a cargarla."
 
 #: apps/registry/views.py
 msgid ""
-"The credential upload expired or is no longer valid, so no file was attached. "
-"Upload it again from the operator's record."
+"The credential upload expired or is no longer valid, so no file was "
+"attached. Upload it again from the operator's record."
 msgstr ""
-"La carga de la credencial venció o ya no es válida, por lo que no se adjuntó "
-"ningún archivo. Vuelva a cargarla desde la ficha del operador."
+"La carga de la credencial venció o ya no es válida, por lo que no se adjuntó"
+" ningún archivo. Vuelva a cargarla desde la ficha del operador."
 
 #: apps/registry/views.py
 msgid "The DGAC credential was saved with the operator."
@@ -14139,8 +14294,8 @@ msgstr "Cargar credencial DGAC (PDF)"
 
 #: templates/registry/operator_form.html
 msgid ""
-"The file could not be read; fill in the form by hand. The file will still be "
-"attached when you save."
+"The file could not be read; fill in the form by hand. The file will still be"
+" attached when you save."
 msgstr ""
 "No se pudo leer el archivo; el formulario se completa a mano. El archivo se "
 "adjuntará igual al guardar."
@@ -14167,8 +14322,8 @@ msgstr "Descartar credencial"
 
 #: templates/registry/operator_form.html
 msgid ""
-"It is read and the form is filled in for you to check. Nothing is saved until "
-"you press Save."
+"It is read and the form is filled in for you to check. Nothing is saved "
+"until you press Save."
 msgstr ""
 "Se lee y el formulario se completa para que usted lo revise. No se guarda "
 "nada hasta presionar Guardar."
@@ -14182,8 +14337,8 @@ msgid ""
 "Untick for papers that carry no issue date worth recording (for example the "
 "RPA registration certificate)."
 msgstr ""
-"Desmarque en los papeles que no traen una fecha de emisión que valga la pena "
-"registrar (por ejemplo, el certificado de inscripción del RPA)."
+"Desmarque en los papeles que no traen una fecha de emisión que valga la pena"
+" registrar (por ejemplo, el certificado de inscripción del RPA)."
 
 #: templates/compliance/_doc_type_hint.html
 msgid "This type does not ask for an issue date."
@@ -14370,6 +14525,71 @@ msgstr[1] "Vence en %(days)s días"
 msgid "Credential in force"
 msgstr "Credencial vigente"
 
+#: templates/base.html
+msgid "The list could not be updated. Please try again."
+msgstr "No se pudo actualizar la lista. Vuelva a intentarlo."
+
 #: templates/registry/_aircraft_rows.html
 msgid "Insurance in force"
 msgstr "Seguro vigente"
+
+#~ msgid "Credential file"
+#~ msgstr "Credencial adjunta"
+
+#~ msgid "No qualifications recorded yet."
+#~ msgstr "Aún no hay habilitaciones registradas."
+
+#~ msgid "Enter the employee ID."
+#~ msgstr "Ingrese el ID de empleado."
+
+#~ msgid "SIGO requests"
+#~ msgstr "Solicitudes SIGO"
+
+#~ msgid "Search title or cost center..."
+#~ msgstr "Buscar título o centro de costo..."
+
+#, python-format
+#~ msgid ""
+#~ "%(counter)s question, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgid_plural ""
+#~ "%(counter)s questions, %(percent)s%% to pass. The result is valid for "
+#~ "%(months)s months and is filed on your record."
+#~ msgstr[0] ""
+#~ "%(counter)s pregunta, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en su ficha."
+#~ msgstr[1] ""
+#~ "%(counter)s preguntas, %(percent)s%% para aprobar. El resultado vale "
+#~ "%(months)s meses y queda en su ficha."
+
+#~ msgid "Active Aircraft"
+#~ msgstr "Aeronaves activas"
+
+#~ msgid "Active Operators"
+#~ msgstr "Operadores activos"
+
+#~ msgid "missing or lapsed"
+#~ msgstr "faltantes o vencidos"
+
+#~ msgid "Expiring in 30 days"
+#~ msgstr "Vence en 30 días"
+
+#~ msgid "No documents attached to this permission."
+#~ msgstr "No hay documentos adjuntos a este permiso."
+
+#~ msgid "Split a plan"
+#~ msgstr "Separar un plan"
+
+#~ msgid "No flight requests yet. Split a geospatial plan to create them."
+#~ msgstr ""
+#~ "Aún no hay solicitudes de vuelo. Separa un plan geoespacial para crearlas."
+
+#~ msgid "Smallest circle that encloses it"
+#~ msgstr "La circunferencia más chica que la encierra"
+
+#~ msgid ""
+#~ "The ↳ row appears when the drawn area is not a circle: SIGO accepts one "
+#~ "circle per request, and that is the smallest one covering the whole area."
+#~ msgstr ""
+#~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
+#~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."

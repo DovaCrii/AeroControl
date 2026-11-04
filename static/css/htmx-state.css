@@ -1,0 +1,29 @@
+/* LV-419: estado de carga y de error de htmx (ver `js/htmx-state.js`). */
+
+/* Atenuado mientras la petición está en vuelo. La opacidad cambia siempre; sólo
+   la transición queda condicionada a que la persona no pida menos movimiento. */
+.is-loading {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .is-loading,
+  [aria-busy] {
+    transition: opacity 0.15s ease;
+  }
+}
+
+/* Región viva de errores: vacía no ocupa lugar; con texto se ve como aviso. */
+.htmx-status:empty {
+  display: none;
+}
+
+.htmx-status {
+  margin: 0 1.5rem 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--bs-danger, #b02a37);
+  border-left-width: 4px;
+  border-radius: 0.375rem;
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+}
