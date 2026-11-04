@@ -18,7 +18,7 @@ from datetime import date
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Prefetch
 from django.http import HttpResponse, HttpResponseNotModified, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -32,6 +32,8 @@ from apps.environment.airspace_near import current_permits, pending_permits
 from apps.environment.views import EnvironmentTab, environment_context
 from apps.geo import administrative_layer
 from apps.geo.airspace_geometry import features_in_area, nearby
+from apps.geo.mini_map import plan_area
+from apps.geo.models import GeoPlan
 from apps.geo.sections import format_dms
 
 from . import payload
@@ -102,6 +104,14 @@ def ui_strings():
         "siteWord": _("Site"),
         "permitWord": _("Permit"),
         "validUntil": _("valid until {date}"),
+        # LV-411: the extent of a permit and its list.
+        "noArea": _("no declared area: fill in the radius or link the KMZ"),
+        "permitsUnplaced": _("{n} without a location or area: not drawn."),
+        "showOnMap": _("Show on the map"),
+        "openPermit": _("Open the permit"),
+        "permitNotShown": _(
+            "That permit is not on the map: it is not current, it has no location or it is not yours to see."
+        ),
         "layerAdmin": _("Administrative boundaries"),
         "adminLoading": _("Loading the administrative boundaries"),
         "adminFailed": _(
@@ -300,26 +310,76 @@ def _site_entry(center):
     }
 
 
-def _permit_entry(permit):
+# LV-411: how much of a permit's extent the map can draw, best first. «plan» = the geometry of its
+# linked geo plan(s); «circle» = its point and radius; «point» = only a centre (no declared area).
+AREA_PLAN, AREA_CIRCLE, AREA_POINT = "plan", "circle", "point"
+
+
+def _permits_with_plans(queryset):
+    return queryset.select_related("cost_center").prefetch_related(
+        Prefetch(
+            "geo_plans",
+            queryset=GeoPlan.objects.filter(
+                is_active=True, current_version__isnull=False
+            )
+            .select_related("current_version")
+            .order_by("created_at", "pk"),
+            to_attr="active_plans",
+        )
+    )
+
+
+def permit_area(permit, with_plans):
+    """`{area, lat, lon, radius_km, geometries}` for a permit, or `None` if there is nothing to place.
+
+    The plan's geometry travels only when the person may also see geo plans (`with_plans`):
+    otherwise the permit falls back to its own circle or point, as before LV-411. Without its own
+    coordinates, a permit with a plan is placed at the plan's first centre (never at the cost
+    center's, which says where the faena is, not where the permit allows flying)."""
+    geometries, plan_center = [], None
+    if with_plans:
+        for plan in getattr(permit, "active_plans", ()):
+            shapes, center = plan_area(plan.current_version.content)
+            geometries.extend(shapes)
+            plan_center = plan_center or center
+    lat, lon = permit.latitude, permit.longitude
+    if lat is None or lon is None:
+        if plan_center is None or not geometries:
+            return None
+        lat, lon = plan_center
     radius = permit.radius_km
+    if geometries:
+        area = AREA_PLAN
+    elif radius:
+        area = AREA_CIRCLE
+    else:
+        area = AREA_POINT
+    return {
+        "area": area,
+        "lat": float(lat),
+        "lon": float(lon),
+        "radius_km": float(radius) if radius is not None else None,
+        "geometries": geometries,
+        "url": reverse("permission-detail", args=[permit.pk]),
+    }
+
+
+def _permit_entry(permit, place):
     return {
         "id": str(permit.pk),
         "number": permit.permission_number,
         "site": permit.cost_center.code,
         "location": permit.location,
         "valid_until": permit.valid_until.isoformat(),
-        "lat": float(permit.latitude) if permit.latitude is not None else None,
-        "lon": float(permit.longitude) if permit.longitude is not None else None,
-        "radius_km": float(radius) if radius is not None else None,
+        **place,
     }
 
 
-def _pending_entry(permit):
+def _pending_entry(permit, place):
     """A permit still in process, as map data. No operators or aircraft: the map only says where.
 
     Folio and dates are optional for a request (the DGAC has not set them yet), so nothing here assumes
     them; `_permit_entry` would break on a null `valid_until`."""
-    radius = permit.radius_km
     return {
         "id": str(permit.pk),
         "folio": permit.internal_folio,
@@ -330,10 +390,20 @@ def _pending_entry(permit):
         "created_on": timezone.localtime(permit.created_at).date().isoformat(),
         "valid_from": permit.valid_from.isoformat() if permit.valid_from else None,
         "valid_until": permit.valid_until.isoformat() if permit.valid_until else None,
-        "lat": float(permit.latitude),
-        "lon": float(permit.longitude),
-        "radius_km": float(radius) if radius is not None else None,
+        **place,
     }
+
+
+def _placed(permits, entry, with_plans):
+    """`(items, unplaced)`: the permits the map can place, and how many it cannot."""
+    items, unplaced = [], 0
+    for permit in permits:
+        place = permit_area(permit, with_plans)
+        if place is None:
+            unplaced += 1
+        else:
+            items.append(entry(permit, place))
+    return items, unplaced
 
 
 class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
@@ -353,6 +423,7 @@ class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
         if not request.user.has_perm(OWN_LAYERS[layer]):
             raise PermissionDenied
         extra = {}
+        with_plans = request.user.has_perm("geo.view_geoplan")
         if layer == "sites":
             from apps.registry.models import CostCenter
 
@@ -364,25 +435,18 @@ class AirspaceOwnLayers(ModelViewPermissionRequiredMixin, View):
             ).order_by("code")
             items = [_site_entry(center) for center in rows]
         elif layer == "pending":
-            requested = pending_permits(request.user)
-            rows = (
-                requested.filter(latitude__isnull=False, longitude__isnull=False)
-                .select_related("cost_center")
-                .order_by("created_at", "pk")
+            rows = _permits_with_plans(
+                pending_permits(request.user).order_by("created_at", "pk")
             )
-            items = [_pending_entry(permit) for permit in rows]
+            items, unplaced = _placed(rows, _pending_entry, with_plans)
             # The ones without a location are not drawn (and never borrow the cost center's point).
-            extra["unplaced"] = requested.filter(
-                Q(latitude__isnull=True) | Q(longitude__isnull=True)
-            ).count()
+            extra["unplaced"] = unplaced
         else:
-            rows = (
-                current_permits(request.user)
-                .filter(latitude__isnull=False, longitude__isnull=False)
-                .select_related("cost_center")
-                .order_by("permission_number", "pk")
+            rows = _permits_with_plans(
+                current_permits(request.user).order_by("permission_number", "pk")
             )
-            items = [_permit_entry(permit) for permit in rows]
+            items, unplaced = _placed(rows, _permit_entry, with_plans)
+            extra["unplaced"] = unplaced
         response = HttpResponse(
             payload.dumps({"layer": layer, "items": items, **extra}),
             content_type="application/json; charset=utf-8",

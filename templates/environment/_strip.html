@@ -49,6 +49,19 @@
       <header class="env-cell-head"><svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-zone"/></svg><h3 class="env-cell-title">{% translate "Airspace" %}</h3></header>
       {% if airspace.fact.state == "ok" and airspace.fact.sites %}<p class="env-cell-big" aria-hidden="true">{{ airspace.fact.count }}</p>{% endif %}
       <p class="env-cell-line">{% if airspace.line.level != "info" %}<span class="env-lvl env-lvl--{{ airspace.line.level }}"><span aria-hidden="true">{{ airspace.line.symbol }}</span> {{ airspace.line.level_label }}</span> {% endif %}<span>{{ airspace.line.text }}</span></p>
+      {% comment %}LV-411: QUÉ zona y QUÉ permiso. Las más cercanas (`pairs`, del mismo cálculo que la cifra), cada una con el mapa centrado en el par y la ficha del permiso; el resto, «y N más».{% endcomment %}
+      {% if airspace.fact.pairs %}
+      <ul class="env-air-pairs">
+        {% for pair in airspace.fact.pairs %}
+        <li>
+          <a class="env-strip-link" href="{{ pair.map_url }}">{% if pair.code %}{{ pair.code }} · {% endif %}{{ pair.name }}<span class="visually-hidden"> ({% translate "Show on the map" %})</span></a>
+          <span class="env-cell-more">{{ pair.kind_label }} · {% if pair.distance_km %}{% blocktranslate with km=pair.distance_km|floatformat:1 site=pair.permit_site %}{{ km }} km from the permit area of {{ site }}{% endblocktranslate %}{% else %}{% blocktranslate with site=pair.permit_site %}touches the permit area of {{ site }}{% endblocktranslate %}{% endif %}</span>
+          <a class="env-strip-link" href="{{ pair.permit_url }}">{% blocktranslate with number=pair.permit_number|default:pair.permit_site %}Permit {{ number }}{% endblocktranslate %}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if airspace.fact.more %}<p class="env-cell-more">{% blocktranslate count counter=airspace.fact.more %}and {{ counter }} more zone{% plural %}and {{ counter }} more zones{% endblocktranslate %}</p>{% endif %}
+      {% endif %}
       <p class="env-cell-line"><a class="env-strip-link" href="{{ airspace.url }}">{% translate "Open the map" %} <span aria-hidden="true">→</span></a></p>
     </div>
     {% endif %}
