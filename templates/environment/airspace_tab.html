@@ -82,7 +82,7 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
     </div>
     <p id="air-tool-hint" class="air-help" role="status" aria-live="polite"></p>
     <div id="air-map" class="air-map" role="region" aria-label="{% translate 'Airspace map' %}">
-      <noscript><p class="air-help">{% translate "The map needs JavaScript. The list of results works without the map once the data loads." %}</p></noscript>
+      <noscript><p class="air-help">{% translate "The map needs JavaScript. The list of results works without the map once the data loads." %}</p>{% if perms.operations.view_flightpermission %}<p class="air-help"><a href="{% url 'permission-list' %}">{% translate "See every flight permit" %}</a></p>{% endif %}</noscript>
     </div>
     <details class="air-legend" id="air-legend" open>
       <summary class="air-legend-summary"><svg class="air-ic" aria-hidden="true" focusable="false"><use href="#air-i-layers"/></svg>{% translate "Layers" %}</summary>
@@ -105,6 +105,9 @@ La advertencia «Referencial» es la ÚNICA de la sección (`_referential.html`,
         <h3 class="air-legend-head">{% translate "My layers (off by default)" %}</h3>
         <div id="air-legend-own" class="air-legend-items"></div>
         <p class="air-help" id="air-legend-pending-note" hidden>{% translate "Dotted outline and hourglass: requested from the DGAC, not yet approved. Not an authorization to fly." %}</p>
+        {% comment %}LV-411: al encender una capa de permisos aparece aquí su listado (lo arma el script con lo que ya bajó para dibujar): «Ver en el mapa» y «Abrir permiso» por fila. Un permiso sin área declarada lo dice.{% endcomment %}
+        <div id="air-own-lists" class="air-own-lists"></div>
+        {% if perms.operations.view_flightpermission %}<p class="air-help"><a href="{% url 'permission-list' %}">{% translate "See every flight permit" %}</a></p>{% endif %}
       </div>
       <p class="air-help">{% translate "Zones carry a letter and a pattern besides their colour: P prohibited, R restricted, D danger, N naval. Small airstrips are not official and appear from zoom 8." %}</p>
     </details>

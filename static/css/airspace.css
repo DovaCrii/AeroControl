@@ -240,6 +240,17 @@
 .air-own-pending-halo { stroke: var(--id-air-halo); stroke-width: 4px; fill: none; stroke-linecap: round; }
 .air-own-pending { stroke: var(--id-air-line-pending); stroke-width: 2.5px; stroke-dasharray: 1 5; stroke-linecap: round; fill: none; }
 .air-own-permit-dot { stroke: var(--ac-primary); stroke-width: 2; fill: var(--ac-surface); fill-opacity: 1; }
+/* LV-411: un permiso sin área declarada es un punto hueco con trazo punteado (no se confunde con el
+   centro de un área); el resaltado de «Ver en el mapa» engruesa el trazo, sin depender del color. */
+.air-own-permit-dot.air-own-noarea { stroke-dasharray: 2 2; fill: none; }
+.air-map path.air-own-focus { stroke-width: 5px; stroke-opacity: 1; }
+.air-own-lists { display: grid; gap: var(--id-sp-2); margin-top: var(--id-sp-1); }
+.air-own-list-head { margin: 0 0 0.25rem; font-size: var(--id-fs-sm); font-weight: 700; }
+.air-own-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; max-height: 16rem; overflow-y: auto; }
+.air-own-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.25rem 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--ac-border); font-size: var(--id-fs-sm); }
+.air-own-row-name { flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+.air-own-row--noarea .air-own-row-name { color: var(--ac-text-secondary); }
+.air-own-row-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .air-badge-wrap, .air-plane-wrap, .air-tag-wrap { background: none; border: 0; }
 /* Jerarquía de marcadores: aeropuerto (disco de 30 px con borde) > aeródromo (22 px) = insignia de zona (22 px). */
 .air-badge { box-shadow: 0 0 0 2px var(--id-air-halo); }

@@ -259,6 +259,10 @@ class TestTheResponse:
             "lat",
             "lon",
             "radius_km",
+            # LV-411: cuánto de su extensión se puede dibujar, la geometría del plan y su ficha.
+            "area",
+            "geometries",
+            "url",
         }
 
     def test_markup_is_escaped_and_the_response_is_private(self, world):
@@ -527,6 +531,8 @@ class TestTheScript:
             "Permit in process JEJ-2026-015 · CC-A · Requested · registered on "
             + timezone.localdate().strftime("%d-%m-%Y")
             + " · proposed validity 02-11-2026 – 20-11-2026"
+            # LV-411: sin radio ni plan, el rótulo dice que no hay área declarada.
+            + " · no declared area: fill in the radius or link the KMZ"
         ) in texts
         assert all(not tip["hasHtml"] for s in node_run["shapes"] for tip in s["tips"])
 
