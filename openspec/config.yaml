@@ -16,6 +16,7 @@ rules:
   specs:
     - Use Given/When/Then for scenarios
     - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Mark every user decision as [NEEDS CLARIFICATION: question]; never invent thresholds or business rules
   design:
     - Include sequence diagrams for complex flows
     - Document architecture decisions with rationale
@@ -32,6 +33,7 @@ rules:
     coverage_threshold: 83  # enforced by fail_under in pyproject.toml (T0.4)
   archive:
     - Warn before merging destructive deltas
+    - Record a verdict before archiving: verified, partial (say what is left) or failed (with evidence)
 
 testing:
   strict_tdd: false

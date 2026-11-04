@@ -10,7 +10,7 @@ so the section stays one implementation instead of four.
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Case, IntegerField, Value, When
 
-from .models import Document, DocumentType
+from .models import Document, DocumentType, newest_first
 from .upload_context import suggested_upload_types
 
 
@@ -74,7 +74,7 @@ def attached_documents_context(user, obj):
         # obliga a leerla entera para encontrar el seguro; agrupada, se salta
         # directo al bloque.
         .annotate(category_rank=category_rank())
-        .order_by("category_rank", "-issue_date")
+        .order_by("category_rank", *newest_first())
     )
     return {
         "documents": documents,
