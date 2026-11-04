@@ -16,6 +16,10 @@
     "templates/reporting/_foot.html": [
       "email"
     ],
+    "apps/core/test_lv399_official_images.py": [
+      "email",
+      "private-ip"
+    ],
     ".claude/skills/ui-ux-pro-max/data/stacks/avalonia.csv": [
       "user-path"
     ]

@@ -1047,7 +1047,31 @@ class AircraftDetail(RegistryDetail):
         else:
             context["total_flight_hours"] = None
         context.update(self._insurance_context())
+        context.update(self._model_image_context())
         return context
+
+    def _model_image_context(self):
+        """LV-399: la foto oficial del modelo, si alguien la cargó; si no, la silueta."""
+        from .models import AircraftModelImage
+
+        image = AircraftModelImage.for_aircraft(self.object)
+        url = ""
+        if image is not None:
+            url = "{}?v={}".format(
+                reverse("aircraft-model-image", args=[image.pk]),
+                int(image.updated_at.timestamp()),
+            )
+        return {
+            "model_image": image,
+            "model_image_url": url,
+            "model_image_upload_url": (
+                reverse("aircraft-model-image-upload", args=[self.object.pk])
+                if self.object.is_active
+                and self.object.model.strip()
+                and self.request.user.has_perm("registry.change_aircraft")
+                else ""
+            ),
+        }
 
     def _insurance_context(self):
         """LV-81: the insurance filing as a stepper plus its trace.

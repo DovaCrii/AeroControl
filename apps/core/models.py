@@ -330,3 +330,40 @@ class ListPreference(BaseModel):
             raise ValidationError(
                 {"name": _("A shared view needs a name.")},
             )
+
+
+class OfficialLinkImage(BaseModel):
+    """LV-399: el banner de un sistema oficial de la DGAC (SIGO, SIPA) para su tarjeta.
+
+    La clave es la de `apps/core/official_links.OFFICIAL_LINKS`. Como la foto de modelo, la
+    imagen no va al repo (logo de tercero, repo público): se carga una vez, se guarda en el
+    almacenamiento de documentos y se sirve por `official-link-image` con sesión iniciada.
+    Sin empresa: los sistemas de la DGAC son los mismos para todas.
+    """
+
+    LINK_KEYS = ("sigo", "sipa")
+
+    link_key = models.CharField(max_length=20, unique=True)
+    storage_key = models.CharField(max_length=255, editable=False)
+    source_url = models.URLField(max_length=500, blank=True)
+    source_host = models.CharField(max_length=255, blank=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("official link image")
+        verbose_name_plural = _("official link images")
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(link_key__in=("sigo", "sipa")),
+                name="core_officiallinkimage_known_key",
+            ),
+        ]
+
+    def __str__(self):
+        return self.link_key

@@ -153,3 +153,63 @@ class AeroModelForm(forms.ModelForm):
             self.instance.validate_constraints(exclude=exclude)
         except forms.ValidationError as exc:
             self._update_errors(exc)
+
+
+class OfficialImageForm(forms.Form):
+    """LV-399: cargar una imagen oficial, subiendo el archivo **o** pegando su dirección.
+
+    La descarga y la validación por contenido corren en `clean()` con el servicio de
+    `apps/core/official_images.py`; el formulario sólo decide de dónde viene. Quien lo usa
+    pasa `allowed_hosts`, la lista del uso (fabricante o DGAC). Con `with_credit=True`
+    aparece el crédito visible bajo la imagen («DJI»).
+    """
+
+    image = forms.FileField(
+        label=_("Image file"),
+        required=False,
+        help_text=_("JPEG, PNG or WebP, up to 5 MB."),
+        widget=forms.ClearableFileInput(
+            attrs={"accept": "image/jpeg,image/png,image/webp"}
+        ),
+    )
+    source_url = forms.URLField(
+        label=_("Or the image address"),
+        required=False,
+        max_length=500,
+        assume_scheme="https",
+        help_text=_("An https address on the allowed list. The server downloads it."),
+    )
+    credit = forms.CharField(
+        label=_("Credit"),
+        required=False,
+        max_length=60,
+        help_text=_("Shown under the image, for example DJI."),
+    )
+
+    def __init__(self, *args, allowed_hosts=(), with_credit=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allowed_hosts = tuple(allowed_hosts)
+        if not with_credit:
+            del self.fields["credit"]
+        self.webp = None
+        self.source_host = ""
+
+    def clean(self):
+        from apps.core.official_images import OfficialImageError, load_image
+
+        cleaned = super().clean()
+        uploaded = cleaned.get("image")
+        url = (cleaned.get("source_url") or "").strip()
+        if self.errors:
+            return cleaned
+        if bool(uploaded) == bool(url):
+            raise forms.ValidationError(
+                _("Upload a file or paste an address, one of the two.")
+            )
+        try:
+            self.webp, self.source_host = load_image(
+                uploaded=uploaded or None, url=url, allowed_hosts=self.allowed_hosts
+            )
+        except OfficialImageError as exc:
+            self.add_error("image" if uploaded else "source_url", str(exc))
+        return cleaned
