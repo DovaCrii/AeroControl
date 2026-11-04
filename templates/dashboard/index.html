@@ -255,7 +255,7 @@ when the three are done.{% endcomment %}
         {% comment %}LV-310: el estado se **lee**, no sólo se ve: punto de color más una insignia de texto
         (misma paleta que la bandeja, `BUCKET_BADGE_CSS`). El color solo no alcanza para quien no lo distingue.{% endcomment %}
         <span class="text-end text-nowrap {{ item.tone }}">
-          <span aria-hidden="true">●</span> <b>{{ item.date|date:"Y-m-d" }}</b>{% if item.badge_css and item.bucket != "later" %} <span class="badge {{ item.badge_css }} ms-1">{% if item.bucket == "overdue" %}{% translate "Overdue" %}{% elif item.bucket == "due_7" %}{% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %}{% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %}{% translate "Due within 30 days" %}{% endif %}</span>{% endif %}
+          <span aria-hidden="true">●</span> <b>{{ item.date|date:"d-m-Y" }}</b>{% if item.badge_css and item.bucket != "later" %} <span class="badge {{ item.badge_css }} ms-1">{% if item.bucket == "overdue" %}{% translate "Overdue" %}{% elif item.bucket == "due_7" %}{% translate "Due within 7 days" %}{% elif item.bucket == "due_15" %}{% translate "Due within 15 days" %}{% elif item.bucket == "due_30" %}{% translate "Due within 30 days" %}{% endif %}</span>{% endif %}
         </span>
       </a>
       {% empty %}
@@ -323,7 +323,7 @@ Nombra matrículas, así que sólo se dibuja con el permiso de lectura de manten
   {% for record in upcoming_maintenance %}
   <a href="{{ record.get_absolute_url }}" class="d-flex justify-content-between align-items-center border-bottom py-2 text-decoration-none text-body">
     <span><span class="cc-chip me-2">{{ record.aircraft.registration }}</span>{{ record.get_maintenance_type_display }}</span>
-    <span class="text-end text-nowrap">{% if record.scheduled_date %}<b>{{ record.scheduled_date|date:"Y-m-d" }}</b>{% else %}<span class="badge sev-warning">{% translate "To be defined" %}</span>{% endif %}</span>
+    <span class="text-end text-nowrap">{% if record.scheduled_date %}<b>{{ record.scheduled_date|date:"d-m-Y" }}</b>{% else %}<span class="badge sev-warning">{% translate "To be defined" %}</span>{% endif %}</span>
   </a>
   {% empty %}
   <p class="text-muted my-2">{% translate "No maintenance pending." %}</p>

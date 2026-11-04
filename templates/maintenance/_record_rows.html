@@ -6,7 +6,7 @@ genéricas. `data-pk` es lo que habilita la selección múltiple.{% endcomment %
 <tr data-pk="{{ object.pk }}">
   <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.aircraft }}</a></td>
   <td>{{ object.get_maintenance_type_display }}</td>
-  <td><span class="text-nowrap">{{ object.scheduled_date|date:"Y-m-d" }}</span></td>
+  <td><span class="text-nowrap">{{ object.scheduled_date|date:"d-m-Y" }}</span></td>
   <td>
     <span class="badge bg-{% if object.status == 'completed' %}success{% elif object.status == 'in_progress' %}warning{% elif object.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ object.get_status_display }}</span>
     {% if object.sent_without_head_office_notice %}<span class="badge sev-caution" data-intake-badge="no-notice">{% translate "Sent without notice to head office" %}</span>{% endif %}

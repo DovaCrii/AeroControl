@@ -102,7 +102,7 @@ def test_aircraft_list_shows_overdue_insurance(client, admin_user, registry_data
 
     assert response.status_code == 200
     content = response.content.decode()
-    assert "2025-06-01" in content
+    assert "01-06-2025" in content
     assert "Overdue" in content or "Atrasada" in content
 
 
@@ -359,7 +359,7 @@ def test_operator_list_shows_credential_expiry_column(
 
     assert response.status_code == 200
     content = response.content.decode()
-    assert "2025-06-01" in content
+    assert "01-06-2025" in content
     assert "Overdue" in content or "Atrasada" in content
 
 

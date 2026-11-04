@@ -16,7 +16,7 @@ ahora el mismo atributo.{% endcomment %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
   <td>{% if has_detail_url %}<a href="{{ object.pk }}/">{{ object }}</a>{% else %}{{ object }}{% endif %}</td>
-  <td>{{ object.created_at|date:'Y-m-d' }}</td>
+  <td>{{ object.created_at|date:'d-m-Y' }}</td>
   <td>{% if object.is_active %}<span class="id-chip id-chip--ok">{% translate "Active" %}</span>{% else %}<span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>{% endif %}</td>
   <td class="text-end">
     {% if has_detail_url %}<a href="{{ object.pk }}/" class="btn btn-sm btn-outline-secondary">{% translate "View" %}</a>{% endif %}

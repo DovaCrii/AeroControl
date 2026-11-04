@@ -13,7 +13,7 @@
       <table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;">
         {% for item in group.items %}
         <tr>
-          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;white-space:nowrap;color:{{ group.color }};font-weight:700;">{{ item.expiry_date|date:"Y-m-d" }}</td>
+          <td style="padding:7px 0;border-bottom:1px solid #eef1f6;white-space:nowrap;color:{{ group.color }};font-weight:700;">{{ item.expiry_date|date:"d-m-Y" }}</td>
           <td style="padding:7px 10px;border-bottom:1px solid #eef1f6;">
             <a href="{{ base_url }}{{ item.url_path }}" style="color:#1b2a4a;text-decoration:underline;">{{ item.label }}</a>
             <span style="color:#66748c;"> — {{ item.detail }}</span>

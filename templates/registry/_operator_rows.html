@@ -17,8 +17,8 @@
   <td class="cell-truncate cell-numeric">{{ object.dgac_credential|default:"—" }}</td>
   <td class="cell-status">
     {% if object.credential_expiry %}
-      {% if object.credential_is_overdue %}<span class="badge sev-critical">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'Y-m-d' }}</span>
-      {% else %}<span class="badge sev-caution">{{ object.credential_expiry|date:'Y-m-d' }}</span>{% endif %}
+      {% if object.credential_is_overdue %}<span class="badge sev-critical">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'d-m-Y' }}</span>
+      {% else %}<span class="badge sev-caution">{{ object.credential_expiry|date:'d-m-Y' }}</span>{% endif %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   {% comment %}LV-87 (refina R4.7): columna propia, y una figura de sí/no en vez

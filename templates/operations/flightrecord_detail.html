@@ -32,7 +32,7 @@
   <table class="table table-bordered">
     <tbody>
       <tr><th scope="row" class="w-25">{% translate "Permission" %}</th><td><a href="{% url 'permission-detail' record.permission.pk %}">{{ record.permission }}</a></td></tr>
-      <tr><th scope="row">{% translate "Date" %}</th><td>{{ record.actual_date|date:"Y-m-d" }}</td></tr>
+      <tr><th scope="row">{% translate "Date" %}</th><td>{{ record.actual_date|date:"d-m-Y" }}</td></tr>
       <tr><th scope="row">{% translate "Departure" %}</th><td>{{ record.departure_time|time:"H:i" }}</td></tr>
       <tr><th scope="row">{% translate "Arrival" %}</th><td>{{ record.arrival_time|time:"H:i" }}</td></tr>
       <tr><th scope="row">{% translate "Pilot" %}</th><td>{{ record.pilot }}</td></tr>

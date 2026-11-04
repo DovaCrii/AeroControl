@@ -15,7 +15,7 @@
   {% comment %}R7.2: a cycle count with no sync date is ambiguous -- a new
   battery, or a sync that never ran? The provenance is shown, not inferred.{% endcomment %}
   <td class="cell-truncate">
-    {% if object.synced_at %}{{ object.synced_at|date:'Y-m-d H:i' }}
+    {% if object.synced_at %}{{ object.synced_at|date:'d-m-Y H:i' }}
     {% else %}<span class="text-muted" title="{% translate 'Never synced from AeroLink' %}">{{ object.get_source_display }}</span>{% endif %}
   </td>
 </tr>

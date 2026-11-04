@@ -3,7 +3,7 @@
 {% block title %}{% translate "Compliance status report" %} - AeroControl{% endblock %}
 {% block content %}
 {% translate "Compliance status report" as print_title %}
-{% include "reporting/_print_head.html" with title=print_title subtitle=report.period.start|date:"Y-m-d" subtitle_end=report.period.end|date:"Y-m-d" %}
+{% include "reporting/_print_head.html" with title=print_title subtitle=report.period.start|date:"d-m-Y" subtitle_end=report.period.end|date:"d-m-Y" %}
 {% include "reporting/_print_foot.html" %}
 <div class="page-header d-print-none">
   {% translate "Compliance" as page_eyebrow %}{% translate "Compliance status report" as page_title %}{% translate "Document validity, upcoming expiries and alert resolution times." as page_description %}
@@ -109,7 +109,7 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
     document counters are both evaluated "as of today" and can only read
     "no change" -- say so instead of implying a comparison happened.{% endcomment %}
     {% if comparison_baseline %}
-    <p class="text-muted small mb-0 mt-1">{% blocktranslate with date=comparison_baseline.date|date:"Y-m-d" %}Document counters compared against the stored snapshot of {{ date }}.{% endblocktranslate %}</p>
+    <p class="text-muted small mb-0 mt-1">{% blocktranslate with date=comparison_baseline.date|date:"d-m-Y" %}Document counters compared against the stored snapshot of {{ date }}.{% endblocktranslate %}</p>
     {% else %}
     <p class="text-muted small mb-0 mt-1">{% translate "No history stored yet: the document counters are evaluated as of today on both sides, so they will read no change. Run snapshot_compliance daily to get a real trend." %}</p>
     {% endif %}
@@ -206,7 +206,7 @@ window closed) and renders "—": a 0% there would read as total failure.{% endc
         <tr>
           <td><strong>{{ alert.entity }}</strong> <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ alert.entity_type }}</span></td>
           <td>{{ alert.rule }}</td>
-          <td>{{ alert.triggered_at|date:"Y-m-d" }}</td>
+          <td>{{ alert.triggered_at|date:"d-m-Y" }}</td>
           <td class="text-end">{% blocktranslate count days=alert.age_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</td>
         </tr>
         {% empty %}

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <p class="eyebrow mb-1">{{ assessment.operator }} · {{ assessment.taken_at|date:"Y-m-d H:i" }}</p>
+    <p class="eyebrow mb-1">{{ assessment.operator }} · {{ assessment.taken_at|date:"d-m-Y H:i" }}</p>
     <h1 class="h3 mb-0">{% translate "Knowledge assessment" %}</h1>
   </div>
   <a class="btn btn-outline-secondary" href="{% url 'operator-detail' assessment.operator.pk %}">{% translate "Open the operator" %}</a>
@@ -25,7 +25,7 @@ solo: "72%" no dice nada sin saber que el corte es 80.{% endcomment %}
       {% blocktranslate with correct=assessment.correct_count total=assessment.question_count percent=pass_percent %}{{ correct }} of {{ total }} correct · {{ percent }}% required{% endblocktranslate %}
     </span>
     <span class="text-body-secondary">
-      {% blocktranslate with date=assessment.expires_on|date:"Y-m-d" %}Valid until {{ date }}{% endblocktranslate %}
+      {% blocktranslate with date=assessment.expires_on|date:"d-m-Y" %}Valid until {{ date }}{% endblocktranslate %}
       {% if assessment.is_expired %}<span class="badge sev-critical ms-1">⚠ {% translate "Overdue" %}</span>{% endif %}
     </span>
   </div>

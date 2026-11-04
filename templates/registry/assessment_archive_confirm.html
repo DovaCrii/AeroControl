@@ -12,7 +12,7 @@ la alerta de vencimiento de esa persona**. Su estado de cumplimiento cambia y
 ninguna pantalla lo dice. Esta página es la que lo dice.{% endcomment %}
 <div class="card p-4">
   <h1 class="h3">{% blocktranslate with name=operator.full_name %}Archive the assessment of {{ name }}?{% endblocktranslate %}</h1>
-  <p>{% blocktranslate with date=object.taken_at|date:'Y-m-d' score=object.score_percent %}Taken on {{ date }}, scored {{ score }}%.{% endblocktranslate %}</p>
+  <p>{% blocktranslate with date=object.taken_at|date:'d-m-Y' score=object.score_percent %}Taken on {{ date }}, scored {{ score }}%.{% endblocktranslate %}</p>
   <div class="alert alert-warning">
     <p class="mb-1"><strong>{% translate "This is the only assessment keeping this person up to date." %}</strong></p>
     <p class="mb-0">{% translate "Archiving it leaves them with no valid assessment, and the expiry alert for it stops being generated — their compliance status changes without any screen saying so." %}</p>

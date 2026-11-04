@@ -23,6 +23,7 @@ from django.contrib.auth.models import User
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone, translation
+from django.utils.formats import date_format
 from django.utils.translation import gettext
 from pypdf import PdfReader
 from reportlab.lib.pagesizes import A4, landscape
@@ -111,7 +112,7 @@ class TestTheRosterWearsThePaperHeader:
             r'<div class="id-print-head".*?</div>', content, re.DOTALL
         ).group(0)
         assert "Catastro de flota y personal" in head
-        assert timezone.localdate().isoformat() in head  # la fecha de corte
+        assert date_format(timezone.localdate(), "d-m-Y") in head  # la fecha de corte
 
     def test_the_screen_header_is_not_printed(self, reader):  # noqa: F811
         content = reader.get(reverse("registry-roster")).content.decode()

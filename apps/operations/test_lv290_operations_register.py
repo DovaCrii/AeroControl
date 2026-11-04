@@ -89,7 +89,7 @@ class TestTheScreen:
         html = response.content.decode()
         assert "DGAC-0042" in html
         assert "J.E.J." in html
-        assert (TODAY - timedelta(days=10)).strftime("%d/%m/%Y") in html
+        assert (TODAY - timedelta(days=10)).strftime("%d-%m-%Y") in html
 
     def test_it_lists_the_registered_operations_with_the_serial_number(
         self, permit, aircraft, pilot

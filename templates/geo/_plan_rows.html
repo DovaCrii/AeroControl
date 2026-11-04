@@ -34,7 +34,7 @@ La fila archivada se distingue y ofrece "Restaurar": sin eso, el filtro
   dice lo otro.{% endcomment %}
   <td>{% include "geo/_status_badge.html" with status=plan.status label=plan.get_status_display %}{% if plan.permit_has_lapsed and plan.renewed_by_folio %} <span class="id-chip id-chip--neutral" title="{{ plan.flight_permission }}">{% translate "Renewed" %} → {{ plan.renewed_by_folio }}</span>{% elif plan.permit_has_lapsed %} <span class="badge sev-critical" title="{{ plan.flight_permission }}">⚠ {% translate "Permit lapsed" %}</span>{% endif %}</td>
   <td>{% if plan.current_version %}v{{ plan.current_version.version_number }}{% else %}—{% endif %}</td>
-  <td><span class="text-nowrap">{{ plan.created_at|date:'Y-m-d' }}</span></td>
+  <td><span class="text-nowrap">{{ plan.created_at|date:'d-m-Y' }}</span></td>
   <td class="text-end text-nowrap">
     {% if not plan.is_active and perms.geo.change_geoplan %}
     <form method="post" action="{% url 'geo-plan-restore' plan.pk %}" style="display:inline">{% csrf_token %}

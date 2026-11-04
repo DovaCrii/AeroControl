@@ -23,7 +23,7 @@
     <tr><th scope="row">{% translate "Check points" %}</th><td>{{ deliverable.checkpoint_count|default:"—" }}</td></tr>
     <tr><th scope="row">{% translate "Coverage (%)" %}</th><td>{% if deliverable.coverage_pct is not None %}{{ deliverable.coverage_pct }}%{% else %}—{% endif %}</td></tr>
     <tr><th scope="row">{% translate "Overlap (%)" %}</th><td>{% if deliverable.overlap_pct is not None %}{{ deliverable.overlap_pct }}%{% else %}—{% endif %}</td></tr>
-    {% if deliverable.validated_at %}<tr><th scope="row">{% translate "Validated" %}</th><td>{{ deliverable.validated_at|date:"Y-m-d H:i" }} · {{ deliverable.validated_by|default:"—" }}</td></tr>{% endif %}
+    {% if deliverable.validated_at %}<tr><th scope="row">{% translate "Validated" %}</th><td>{{ deliverable.validated_at|date:"d-m-Y H:i" }} · {{ deliverable.validated_by|default:"—" }}</td></tr>{% endif %}
     <tr><th scope="row">{% translate "Notes" %}</th><td>{{ deliverable.notes|default:"—" }}</td></tr>
   </tbody></table>
 </div>
