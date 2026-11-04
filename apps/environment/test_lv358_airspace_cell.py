@@ -396,7 +396,11 @@ class TestFactsNotAVerdict:
         header = client.get(reverse("environment-gnss")).content.decode()
         header = header.split('class="env-header"')[1].split("</section>")[0]
         assert "snapshot of" in cell and "snapshot of" not in header
-        for part in (cell, header):
+        # LV-411: la tarjeta nombra el TIPO de la zona como lo dice la fuente («Danger» es la categoría
+        # D de la DGAC, no un veredicto ni un color): ese rótulo se quita antes de buscar el rojo.
+        danger_label = str(airspace_near.KIND_LABELS["danger"])
+        assert danger_label in cell
+        for part in (cell.replace(danger_label, ""), header):
             assert "env-lvl--strong" not in part
             assert not re.search(r"critical|danger|\bred\b", part, re.I)
 

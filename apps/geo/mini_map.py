@@ -16,7 +16,7 @@ from django.conf import settings
 from django.utils.translation import gettext
 
 from .kml.canonical import iter_placemarks
-from .sections import build_section_document
+from .sections import build_section_document, split_sections
 
 # Seis decimales son ~11 cm: de sobra para ver un área de vuelo, y no regalan la
 # precisión de origen de un archivo que es del cliente.
@@ -44,6 +44,37 @@ def _geometries(section):
                 {"type": geometry["type"], "coordinates": _rounded(coordinates)}
             )
     return found
+
+
+def _as_area(geometry):
+    """Un anillo cerrado dibujado como línea (los KMZ de Trimble) se entrega como polígono."""
+    coordinates = geometry["coordinates"]
+    if (
+        geometry["type"] == "LineString"
+        and len(coordinates) >= 4
+        and coordinates[0][:2] == coordinates[-1][:2]
+    ):
+        return {"type": "Polygon", "coordinates": [coordinates]}
+    return geometry
+
+
+def plan_area(document):
+    """LV-411: las áreas de un plan (sin los puntos) y el centro de su primera sección.
+
+    Devuelve `(geometrías, centro)`; `centro` es `(lat, lon)` o `None` si no hay sección. Usa las
+    MISMAS secciones que el mini-mapa y la hoja SIGO (`split_sections` + `_geometries`): el mapa de
+    espacio aéreo dibuja lo que el permiso declara, sin recalcularlo.
+    """
+    shapes, center = [], None
+    for section in split_sections(document):
+        if center is None:
+            center = section.center
+        shapes.extend(
+            _as_area(geometry)
+            for geometry in _geometries(section)
+            if geometry["type"] != "Point"
+        )
+    return shapes, center
 
 
 def _aerodrome(row):

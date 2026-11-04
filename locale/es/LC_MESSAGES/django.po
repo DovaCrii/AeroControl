@@ -14188,3 +14188,49 @@ msgstr ""
 #: templates/compliance/_doc_type_hint.html
 msgid "This type does not ask for an issue date."
 msgstr "Este tipo no pide fecha de emisión."
+
+#: apps/airspace/views.py
+msgid "no declared area: fill in the radius or link the KMZ"
+msgstr "sin área declarada: complete el radio o vincule el KMZ"
+
+#: apps/airspace/views.py
+msgid "{n} without a location or area: not drawn."
+msgstr "{n} sin ubicación ni área: no se dibujan."
+
+#: apps/airspace/views.py templates/environment/_strip.html
+msgid "Show on the map"
+msgstr "Ver en el mapa"
+
+#: apps/airspace/views.py
+msgid ""
+"That permit is not on the map: it is not current, it has no location or it "
+"is not yours to see."
+msgstr ""
+"Ese permiso no está en el mapa: no está vigente, no tiene ubicación o no "
+"está entre los que puede ver."
+
+#: templates/environment/airspace_tab.html
+msgid "See every flight permit"
+msgstr "Ver todos los permisos de vuelo"
+
+#: templates/environment/_strip.html
+#, python-format
+msgid "%(km)s km from the permit area of %(site)s"
+msgstr "%(km)s km del área del permiso de %(site)s"
+
+#: templates/environment/_strip.html
+#, python-format
+msgid "touches the permit area of %(site)s"
+msgstr "toca el área del permiso de %(site)s"
+
+#: templates/environment/_strip.html
+#, python-format
+msgid "Permit %(number)s"
+msgstr "Permiso %(number)s"
+
+#: templates/environment/_strip.html
+#, python-format
+msgid "and %(counter)s more zone"
+msgid_plural "and %(counter)s more zones"
+msgstr[0] "y %(counter)s zona más"
+msgstr[1] "y %(counter)s zonas más"

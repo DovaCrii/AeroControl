@@ -1568,12 +1568,41 @@
     m.bindTooltip(tipNode(title), { direction: "top" });
     return [m];
   }
-  function drawPermit(item) {
+  /* LV-411: la extensión de un permiso, la mejor que haya. `area` lo decide el servidor: «plan» = la
+     geometría del plan geoespacial vinculado; «circle» = su punto y su radio; «point» = sólo un centro,
+     y entonces el rótulo lo dice («sin área declarada») para que nadie lea un punto como un área. */
+  function permitTitle(item) {
     var title =
       T.permitWord + " " + (item.number || item.site) + " · " + item.site + " · " +
       fmt(T.validUntil, { date: dateText(item.valid_until) });
-    var shapes = [];
-    if (item.radius_km) {
+    return item.area === "point" ? title + " · " + T.noArea : title;
+  }
+  function pendingTitle(item) {
+    var title =
+      T.pendingWord + " " + item.folio + " · " + item.site + " · " + item.status + " · " +
+      fmt(T.registeredOn, { date: dateText(item.created_on) }) + " · " +
+      (item.valid_from && item.valid_until
+        ? fmt(T.proposedValidity, { from: dateText(item.valid_from), until: dateText(item.valid_until) })
+        : T.validityUnset);
+    return item.area === "point" ? title + " · " + T.noArea : title;
+  }
+  function planShapes(item, renderer, className, title) {
+    if (item.area !== "plan" || !item.geometries || !item.geometries.length) {
+      return [];
+    }
+    var shape = L.geoJSON(
+      { type: "FeatureCollection", features: item.geometries.map(function (geometry) {
+        return { type: "Feature", properties: {}, geometry: geometry };
+      }) },
+      { renderer: renderer, className: className, interactive: true }
+    );
+    shape.bindTooltip(tipNode(title), { sticky: true });
+    return [shape];
+  }
+  function drawPermit(item) {
+    var title = permitTitle(item);
+    var shapes = planShapes(item, svgRenderer, "air-own-permit", title);
+    if (!shapes.length && item.radius_km) {
       var circle = L.circle([item.lat, item.lon], {
         renderer: svgRenderer,
         radius: item.radius_km * 1000,
@@ -1586,7 +1615,7 @@
     var dot = L.circleMarker([item.lat, item.lon], {
       renderer: svgRenderer,
       radius: 6,
-      className: "air-own-permit-dot",
+      className: item.area === "point" ? "air-own-permit-dot air-own-noarea" : "air-own-permit-dot",
       interactive: true,
     });
     dot.bindTooltip(tipNode(title), { direction: "top" });
@@ -1597,14 +1626,9 @@
   /* «Permisos en trámite» (LV-379): solicitados a la DGAC y aún sin aprobar. Contorno punteado y reloj de
      arena, nunca el trazo del permiso vigente. Folio y fechas pueden faltar: el servidor manda null. */
   function drawPending(item) {
-    var title =
-      T.pendingWord + " " + item.folio + " · " + item.site + " · " + item.status + " · " +
-      fmt(T.registeredOn, { date: dateText(item.created_on) }) + " · " +
-      (item.valid_from && item.valid_until
-        ? fmt(T.proposedValidity, { from: dateText(item.valid_from), until: dateText(item.valid_until) })
-        : T.validityUnset);
-    var shapes = [];
-    if (item.radius_km) {
+    var title = pendingTitle(item);
+    var shapes = planShapes(item, pendingRenderer, "air-own-pending", title);
+    if (!shapes.length && item.radius_km) {
       [["air-own-pending-halo", false], ["air-own-pending", true]].forEach(function (spec) {
         var ring = L.circle([item.lat, item.lon], {
           renderer: pendingRenderer,
@@ -1630,6 +1654,37 @@
     return shapes;
   }
 
+  /* LV-411: el listado de los permisos de la capa, la alternativa textual de lo que se dibuja. Cada
+     fila dice qué es, si no tiene área declarada, y ofrece «Ver en el mapa» (centra y resalta) y
+     «Abrir permiso» (su ficha). Se arma con lo mismo que llegó para dibujar: ningún pedido aparte. */
+  function renderOwnList(key) {
+    var group = ownGroups[key];
+    if (!group.list) {
+      return;
+    }
+    group.rows.textContent = "";
+    group.items.forEach(function (record) {
+      var item = record.item;
+      var row = el("li", "air-own-row" + (item.area === "point" ? " air-own-row--noarea" : ""));
+      row.appendChild(el("span", "air-own-row-name", record.title));
+      var actions = el("span", "air-own-row-actions");
+      var show = el("button", "air-tool air-own-show", T.showOnMap);
+      show.type = "button";
+      show.dataset.ownKey = key;
+      show.dataset.ownId = item.id;
+      show.addEventListener("click", function () {
+        focusOwn(key, item.id, null);
+      });
+      actions.appendChild(show);
+      var open = el("a", "air-own-open", T.openPermit);
+      open.href = item.url;
+      actions.appendChild(open);
+      row.appendChild(actions);
+      group.rows.appendChild(row);
+    });
+    group.list.hidden = !group.on;
+  }
+
   function setOwnLayer(key, on, box) {
     var group = ownGroups[key];
     group.on = on;
@@ -1637,27 +1692,33 @@
       group.layers.forEach(function (layer) {
         map.removeLayer(layer);
       });
+      if (group.list) {
+        group.list.hidden = true;
+      }
       $("air-tool-hint").textContent = fmt(T.layerHidden, { name: ownName(key) });
-      return;
+      return Promise.resolve(group);
     }
     var show = function () {
       if (!group.on) {
-        return;
+        return group;
       }
       group.layers.forEach(function (layer) {
         layer.addTo(map);
       });
+      if (group.list) {
+        group.list.hidden = false;
+      }
       var hint = group.layers.length ? fmt(T.layerShown, { name: ownName(key) }) : T.layerOwnEmpty;
       if (group.unplaced) {
-        hint += " · " + fmt(T.pendingUnplaced, { n: group.unplaced });
+        hint += " · " + fmt(key === "pending" ? T.pendingUnplaced : T.permitsUnplaced, { n: group.unplaced });
       }
       $("air-tool-hint").textContent = hint;
+      return group;
     };
     if (group.loaded) {
-      show();
-      return;
+      return Promise.resolve(show());
     }
-    fetch(group.url, { credentials: "same-origin", headers: { Accept: "application/json" } })
+    return fetch(group.url, { credentials: "same-origin", headers: { Accept: "application/json" } })
       .then(function (response) {
         if (!response.ok) {
           throw new Error(String(response.status));
@@ -1670,20 +1731,111 @@
           drawn.forEach(function (layer) {
             group.layers.push(layer);
           });
+          if (key !== "sites") {
+            group.items.push({
+              item: item,
+              layers: drawn,
+              title: key === "pending" ? pendingTitle(item) : permitTitle(item),
+            });
+          }
         });
         group.loaded = true;
         group.unplaced = Number(data.unplaced) || 0;
         if (key === "pending" && group.label) {
           group.label.appendChild(el("span", "air-count-pill", String(data.items.length)));
         }
-        show();
+        renderOwnList(key);
+        return show();
       })
       .catch(function (error) {
         reportError("own layer " + key, error);
         group.on = false;
         box.checked = false;
         $("air-tool-hint").textContent = T.layerOwnFailed;
+        return null;
       });
+  }
+
+  /* «Ver en el mapa»: enciende la capa si hace falta, encuadra el permiso (y la zona, si se pidió el
+     par desde la tarjeta del panel) y lo resalta. Lo que no está se dice en la línea de estado. */
+  var focusedOwn = [];
+
+  function layerElements(layer) {
+    var found = [];
+    if (layer.getElement && layer.getElement()) {
+      found.push(layer.getElement());
+    }
+    if (layer.eachLayer) {
+      layer.eachLayer(function (part) {
+        found = found.concat(layerElements(part));
+      });
+    }
+    return found;
+  }
+
+  function focusOwn(key, id, zoneId) {
+    var group = ownGroups[key];
+    if (!group) {
+      if (zoneId && byId[zoneId]) {
+        select(zoneId);
+      }
+      $("air-tool-hint").textContent = T.permitNotShown;
+      return Promise.resolve(null);
+    }
+    var box = group.box;
+    if (box && !box.checked) {
+      box.checked = true;
+    }
+    return setOwnLayer(key, true, box).then(function () {
+      var record = group.items.find(function (r) {
+        return r.item.id === id;
+      });
+      if (!record) {
+        // Sin el permiso en la capa (p. ej. medido desde la faena), la zona del par igual se muestra.
+        if (zoneId && byId[zoneId]) {
+          select(zoneId);
+        }
+        $("air-tool-hint").textContent = T.permitNotShown;
+        return null;
+      }
+      focusedOwn.forEach(function (node) {
+        node.classList.remove("air-own-focus");
+      });
+      focusedOwn = [];
+      var zone = zoneId && byId[zoneId];
+      if (zone) {
+        select(zoneId, { fly: false });
+      }
+      var bounds = L.featureGroup(record.layers).getBounds();
+      if (zone && zone.bbox) {
+        bounds.extend([[zone.bbox[1], zone.bbox[0]], [zone.bbox[3], zone.bbox[2]]]);
+      }
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { maxZoom: 13, padding: [40, 40] });
+      }
+      record.layers.forEach(function (layer) {
+        layerElements(layer).forEach(function (node) {
+          node.classList.add("air-own-focus");
+          focusedOwn.push(node);
+        });
+      });
+      $("air-tool-hint").textContent = fmt(T.selected, { name: record.title });
+      return record;
+    });
+  }
+
+  /* El enlace de la tarjeta «Espacio aéreo» del panel y de «Ver en el mapa»: `?permit=<id>&layer=permits`
+     (o `pending`) y, si es un par, `&zone=<id>`. Se aplica una sola vez, con el mapa ya armado. */
+  function applyDeepLink() {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get("permit");
+    if (!id) {
+      return;
+    }
+    var key = params.get("layer") === "pending" ? "pending" : "permits";
+    // El listado de la capa vive en la leyenda: se abre para que la fila quede a la vista.
+    $("air-legend").open = true;
+    focusOwn(key, id, params.get("zone"));
   }
 
   function buildOwnLegend(host) {
@@ -1696,7 +1848,8 @@
       return own.key === "pending";
     });
     offered.forEach(function (own) {
-      ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false, unplaced: 0, label: null };
+      ownGroups[own.key] = { url: own.url, layers: [], loaded: false, on: false, unplaced: 0, label: null,
+        items: [], list: null, rows: null, box: null };
       var label = el("label", "air-legend-item");
       var box = el("input");
       box.type = "checkbox";
@@ -1706,6 +1859,15 @@
         setOwnLayer(own.key, box.checked, box);
       });
       ownGroups[own.key].label = label;
+      ownGroups[own.key].box = box;
+      if (own.key !== "sites") {
+        var list = el("div", "air-own-listbox");
+        list.hidden = true;
+        list.appendChild(el("h4", "air-own-list-head", ownName(own.key)));
+        ownGroups[own.key].rows = list.appendChild(el("ul", "air-own-list"));
+        ownGroups[own.key].list = list;
+        $("air-own-lists").appendChild(list);
+      }
       var swatch = el("span", "air-swatch air-swatch--own-" + own.key, own.key === "sites" ? "■" : own.key === "pending" ? "⧗" : "◎");
       swatch.setAttribute("aria-hidden", "true");
       label.appendChild(box);
@@ -1868,6 +2030,7 @@
       $("air-q").value = preset;
       onQuery();
     }
+    applyDeepLink();
   }
 
   function onQuery() {
