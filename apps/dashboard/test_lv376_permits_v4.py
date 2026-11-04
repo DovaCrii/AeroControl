@@ -299,7 +299,10 @@ def test_waiting_since_comes_from_the_date_the_request_was_registered(db):
     stamp = timezone.now() - timedelta(days=9)
     FlightPermission.objects.filter(pk=permit.pk).update(created_at=stamp)
     row = _row_of(_page(login_as(VIEW)).content.decode(), "CC1")
-    assert f"Waiting for the DGAC since {timezone.localtime(stamp):%d-%m}" in row
+    assert (
+        f"Requested on {timezone.localtime(stamp):%d-%m}: follow up with the DGAC"
+        in row
+    )
 
 
 @pytest.mark.django_db
@@ -316,7 +319,7 @@ def test_a_permit_that_has_not_started_says_when_and_that_nothing_is_due(db):
         valid_until=start + timedelta(days=90),
     )
     row = _row_of(_page(login_as(VIEW)).content.decode(), "CC1")
-    assert f"Starts on {start:%d-%m}; nothing to do until then" in row
+    assert "Nothing to do until that date" in row
     assert f"Starts {start:%d-%m}" in row
     assert 'class="row-awaiting"' in row
 
@@ -325,12 +328,14 @@ def test_a_permit_that_has_not_started_says_when_and_that_nothing_is_due(db):
 def test_renew_now_is_amber_and_only_no_permit_is_red(mix):
     html = _page(login_as(VIEW)).content.decode()
     soon = _row_of(html, "CC3")
-    assert "id-cx-state--warning" in soon and "▲" in soon and "Renew now" in soon
+    assert (
+        "id-cx-state--warning" in soon and "▲" in soon and "Expires in ≤30 days" in soon
+    )
     assert "row-critical" not in soon  # G1: el rojo es sólo «no se puede volar»
     none = _row_of(html, "CC1")
     assert "id-cx-state--none" in none and 'class="row-critical"' in none
-    assert "id-cx-state--advisory" in _row_of(html, "CC4")
-    assert "Renew soon" in _row_of(html, "CC4")
+    assert "id-cx-state--warning id-cx-state--soft" in _row_of(html, "CC4")
+    assert "Expires in 31–60 days" in _row_of(html, "CC4")
     assert "id-cx-state--ok" in _row_of(html, "CC5")
 
 
@@ -409,19 +414,19 @@ def test_the_daybar_geometry_is_in_attributes_and_the_colour_in_the_class():
     svg = render_daybar(45)
     assert 'aria-hidden="true"' in svg and "role=" not in svg and "style=" not in svg
     assert svg.count("<line") == 2 and 'x1="42.67"' in svg and 'x1="85.33"' in svg
-    assert "id-cx-day--mid" in svg and 'width="64"' in svg
+    assert "id-cx-day--warning" in svg and 'width="64"' in svg
 
 
 @pytest.mark.parametrize(
     ("days", "css"),
     [
-        (-3, "soon"),
-        (0, "soon"),
-        (30, "soon"),
-        (31, "mid"),
-        (60, "mid"),
-        (61, "far"),
-        (400, "far"),
+        (-3, "warning"),
+        (0, "warning"),
+        (30, "warning"),
+        (31, "warning"),
+        (60, "warning"),
+        (61, "ok"),
+        (400, "ok"),
     ],
 )
 def test_the_daybar_band_and_clamp(days, css):
@@ -469,7 +474,6 @@ CHIP_FILLS = (
     "--sev-critical-text",
     "--id-cx-wait-fg",
     "--sev-warning-text",
-    "--sev-advisory-text",
     "--id-ok-text",
 )
 
@@ -501,7 +505,7 @@ def test_the_edge_fills_and_marks_reach_3_to_1(theme):
     for name in ("--sev-critical-text", "--id-cx-wait-fg"):  # el filete de la fila
         assert _contrast(_resolve(tokens[name], tokens), surface) >= 3, (theme, name)
     track = _resolve(tokens["--id-cx-track"], tokens)
-    for name in ("--sev-warning-text", "--sev-advisory-text", "--id-ok-text"):
+    for name in ("--sev-warning-text", "--id-ok-text"):
         assert _contrast(_resolve(tokens[name], tokens), track) >= 3, (theme, name)
     assert _contrast(_resolve(tokens["--id-edge"], tokens), surface) >= 3
 

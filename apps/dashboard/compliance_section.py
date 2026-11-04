@@ -41,6 +41,8 @@ from .compliance_data import (
 from .compliance_permits import (
     KIND_CHIP,
     PERMIT_PERMISSION,
+    chip_css,
+    kind_label,
     permit_table,
     requested_query,
     requested_sort,
@@ -191,42 +193,36 @@ def guide_states(user):
     rows = [
         (
             "none",
-            _("No permit"),
             _("No permit in force: the site cannot fly."),
             _("Request a permit"),
             create,
         ),
         (
             "awaiting",
-            _("Waiting for the DGAC"),
             _("Requested; there is no answer yet."),
             _("Follow up with the DGAC"),
             permits,
         ),
         (
             "not_started",
-            _("Starts later"),
             _("Approved; it takes effect from its start date."),
             _("Nothing to do until that date"),
             "",
         ),
         (
             "renew_now",
-            _("Renew now"),
             _("Expires in %(n)s days or less.") % {"n": critical},
             _("Prepare the renewal today"),
             permits,
         ),
         (
             "renew_soon",
-            _("Renew soon"),
             _("Expires in %(a)s to %(b)s days.") % {"a": critical + 1, "b": warning},
             _("Plan the renewal"),
             "",
         ),
         (
             "ok",
-            _("Up to date"),
             _("More than %(n)s days left.") % {"n": warning},
             _("Nothing to do"),
             "",
@@ -237,12 +233,14 @@ def guide_states(user):
             "kind": kind,
             "symbol": KIND_CHIP[kind][0],
             "tone": KIND_CHIP[kind][1],
-            "label": label,
+            "css": chip_css(kind),
+            # LV-412: la misma palabra que el chip de la tabla y su leyenda (`kind_label`).
+            "label": kind_label(kind),
             "meaning": meaning,
             "todo": todo,
             "url": url,
         }
-        for kind, label, meaning, todo, url in rows
+        for kind, meaning, todo, url in rows
     ]
 
 
