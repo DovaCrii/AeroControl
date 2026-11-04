@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **LV-395 restaurado (`LV-409`, `codex/restaurar-lv395`).** El PR de los banners (#214) había borrado sin avisar la fecha de emisión opcional, la migración `compliance 0029` y el color de subida; vuelven tal cual. Sin migración nueva; lleva estáticos.
+
 - **Escrituras concurrentes en SQLite (`LV-403`, `codex/sqlite-escrituras-concurrentes`).** SQLite abre ahora cada transacción con `BEGIN IMMEDIATE` (`transaction_mode`), así que leer-luego-escribir ya no da «database is locked» inmediato y los folios que dependían de `select_for_update()` quedan realmente serializados; y el «último + 1» de las ocho secuencias (`AuditEvent`, historiales, `ResourceMovementLog`) se lee e inserta dentro de `transaction.atomic()`. Guardián con `ast` para que no vuelva. Sin migración ni estáticos.
 
 - **Respaldo de los documentos y retención por cantidad (`LV-401`, `codex/respaldo-documentos`).** Comando `backup_documents`: `tar.gz` completo de `DOCUMENTS_DIR` (sin `workshop-intake-pending/`) con manifiesto (archivos, bytes, `sha256`), registrado como `JobRun` y vigilado por `check_scheduled_jobs` (48 h). `backup` y `backup_documents` conservan los 14 últimos (`--keep N` / `BACKUP_KEEP`): por cantidad, nunca el más reciente, sólo con manifiesto válido. Sin migración; hay que crear el timer `aerocontrol-docbackup` en la VM (`docs/dev/ubuntu-vm-deploy.md` H.1b).
