@@ -14369,3 +14369,7 @@ msgstr[1] "Vence en %(days)s días"
 #: templates/registry/_operator_rows.html
 msgid "Credential in force"
 msgstr "Credencial vigente"
+
+#: templates/base.html
+msgid "The list could not be updated. Please try again."
+msgstr "No se pudo actualizar la lista. Vuelva a intentarlo."
