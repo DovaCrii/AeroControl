@@ -947,6 +947,9 @@ msgid "Edit deliverable"
 msgstr "Editar entregable"
 
 #: .\apps\compliance\views.py:249
+msgid "This document was already replaced by a newer version."
+msgstr "Este documento ya fue reemplazado por una versión más reciente."
+
 msgid "Only a draft deliverable can be validated."
 msgstr "Sólo un entregable en borrador puede validarse."
 
@@ -14172,3 +14175,19 @@ msgid ""
 msgstr ""
 "Se lee y el formulario se completa para que usted lo revise. No se guarda "
 "nada hasta presionar Guardar."
+
+#: apps/compliance/models.py
+msgid "Requires issue date"
+msgstr "Requiere fecha de emisión"
+
+#: apps/compliance/models.py
+msgid ""
+"Untick for papers that carry no issue date worth recording (for example the "
+"RPA registration certificate)."
+msgstr ""
+"Desmarque en los papeles que no traen una fecha de emisión que valga la pena "
+"registrar (por ejemplo, el certificado de inscripción del RPA)."
+
+#: templates/compliance/_doc_type_hint.html
+msgid "This type does not ask for an issue date."
+msgstr "Este tipo no pide fecha de emisión."

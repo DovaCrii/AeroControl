@@ -60,12 +60,14 @@ from .forms import (
     NonConformityForm,
     OwnerForm,
 )
+from .monthly import filed_on
 from .models import (
     Alert,
     AlertRule,
     Deliverable,
     Document,
     DocumentType,
+    newest_first,
     MonthlyComplianceReview,
     NonConformity,
     document_upload_path,
@@ -689,7 +691,7 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
                 content_type=tenant_ct, is_current_version=True, is_active=True
             )
             .select_related("doc_type")
-            .order_by("-issue_date")
+            .order_by(*newest_first())
         )
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
@@ -800,7 +802,7 @@ class OperationalRecordsView(
                 is_active=True,
             )
             .select_related("doc_type")
-            .order_by("-issue_date")
+            .order_by(*newest_first())
         )
         tenant_ids = visible_tenant_ids(self.request.user)
         if tenant_ids is not None:
@@ -811,8 +813,8 @@ class OperationalRecordsView(
             queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
         month = self._parse_month(self.request.GET.get("month"))
         if month:
-            queryset = queryset.filter(
-                issue_date__year=month.year, issue_date__month=month.month
+            queryset = queryset.annotate(filed_on=filed_on()).filter(
+                filed_on__year=month.year, filed_on__month=month.month
             )
         return queryset
 
@@ -1338,6 +1340,7 @@ class DocumentReplace(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, Fo
             scope_queryset_to_tenant(Document.objects.all(), request.user),
             pk=kwargs["pk"],
             is_active=True,
+            is_current_version=True,
         )
         return super().dispatch(request, *args, **kwargs)
 
@@ -1360,18 +1363,33 @@ class DocumentReplace(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, Fo
     def form_valid(self, form):
         with uploaded_file_cleanup() as stored:
             with transaction.atomic():
-                self.document.is_current_version = False
-                self.document.save(update_fields=["is_current_version", "updated_at"])
-                self.document.resolve_related_alerts()
-                new_document = form.save(commit=False)
-                new_document.is_current_version = True
-                new_document.content_type = self.document.content_type
-                new_document.object_id = self.document.object_id
-                new_document.file_path = ""
-                new_document.save()
-                stored["path"] = save_uploaded_file(
-                    new_document, form.cleaned_data["file"]
-                )
+                # LV-402: claim the old version atomically. A stale tab or a
+                # double click finds it already replaced (0 rows) and must not
+                # create a second current version.
+                claimed = Document.objects.filter(
+                    pk=self.document.pk, is_current_version=True
+                ).update(is_current_version=False, updated_at=timezone.now())
+                if not claimed:
+                    new_document = None
+                else:
+                    self.document.is_current_version = False
+                    self.document.resolve_related_alerts()
+                    new_document = form.save(commit=False)
+                    new_document.is_current_version = True
+                    new_document.tenant_id = self.document.tenant_id
+                    new_document.content_type = self.document.content_type
+                    new_document.object_id = self.document.object_id
+                    new_document.file_path = ""
+                    new_document.save()
+                    stored["path"] = save_uploaded_file(
+                        new_document, form.cleaned_data["file"]
+                    )
+        if new_document is None:
+            messages.error(
+                self.request,
+                _("This document was already replaced by a newer version."),
+            )
+            return redirect("document-detail", pk=self.document.pk)
         set_audit_context(
             self.request,
             new_document,

@@ -122,6 +122,12 @@ else:
             # documented safe synchronous level under WAL.
             "OPTIONS": {
                 "timeout": 20,
+                # LV-403: BEGIN IMMEDIATE takes the write lock at the start of
+                # every transaction. With the default (DEFERRED) a transaction
+                # that reads and then writes fails at once with "database is
+                # locked" when another writer got in between, ignoring
+                # busy_timeout, and `select_for_update()` is a no-op on SQLite.
+                "transaction_mode": "IMMEDIATE",
                 "init_command": (
                     "PRAGMA journal_mode=WAL;"
                     "PRAGMA synchronous=NORMAL;"

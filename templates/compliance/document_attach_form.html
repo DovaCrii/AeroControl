@@ -40,7 +40,7 @@ a confiar en que el sistema eligió bien.{% endcomment %}
           misma palabra, y el guardián de traducciones lo marcó. Separados por
           `·` se leen como etiquetas, no como frase, así que la mayúscula no
           desentona.{% endcomment %}
-          · {% translate "Issued" %} {{ candidate.issue_date|date:"Y-m-d" }}
+          {% if candidate.issue_date %}· {% translate "Issued" %} {{ candidate.issue_date|date:"Y-m-d" }}{% endif %}
           {% if candidate.expiry_date %} · {% translate "Valid until" %} {{ candidate.expiry_date|date:"Y-m-d" }}{% else %} · {% translate "No expiry" %}{% endif %}
         </div>
       </label>

@@ -23,9 +23,9 @@
       <label class="form-label" for="id_file">{% translate "Workshop document (PDF)" %}</label>
       <input class="form-control" type="file" name="file" id="id_file" accept=".pdf,application/pdf" required>
     </div>
+    {% comment %}LV-395: «Cancelar» vive arriba, como en la vista previa (LV-388); abajo estaba repetido.{% endcomment %}
     <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">{% translate "Upload and review" %}</button>
-      <a class="btn btn-outline-secondary" href="{{ cancel_url }}">{% translate "Cancel" %}</a>
+      <button type="submit" class="btn btn-upload">{% translate "Upload and review" %}</button>
     </div>
   </form>
 </div>
