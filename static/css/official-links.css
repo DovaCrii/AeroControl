@@ -31,18 +31,51 @@
   outline-offset: 2px;
 }
 
+/* LV-399: los símbolos del sprite no traen `fill` ni `stroke` (los hereda quien los usa,
+   como `.nav-icon`). Sin `fill: none` y `stroke: currentColor` (también en LV-398) se rellenaba de negro: un
+   rectángulo macizo en SIGO y una figura negra en SIPA, invisibles en el tema oscuro.
+   `--ac-primary` sobre la tarjeta: 4,61:1 claro y 7,78:1 oscuro (contrast.py, mín. 3:1). */
 .ol-icon {
   flex: none;
   width: 1.75rem;
   height: 1.75rem;
   color: var(--ac-primary);
-  /* LV-398: los símbolos del sprite no traen relleno ni trazo propios (UX-05); sin esto se
-     dibujaban rellenos de negro, un cuadrado y una silueta, en vez del icono de línea. */
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* LV-399: banner oficial cargado por quien administra (servido desde la app). Tamaño
+   contenido: identifica la tarjeta sin empujar el texto. */
+.ol-logo {
+  flex: none;
+  width: 4.5rem;
+  height: 2.75rem;
+  object-fit: contain;
+  border-radius: calc(var(--ac-radius) / 2);
+  background: var(--ac-surface);
+}
+
+.ol-manage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+}
+
+/* LV-399: la foto oficial del modelo en la ficha de la aeronave, con su crédito. */
+.fleet-hero-official {
+  margin: 0;
+}
+
+.fleet-hero-credit {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  text-align: end;
+  color: var(--ac-text-secondary);
 }
 
 /* LV-398: la tarjeta «¿Recién llega a AeroControl?» del panel. Vive acá porque esta hoja ya se

@@ -472,9 +472,10 @@ class TestTheCostOfTheStrip:
     def test_the_panel_budget_is_untouched(self):
         from apps.dashboard import test_lv237_panel_query_budget as budget
 
+        # +1 en LV-399 (banner oficial de SIGO/SIPA), no por esta celda.
         assert (budget.PANEL_QUERY_BUDGET, budget.PANEL_FILTERED_QUERY_BUDGET) == (
-            49,
             50,
+            51,
         )
 
     def test_building_the_panel_does_not_run_the_airspace_queries(
