@@ -1,5 +1,5 @@
 import uuid
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -187,9 +187,12 @@ class AuditEvent(models.Model):
     def save(self, *args, **kwargs):
         if not self._state.adding:
             raise ValidationError("AuditEvent records are append-only.")
-        latest = AuditEvent.objects.order_by("-sequence").first()
-        self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: last sequence + insert in one write transaction (see the
+        # SQLite `transaction_mode` in config/settings/base.py).
+        with transaction.atomic():
+            latest = AuditEvent.objects.order_by("-sequence").first()
+            self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         raise ValidationError("AuditEvent records are append-only.")

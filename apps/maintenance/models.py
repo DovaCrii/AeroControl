@@ -478,10 +478,13 @@ class MaintenanceHistory(BaseModel):
         return f"{self.record_id}: {self.previous_status} → {self.new_status}"
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            latest = MaintenanceHistory.objects.order_by("-sequence").first()
-            self.sequence = (latest.sequence if latest else 0) + 1
-        return super().save(*args, **kwargs)
+        # LV-403: read the last sequence and insert it in one write transaction,
+        # or two writers read the same value and the sequence repeats.
+        with transaction.atomic():
+            if self._state.adding:
+                latest = MaintenanceHistory.objects.order_by("-sequence").first()
+                self.sequence = (latest.sequence if latest else 0) + 1
+            return super().save(*args, **kwargs)
 
 
 def normalize_workshop_name(value):
