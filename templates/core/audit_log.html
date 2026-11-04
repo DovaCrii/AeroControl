@@ -46,7 +46,7 @@
       <tbody>
         {% for event in events %}
         <tr>
-          <td class="text-muted small">{{ event.created_at|date:"Y-m-d H:i:s" }}</td>
+          <td class="text-muted small">{{ event.created_at|date:"d-m-Y H:i:s" }}</td>
           <td>{{ event.actor.username|default:"—" }}</td>
           <td><code>{{ event.action }}</code></td>
           <td class="small">{{ event.model_label|default:"—" }}</td>

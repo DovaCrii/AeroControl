@@ -12,7 +12,7 @@
   after importing 41 rows there was no confirmation and no visible way back.
   {% endcomment %}
   <div class="card p-3 mt-3 d-flex flex-row flex-wrap align-items-center gap-2 justify-content-between">
-    <span class="text-muted">{% blocktranslate with count=last_batch.created_ids|length when=last_batch.created_at|date:'Y-m-d H:i' %}Last import: {{ count }} rows on {{ when }}.{% endblocktranslate %}</span>
+    <span class="text-muted">{% blocktranslate with count=last_batch.created_ids|length when=last_batch.created_at|date:'d-m-Y H:i' %}Last import: {{ count }} rows on {{ when }}.{% endblocktranslate %}</span>
     <form method="post" action="{% url 'costcenter-import-revert' last_batch.pk %}">{% csrf_token %}
       <button class="btn btn-sm btn-outline-danger" type="submit">{% translate "Undo this import" %}</button>
     </form>

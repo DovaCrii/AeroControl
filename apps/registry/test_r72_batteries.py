@@ -83,7 +83,7 @@ class TestProvenance:
         # `apps/compliance/test_reports.py` documents at the top of the file --
         # this test was written the other way and only failed after 20:00, which
         # is why it survived since R7.2.
-        assert timezone.localtime(synced_at).strftime("%Y-%m-%d") in content
+        assert timezone.localtime(synced_at).strftime("%d-%m-%Y") in content
         assert str(never.get_source_display()) in content
 
 

@@ -27,7 +27,7 @@
   líneas deja de poder compararse con el de la fila de arriba — el usuario lo leyó
   como "letras apretadas". La vigencia vencida va en rojo: es la fecha que explica
   el chip de la columna siguiente.{% endcomment %}
-  <td class="text-nowrap{% if object.has_lapsed %} sev-text-critical{% endif %}">{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"Y-m-d" }} – {{ object.valid_until|date:"Y-m-d" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
+  <td class="text-nowrap{% if object.has_lapsed %} sev-text-critical{% endif %}">{% if object.valid_from and object.valid_until %}{{ object.valid_from|date:"d-m-Y" }} – {{ object.valid_until|date:"d-m-Y" }}{% else %}<span class="text-body-secondary fst-italic">{% translate "Awaiting the DGAC" %}</span>{% endif %}</td>
   {% comment %}LV-246: **el permiso vencido en rojo, con marca.** Pedido del usuario:
   *"que sea marcado en ROJO con alguna marca"*. `expired` caía en el `else` y salía
   en `bg-warning` —el mismo ámbar que «Solicitado»—, así que un permiso que ya no

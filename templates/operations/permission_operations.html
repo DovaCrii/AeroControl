@@ -11,7 +11,7 @@
 
   <div class="row g-3 mb-4">
     <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Request no." %}</div><div class="fw-semibold">{{ permission.permission_number|default:"—" }}</div></div></div>
-    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Authorized period" %}</div><div class="fw-semibold">{{ permission.valid_from|date:"d/m/Y" }} – {{ permission.valid_until|date:"d/m/Y" }}</div></div></div>
+    <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Authorized period" %}</div><div class="fw-semibold">{{ permission.valid_from|date:"d-m-Y" }} – {{ permission.valid_until|date:"d-m-Y" }}</div></div></div>
     <div class="col-md-4"><div class="border rounded p-3 h-100"><div class="small text-muted">{% translate "Company" %}</div><div class="fw-semibold">{{ company }}</div></div></div>
   </div>
 
@@ -56,7 +56,7 @@
       {% for n, r in rows %}
         <tr>
           <td>{{ n }}</td>
-          <td>{{ r.actual_date|date:"d/m/Y" }}</td>
+          <td>{{ r.actual_date|date:"d-m-Y" }}</td>
           <td>{{ r.departure_time|time:"H:i" }}</td>
           <td>{{ r.arrival_time|time:"H:i" }}</td>
           <td>{{ r.pilot }}</td>

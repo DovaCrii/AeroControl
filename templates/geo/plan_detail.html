@@ -259,7 +259,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
 {% if weather %}
 <div class="card mb-3 p-3">
   <h2 class="h5 mb-1">{% translate "Weather forecast" %}</h2>
-  <p class="text-muted small mb-3">{% blocktranslate with date=weather_date|date:"Y-m-d" %}Forecast over this area for {{ date }}, the day the linked permit begins.{% endblocktranslate %}</p>
+  <p class="text-muted small mb-3">{% blocktranslate with date=weather_date|date:"d-m-Y" %}Forecast over this area for {{ date }}, the day the linked permit begins.{% endblocktranslate %}</p>
   {% comment %}R8.4: el bloque de cifras salió de acá a `core/_weather_metrics.html`,
   compartido con el panel. Tener dos copias del mismo pronóstico era garantía de
   que una se quedara en km/h mientras la otra pasaba a m/s.{% endcomment %}
@@ -286,8 +286,8 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
     <table class="table table-sm mb-0">
       <thead><tr><th scope="col">{% translate "Reviewed" %}</th><th scope="col">{% translate "For" %}</th><th scope="col">{% translate "Max wind" %}</th><th scope="col">{% translate "Max gusts" %}</th><th scope="col">{% translate "Precipitation" %}</th><th scope="col">{% translate "Chance of rain" %}</th><th scope="col">{% translate "By" %}</th></tr></thead>
       <tbody>{% for review in weather_reviews %}<tr>
-        <td class="text-nowrap">{{ review.created_at|date:"Y-m-d H:i" }}</td>
-        <td class="text-nowrap">{{ review.target_date|date:"Y-m-d" }}</td>
+        <td class="text-nowrap">{{ review.created_at|date:"d-m-Y H:i" }}</td>
+        <td class="text-nowrap">{{ review.target_date|date:"d-m-Y" }}</td>
         <td>{% if review.wind_speed_max is not None %}{{ review.wind_speed_max }} {{ review.units.wind_speed_10m_max|default:"" }}{% else %}—{% endif %}</td>
         <td>{% if review.wind_gusts_max is not None %}{{ review.wind_gusts_max }} {{ review.units.wind_gusts_10m_max|default:"" }}{% else %}—{% endif %}</td>
         <td>{% if review.precipitation_sum is not None %}{{ review.precipitation_sum }} {{ review.units.precipitation_sum|default:"" }}{% else %}—{% endif %}</td>
@@ -334,7 +334,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
               <td>v{{ version.version_number }}{% if plan.current_version_id == version.id %} <span class="badge bg-secondary">{% translate "Current" %}</span>{% endif %}</td>
               <td>{{ version.get_source_display }}</td>
               <td>{{ version.feature_count }}</td>
-              <td><span class="text-nowrap">{{ version.created_at|date:'Y-m-d H:i' }}</span></td>
+              <td><span class="text-nowrap">{{ version.created_at|date:'d-m-Y H:i' }}</span></td>
               {% if can_restore %}
               <td class="text-end">
                 {% if plan.current_version_id != version.id %}
@@ -409,7 +409,7 @@ the provider did not answer -- a forecast is context, never a blocker.{% endcomm
             <tr>
               <td>{{ link.previous_permission|default:"—" }}</td>
               <td>{{ link.new_permission|default:"—" }}</td>
-              <td><span class="text-nowrap">{{ link.created_at|date:'Y-m-d H:i' }}</span></td>
+              <td><span class="text-nowrap">{{ link.created_at|date:'d-m-Y H:i' }}</span></td>
             </tr>
             {% endfor %}
           </tbody>

@@ -92,5 +92,5 @@ Va debajo y en letra chica: es procedencia, no una medición más. Y si el
 proveedor no la trae —un pronóstico guardado antes de que esto existiera— no se
 dibuja nada, en vez de inventar una hora.{% endcomment %}
 {% if weather.fetched_at %}
-<p class="text-body-secondary small mt-2 mb-0">{% blocktranslate with when=weather.fetched_at|as_datetime|date:"Y-m-d H:i" %}Queried from the provider at {{ when }}.{% endblocktranslate %}</p>
+<p class="text-body-secondary small mt-2 mb-0">{% blocktranslate with when=weather.fetched_at|as_datetime|date:"d-m-Y H:i" %}Queried from the provider at {{ when }}.{% endblocktranslate %}</p>
 {% endif %}

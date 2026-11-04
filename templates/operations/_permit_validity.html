@@ -7,11 +7,11 @@ español `10.5` saldría como `10,5` y no es un número SVG válido.{% endcommen
 <div class="permit-validity">
   {% localize off %}<svg class="permit-tl" viewBox="0 0 300 36" width="300" height="36" role="img" aria-labelledby="permit-tl-title permit-tl-desc" focusable="false">
     <title id="permit-tl-title">{% translate "Validity" %}</title>
-    <desc id="permit-tl-desc">{{ validity_line.start|date:"Y-m-d" }} – {{ validity_line.end|date:"Y-m-d" }}. {{ validity_line.text }}</desc>
+    <desc id="permit-tl-desc">{{ validity_line.start|date:"d-m-Y" }} – {{ validity_line.end|date:"d-m-Y" }}. {{ validity_line.text }}</desc>
     <rect class="permit-tl-track" x="{{ validity_line.left }}" y="14" width="{{ validity_line.width }}" height="8" rx="4"/>
     <rect class="permit-tl-elapsed permit-tl-elapsed--{{ validity_line.tone }}" x="{{ validity_line.left }}" y="14" width="{{ validity_line.elapsed_w }}" height="8" rx="4"/>
     <line class="permit-tl-today" x1="{{ validity_line.today_x }}" x2="{{ validity_line.today_x }}" y1="8" y2="28"/>
   </svg>{% endlocalize %}
-  <p class="permit-validity-text mb-0"><span class="permit-validity-dates">{{ validity_line.start|date:"Y-m-d" }} – {{ validity_line.end|date:"Y-m-d" }}</span> · {{ validity_line.text }}</p>
+  <p class="permit-validity-text mb-0"><span class="permit-validity-dates">{{ validity_line.start|date:"d-m-Y" }} – {{ validity_line.end|date:"d-m-Y" }}</span> · {{ validity_line.text }}</p>
 </div>
 {% endif %}

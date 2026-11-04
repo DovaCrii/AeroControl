@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Fecha única en pantalla y icono de «Entorno» (`LV-408`, `codex/fechas-unicas`).** Todas las plantillas de pantalla muestran las fechas como `d-m-Y` (antes convivían `Y-m-d`, `d/m/Y` y `d-m-Y`); el ISO queda sólo en inputs `type="date"`, `datetime=` y exportaciones. Guardián nuevo. El símbolo `icon-environment` del sprite estaba mal formado (faltaba un espacio) y el ítem del menú se veía sin icono; el guardián del sprite ahora parsea el XML.
+
 - **La imagen de SIGO y SIPA viene con la app (`LV-406`, `codex/banners-imagen-oficial`).** Se retiran del panel los enlaces «Cargar el banner de…» y la vista de carga: cada enlace oficial trae la URL de su imagen y el comando `load_official_link_images` (`--force`) la descarga con la lista `dgac.gob.cl` y la protección anti-SSRF, la guarda en el almacenamiento privado y la tarjeta la muestra arriba, a todo su ancho. Nada de la DGAC va al repositorio. Sin migración; lleva estáticos; correr el comando una vez tras desplegar (`docs/imagenes-oficiales.md`).
 - **Alta de operador con credencial DGAC (`LV-405`, `codex/operador-con-credencial`).** «Nuevo: operador» permite cargar la credencial (PDF): se lee, el formulario sale prellenado para confirmar y al guardar quedan el operador y su documento de credencial en una sola transacción. Archivo provisional con token firmado (1 h), que se conserva ante errores del formulario y se borra al descartar.
 - **LV-395 restaurado (`LV-409`, `codex/restaurar-lv395`).** El PR de los banners (#214) había borrado sin avisar la fecha de emisión opcional, la migración `compliance 0029` y el color de subida; vuelven tal cual. Sin migración nueva; lleva estáticos.

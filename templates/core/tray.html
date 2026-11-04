@@ -60,7 +60,7 @@ traducirse. Los encabezados van llanos, que es como `worktable_th` degrada.{% en
   esperando a la DGAC no está sin asignar: es que no se asigna, y decir lo
   contrario inventaría un pendiente de gestión que no existe.{% endcomment %}
   <td>{% if row.owner %}{{ row.owner.get_full_name|default:row.owner.username }}{% elif row.source == 'alert' or row.source == 'nonconformity' %}<span class="text-muted fst-italic">{% translate "Unassigned" %}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-  <td>{% if row.due %}<span class="text-nowrap">{{ row.due|date:"Y-m-d" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+  <td>{% if row.due %}<span class="text-nowrap">{{ row.due|date:"d-m-Y" }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
   <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ row.url }}">{% translate "Open" %}</a></td>
 </tr>
 {% empty %}

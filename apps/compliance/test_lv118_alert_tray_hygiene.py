@@ -26,6 +26,7 @@ from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 
 from apps.compliance.models import Alert, AlertRule
 from apps.registry.models import Aircraft, CostCenter, Operator
@@ -143,8 +144,8 @@ class TestTheExpiryIsTheOneThatTriggeredIt:
             .get(reverse("alert-list"), {"is_resolved": "all"})
             .content.decode()
         )
-        assert "2026-08-08" in content
-        assert aircraft.insurance_expiry.isoformat() not in content
+        assert "08-08-2026" in content
+        assert date_format(aircraft.insurance_expiry, "d-m-Y") not in content
 
     @pytest.mark.django_db
     def test_a_rule_watching_a_status_has_no_expiry_to_show(self, aircraft):

@@ -37,7 +37,7 @@ Shared by the flight permit, the geo plan and the aircraft's insurance filing
         <div class="id-timeline-head">
           <strong>{{ h.get_new_status_display|default:h.new_status }}</strong>
           <span class="text-muted small">{% blocktranslate with previous=h.get_previous_status_display|default:h.previous_status %}from {{ previous }}{% endblocktranslate %}</span>
-          <time class="id-timeline-date" datetime="{{ h.created_at|date:'c' }}">{{ h.created_at|date:"Y-m-d H:i" }}</time>
+          <time class="id-timeline-date" datetime="{{ h.created_at|date:'c' }}">{{ h.created_at|date:"d-m-Y H:i" }}</time>
         </div>
         {% comment %}The role is the user's groups (Operations, Compliance…).
         A trace that says who but not in what capacity answers half the

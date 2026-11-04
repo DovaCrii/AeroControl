@@ -24,7 +24,7 @@ en todo movimiento inicial. El recurso ahora enlaza a su ficha: leer que
     {% if entry.detail %}<span class="table-primary-sub">{{ entry.detail }}</span>{% endif %}
   </td>
   <td>{{ entry.changed_by_user|default:"—" }}</td>
-  <td class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}<span class="table-primary-sub">{% blocktranslate with since=entry.created_at|timesince %}{{ since }} ago{% endblocktranslate %}</span></td>
+  <td class="text-nowrap">{{ entry.created_at|date:'d-m-Y H:i' }}<span class="table-primary-sub">{% blocktranslate with since=entry.created_at|timesince %}{{ since }} ago{% endblocktranslate %}</span></td>
 </tr>
 {% empty %}
 <tr><td colspan="99" class="text-center text-muted py-4">

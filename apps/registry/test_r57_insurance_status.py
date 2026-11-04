@@ -118,4 +118,4 @@ def test_list_shows_the_expiry_date_instead_of_pending_once_it_exists(admin_clie
 
     content = admin_client.get(reverse("aircraft-list")).content.decode()
 
-    assert "2099-01-01" in content
+    assert "01-01-2099" in content

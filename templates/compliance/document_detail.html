@@ -46,7 +46,7 @@ decisión de seguridad, no de comodidad).{% endcomment %}
   <h2 class="h5">{% translate "Previous versions" %}</h2>
   <ul class="mb-0">
     {% for version in versions %}
-    <li><a href="{% url 'document-detail' version.pk %}">{{ version.title }}</a> — {{ version.created_at|date:'Y-m-d H:i' }}</li>
+    <li><a href="{% url 'document-detail' version.pk %}">{{ version.title }}</a> — {{ version.created_at|date:'d-m-Y H:i' }}</li>
     {% empty %}
     <li class="text-muted">{% translate "No previous versions." %}</li>
     {% endfor %}

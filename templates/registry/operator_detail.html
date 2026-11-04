@@ -20,7 +20,7 @@
   dato; el catálogo es la interpretación.{% endcomment %}
   {% comment %}LV-253: la lista marcaba la credencial vencida y la ficha no —
   quien abría al operador veía la fecha en la tabla sin ninguna señal.{% endcomment %}
-  {% if object.credential_is_overdue %}<p class="mb-3" data-credential-lapsed><span class="badge sev-critical">⚠ {% translate "DGAC credential lapsed" %}</span> <span class="sev-text-critical">{{ object.credential_expiry|date:'Y-m-d' }}</span></p>{% endif %}
+  {% if object.credential_is_overdue %}<p class="mb-3" data-credential-lapsed><span class="badge sev-critical">⚠ {% translate "DGAC credential lapsed" %}</span> <span class="sev-text-critical">{{ object.credential_expiry|date:'d-m-Y' }}</span></p>{% endif %}
   {% comment %}LV-369: ex colaborador. Banner informativo (cian, no rojo: no es un
   fallo), con símbolo + palabra. El motivo y la nota son datos sensibles: sólo
   con `change_operator`, y por eso la tabla genérica **no** los dibuja (la
@@ -63,8 +63,8 @@ con fechas, el bloque estructurado dice algo que el texto libre no puede decir.
       {% for qualification in qualifications %}
       <tr>
         <td><span class="badge {% if qualification.expiry_date and qualification.expiry_date < today %}bg-danger{% else %}{{ qualification.qualification_type.chip_class }}{% endif %}">{{ qualification.qualification_type.name }}</span></td>
-        <td>{{ qualification.issue_date|date:'Y-m-d'|default:'—' }}</td>
-        <td>{% if qualification.expiry_date %}{{ qualification.expiry_date|date:'Y-m-d' }}{% if qualification.expiry_date < today %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td>{{ qualification.issue_date|date:'d-m-Y'|default:'—' }}</td>
+        <td>{% if qualification.expiry_date %}{{ qualification.expiry_date|date:'d-m-Y' }}{% if qualification.expiry_date < today %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% endif %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
         <td class="text-end">{% if perms.registry.change_qualification %}<a href="{% url 'qualification-update' qualification.pk %}" hx-get="{% url 'qualification-update' qualification.pk %}" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-secondary">{% translate "Edit" %}</a>{% endif %}</td>
       </tr>
       {% endfor %}
@@ -106,10 +106,10 @@ lo que hay que reforzar.{% endcomment %}
     <tbody>
       {% for assessment in assessments %}
       <tr>
-        <td>{{ assessment.taken_at|date:'Y-m-d' }}</td>
+        <td>{{ assessment.taken_at|date:'d-m-Y' }}</td>
         <td>{% if assessment.passed %}<span class="badge bg-success">{% translate "Passed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Insufficient" %}</span>{% endif %}</td>
         <td>{{ assessment.score_percent }}% <span class="text-body-secondary small">({{ assessment.correct_count }}/{{ assessment.question_count }})</span></td>
-        <td>{{ assessment.expires_on|date:'Y-m-d' }}{% if assessment.is_expired %} <span class="badge sev-critical">⚠ {% translate "Overdue" %}</span>{% endif %}</td>
+        <td>{{ assessment.expires_on|date:'d-m-Y' }}{% if assessment.is_expired %} <span class="badge sev-critical">⚠ {% translate "Overdue" %}</span>{% endif %}</td>
         <td class="text-end">
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a>
           {% comment %}LV-173: archivar, nunca borrar. Va como formulario POST y
@@ -139,7 +139,7 @@ lo que hay que reforzar.{% endcomment %}
     <tbody>
       {% for assessment in archived_assessments %}
       <tr>
-        <td>{{ assessment.taken_at|date:'Y-m-d' }}</td>
+        <td>{{ assessment.taken_at|date:'d-m-Y' }}</td>
         <td>{% if assessment.passed %}{% translate "Passed" %}{% else %}{% translate "Insufficient" %}{% endif %}</td>
         <td>{{ assessment.score_percent }}%</td>
         <td class="text-end">
@@ -183,7 +183,7 @@ con los dos permisos: subir un documento y cambiar al operador.{% endcomment %}
         <td>{{ entry.get_movement_display }}</td>
         <td>{{ entry.from_cost_center|default:"—" }}</td>
         <td>{{ entry.to_cost_center|default:"—" }}</td>
-        <td><span class="text-nowrap">{{ entry.created_at|date:'Y-m-d H:i' }}</span></td>
+        <td><span class="text-nowrap">{{ entry.created_at|date:'d-m-Y H:i' }}</span></td>
       </tr>
       {% endfor %}
     </tbody>

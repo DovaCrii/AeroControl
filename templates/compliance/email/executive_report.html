@@ -4,7 +4,7 @@
   <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dde3ec;border-radius:10px;overflow:hidden;">
     <div style="padding:22px 26px;background:#1b2a4a;color:#ffffff;">
       <h1 style="margin:0;font-size:19px;">{% blocktranslate with period=period_label %}Executive compliance report ({{ period }}){% endblocktranslate %}</h1>
-      <p style="margin:6px 0 0;font-size:13px;opacity:.85;">{{ report.period.start|date:"Y-m-d" }} — {{ report.period.end|date:"Y-m-d" }}</p>
+      <p style="margin:6px 0 0;font-size:13px;opacity:.85;">{{ report.period.start|date:"d-m-Y" }} — {{ report.period.end|date:"d-m-Y" }}</p>
     </div>
 
     <div style="padding:20px 26px;">

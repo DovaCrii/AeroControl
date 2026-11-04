@@ -55,7 +55,7 @@ whether a title wrapped, so nothing lined up.{% endcomment %}
               {% else %}<span class="badge bg-warning text-dark">{% translate "Never run" %}</span>{% endif %}
               {% if j.stale %} <span class="badge bg-warning text-dark" title="{% translate 'No run in over 48 hours' %}">⚠</span>{% endif %}
             </td>
-            <td class="text-muted small">{% if j.when %}{{ j.when|date:"Y-m-d H:i" }}{% else %}—{% endif %}</td>
+            <td class="text-muted small">{% if j.when %}{{ j.when|date:"d-m-Y H:i" }}{% else %}—{% endif %}</td>
           </tr>
         {% endfor %}
         </tbody>

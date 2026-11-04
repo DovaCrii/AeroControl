@@ -54,7 +54,7 @@
       <tbody>
         {% for document in documents %}
         <tr>
-          <td>{{ document.issue_date|date:"Y-m-d"|default:"—" }}</td>
+          <td>{{ document.issue_date|date:"d-m-Y"|default:"—" }}</td>
           <td>{% if document.cost_center %}{{ document.cost_center.code }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           <td>{{ document.doc_type }}</td>
           <td><a href="{% url 'document-detail' document.pk %}" class="fw-semibold">{{ document.title }}</a></td>

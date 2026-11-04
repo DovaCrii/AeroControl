@@ -38,7 +38,7 @@ faena, su responsable y su equipo (operadores y aeronaves).{% endcomment %}
       {% regroup register_permits by cost_center as by_centre %}
       {% for group in by_centre %}
       <optgroup label="{{ group.grouper }}">
-        {% for p in group.list %}<option value="{{ p.pk }}">{{ p.permission_number|default:p.internal_folio }} · {{ p.valid_from|date:"d/m/Y" }} – {{ p.valid_until|date:"d/m/Y" }}</option>{% endfor %}
+        {% for p in group.list %}<option value="{{ p.pk }}">{{ p.permission_number|default:p.internal_folio }} · {{ p.valid_from|date:"d-m-Y" }} – {{ p.valid_until|date:"d-m-Y" }}</option>{% endfor %}
       </optgroup>
       {% endfor %}
     </select>

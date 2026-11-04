@@ -101,6 +101,33 @@ class TestThereIsOneSpriteAndTheMenuUsesIt:
             assert sid.startswith("icon-"), sid
 
 
+class TestEveryMenuItemHasADrawableIcon:
+    """`LV-408`: «Entorno» salía sin icono con el id presente en el sprite.
+
+    El símbolo se escribió como `<symbol id="icon-environment"viewBox=...>` (sin
+    espacio): el archivo dejó de ser XML bien formado y el navegador no dibujó
+    ese símbolo. Cruzar ids con una expresión regular no lo ve; hay que parsear.
+    """
+
+    def test_the_sprite_is_well_formed_xml_and_every_symbol_has_a_viewbox(self):
+        import xml.etree.ElementTree as ET
+
+        root = ET.fromstring(_sprite())
+        symbols = [el for el in root if el.tag.endswith("symbol")]
+
+        assert len(symbols) == len(_symbol_ids())
+        for symbol in symbols:
+            assert symbol.get("viewBox"), symbol.get("id")
+            assert len(list(symbol)) > 0, symbol.get("id")
+
+    def test_every_menu_item_names_an_icon_that_the_sprite_draws(self):
+        from apps.core.navigation import all_items
+
+        for item in all_items():
+            assert item.icon, item.key if hasattr(item, "key") else item
+            assert f"icon-{item.icon}" in _symbol_ids(), item.icon
+
+
 class TestTheSymbolsDoNotCarryTheirOwnColour:
     def test_no_symbol_declares_stroke_or_fill(self):
         """**El que importa.**

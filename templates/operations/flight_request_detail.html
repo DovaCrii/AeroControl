@@ -198,7 +198,7 @@ explícita del usuario. Lo que queda registrado es quién anotó qué y cuándo.
   {% for note in notes %}
   <div class="border-bottom py-2">
     <div>{{ note.text|linebreaksbr }}</div>
-    <div class="small text-body-secondary">{{ note.author }} · {{ note.created_at|date:"Y-m-d H:i" }}</div>
+    <div class="small text-body-secondary">{{ note.author }} · {{ note.created_at|date:"d-m-Y H:i" }}</div>
   </div>
   {% empty %}
   <p class="text-muted">{% translate "No notes yet." %}</p>
