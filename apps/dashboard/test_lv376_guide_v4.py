@@ -65,7 +65,7 @@ def test_the_legend_is_a_table_with_one_row_per_state_in_urgency_order(sites):
         ("none", "✕", "none"),
         ("awaiting", "◐", "wait"),
         ("renew_now", "▲", "warning"),
-        ("renew_soon", "◆", "advisory"),
+        ("renew_soon", "◆", "warning id-cx-state--soft"),
         ("ok", "●", "ok"),
     ):
         row = legend.split(f'data-cx-state="{kind}"')[1].split("</tr>")[0]
