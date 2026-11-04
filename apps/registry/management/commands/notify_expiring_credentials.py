@@ -12,11 +12,12 @@ an optional timer in docs/dev/scheduled-operations.md.
 """
 
 import logging
+import smtplib
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import EmailMessage
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -67,6 +68,7 @@ class Command(BaseCommand):
         today = timezone.localdate()
         cutoff = today + timedelta(days=days)
         sent = skipped = total_items = 0
+        failed = 0
 
         for operator in Operator.objects.filter(is_active=True):
             items = self._items_for(operator, today, cutoff)
@@ -103,12 +105,28 @@ class Command(BaseCommand):
                     "registry/email/credential_notice.txt",
                     {"operator": operator, "items": items},
                 )
-                EmailMessage(
-                    subject=subject,
-                    body=body,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[operator.email],
-                ).send()
+                try:
+                    EmailMessage(
+                        subject=subject,
+                        body=body,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[operator.email],
+                    ).send()
+                except (smtplib.SMTPException, OSError) as exc:
+                    # LV-418: one failed notice must not cut the rest. Operator
+                    # id and error type only: no name or address in the log.
+                    failed += 1
+                    logger.error(
+                        "credential_notice_failed",
+                        extra={
+                            "recipient": "",
+                            "item_count": len(items),
+                            "send_result": "failed",
+                            "reason": type(exc).__name__,
+                            "operator_id": str(operator.pk),
+                        },
+                    )
+                    continue
             sent += 1
             total_items += len(items)
             logger.info(
@@ -119,6 +137,8 @@ class Command(BaseCommand):
                     "send_result": "dry_run" if dry_run else "sent",
                 },
             )
+        if failed:
+            raise CommandError(f"{failed} notice(s) failed to send; {sent} sent.")
         return sent, skipped, total_items
 
     @staticmethod

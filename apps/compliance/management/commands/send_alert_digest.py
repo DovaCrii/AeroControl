@@ -1,8 +1,9 @@
 import logging
+import smtplib
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -65,6 +66,7 @@ class Command(BaseCommand):
     def _run(self, dry_run):
         today = timezone.localdate()
         sent = skipped = total_items = 0
+        failed = []
         # Archived centers fall out of the loop below by design, but falling
         # out silently while they still have active operators or aircraft is a
         # compliance blind spot: their documents stop being watched with no
@@ -151,7 +153,29 @@ class Command(BaseCommand):
                     render_to_string("compliance/email/alert_digest.html", context),
                     "text/html",
                 )
-                message.send()
+                try:
+                    message.send()
+                except (smtplib.SMTPException, OSError) as exc:
+                    # LV-418: one center's SMTP failure must not cut the mail of
+                    # the rest. Center code and error type only: no recipients.
+                    failed.append(cost_center.code)
+                    logger.error(
+                        "digest_send_failed",
+                        extra={
+                            "recipient": "",
+                            "item_count": item_count,
+                            "send_result": "failed",
+                            "reason": type(exc).__name__,
+                            "cost_center": cost_center.code,
+                        },
+                    )
+                    self.stdout.write(
+                        self.style.ERROR(
+                            f"{cost_center.code}: the digest could not be sent "
+                            f"({type(exc).__name__})."
+                        )
+                    )
+                    continue
             sent += 1
             total_items += item_count
             # Recipient and counts only: the digest body is never logged.
@@ -162,6 +186,13 @@ class Command(BaseCommand):
                     "item_count": item_count,
                     "send_result": "dry_run" if dry_run else "sent",
                 },
+            )
+        if failed:
+            # The job ends in error so the watchdog sees it; the other centers
+            # were already mailed above.
+            raise CommandError(
+                f"{len(failed)} digest(s) failed to send ({', '.join(failed)}); "
+                f"{sent} sent."
             )
         return sent, skipped, total_items
 
