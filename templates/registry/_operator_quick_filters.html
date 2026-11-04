@@ -1,0 +1,12 @@
+{% load i18n %}
+{% comment %}LV-413: atajos a las cuatro preguntas que más se hacen sobre el padrón. El número es
+el de filas que trae el clic (se cuenta con los filtros puestos y el del atajo encima), y un
+atajo encendido se apaga con el mismo clic. Son enlaces corrientes y no htmx: así el formulario
+de filtros vuelve a dibujarse con el valor que el atajo puso. En una respuesta htmx este bloque
+viaja fuera de banda (`oob`) para que los conteos sigan a la búsqueda en vivo.{% endcomment %}
+<nav id="op-quick" class="op-quick" aria-label="{% translate 'Quick filters' %}"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <span class="op-quick-label">{% translate "Quick filters" %}</span>
+  {% for chip in quick_filters %}
+  <a class="op-quick-chip{% if chip.active %} is-active{% endif %}" href="{{ chip.url }}"{% if chip.active %} aria-current="true"{% endif %}>{% if chip.active %}<span aria-hidden="true">✓ </span>{% endif %}{{ chip.label }} <span class="op-quick-count">{{ chip.count }}</span></a>
+  {% endfor %}
+</nav>

@@ -5,6 +5,7 @@ standalone movement log list cannot drift apart on how a row's bare
 resource_id gets resolved to a human label.
 """
 
+import re
 import unicodedata
 from collections import defaultdict
 from datetime import timedelta
@@ -270,25 +271,97 @@ def filter_by_insurance(queryset, key, today):
     )
 
 
+# LV-413: el semáforo de la credencial DGAC, en un solo lugar para la lista, su filtro y
+# sus atajos. Los cortes **no son nuevos**: son los 30/60 días de `kpis.permit_band`, la
+# escala de documento que ya dibuja el informe (crítico, por vencer, vigente). La lista
+# pintaba **toda** fecha futura en ámbar —también una credencial que vence en 2029—, así
+# que el color no decía nada. Lo que cambia respecto del permiso es el tramo de 0–30 días:
+# allá es crítico porque renovar exige una carta del mandante; acá la credencial vencida
+# ya tiene su rojo, y lo que vence pronto es aviso (ámbar), como pidió el usuario.
+CREDENTIAL_LAPSED = "lapsed"
+CREDENTIAL_SOON = "soon"
+CREDENTIAL_WARNING = "warning"
+CREDENTIAL_CURRENT = "current"
+CREDENTIAL_MISSING = "missing"
+
+# Banda -> clase de la insignia. `current` no usa la escala `sev-*` (no hay verde ahí):
+# toma el «correcto» de `identity.css` (`--id-ok-*`) a través de `operators.css`, y
+# `missing` es neutro: una fecha que nunca se cargó no es ni buena ni mala, es un dato
+# que falta (LV-29).
+CREDENTIAL_BAND_CSS = {
+    CREDENTIAL_LAPSED: "sev-critical",
+    CREDENTIAL_SOON: "sev-warning",
+    CREDENTIAL_WARNING: "sev-advisory",
+    CREDENTIAL_CURRENT: "op-band-ok",
+    CREDENTIAL_MISSING: "op-band-none",
+}
+
+
+def credential_band(expiry, today):
+    """`(banda, días que quedan)` de una credencial; `días` es `None` sin fecha."""
+    from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+
+    if expiry is None:
+        return CREDENTIAL_MISSING, None
+    days = (expiry - today).days
+    if days < 0:
+        return CREDENTIAL_LAPSED, days
+    if days <= PERMIT_CRITICAL_DAYS:
+        return CREDENTIAL_SOON, days
+    if days <= PERMIT_WARNING_DAYS:
+        return CREDENTIAL_WARNING, days
+    return CREDENTIAL_CURRENT, days
+
+
 def filter_by_credential(queryset, key, today):
     """Lo mismo para la credencial DGAC de cada operador.
 
     Aquí "al día" es sólo la fecha —no hay un campo de estado como en la póliza—
     así que `attention` es todo lo que no tiene una vigencia por delante,
     incluidos los que nunca la tuvieron cargada.
+
+    LV-413: suma `warning` (31–60 días) y `current` (más de 60), con los mismos
+    cortes que `credential_band`, para que el filtro y el color digan lo mismo.
     """
+    from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+
     if key == "attention":
         return queryset.exclude(credential_expiry__gte=today)
-    if key == "lapsed":
+    if key == CREDENTIAL_LAPSED:
         return queryset.filter(credential_expiry__lt=today)
-    if key == "missing":
+    if key == CREDENTIAL_MISSING:
         return queryset.filter(credential_expiry__isnull=True)
-    if key == "soon":
+    if key == CREDENTIAL_SOON:
         return queryset.filter(
             credential_expiry__gte=today,
-            credential_expiry__lte=today + timedelta(days=30),
+            credential_expiry__lte=today + timedelta(days=PERMIT_CRITICAL_DAYS),
+        )
+    if key == CREDENTIAL_WARNING:
+        return queryset.filter(
+            credential_expiry__gt=today + timedelta(days=PERMIT_CRITICAL_DAYS),
+            credential_expiry__lte=today + timedelta(days=PERMIT_WARNING_DAYS),
+        )
+    if key == CREDENTIAL_CURRENT:
+        return queryset.filter(
+            credential_expiry__gt=today + timedelta(days=PERMIT_WARNING_DAYS)
         )
     return queryset
+
+
+_AUTHORIZATION_SEPARATORS = re.compile(r"\s+-\s+|\s*[,;/\n]+\s*")
+
+
+def authorization_items(text):
+    """LV-413: el texto de habilitaciones de la DGAC, partido en sus piezas **tal como
+    vienen escritas**. No se interpreta ni se normaliza nada (regla de LV-152): sólo se
+    corta por los separadores que la DGAC usa entre modelos —« - » con espacios, coma,
+    punto y coma, barra o salto de línea—. «MATRICE-ELIOS» queda junto: un guion sin
+    espacios es parte del nombre y no un separador."""
+    return [
+        item.strip()
+        for item in _AUTHORIZATION_SEPARATORS.split(text or "")
+        if item.strip()
+    ]
 
 
 def label_movements(entries):

@@ -1,5 +1,7 @@
 {% extends "generic/list.html" %}
-{% load aero_tags i18n %}
+{% load aero_tags i18n static %}
+
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/operators.css' %}">{% endblock %}
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'operator-import' %}">{% translate "Import" %}</a>{% endblock %}
 
@@ -8,11 +10,23 @@
 {% comment %}LV-369: el filtro de estado distingue a quien **salió de la empresa** de lo
 archivado por error o duplicado. Es el mismo bloque del genérico con una opción más;
 «Archivados» ya no incluye a los ex colaboradores.{% endcomment %}
+{% comment %}LV-413 (pedido del usuario: «he tenido problemas con el filtro y cómo navegar en
+los operadores»). Había una búsqueda que sólo miraba nombre, RUT tal cual y credencial, y un
+único filtro de estado. Ahora: la búsqueda dice qué campos mira (placeholder), y cuatro
+filtros rotulados que se combinan entre sí y con la búsqueda. Cada selector refresca la tabla
+por htmx con todo el formulario (`hx-include`), y los atajos y la paginación viajan fuera de
+banda en el parcial de filas, así que ninguno pierde a los otros (LV-410).{% endcomment %}
 {% block list_filters %}
 <div class="id-filter id-filter--grow"><label class="id-filter-label" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
-<div class="id-filter"><label class="id-filter-label" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="is_active"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="left" {% if request.GET.is_active == 'left' %}selected{% endif %}>{% translate "Former employees" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
-<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-credential">{% translate "Credential" %}</label><select class="form-select" id="id-filter-credential" name="credential" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "Any expiry" %}</option>{% for value, label in credential_choices %}<option value="{{ value }}" {% if filters.credential == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-pdf">{% translate "Credential PDF" %}</label><select class="form-select" id="id-filter-pdf" name="pdf" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "With or without PDF" %}</option><option value="yes" {% if filters.pdf == 'yes' %}selected{% endif %}>{% translate "PDF on file" %}</option><option value="no" {% if filters.pdf == 'no' %}selected{% endif %}>{% translate "No PDF" %}</option></select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-cost-center">{% translate "Cost center" %}</label><select class="form-select" id="id-filter-cost-center" name="cost_center" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All cost centers" %}</option><option value="none" {% if filters.cost_center == 'none' %}selected{% endif %}>{% translate "Unassigned" %}</option>{% for cc in cost_center_options %}<option value="{{ cc.pk }}" {% if filters.cost_center == cc.pk|stringformat:'s' %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>
+{% if model_options %}<div class="id-filter"><label class="id-filter-label" for="id-filter-model">{% translate "Qualified for" %}</label><select class="form-select" id="id-filter-model" name="model" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "Any model" %}</option>{% for item in model_options %}<option value="{{ item }}" {% if filters.model == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>{% endif %}
+<div class="id-filter"><label class="id-filter-label" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="is_active" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All statuses" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="left" {% if request.GET.is_active == 'left' %}selected{% endif %}>{% translate "Former employees" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button>{% if is_filtered %} <a class="btn btn-link" href="{{ request.path }}">{% translate "Clear filters" %}</a>{% endif %}</div>
 {% endblock %}
+
+{% block list_intro %}{% include "registry/_operator_quick_filters.html" %}{% endblock %}
 
 {% comment %}LV-162 (pedido del usuario con captura, 2026-08-27): el reparto
 estaba al revés de lo que pide el contenido. `col-flex` existe para absorber el
@@ -34,8 +48,11 @@ en el navegador: la habilitación pasa de 281 a 436 px.{% endcomment %}
   {% comment %}Una fecha dentro de una insignia; no crece.{% endcomment %}
   <col class="col-status">
   {% comment %}LV-87: el respaldo adjunto es su propia columna, y su dato es un
-  icono centrado -- de ahí `col-icon` y no `col-status`.{% endcomment %}
-  <col class="col-icon">
+  icono centrado -- de ahí `col-icon` y no `col-status`.
+  LV-413: pasa a `col-numeric` (8 %). El rótulo vuelve a decir qué es —«PDF credencial»,
+  dos palabras que se parten entre sí y no a mitad de palabra— y la celda lleva icono y
+  palabra («Ver» / «Cargar»), que no caben en el 6 % de un icono suelto.{% endcomment %}
+  <col class="col-numeric">
   {% comment %}El código de la faena, o "Sin asignar".{% endcomment %}
   <col class="col-compact">
   {% comment %}LV-152: la habilitación pasa de insignia a texto libre, así que es
@@ -62,7 +79,9 @@ partía **a mitad de palabra** ("CREDENCIA / L ADJUNTA"). Ensancharla habría si
 regalarle espacio a una cruz quitándoselo a la habilitación, que es justo lo que
 `LV-162` vino a corregir. El significado completo vive en el `title` y en el
 texto para lector de pantalla de cada celda, que ya lo decían.{% endcomment %}
-<th scope="col" class="cell-status" title="{% translate 'DGAC credential file' %}">{% translate "File" %}</th>
+{% comment %}LV-413: «Archivo» no decía de qué; el usuario no sabía qué marcaban la cruz y el
+visto. Vuelve a nombrar el dato.{% endcomment %}
+<th scope="col" class="cell-status" title="{% translate 'DGAC credential file' %}">{% translate "Credential PDF" %}</th>
 {% worktable_th _("Cost center") "cost_center" %}
 {% comment %}LV-152: decía "Habilitación" y mostraba una insignia verde "Vigente"
 derivada de las habilitaciones estructuradas. Con el vencimiento en `NULL` —como

@@ -7,7 +7,9 @@
   dice la verdad de lo que se sabe de ese nombre en vez de inventar un corte para
   que todas se vean iguales. El `title` lleva siempre el nombre de registro, que
   es el que aparece en el permiso y en el catastro.{% endcomment %}
-  <td><a href="{{ object.pk }}/" class="table-primary-value" title="{{ object.full_name }}">{{ object.listing_name }}</a>{% if object.left_company_on %} <span class="badge sev-advisory"><span aria-hidden="true">→</span> {% blocktranslate with date=object.left_company_on|date:"d-m-Y" %}Former employee · left on {{ date }}{% endblocktranslate %}</span>{% elif not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
+  {% comment %}LV-413: el enlace a la ficha lleva la consulta de la lista (`?back=`), y la
+  ficha la usa en «Volver a la lista»: se vuelve a la misma búsqueda, filtros y página.{% endcomment %}
+  <td><a href="{{ object.pk }}/{% if list_query %}?back={{ list_query|urlencode:'' }}{% endif %}" class="table-primary-value" title="{{ object.full_name }}">{{ object.listing_name }}</a>{% if object.left_company_on %} <span class="badge sev-advisory"><span aria-hidden="true">→</span> {% blocktranslate with date=object.left_company_on|date:"d-m-Y" %}Former employee · left on {{ date }}{% endblocktranslate %}</span>{% elif not object.is_active %} <span class="badge bg-secondary">{% translate "Archived" %}</span>{% endif %}
     {% if object.rut %}<span class="table-primary-sub cell-truncate">{{ object.rut }}</span>{% endif %}
   </td>
   {% comment %}LV-177: el folio de la credencial es un número y se alineaba a la
@@ -15,31 +17,45 @@
   `tabular-nums`, comparar dos folios de la lista deja de exigir leerlos
   dígito por dígito.{% endcomment %}
   <td class="cell-truncate cell-numeric">{{ object.dgac_credential|default:"—" }}</td>
+  {% comment %}LV-413: el semáforo. Antes toda fecha futura iba en ámbar —también una que
+  vence en 2029—, así que el color no distinguía nada. La banda sale de
+  `Operator.credential_state` (cortes 30/60 de la escala de documento) y cada una se dice
+  con forma, palabra y color a la vez: ⚠ vencida en rojo, ◷ ≤30 días en ámbar, ◔ 31–60 en
+  azul, ✓ vigente en verde, y «Sin fecha» neutro.{% endcomment %}
   <td class="cell-status">
-    {% if object.credential_expiry %}
-      {% if object.credential_is_overdue %}<span class="badge sev-critical">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'d-m-Y' }}</span>
-      {% else %}<span class="badge sev-caution">{{ object.credential_expiry|date:'d-m-Y' }}</span>{% endif %}
-    {% else %}<span class="text-muted">—</span>{% endif %}
+    {% with state=object.credential_state %}
+    {% if state.band == "lapsed" %}<span class="badge {{ state.css }}">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'d-m-Y' }}</span>
+    {% elif state.band == "missing" %}<span class="badge {{ state.css }}">— {% translate "No date" %}</span>
+    {% else %}<span class="badge {{ state.css }}" title="{% blocktranslate count days=state.days %}Expires in {{ days }} day{% plural %}Expires in {{ days }} days{% endblocktranslate %}"><span aria-hidden="true">{% if state.band == "soon" %}◷{% elif state.band == "warning" %}◔{% else %}✓{% endif %}</span> {{ object.credential_expiry|date:'d-m-Y' }}{% if state.band != "current" %} · {% blocktranslate count days=state.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}<span class="visually-hidden"> · {% translate "Credential in force" %}</span>{% endif %}</span>{% endif %}
+    {% endwith %}
   </td>
   {% comment %}LV-87 (refina R4.7): columna propia, y una figura de sí/no en vez
   de una insignia que sólo aparecía cuando faltaba. Que el respaldo **esté** es
   información tan útil como que falte, y el icono se lee de un barrido sin tener
   que leer texto fila por fila. Va inline, como el resto de los iconos: la CSP es
   un `default-src 'self'` pelado.{% endcomment %}
+  {% comment %}LV-413: icono **y** palabra. Con PDF, «Ver» abre la credencial (con permiso
+  para ver documentos); sin PDF, «Cargar» lleva al formulario de la ficha (LV-368) para
+  quien puede subirla. Lo que el icono afirma lo dice además el texto oculto, para lector
+  de pantalla.{% endcomment %}
   <td class="cell-status">
     {% if object.has_credential_pdf %}
-    <span class="credential-file is-present" title="{% translate 'DGAC credential PDF on file' %}">
+    {% if can_view_documents and object.credential_pdf_id %}<a class="credential-file is-present" href="{% url 'document-detail' object.credential_pdf_id %}" title="{% translate 'DGAC credential PDF on file' %}">{% else %}<span class="credential-file is-present" title="{% translate 'DGAC credential PDF on file' %}">{% endif %}
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6.5 9.6 17 4 11.4"/></svg>
-      <span class="visually-hidden">{% translate "Credential file on record" %}</span>
-    </span>
+      <span class="visually-hidden">{% translate "Credential file on record" %}:</span>
+      <span class="credential-file-word">{% if can_view_documents and object.credential_pdf_id %}{% translate "View" %}{% else %}{% translate "Yes" %}{% endif %}</span>
+    {% if can_view_documents and object.credential_pdf_id %}</a>{% else %}</span>{% endif %}
     {% else %}
-    <span class="credential-file is-missing" title="{% translate 'No DGAC credential PDF on file' %}">
+    {% if can_upload_credential and object.is_active %}<a class="credential-file is-missing" href="{{ object.pk }}/{% if list_query %}?back={{ list_query|urlencode:'' }}{% endif %}#credential-upload" title="{% translate 'No DGAC credential PDF on file' %}" data-credential-upload>{% else %}<span class="credential-file is-missing" title="{% translate 'No DGAC credential PDF on file' %}">{% endif %}
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      <span class="visually-hidden">{% translate "No credential file" %}</span>
-    </span>
+      <span class="visually-hidden">{% translate "No credential file" %}:</span>
+      <span class="credential-file-word">{% if can_upload_credential and object.is_active %}{% translate "Upload" %}{% else %}{% translate "No" %}{% endif %}</span>
+    {% if can_upload_credential and object.is_active %}</a>{% else %}</span>{% endif %}
     {% endif %}
   </td>
-  <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
+  {% comment %}LV-413: «Sin asignar» iba en `text-muted` y se perdía; ahora en el color
+  secundario del texto (contraste calculado ≥ 4,5:1 en los dos temas).{% endcomment %}
+  <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="op-unassigned">{% translate "Unassigned" %}</span>{% endif %}</td>
   {% comment %}LV-152: la habilitación, tal como la escribe la DGAC. Era una
   insignia derivada de las habilitaciones estructuradas que decía "Vigente"
   siempre que el vencimiento fuera nulo, o sea para todas las importadas — un
@@ -47,8 +63,12 @@
   estandarizar: *"lo importante de la habilitación es poner directamente en el
   recuadro lo que dice la DGAC, no más […] ya que es variable el asunto"*.
   {% endcomment %}
-  <td class="cell-truncate">
-    {% if object.authorizations %}<span title="{{ object.authorizations }}">{{ object.authorizations }}</span>
+  {% comment %}LV-413: las piezas del texto de la DGAC como fichas, **sin cambiar una
+  letra** (LV-152): sólo se corta por los separadores que la DGAC usa entre modelos. Antes
+  la línea se truncaba con «…» a mitad de palabra; ahora van las cuatro primeras fichas y
+  un «+N» con las que faltan, y el `title` guarda el texto completo.{% endcomment %}
+  <td>
+    {% if object.authorizations %}{% with items=object.authorization_items %}<span class="op-quals" title="{{ object.authorizations }}">{% for item in items|slice:":4" %}<span class="op-qual">{{ item }}</span>{% endfor %}{% if items|length > 4 %}<span class="op-qual op-qual--more">+{{ items|length|add:"-4" }}</span>{% endif %}</span>{% endwith %}
     {% else %}<span class="text-muted">—</span>{% endif %}
   </td>
   <td class="text-end">
@@ -111,4 +131,4 @@ razón por la que inyecta su `<col>`: la columna y su ancho son el mismo hecho.
   {% endif %}
 </td></tr>
 {% endfor %}
-{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% include "registry/_operator_quick_filters.html" with oob=True %}{% endif %}
