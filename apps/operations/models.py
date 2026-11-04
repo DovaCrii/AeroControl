@@ -572,7 +572,7 @@ class FlightPermission(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         of a new year (nothing to lock yet); the `unique` constraint turns
         that rare race into a failed save instead of a silent duplicate.
         """
-        prefix = f"JEJ-{timezone.now().year}-"
+        prefix = f"JEJ-{timezone.localdate().year}-"
         last = (
             FlightPermission.objects.select_for_update()
             .filter(internal_folio__startswith=prefix)

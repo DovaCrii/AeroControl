@@ -184,7 +184,7 @@ class GeoPlan(StatusHistoryMixin, StatusFlowMixin, BaseModel):
         from django.db import transaction  # noqa: F401  (documenta el contrato)
         from django.utils import timezone
 
-        prefix = f"PG-{timezone.now().year}-"
+        prefix = f"PG-{timezone.localdate().year}-"
         last = (
             GeoPlan.objects.select_for_update()
             .filter(folio__startswith=prefix)

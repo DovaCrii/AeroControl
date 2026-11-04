@@ -483,6 +483,8 @@ def status_at_cutoff(permits, cutoff):
     fila cuando la operación crezca, y este payload se arma también desde un
     trabajo nocturno donde nadie mira el reloj.
     """
+    from django.utils import timezone
+
     from apps.operations.models import PermissionHistory
 
     by_permit = {}
@@ -494,7 +496,7 @@ def status_at_cutoff(permits, cutoff):
     resolved = {}
     for permit in permits:
         entries = by_permit.get(permit.pk, [])
-        upto = [e for e in entries if e.created_at.date() <= cutoff]
+        upto = [e for e in entries if timezone.localtime(e.created_at).date() <= cutoff]
         if upto:
             resolved[permit.pk] = upto[-1].new_status
         elif entries:
