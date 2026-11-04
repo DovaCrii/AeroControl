@@ -337,6 +337,29 @@ AEROLINK_API_URL = config("AEROLINK_API_URL", default="")
 AEROLINK_API_TOKEN = config("AEROLINK_API_TOKEN", default="")
 AEROLINK_TIMEOUT_SECONDS = config("AEROLINK_TIMEOUT_SECONDS", default=10, cast=int)
 
+# LV-399: imágenes oficiales (foto del fabricante por modelo de aeronave y banner de los
+# sistemas DGAC) que quien administra carga una vez, subiendo el archivo o pegando una URL
+# que el servidor descarga. Se guardan en el almacenamiento de documentos (fuera de git) y
+# se sirven por una vista propia. Cada lista admite el host y **todos sus subdominios**;
+# la descarga exige https, no sigue redirecciones y rechaza IP privadas o locales
+# (`apps/core/official_images.py`). Separadas por coma en el entorno.
+OFFICIAL_IMAGE_ALLOWED_HOSTS = config(
+    "OFFICIAL_IMAGE_ALLOWED_HOSTS",
+    default="dji.com,www.dji.com,enterprise.dji.com,dl.djicdn.com,www-cdn.djiits.com",
+    cast=lambda value: [h.strip().lower() for h in value.split(",") if h.strip()],
+)
+OFFICIAL_LINK_IMAGE_ALLOWED_HOSTS = config(
+    "OFFICIAL_LINK_IMAGE_ALLOWED_HOSTS",
+    default="dgac.gob.cl",
+    cast=lambda value: [h.strip().lower() for h in value.split(",") if h.strip()],
+)
+OFFICIAL_IMAGE_MAX_BYTES = config(
+    "OFFICIAL_IMAGE_MAX_BYTES", default=5 * 1024 * 1024, cast=int
+)
+OFFICIAL_IMAGE_TIMEOUT_SECONDS = config(
+    "OFFICIAL_IMAGE_TIMEOUT_SECONDS", default=10, cast=int
+)
+
 CSP_REPORT_ONLY = config("CSP_REPORT_ONLY", default=True, cast=bool)
 # Where the browser posts CSP violation reports. Defaults to the app's own
 # logging endpoint; set empty to omit the report-uri directive entirely.

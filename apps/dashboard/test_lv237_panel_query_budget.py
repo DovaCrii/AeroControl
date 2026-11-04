@@ -41,7 +41,12 @@ from apps.registry.models import Aircraft, CostCenter, Operator
 # nueva sobre un estado que el resto de sus agregados no mira. Se sube a propósito y
 # queda dicho — que es exactamente la diferencia entre una consulta que se agrega
 # sabiendo y una que se agrega sin que nadie se entere, que es la razón del archivo.
-PANEL_QUERY_BUDGET = 49
+PANEL_QUERY_BUDGET = 50
+#
+# **+1 el 2026-11-03 (`LV-399`), a propósito**: las tarjetas de SIGO y SIPA miran si quien
+# administra cargó su banner oficial (`official_link_cards`, una sola consulta a
+# `OfficialLinkImage` para las dos). Es perezoso: el menú lateral de las demás páginas
+# no la paga, sólo la plantilla que dibuja las tarjetas.
 #
 # **LV-310 (2026-10-13): el número no se mueve, y no por casualidad.** Salió la
 # agregación «Mantenimiento por tipo» (-1) y entró la lista «Próximas mantenciones»
@@ -53,7 +58,7 @@ PANEL_QUERY_BUDGET = 49
 # y cambia los `WHERE` del resto sin agregar recorridos. Se mide aparte igualmente:
 # que hoy sea "una más" es justo lo que un techo propio mantiene verdadero. Antes de
 # `LV-237` eran 59.
-PANEL_FILTERED_QUERY_BUDGET = 50
+PANEL_FILTERED_QUERY_BUDGET = 51  # +1 LV-399, la misma consulta del banner oficial.
 
 
 @pytest.fixture

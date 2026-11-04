@@ -1,8 +1,26 @@
 from django.urls import path
-from . import assessment_views, credential_views, report_views, views
+from . import (
+    assessment_views,
+    credential_views,
+    model_image_views,
+    report_views,
+    views,
+)
 
 urlpatterns = []
 urlpatterns += [
+    # LV-399: la foto oficial del modelo, cargada desde la ficha y servida desde el
+    # almacenamiento privado.
+    path(
+        "aircraft/<uuid:pk>/model-image/",
+        model_image_views.AircraftModelImageUpload.as_view(),
+        name="aircraft-model-image-upload",
+    ),
+    path(
+        "aircraft-model-images/<uuid:pk>/",
+        model_image_views.AircraftModelImageView.as_view(),
+        name="aircraft-model-image",
+    ),
     # LV-368: subir la credencial DGAC de un operador, leerla y confirmarla.
     path(
         "operator/<uuid:pk>/credential/upload/",

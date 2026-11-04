@@ -127,6 +127,11 @@ LOGIN_ONLY = {
         "ninguna devuelve un contenedor vacío, sin nombres de registros. La faena "
         "de la URL se acota por tenant. Todo por GET."
     ),
+    "apps.core.official_image_views.OfficialLinkImageView": (
+        "LV-399: el banner público de SIGO/SIPA, el mismo para todas las empresas, que "
+        "las tarjetas del panel muestran a toda sesión; se sirve desde la app sólo para "
+        "que el CSP no admita otro dominio. Cargarlo sí exige `change_officiallinkimage`."
+    ),
     # DRF: piden `IsAuthenticated` y hacen la comprobación de modelo adentro,
     # porque el permiso depende del método (GET lista, POST escribe).
     "apps.geo.api.GeoPlanVersionsView": (

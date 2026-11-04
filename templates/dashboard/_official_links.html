@@ -1,17 +1,18 @@
 {% load i18n static %}
 {% comment %}LV-396: tarjetas hacia los sistemas oficiales de la DGAC (SIGO y SIPA). El registro y las URL
 vienen de `apps/core/official_links.py` (context processor `official_links`): acá no se escribe ninguna
-dirección. Sin logos ni capturas de la DGAC (marcas de terceros; el CSP sólo admite imágenes propias): el
-icono es del sprite propio. Convención de enlace externo del repo: `target="_blank" rel="noopener noreferrer"`
-y aviso oculto «se abre en una pestaña nueva». Reutilizable en la página de inicio: LV-398 le pasa
-`ol_title_class` para que el título se vea allí (en el panel sigue oculto).{% endcomment %}
+dirección. Convención de enlace externo del repo: `target="_blank" rel="noopener noreferrer"` y aviso oculto
+«se abre en una pestaña nueva». Reutilizable en la página de inicio: LV-398 le pasa `ol_title_class` para que
+el título se vea allí (en el panel sigue oculto).
+LV-399: si quien administra cargó el banner oficial del sistema, se muestra (servido desde la app, desde el
+almacenamiento privado: el repo no lleva marcas de terceros); si no, el icono del sprite con `currentColor`.{% endcomment %}
 {% if official_links %}
 <section class="ol-banners mb-3" aria-labelledby="ol-banners-title">
   <h2 id="ol-banners-title" class="{{ ol_title_class|default:'visually-hidden' }}">{% translate "Official links" %}</h2>
   <div class="ol-grid">
-    {% for link in official_links %}
+    {% for link in official_link_cards %}
     <a class="ol-card" data-official-link="{{ link.key }}" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
-      <svg class="ol-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg>
+      {% if link.image_url %}<img class="ol-logo" src="{{ link.image_url }}" alt="{{ link.acronym }}" width="72" height="44" loading="lazy">{% else %}<svg class="ol-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#icon-{{ link.icon }}"/></svg>{% endif %}
       <span class="ol-body">
         <strong class="ol-name">{{ link.name }}</strong>
         <span class="ol-purpose">{{ link.purpose }}</span>
@@ -21,5 +22,10 @@ y aviso oculto «se abre en una pestaña nueva». Reutilizable en la página de 
     </a>
     {% endfor %}
   </div>
+  {% if perms.core.change_officiallinkimage %}
+  <div class="ol-manage">
+    {% for link in official_links %}<a href="{% url 'official-link-image-upload' link.key %}">{% blocktranslate with system=link.acronym %}Load the {{ system }} banner{% endblocktranslate %}</a>{% endfor %}
+  </div>
+  {% endif %}
 </section>
 {% endif %}
