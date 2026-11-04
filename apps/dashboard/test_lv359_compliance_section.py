@@ -114,13 +114,16 @@ def test_the_slot_carries_the_chosen_site_explicitly(operation):
 
 @pytest.mark.django_db
 def test_the_slot_costs_the_panel_no_queries(operation, django_assert_num_queries):
-    """El hueco se dibuja con permisos ya en memoria: `test_lv237` sigue EXACTAMENTE en 49/50."""
+    """El hueco se dibuja con permisos ya en memoria: `test_lv237` sigue EXACTAMENTE en 50/51.
+
+    (49/50 hasta LV-399, que sumó la consulta del banner oficial de SIGO/SIPA.)
+    """
     from apps.dashboard.test_lv237_panel_query_budget import (
         PANEL_FILTERED_QUERY_BUDGET,
         PANEL_QUERY_BUDGET,
     )
 
-    assert (PANEL_QUERY_BUDGET, PANEL_FILTERED_QUERY_BUDGET) == (49, 50)
+    assert (PANEL_QUERY_BUDGET, PANEL_FILTERED_QUERY_BUDGET) == (50, 51)
     client = login_as("view_maintenancerecord")
     client.get(reverse("dashboard"))
     with django_assert_num_queries(PANEL_QUERY_BUDGET):

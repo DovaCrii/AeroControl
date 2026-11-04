@@ -1,8 +1,9 @@
 import hashlib
 import json
-import shutil
+import sqlite3
 from pathlib import Path
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 
@@ -31,8 +32,32 @@ class Command(BaseCommand):
             or manifest.get("sha256") != digest
         ):
             raise CommandError("Backup checksum does not match manifest")
-        if destination.exists() and not options["force"]:
-            raise CommandError("Destination exists; use --force to overwrite")
+        live = Path(settings.DATABASES["default"]["NAME"]).resolve()
+        is_live = destination == live
+        if (destination.exists() or is_live) and not options["force"]:
+            raise CommandError(
+                "Destination is the configured live database; use --force "
+                "after stopping the service (sudo systemctl stop aerocontrol)"
+                if is_live
+                else "Destination exists; use --force to overwrite"
+            )
+        if is_live:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Restoring over the live database: the 'aerocontrol' service "
+                    "must be stopped first (sudo systemctl stop aerocontrol) and "
+                    "started again afterwards."
+                )
+            )
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(backup, destination)
+        # SQLite's online backup API, not `copy2`: the live database runs in WAL
+        # mode, and a byte copy leaves the previous `-wal`/`-shm` beside the new
+        # file, where SQLite replays them over the restored pages and damages it.
+        origin = sqlite3.connect(f"{backup.as_uri()}?mode=ro", uri=True)
+        target = sqlite3.connect(destination)
+        try:
+            origin.backup(target)
+        finally:
+            target.close()
+            origin.close()
         self.stdout.write(self.style.SUCCESS(f"Backup restored: {destination}"))

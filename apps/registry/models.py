@@ -2015,3 +2015,75 @@ class ResourceMovementLog(BaseModel):
 
     def delete(self, *args, **kwargs):
         raise ValidationError("ResourceMovementLog records are append-only.")
+
+
+def normalize_model_key(raw):
+    """La clave con la que un modelo de aeronave comparte su imagen oficial (LV-399).
+
+    Minúsculas y espacios colapsados: «Matrice 300 RTK» y «MATRICE  300 rtk» son el mismo
+    modelo, y todas las aeronaves de ese modelo muestran la misma foto. Sin adivinar más que
+    eso —«M300» y «Matrice 300» siguen siendo claves distintas—: confundir dos modelos
+    mostraría la foto equivocada, y cargar la misma imagen dos veces cuesta un minuto.
+    """
+    return " ".join((raw or "").lower().split())
+
+
+class AircraftModelImage(BaseModel):
+    """LV-399: la foto oficial del fabricante, una por modelo de aeronave y por empresa.
+
+    No hay catálogo de modelos en el padrón (`Aircraft.model` es texto libre), así que esta
+    tabla es el catálogo mínimo: la clave normalizada del modelo y su imagen. El archivo vive
+    en el almacenamiento de documentos (`storage_key`, fuera de git) y se sirve por
+    `aircraft-model-image`, con `view_aircraft` y acotado por empresa. Reemplazar la imagen
+    actualiza esta misma fila: el archivo anterior queda guardado y la auditoría dice quién.
+    """
+
+    tenant = models.ForeignKey(
+        OperationalTenant,
+        on_delete=models.PROTECT,
+        default=get_default_tenant,
+        related_name="aircraft_model_images",
+    )
+    model_key = models.CharField(max_length=100, verbose_name=_("Model key"))
+    model_name = models.CharField(max_length=100, verbose_name=_("Model"))
+    storage_key = models.CharField(max_length=255, editable=False)
+    source_url = models.URLField(max_length=500, blank=True)
+    source_host = models.CharField(max_length=255, blank=True)
+    credit = models.CharField(max_length=60, blank=True, verbose_name=_("Credit"))
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("official model image")
+        verbose_name_plural = _("official model images")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "model_key"],
+                name="registry_modelimage_tenant_key_uniq",
+            ),
+            models.CheckConstraint(
+                condition=~Q(model_key=""),
+                name="registry_modelimage_key_not_empty",
+            ),
+        ]
+
+    def __str__(self):
+        return self.model_name or self.model_key
+
+    def save(self, *args, **kwargs):
+        self.model_key = normalize_model_key(self.model_key or self.model_name)
+        return super().save(*args, **kwargs)
+
+    @classmethod
+    def for_aircraft(cls, aircraft):
+        key = normalize_model_key(getattr(aircraft, "model", ""))
+        if not key:
+            return None
+        return cls.objects.filter(
+            tenant_id=aircraft.tenant_id, model_key=key, is_active=True
+        ).first()
