@@ -473,6 +473,19 @@ class Aircraft(StatusHistoryMixin, BaseModel):
             and self.insurance_expiry < timezone.localdate()
         )
 
+    @property
+    def insurance_state(self):
+        """LV-416: la banda del semáforo del seguro JAC, la misma escala que la credencial.
+
+        Ver `selectors.expiry_band`: 30/60 días, sin corte propio.
+        """
+        from django.utils import timezone
+
+        from .selectors import EXPIRY_BAND_CSS, expiry_band
+
+        band, days = expiry_band(self.insurance_expiry, timezone.localdate())
+        return {"band": band, "days": days, "css": EXPIRY_BAND_CSS[band]}
+
     def clean(self):
         # X.1/LV-142: normalizar **acá** y no sólo en `save()`. `full_clean`
         # corre `clean()` antes de `validate_unique()`, así que la comprobación
@@ -1295,10 +1308,10 @@ class Operator(BaseModel):
         """
         from django.utils import timezone
 
-        from .selectors import CREDENTIAL_BAND_CSS, credential_band
+        from .selectors import EXPIRY_BAND_CSS, expiry_band
 
-        band, days = credential_band(self.credential_expiry, timezone.localdate())
-        return {"band": band, "days": days, "css": CREDENTIAL_BAND_CSS[band]}
+        band, days = expiry_band(self.credential_expiry, timezone.localdate())
+        return {"band": band, "days": days, "css": EXPIRY_BAND_CSS[band]}
 
     @property
     def authorization_items(self):

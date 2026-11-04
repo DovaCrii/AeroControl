@@ -14369,3 +14369,7 @@ msgstr[1] "Vence en %(days)s días"
 #: templates/registry/_operator_rows.html
 msgid "Credential in force"
 msgstr "Credencial vigente"
+
+#: templates/registry/_aircraft_rows.html
+msgid "Insurance in force"
+msgstr "Seguro vigente"

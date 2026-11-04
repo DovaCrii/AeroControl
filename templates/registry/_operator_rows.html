@@ -23,11 +23,7 @@
   con forma, palabra y color a la vez: ⚠ vencida en rojo, ◷ ≤30 días en ámbar, ◔ 31–60 en
   azul, ✓ vigente en verde, y «Sin fecha» neutro.{% endcomment %}
   <td class="cell-status">
-    {% with state=object.credential_state %}
-    {% if state.band == "lapsed" %}<span class="badge {{ state.css }}">⚠ {% translate "Overdue" %} · {{ object.credential_expiry|date:'d-m-Y' }}</span>
-    {% elif state.band == "missing" %}<span class="badge {{ state.css }}">— {% translate "No date" %}</span>
-    {% else %}<span class="badge {{ state.css }}" title="{% blocktranslate count days=state.days %}Expires in {{ days }} day{% plural %}Expires in {{ days }} days{% endblocktranslate %}"><span aria-hidden="true">{% if state.band == "soon" %}◷{% elif state.band == "warning" %}◔{% else %}✓{% endif %}</span> {{ object.credential_expiry|date:'d-m-Y' }}{% if state.band != "current" %} · {% blocktranslate count days=state.days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}{% else %}<span class="visually-hidden"> · {% translate "Credential in force" %}</span>{% endif %}</span>{% endif %}
-    {% endwith %}
+    {% translate "Credential in force" as in_force %}{% include "registry/_expiry_badge.html" with state=object.credential_state expiry=object.credential_expiry in_force_label=in_force %}
   </td>
   {% comment %}LV-87 (refina R4.7): columna propia, y una figura de sí/no en vez
   de una insignia que sólo aparecía cuando faltaba. Que el respaldo **esté** es
