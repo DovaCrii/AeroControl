@@ -26,10 +26,7 @@ from apps.core.views import (
 # serve the whole JSON API (the padrón AeroLink reads, X.3/X.4b), so routing
 # them out of the app being retired is what makes that retirement possible.
 from apps.core.api import ApiIndexView, ThrottledObtainAuthToken
-from apps.core.official_image_views import (
-    OfficialLinkImageUpload,
-    OfficialLinkImageView,
-)
+from apps.core.official_image_views import OfficialLinkImageView
 from apps.workboard.api import (
     KanbanTaskApiView,
     api_openapi_schema,
@@ -112,13 +109,8 @@ urlpatterns = [
     path("administracion/", AdministrationCenterView.as_view(), name="administration"),
     # LV-361 (fase 4): la revisión humana de las zonas leídas del AIP, con permiso propio.
     path("administracion/espacio-aereo/", include("apps.airspace.review_urls")),
-    # LV-399: el banner oficial de SIGO/SIPA, cargado por quien administra y servido
-    # desde el almacenamiento privado.
-    path(
-        "administracion/enlaces-oficiales/<slug:key>/imagen/",
-        OfficialLinkImageUpload.as_view(),
-        name="official-link-image-upload",
-    ),
+    # LV-399/LV-406: el banner oficial de SIGO/SIPA, descargado por `load_official_link_images`
+    # y servido desde el almacenamiento privado.
     path(
         "official-links/<slug:key>/image/",
         OfficialLinkImageView.as_view(),

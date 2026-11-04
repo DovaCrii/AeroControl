@@ -47,23 +47,31 @@
   stroke-linejoin: round;
 }
 
-/* LV-399: banner oficial cargado por quien administra (servido desde la app). Tamaño
-   contenido: identifica la tarjeta sin empujar el texto. */
-.ol-logo {
-  flex: none;
-  width: 4.5rem;
-  height: 2.75rem;
-  object-fit: contain;
-  border-radius: calc(var(--ac-radius) / 2);
-  background: var(--ac-surface);
+/* LV-399/LV-406: imagen oficial del sistema (la descarga `load_official_link_images`, se sirve
+   desde la app). Va arriba de la tarjeta, a todo su ancho y con alto contenido; `contain` sobre
+   un fondo neutro del tema no recorta ni el logo de SIGO ni la cabecera ancha de SIPA. */
+.ol-card-banner {
+  flex-wrap: wrap;
 }
 
-.ol-manage {
+.ol-banner {
+  flex: 0 0 100%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  margin-top: 0.4rem;
-  font-size: 0.82rem;
+  align-items: center;
+  justify-content: center;
+  height: 4rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: calc(var(--ac-radius) / 2);
+  background: var(--ac-surface-alt, var(--ac-surface));
+  border: 1px solid var(--id-edge, var(--ac-control-border));
+}
+
+.ol-logo {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* LV-399: la foto oficial del modelo en la ficha de la aeronave, con su crédito. */
