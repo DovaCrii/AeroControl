@@ -29,6 +29,8 @@ from apps.compliance.kpis import (
     PERMIT_BAND_CRITICAL,
     PERMIT_BAND_NOMINAL,
     PERMIT_BAND_WARNING,
+    PERMIT_CRITICAL_DAYS,
+    PERMIT_WARNING_DAYS,
     permit_band,
     permit_status_by_cost_center,
 )
@@ -57,20 +59,44 @@ BAND_TONE = {
     PERMIT_BAND_NOMINAL: "ok",
 }
 
-# LV-376 (G1): el estado de cada faena en palabras de acción. Un permiso vigente que vence en 30 días o
-# menos es ámbar «Renovar ya»: el ROJO queda para «no se puede volar» (sin permiso).
+# LV-376 (G1): el estado de cada faena. Un permiso vigente que vence en 30 días o menos es ámbar: el ROJO
+# queda para «no se puede volar» (sin permiso), como el semáforo de la guía INS-096 («Cómo funciona»).
 KINDS = ("none", "not_started", "awaiting", "renew_now", "renew_soon", "ok")
 KIND_URGENCY = {kind: rank for rank, kind in enumerate(KINDS)}
-# kind -> (símbolo, tono de `.id-cx-state--*`). Ámbar y espera casi no se distinguen por tono: el símbolo
-# y la palabra son los que dicen cuál es cuál.
-KIND_CHIP = {
-    "none": ("✕", "none"),
-    "not_started": ("◐", "wait"),
-    "awaiting": ("◐", "wait"),
-    "renew_now": ("▲", "warning"),
-    "renew_soon": ("◆", "advisory"),
-    "ok": ("●", "ok"),
+# LV-412: el chip de un permiso vigente sale del tramo de `permit_band` (el mismo dato que colorea la barra
+# de días): tramo -> (símbolo, tono, suave). Tres colores, los del semáforo: rojo (sin permiso), ámbar y
+# verde. Los dos tramos ámbar se distinguen por forma (▲ / ◆), palabra y peso (sólido / suave), nunca
+# sólo por el color. El cian de «Renovar pronto» se retiró: no era un nivel del semáforo y competía con verde.
+BAND_CHIP = {
+    PERMIT_BAND_CRITICAL: ("▲", "warning", False),
+    PERMIT_BAND_WARNING: ("◆", "warning", True),
+    PERMIT_BAND_NOMINAL: ("●", "ok", False),
 }
+KIND_BAND = {
+    "renew_now": PERMIT_BAND_CRITICAL,
+    "renew_soon": PERMIT_BAND_WARNING,
+    "ok": PERMIT_BAND_NOMINAL,
+}
+# kind -> (símbolo, tono de `.id-cx-state--*`, suave). La espera no es un nivel del semáforo: lleva su tono.
+KIND_CHIP = {
+    "none": ("✕", "none", False),
+    "not_started": ("◐", "wait", False),
+    "awaiting": ("◐", "wait", False),
+    **{kind: BAND_CHIP[band] for kind, band in KIND_BAND.items()},
+}
+
+
+def chip_css(kind):
+    """Las clases del chip de un estado: tono y, si corresponde, la variante suave."""
+    _symbol, tone, soft = KIND_CHIP[kind]
+    return f"id-cx-state id-cx-state--{tone}" + (" id-cx-state--soft" if soft else "")
+
+
+def band_tone(days):
+    """El tono de la barra de días: el mismo de `BAND_CHIP` para el tramo de `permit_band(days)`."""
+    band = permit_band(days)
+    return BAND_CHIP[band][1] if band else ""
+
 
 # Trozos del resumen y valores permitidos de `?state=` -> los `kind` que cubre cada uno.
 STATE_FILTERS = {
@@ -237,18 +263,50 @@ def _dm(day):
     return day.strftime("%d-%m")
 
 
-def _chip_label(kind, row):
+def kind_label(kind, row=None):
+    """La palabra del chip: el ESTADO, no la acción (la acción vive en «Qué hay que hacer»).
+
+    Los días salen de las constantes de `kpis` (los cortes de `permit_band`), no de un texto tecleado.
+    Sin `row` (la leyenda y la guía), «empieza» se dice sin fecha.
+    """
     if kind == "none":
         return _("No permit")
     if kind == "awaiting":
         return _("Waiting for the DGAC")
     if kind == "not_started":
-        return _("Starts %(date)s") % {"date": _dm(row["next_start"])}
+        if row and row.get("next_start"):
+            return _("Starts %(date)s") % {"date": _dm(row["next_start"])}
+        return _("Starts later")
     if kind == "renew_now":
-        return _("Renew now")
+        return _("Expires in ≤%(n)s days") % {"n": PERMIT_CRITICAL_DAYS}
     if kind == "renew_soon":
-        return _("Renew soon")
+        return _("Expires in %(a)s–%(b)s days") % {
+            "a": PERMIT_CRITICAL_DAYS + 1,
+            "b": PERMIT_WARNING_DAYS,
+        }
     return _("Up to date")
+
+
+def legend():
+    """La leyenda al pie: un chip por estado posible (`KINDS`), dibujado igual que en las filas."""
+    hints = {"ok": _("over %(n)s days") % {"n": PERMIT_WARNING_DAYS}}
+    return [
+        {
+            "kind": kind,
+            "symbol": KIND_CHIP[kind][0],
+            "css": chip_css(kind),
+            "label": kind_label(kind),
+            "hint": hints.get(kind, ""),
+        }
+        for kind in KINDS
+    ]
+
+
+def legend_note():
+    return _(
+        "The bar shows the days left of the first permit to expire (0 to 90), with marks at %(a)s and "
+        "%(b)s, in the color of its status; the word and the date carry the meaning."
+    ) % {"a": PERMIT_CRITICAL_DAYS, "b": PERMIT_WARNING_DAYS}
 
 
 def _in_text(days):
@@ -260,19 +318,37 @@ def _in_text(days):
 
 
 def _counts_text(row):
-    """«2 vigentes · 1 en trámite», sólo con lo que hay; sin nada, «Sin permisos vivos»."""
+    """LV-412: «4 permisos vigentes · 1 en trámite ante la DGAC», sólo con lo que hay.
+
+    La espera se separa en sus dos casos reales (en trámite ante la DGAC / aprobado que aún no empieza);
+    sin nada vivo, «Sin permiso vigente».
+    """
     parts = []
-    in_force = row["in_force"]
-    waiting = row["awaiting"] + row["not_started"]
+    in_force, awaiting, later = row["in_force"], row["awaiting"], row["not_started"]
     if in_force:
         parts.append(
-            ngettext("%(n)s in force", "%(n)s in force", in_force) % {"n": in_force}
+            ngettext("%(n)s permit in force", "%(n)s permits in force", in_force)
+            % {"n": in_force}
         )
-    if waiting:
+    if awaiting:
         parts.append(
-            ngettext("%(n)s in progress", "%(n)s in progress", waiting) % {"n": waiting}
+            ngettext(
+                "%(n)s in progress with the DGAC",
+                "%(n)s in progress with the DGAC",
+                awaiting,
+            )
+            % {"n": awaiting}
         )
-    return " · ".join(parts) or _("No live permits.")
+    if later:
+        parts.append(
+            ngettext(
+                "%(n)s approved, not started yet",
+                "%(n)s approved, not started yet",
+                later,
+            )
+            % {"n": later}
+        )
+    return " · ".join(parts) or _("No permit in force")
 
 
 def _expiring_permit(row, listed, today):
@@ -311,16 +387,16 @@ def _action(kind, row, listed, today, flags):
         if flags["can_add"]:
             url = f"{create}?{site}"
     elif kind == "awaiting":
+        # LV-412: el chip ya dice «Esperando a la DGAC»; aquí va la acción y desde cuándo.
         since = _awaiting_since(listed)
         text = (
-            _("Waiting for the DGAC since %(date)s") % {"date": _dm(since)}
+            _("Requested on %(date)s: follow up with the DGAC") % {"date": _dm(since)}
             if since
-            else _("Waiting for the DGAC")
+            else _("Follow up with the DGAC")
         )
     elif kind == "not_started":
-        text = _("Starts on %(date)s; nothing to do until then") % {
-            "date": _dm(row["next_start"])
-        }
+        # El chip dice «Empieza dd-mm»; repetir la fecha no decía nada nuevo.
+        text = _("Nothing to do until that date")
     elif kind == "renew_now":
         expiring = _expiring_permit(row, listed, today)
         if expiring and expiring["renewed"]:
@@ -352,7 +428,8 @@ def _action(kind, row, listed, today, flags):
             days,
         ) % {"n": days}
     else:
-        text = _("Up to date")
+        # LV-412: el chip ya dice «Al día»; repetirlo aquí no decía qué hacer.
+        text = _("Nothing to do")
     return {"text": text, "url": url}
 
 
@@ -452,7 +529,7 @@ def permit_table(
         kind = kinds[id(row)]
         listed = details.get(row["cost_center"].pk, [])
         past = _past(row)
-        symbol, tone = KIND_CHIP[kind]
+        symbol, tone, _soft = KIND_CHIP[kind]
         site_query = urlencode({"cost_center": row["cost_center"].pk})
         items.append(
             {
@@ -466,7 +543,8 @@ def permit_table(
                 "chip": {
                     "symbol": symbol,
                     "tone": tone,
-                    "label": _chip_label(kind, row),
+                    "css": chip_css(kind),
+                    "label": kind_label(kind, row),
                 },
                 "action": _action(kind, row, listed, today, flags),
                 "past_text": _past_text(past),
@@ -516,6 +594,8 @@ def permit_table(
         "query": query,
         "filtered": filtered,
         "tally": tally,
+        "legend": legend(),
+        "legend_note": legend_note(),
         "tally_total": ngettext("%(count)s site:", "%(count)s sites:", total)
         % {"count": total},
         "showing": _("Showing %(shown)s of %(total)s")

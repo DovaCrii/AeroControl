@@ -74,6 +74,8 @@
 .id-cx-unowned { white-space: nowrap; }
 
 .id-cx-legend { margin: var(--id-sp-1) 0 0; font-size: var(--id-fs-sm); color: var(--ac-text-secondary); }
+.id-cx-key { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin: 0 0 0.25rem; padding: 0; list-style: none; }
+.id-cx-key .id-cx-state { font-size: 0.8125rem; padding: 0 0.5rem; }
 /* Fase 3: historial de revisión y guía de lectura. Sin tokens nuevos: los chips ya llevan su contraste. */
 /* Permisos por faena (LV-359, v4 en LV-376): tabla real, sin `colspan` ni `.table-normalized`. */
 .id-cx-permits-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--id-sp-1) var(--id-sp-3); }
@@ -101,18 +103,21 @@
 .id-cx-permits .worktable-sort { white-space: normal; }
 .id-cx-site-name { font-weight: 600; color: var(--ac-text); }
 .id-cx-permits .id-cx-note { margin: 0.15rem 0 0; font-size: 0.875rem; color: var(--ac-text-secondary); }
+/* LV-412: la faena se leía gris; código y permisos en tinta (≥4,5:1 calculado). */
+.id-cx-site .cc-chip { color: var(--ac-text); background: var(--id-tile); border-color: var(--id-edge); }
+.id-cx-permits .id-cx-site-counts { color: var(--ac-text); }
 .id-cx-todo-text { margin: 0; }
 .id-cx-todo-text a { color: var(--ac-text); font-weight: 600; text-decoration: underline; }
 /* Chip sólido: letra `--ac-surface` sobre `--sev-*-text` (5,35 a 9,92 en los dos temas), sans, sin versalitas. Ámbar y espera casi no se distinguen por tono: símbolo y palabra. */
-.id-cx-state { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.65rem; border-radius: var(--id-r-pill); color: var(--ac-surface); font-size: 0.9375rem; font-weight: 700; line-height: 1.35; }
+.id-cx-state { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.65rem; border-radius: var(--id-r-pill); color: var(--ac-surface); font-size: 0.9375rem; font-weight: 700; line-height: 1.35; white-space: nowrap; }
 .id-cx-state--none { background: var(--sev-critical-text); }
 .id-cx-state--wait { background: var(--id-cx-wait-fg); }
 .id-cx-state--warning { background: var(--sev-warning-text); }
-.id-cx-state--advisory { background: var(--sev-advisory-text); }
+.id-cx-state--soft { background: var(--sev-warning-bg); color: var(--sev-warning-text); box-shadow: inset 0 0 0 1px var(--sev-warning-text); }
 .id-cx-state--ok { background: var(--id-ok-text); }
 /* La fila no se tiñe entera: filete de 4 px en el color del nivel más el chip. */
-.id-cx-permits tr.row-critical > td, .id-cx-permits tr.row-awaiting > td { background-color: transparent; color: inherit; }
-.id-cx-permits.table-hover > tbody > tr.row-critical:hover > *, .id-cx-permits.table-hover > tbody > tr.row-awaiting:hover > * { --bs-table-bg-state: var(--bs-table-hover-bg); color: inherit; }
+.id-cx-permits tr.row-critical > td, .id-cx-permits tr.row-awaiting > td { background-color: transparent; color: var(--ac-text); }
+.id-cx-permits.table-hover > tbody > tr.row-critical:hover > *, .id-cx-permits.table-hover > tbody > tr.row-awaiting:hover > * { --bs-table-bg-state: var(--bs-table-hover-bg); color: var(--ac-text); }
 .id-cx-permits tr.row-critical > td:first-child { box-shadow: inset 4px 0 0 var(--sev-critical-text), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
 .id-cx-permits tr.row-awaiting > td:first-child { box-shadow: inset 4px 0 0 var(--id-cx-wait-fg), inset 0 0 0 9999px var(--bs-table-bg-state, transparent); }
 .id-cx-site-details { margin-top: 0.35rem; }
@@ -122,9 +127,9 @@
 .id-cx-in { color: var(--ac-text-secondary); font-size: 0.875rem; }
 .id-cx-expiry .id-cx-daybar { display: block; width: 100%; max-width: 8rem; margin-top: 0.25rem; }
 .id-cx-day-track { fill: var(--id-cx-track); }
-.id-cx-day--soon { fill: var(--sev-warning-text); }
-.id-cx-day--mid { fill: var(--sev-advisory-text); }
-.id-cx-day--far { fill: var(--id-ok-text); }
+/* LV-412: la barra lleva el tono del chip de su fila (`BAND_CHIP`). */
+.id-cx-day--warning { fill: var(--sev-warning-text); }
+.id-cx-day--ok { fill: var(--id-ok-text); }
 .id-cx-day-mark { stroke: var(--id-edge); stroke-width: 1.5; }
 /* A 375 px cada faena es una tarjeta (`data-cx-label`: `worktable.js` pisa `data-label`; sin `style=""`, por la CSP). */
 @media (max-width: 575.98px) {
@@ -133,6 +138,7 @@
   .id-cx-permits tr { margin: 0 0 var(--id-sp-1); border: 1px solid var(--id-edge); border-radius: var(--id-r-control); overflow: hidden; }
   .id-cx-permits td { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.5rem; padding: 0.4rem 0.75rem; border: 0; }
   .id-cx-permits td::before { content: attr(data-cx-label); font-size: 0.875rem; font-weight: 600; color: var(--ac-text-secondary); }
+  .id-cx-permits .id-cx-state { white-space: normal; }
 }
 .id-cx-hist { border-collapse: collapse; width: 100%; font-size: var(--id-fs-sm); }
 .id-cx-hist th, .id-cx-hist td { padding: 0.3rem 0.4rem; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--ac-border); }

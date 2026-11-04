@@ -294,9 +294,10 @@ def test_the_detail_of_a_foreign_site_is_not_reachable_by_choosing_it(sites):
     ("days", "symbol", "tone"),
     [
         # LV-376 (G1): hasta 30 días es ámbar «Renovar ya» (el rojo es sólo «sin permiso»)
+        # LV-412: 31 a 60 es ámbar suave (◆), ya no cian
         (30, "▲", "warning"),
-        (31, "◆", "advisory"),
-        (60, "◆", "advisory"),
+        (31, "◆", "warning id-cx-state--soft"),
+        (60, "◆", "warning id-cx-state--soft"),
         (61, "●", "ok"),
     ],
 )
@@ -329,8 +330,8 @@ def test_the_daybar_has_the_marks_and_the_text_carries_the_days(db):
         assert bar.count('class="id-cx-day-mark"') == 2
         assert 'x1="42.67"' in bar and 'x1="85.33"' in bar
     # 17 días: ámbar y 24,18 de 128; más de 90: se acota al ancho completo, y el texto dice los 200 reales
-    assert "id-cx-day--soon" in bars[0] and 'width="24.18"' in bars[0]
-    assert "id-cx-day--far" in bars[1] and 'width="128"' in bars[1]
+    assert "id-cx-day--warning" in bars[0] and 'width="24.18"' in bars[0]
+    assert "id-cx-day--ok" in bars[1] and 'width="128"' in bars[1]
     assert ngettext("in %(n)s day", "in %(n)s days", 17) % {"n": 17} in html
     assert ngettext("in %(n)s day", "in %(n)s days", 200) % {"n": 200} in html
 

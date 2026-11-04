@@ -168,24 +168,29 @@ def stack(parts, uid, title, desc, width=240):
     return mark_safe(render_stack(parts, uid, title, desc, width))  # nosec B308 B703
 
 
-def render_daybar(days, width=128, height=14, horizon=90, marks=(30, 60)):
-    """Barra de días 0 a `horizon` con marcas en 30 y 60 (LV-376, fase 1b). Decorativa: `aria-hidden`.
+def render_daybar(days, width=128, height=14, horizon=90, tone=None):
+    """Barra de días 0 a `horizon` con marcas en los cortes de `permit_band` (LV-376, fase 1b). Decorativa: `aria-hidden`.
 
     La fecha y «en N días» van impresas al lado, así que el dibujo no lleva `<title>` ni `role`. El
-    color sale de la clase (`id-cx-day--soon|mid|far`), nunca de un `style`; la geometría, de atributos.
-    Escala de PERMISOS: hasta 30 días ámbar, hasta 60 cian, más allá verde.
+    color sale de la clase (`id-cx-day--<tono>`), nunca de un `style`; la geometría, de atributos.
+    LV-412: el tono es el MISMO del chip de estado de la fila (la plantilla lo pasa); sin él se toma de
+    `band_tone`, que lee `permit_band`. Ni los cortes ni el color se deciden aquí.
     """
+    from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
+    from apps.dashboard.compliance_permits import band_tone
+
+    marks = (PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS)
     days = int(days)
     clamped = min(max(days, 0), horizon)
     fill = max(width * clamped / horizon, 3)
-    css = "soon" if days <= marks[0] else ("mid" if days <= marks[1] else "far")
+    css = tone or band_tone(days)
     top, bar = 3, height - 6
     parts = [
         f'<svg class="id-cx-svg id-cx-daybar" width="{_n(width)}" height="{_n(height)}" '
         f'viewBox="0 0 {_n(width)} {_n(height)}" aria-hidden="true" focusable="false">',
         f'<rect class="id-cx-day-track" x="0" y="{top}" width="{_n(width)}" '
         f'height="{bar}" rx="3"/>',
-        f'<rect class="id-cx-day-fill id-cx-day--{css}" x="0" y="{top}" '
+        f'<rect class="id-cx-day-fill id-cx-day--{escape(css)}" x="0" y="{top}" '
         f'width="{_n(fill)}" height="{bar}" rx="3"/>',
     ]
     for mark in marks:
@@ -198,8 +203,8 @@ def render_daybar(days, width=128, height=14, horizon=90, marks=(30, 60)):
 
 
 @register.simple_tag
-def daybar(days, width=128):
-    return mark_safe(render_daybar(days, width))  # nosec B308 B703
+def daybar(days, tone="", width=128):
+    return mark_safe(render_daybar(days, width, tone=tone or None))  # nosec B308 B703
 
 
 # Retirada de PANTALLA (LV-367, fase 4), no de código: «Cumplimiento» ya no dibuja anillos, pero la etiqueta
