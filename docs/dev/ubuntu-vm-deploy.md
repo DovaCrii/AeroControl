@@ -461,7 +461,7 @@ Pasos: rama `main...origin/main` y árbol limpio → qué falta (migraciones, `s
 shell ni por la pantalla) → respaldo **antes** del `pull` si hay migraciones → `pull --ff-only` →
 `uv sync --no-dev --locked` → `migrate` → `collectstatic` → reinicio → health 200 → hash final.
 Cada comprobación aborta con `DEPLOY FALLÓ en paso N` e imprime el rollback sugerido (`git checkout
-<hash viejo> && sudo systemctl restart aerocontrol`, más `restore_backup` si hubo migraciones); **nunca lo
+<hash viejo> && sudo systemctl restart aerocontrol`, más `sudo systemctl stop aerocontrol`, `restore_backup` y `sudo systemctl start aerocontrol` si hubo migraciones); **nunca lo
 ejecuta**. Opciones: `--status`, `--backup`, `--allow-noop-sync`. No instala timers (Parte G).
 Si el script no puede correr, el plan B manual son los cuatro bloques de la skill `desplegar-p340`.
 

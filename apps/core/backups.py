@@ -8,9 +8,10 @@ es lo que se escribió, no lo que hoy hay en el disco.
 
 Y hay una razón técnica para no conformarse con el checksum. Un `sha256` prueba
 que **el archivo no cambió desde que se escribió**; no prueba que sea una base
-usable. `backup` copia el `.sqlite3` con `shutil.copy2` mientras la aplicación
-puede estar escribiendo, y ése es el caso que SQLite documenta como riesgoso:
-la copia puede capturar un estado a medias. El checksum de un archivo roto
+usable. Antes `backup` copiaba el `.sqlite3` con `shutil.copy2` (LV-116 lo
+cambió por la API de respaldo en línea de SQLite, igual que `restore_backup`
+desde LV-400): ése es el caso que SQLite documenta como riesgoso, porque la
+copia puede capturar un estado a medias. El checksum de un archivo roto
 coincide perfectamente consigo mismo.
 
 Por eso la verificación **abre** el respaldo y le corre `PRAGMA integrity_check`
