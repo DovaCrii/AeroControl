@@ -14234,3 +14234,82 @@ msgid "and %(counter)s more zone"
 msgid_plural "and %(counter)s more zones"
 msgstr[0] "y %(counter)s zona más"
 msgstr[1] "y %(counter)s zonas más"
+
+#: apps/registry/views.py
+msgid "Expires in 30 days or less"
+msgstr "Vence en 30 días o menos"
+
+#: apps/registry/views.py
+msgid "Expires in 31 to 60 days"
+msgstr "Vence en 31 a 60 días"
+
+#: apps/registry/views.py
+msgid "In force (more than 60 days)"
+msgstr "Vigente (más de 60 días)"
+
+#: apps/registry/views.py
+msgid "No date on file"
+msgstr "Sin fecha cargada"
+
+#: apps/registry/views.py
+msgid "Needs attention (lapsed or no date)"
+msgstr "Requiere atención (vencida o sin fecha)"
+
+#: apps/registry/views.py
+msgid "Credential lapsed"
+msgstr "Credencial vencida"
+
+#: apps/registry/views.py
+msgid "About to expire"
+msgstr "Por vencer"
+
+#: apps/registry/views.py
+msgid "Name, RUT, credential, cost center or model…"
+msgstr "Nombre, RUT, credencial, centro de costo o modelo…"
+
+#: templates/registry/operator_list.html
+msgid "Credential"
+msgstr "Credencial"
+
+#: templates/registry/operator_list.html
+msgid "Any expiry"
+msgstr "Cualquier vigencia"
+
+#: templates/registry/operator_list.html
+msgid "Credential PDF"
+msgstr "PDF credencial"
+
+#: templates/registry/operator_list.html
+msgid "With or without PDF"
+msgstr "Con o sin PDF"
+
+#: templates/registry/operator_list.html
+msgid "PDF on file"
+msgstr "PDF cargado"
+
+#: templates/registry/operator_list.html
+msgid "Qualified for"
+msgstr "Habilitado para"
+
+#: templates/registry/operator_list.html
+msgid "Any model"
+msgstr "Cualquier modelo"
+
+#: templates/registry/_operator_quick_filters.html
+msgid "Quick filters"
+msgstr "Accesos rápidos"
+
+#: templates/registry/_operator_rows.html
+msgid "No date"
+msgstr "Sin fecha"
+
+#: templates/registry/_operator_rows.html
+#, python-format
+msgid "Expires in %(days)s day"
+msgid_plural "Expires in %(days)s days"
+msgstr[0] "Vence en %(days)s día"
+msgstr[1] "Vence en %(days)s días"
+
+#: templates/registry/_operator_rows.html
+msgid "Credential in force"
+msgstr "Credencial vigente"
