@@ -13344,6 +13344,157 @@ msgstr "Sirve para consultar las licencias y habilitaciones del personal aeroná
 msgid "Official links"
 msgstr "Enlaces oficiales"
 
+#: .\apps\core\official_images.py
+msgid "Only https addresses are accepted."
+msgstr "Solo se aceptan direcciones https."
+
+#: .\apps\core\official_images.py
+msgid "The address must not include a user name or password."
+msgstr "La dirección no debe incluir usuario ni contraseña."
+
+#: .\apps\core\official_images.py
+msgid "The address has no valid host."
+msgstr "La dirección no tiene un servidor válido."
+
+#: .\apps\core\official_images.py
+msgid "Only the standard https port is accepted."
+msgstr "Solo se acepta el puerto https estándar."
+
+#: .\apps\core\official_images.py
+#, python-format
+msgid "The host %(host)s is not on the list of allowed sources."
+msgstr "El servidor %(host)s no está en la lista de fuentes permitidas."
+
+#: .\apps\core\official_images.py
+msgid "The host could not be resolved."
+msgstr "No se pudo resolver el servidor."
+
+#: .\apps\core\official_images.py
+msgid "The address points to a private or local network."
+msgstr "La dirección apunta a una red privada o local."
+
+#: .\apps\core\official_images.py
+#, python-format
+msgid "The image exceeds the maximum size of %(size)s MB."
+msgstr "La imagen supera el tamaño máximo de %(size)s MB."
+
+#: .\apps\core\official_images.py
+msgid "The image could not be downloaded."
+msgstr "No se pudo descargar la imagen."
+
+#: .\apps\core\official_images.py
+msgid "The address redirects to another one. Paste the final address of the image."
+msgstr "La dirección redirige a otra. Pegue la dirección final de la imagen."
+
+#: .\apps\core\official_images.py
+#, python-format
+msgid "The server answered with status %(status)s."
+msgstr "El servidor respondió con el estado %(status)s."
+
+#: .\apps\core\official_images.py
+msgid "The download took too long."
+msgstr "La descarga tardó demasiado."
+
+#: .\apps\core\official_images.py
+msgid "The file is not a valid image. Use a JPEG, PNG or WebP image."
+msgstr "El archivo no es una imagen válida. Use una imagen JPEG, PNG o WebP."
+
+#: .\apps\core\official_images.py
+msgid "The image has too many pixels."
+msgstr "La imagen tiene demasiados píxeles."
+
+#: .\apps\core\forms.py
+msgid "Image file"
+msgstr "Archivo de imagen"
+
+#: .\apps\core\forms.py
+msgid "JPEG, PNG or WebP, up to 5 MB."
+msgstr "JPEG, PNG o WebP, hasta 5 MB."
+
+#: .\apps\core\forms.py
+msgid "Or the image address"
+msgstr "O la dirección de la imagen"
+
+#: .\apps\core\forms.py
+msgid "An https address on the allowed list. The server downloads it."
+msgstr "Una dirección https de la lista permitida. El servidor la descarga."
+
+#: .\apps\core\forms.py
+msgid "Credit"
+msgstr "Crédito"
+
+#: .\apps\core\forms.py
+msgid "Shown under the image, for example DJI."
+msgstr "Se muestra bajo la imagen, por ejemplo DJI."
+
+#: .\apps\core\forms.py
+msgid "Upload a file or paste an address, one of the two."
+msgstr "Suba un archivo o pegue una dirección, una de las dos."
+
+#: .\apps\registry\models.py
+msgid "Model key"
+msgstr "Clave del modelo"
+
+#: .\apps\registry\models.py
+msgid "official model image"
+msgstr "imagen oficial del modelo"
+
+#: .\apps\registry\models.py
+msgid "official model images"
+msgstr "imágenes oficiales de modelos"
+
+#: .\apps\core\models.py
+msgid "official link image"
+msgstr "imagen de enlace oficial"
+
+#: .\apps\core\models.py
+msgid "official link images"
+msgstr "imágenes de enlaces oficiales"
+
+#: .\apps\registry\model_image_views.py
+#, python-format
+msgid "Official image of the model %(model)s"
+msgstr "Imagen oficial del modelo %(model)s"
+
+#: .\apps\registry\model_image_views.py
+msgid "The aircraft has no model to attach the image to."
+msgstr "La aeronave no tiene un modelo al cual asociar la imagen."
+
+#: .\apps\registry\model_image_views.py
+msgid "Official image saved for this model."
+msgstr "Imagen oficial guardada para este modelo."
+
+#: .\apps\core\official_image_views.py
+#, python-format
+msgid "Official banner of %(system)s"
+msgstr "Banner oficial de %(system)s"
+
+#: .\apps\core\official_image_views.py
+msgid "Official banner saved."
+msgstr "Banner oficial guardado."
+
+#: .\templates\registry\aircraft_detail.html
+#, python-format
+msgid "Image: %(credit)s"
+msgstr "Imagen: %(credit)s"
+
+#: .\templates\registry\aircraft_detail.html
+msgid "Official image"
+msgstr "Imagen oficial"
+
+#: .\templates\registry\aircraft_detail.html
+msgid "Replace the official image of the model"
+msgstr "Reemplazar la imagen oficial del modelo"
+
+#: .\templates\registry\aircraft_detail.html
+msgid "Load the official image of the model"
+msgstr "Cargar la imagen oficial del modelo"
+
+#: .\templates\dashboard\_official_links.html
+#, python-format
+msgid "Load the %(system)s banner"
+msgstr "Cargar el banner de %(system)s"
+
 #: .\templates\core\start.html
 #: .\templates\dashboard\index.html
 #: .\apps\core\navigation.py

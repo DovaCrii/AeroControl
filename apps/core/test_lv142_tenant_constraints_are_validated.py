@@ -30,6 +30,9 @@ TENANT_SCOPED_CONSTRAINTS = {
     ("core.TenantMembership", "unique_tenant_membership"),
     ("registry.CostCenter", "registry_costcenter_tenant_code_uniq"),
     ("registry.Operator", "registry_operator_tenant_employee_uniq"),
+    # LV-399: una foto oficial por modelo y empresa. Se carga por una vista con `Form`
+    # (no `ModelForm`) y `update_or_create`, así que nunca choca; queda listada igual.
+    ("registry.AircraftModelImage", "registry_modelimage_tenant_key_uniq"),
     ("compliance.ComplianceSnapshot", "compliance_snapshot_cc_date_uniq"),
     ("compliance.ComplianceSnapshot", "compliance_snapshot_total_date_uniq"),
 }

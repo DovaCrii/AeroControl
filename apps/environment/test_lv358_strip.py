@@ -391,8 +391,9 @@ class TestThePanel:
         assert client.get(DASHBOARD).status_code == 200
 
     def test_the_panel_budget_is_untouched(self):
-        assert budget.PANEL_QUERY_BUDGET == 49
-        assert budget.PANEL_FILTERED_QUERY_BUDGET == 50
+        # +1 en LV-399 (banner oficial de SIGO/SIPA), no por esta franja.
+        assert budget.PANEL_QUERY_BUDGET == 50
+        assert budget.PANEL_FILTERED_QUERY_BUDGET == 51
 
     def test_the_hole_costs_the_panel_no_query(self, on, settings):
         client = login_as(VIEW)
