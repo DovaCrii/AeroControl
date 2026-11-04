@@ -14113,6 +14113,66 @@ msgstr "Lo vigente, lo que está por vencer y lo que ya venció."
 msgid "Incident"
 msgstr "Incidente"
 
+#: apps/registry/operator_intake.py
+msgid "Credential discarded; nothing was saved."
+msgstr "Credencial descartada; no se guardó nada."
+
+#: apps/registry/views.py
+msgid "The credential upload expired or is no longer valid. Upload it again."
+msgstr "La carga de la credencial venció o ya no es válida. Vuelva a cargarla."
+
+#: apps/registry/views.py
+msgid ""
+"The credential upload expired or is no longer valid, so no file was attached. "
+"Upload it again from the operator's record."
+msgstr ""
+"La carga de la credencial venció o ya no es válida, por lo que no se adjuntó "
+"ningún archivo. Vuelva a cargarla desde la ficha del operador."
+
+#: apps/registry/views.py
+msgid "The DGAC credential was saved with the operator."
+msgstr "La credencial DGAC se guardó junto con el operador."
+
+#: templates/registry/operator_form.html
+msgid "Upload the DGAC credential (PDF)"
+msgstr "Cargar credencial DGAC (PDF)"
+
+#: templates/registry/operator_form.html
+msgid ""
+"The file could not be read; fill in the form by hand. The file will still be "
+"attached when you save."
+msgstr ""
+"No se pudo leer el archivo; el formulario se completa a mano. El archivo se "
+"adjuntará igual al guardar."
+
+#: templates/registry/operator_form.html
+msgid ""
+"The credential was read and the form was filled in with what was found. "
+"Check each value against the paper before saving."
+msgstr ""
+"Se leyó la credencial y el formulario se completó con lo encontrado. "
+"Conviene revisar cada valor contra el papel antes de guardar."
+
+#: templates/registry/operator_form.html
+msgid "Doubtful, check these"
+msgstr "Dudosos, revíselos"
+
+#: templates/registry/operator_form.html
+msgid "The file is attached to the operator when you save."
+msgstr "El archivo se adjunta al operador al guardar."
+
+#: templates/registry/operator_form.html
+msgid "Discard credential"
+msgstr "Descartar credencial"
+
+#: templates/registry/operator_form.html
+msgid ""
+"It is read and the form is filled in for you to check. Nothing is saved until "
+"you press Save."
+msgstr ""
+"Se lee y el formulario se completa para que usted lo revise. No se guarda "
+"nada hasta presionar Guardar."
+
 #: apps/compliance/models.py
 msgid "Requires issue date"
 msgstr "Requiere fecha de emisión"

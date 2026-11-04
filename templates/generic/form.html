@@ -11,8 +11,10 @@
     </div>
   </div>
 
+  {% block form_top %}{% endblock %}
   <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
     {% csrf_token %}
+    {% block form_hidden %}{% endblock %}
     {% include "generic/_duplicate_hint.html" %}
     {% include "generic/_form_errors.html" %}
     {{ form|crispy }}

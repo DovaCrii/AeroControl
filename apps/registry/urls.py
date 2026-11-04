@@ -3,6 +3,7 @@ from . import (
     assessment_views,
     credential_views,
     model_image_views,
+    operator_intake,
     report_views,
     views,
 )
@@ -20,6 +21,17 @@ urlpatterns += [
         "aircraft-model-images/<uuid:pk>/",
         model_image_views.AircraftModelImageView.as_view(),
         name="aircraft-model-image",
+    ),
+    # LV-405: cargar la credencial al dar de alta un operador nuevo.
+    path(
+        "operator/new/credential/",
+        operator_intake.OperatorCredentialIntakeUpload.as_view(),
+        name="operator-credential-intake",
+    ),
+    path(
+        "operator/new/credential/cancel/",
+        operator_intake.OperatorCredentialIntakeCancel.as_view(),
+        name="operator-credential-intake-cancel",
     ),
     # LV-368: subir la credencial DGAC de un operador, leerla y confirmarla.
     path(

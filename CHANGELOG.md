@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Alta de operador con credencial DGAC (`LV-405`, `codex/operador-con-credencial`).** «Nuevo: operador» permite cargar la credencial (PDF): se lee, el formulario sale prellenado para confirmar y al guardar quedan el operador y su documento de credencial en una sola transacción. Archivo provisional con token firmado (1 h), que se conserva ante errores del formulario y se borra al descartar.
 - **LV-395 restaurado (`LV-409`, `codex/restaurar-lv395`).** El PR de los banners (#214) había borrado sin avisar la fecha de emisión opcional, la migración `compliance 0029` y el color de subida; vuelven tal cual. Sin migración nueva; lleva estáticos.
 
 - **Agente `auditor-remediacion` versionado (`LV-407`, `codex/auditor-veredicto`).** `.gitignore` deja de ignorar `.claude/agents/` (el agente de LV-400 nunca había llegado al repo). Cada hallazgo de auditoría cierra con veredicto `verified`/`partial`/`failed`, y las decisiones del usuario se marcan `[NEEDS CLARIFICATION: …]`, también en `openspec/config.yaml`.
