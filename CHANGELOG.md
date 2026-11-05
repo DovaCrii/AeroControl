@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Filtros mal escritos y CSV del cierre mensual (`LV-420`, `codex/csv-y-filtros`).** Un `?doc_type=abc` (o `entity_type`, `cost_center`, `board`, `operator`, la terna de «¿Puedo volar?») ya no devuelve un 500: un valor imposible no encuentra nada, con `filter_or_none` y `lookup_by_pk`. El CSV del cierre mensual pasa cada celda por `neutralize`, como el resto de las exportaciones (auditoría #10 y #12).
 - **Estado de carga y de error de htmx (`LV-419`, `codex/htmx-carga-error`).** El destino de cada petición htmx lleva `aria-busy` y se atenúa mientras carga; un error HTTP o de red escribe un aviso traducido en la región viva `#htmx-status`, y el formulario htmx del modal desactiva su botón de envío para evitar el doble envío. `static/js/htmx-state.js` + `static/css/htmx-state.css`. Sin migración; lleva `collectstatic`.
 - **Un fallo SMTP ya no corta el resumen de los demás centros (`LV-418`, `codex/digest-smtp-resiliente`).** `send_alert_digest` y `notify_expiring_credentials` registran el envío fallido, siguen con el resto y terminan en error (`JobRun`) al final. Sin registro de «enviado». Hallazgo #7, `verified`.
 - **La cotización Geocom ya no propone el subtotal como total (`LV-417`, `codex/cotizacion-geocom-total`).** «Sub total» calzaba antes que «Total»; ahora se salta, y si neto + IVA no cuadra con el total (más de 1 peso) el total queda vacío para que lo escriba la persona. Hallazgo #6, `verified`.

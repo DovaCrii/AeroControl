@@ -2973,7 +2973,7 @@ class CanIFlyView(LoginRequiredMixin, TemplateView):
             rosters[key] = scope_queryset_to_tenant(queryset, user)
             raw = self.request.GET.get(key)
             if raw:
-                chosen[key] = rosters[key].filter(pk=raw).first()
+                chosen[key] = lookup_by_pk(rosters[key], raw)
 
         context.update(
             {
