@@ -27,3 +27,14 @@
   background: var(--bs-body-bg, #fff);
   color: var(--bs-body-color, #212529);
 }
+
+/* LV-421: el aviso de «guardado» flota un momento cuando la lista refrescada
+   dejó el contenedor fuera de la vista. Es el mismo aviso, no uno nuevo. */
+.page-messages--floating {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1085;
+  max-width: min(28rem, calc(100vw - 2rem));
+  margin: 0;
+}
