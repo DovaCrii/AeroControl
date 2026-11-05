@@ -1,5 +1,18 @@
 # HANDOFF — AeroControl
 
+## ✅ 2026-11-05 — dos despliegues más; producción = `9f3802b`
+
+Leído de los RESÚMENES que pegó el usuario.
+
+| Tramo | Commits | Migraciones | Contenido |
+|---|---|---|---|
+| `e9e225b` → `80db14b` | — | ninguna | `LV-413`, `LV-414` |
+| `80db14b` → `9f3802b` | 16 | ninguna | `LV-415` a `LV-419`: 4 estáticos, `active`, health 200, 17 timers, HEAD == origin/main |
+
+**Fusionado y pendiente de despliegue:** `LV-420` (sin migración ni estáticos: basta con `pull` y reiniciar).
+
+**Pendientes de la auditoría:** #13/#14 auditoría de la mantención y `X-Request-ID`, #15 umbrales en un solo lugar, #17 limpieza de `workshop-intake-pending/`, #5/#11 aislamiento por empresa (antes de una 2.ª empresa) y #19/#20 limpieza.
+
 ## ✅ 2026-11-04 — cuatro despliegues en `p340`; producción = `e9e225b`
 
 Constancia leída de los RESÚMENES que dio el usuario (no verificados por el agente en la VM).

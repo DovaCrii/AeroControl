@@ -17,6 +17,7 @@ from apps.core.views import (
     ModelViewPermissionRequiredMixin,
     SearchMixin,
     TenantScopedChoicesMixin,
+    filter_or_none,
 )
 from apps.core.audit import set_audit_context
 from apps.reporting.export import (
@@ -167,9 +168,9 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
         )
         params = self.request.GET
         if params.get("board"):
-            qs = qs.filter(board_id=params["board"])
+            qs = filter_or_none(qs, board_id=params["board"])
         if params.get("operator"):
-            qs = qs.filter(assigned_to_id=params["operator"])
+            qs = filter_or_none(qs, assigned_to_id=params["operator"])
         if params.get("priority") in dict(KanbanTask.PRIORITIES):
             qs = qs.filter(priority=params["priority"])
         if params.get("state") in dict(KanbanStage.STATUS_TYPES):
@@ -216,7 +217,8 @@ class KanbanTaskListView(ModelViewPermissionRequiredMixin, ListView):
                 ).order_by("full_name"),
                 "priorities": KanbanTask.PRIORITIES,
                 "states": KanbanStage.STATUS_TYPES,
-                "labels": KanbanLabel.objects.filter(
+                "labels": filter_or_none(
+                    KanbanLabel.objects.all(),
                     board_id=self.request.GET.get("board"),
                     board__in=accessible_boards(self.request.user).values("pk"),
                     is_active=True,

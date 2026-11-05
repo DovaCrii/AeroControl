@@ -39,6 +39,8 @@ from apps.core.views import (
     TenantScopedChoicesMixin,
     TenantScopedQuerysetMixin,
     filter_options,
+    filter_or_none,
+    lookup_by_pk,
 )
 from apps.core.tenancy import (
     scope_form_choices,
@@ -125,9 +127,9 @@ def upload_cancel_url(request):
     """
     from django.contrib.contenttypes.models import ContentType
 
-    content_type = ContentType.objects.filter(
-        pk=request.GET.get("entity_type") or 0
-    ).first()
+    content_type = lookup_by_pk(
+        ContentType.objects.all(), request.GET.get("entity_type") or 0
+    )
     object_id = request.GET.get("object_id")
     if content_type and object_id:
         record = _visible_subject(
@@ -637,7 +639,9 @@ class DocumentList(ComplianceList):
     def get_queryset(self):
         queryset = super().get_queryset().select_related("doc_type", "content_type")
         if self.request.GET.get("doc_type"):
-            queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
+            queryset = filter_or_none(
+                queryset, doc_type_id=self.request.GET["doc_type"]
+            )
         if self.request.GET.get("is_current_version") in ("true", "false"):
             queryset = queryset.filter(
                 is_current_version=self.request.GET["is_current_version"] == "true"
@@ -702,7 +706,9 @@ class CompanyDocumentsView(CsvExportMixin, ModelViewPermissionRequiredMixin, Lis
         if query_text:
             queryset = queryset.filter(title__icontains=query_text)
         if self.request.GET.get("doc_type"):
-            queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
+            queryset = filter_or_none(
+                queryset, doc_type_id=self.request.GET["doc_type"]
+            )
         return queryset
 
     def get_queryset(self):
@@ -810,9 +816,13 @@ class OperationalRecordsView(
         if tenant_ids is not None:
             queryset = queryset.filter(tenant_id__in=tenant_ids)
         if self.request.GET.get("cost_center"):
-            queryset = queryset.filter(object_id=self.request.GET["cost_center"])
+            queryset = filter_or_none(
+                queryset, object_id=self.request.GET["cost_center"]
+            )
         if self.request.GET.get("doc_type"):
-            queryset = queryset.filter(doc_type_id=self.request.GET["doc_type"])
+            queryset = filter_or_none(
+                queryset, doc_type_id=self.request.GET["doc_type"]
+            )
         month = self._parse_month(self.request.GET.get("month"))
         if month:
             queryset = queryset.annotate(filed_on=filed_on()).filter(
@@ -1049,9 +1059,10 @@ class DocumentAttachExisting(ModelPermissionRequiredMixin, View):
 
     def _target(self, request):
         """La entidad a la que se adjunta, y el tipo de papel."""
-        content_type = ContentType.objects.filter(
-            pk=request.GET.get("entity_type") or request.POST.get("entity_type")
-        ).first()
+        content_type = lookup_by_pk(
+            ContentType.objects.all(),
+            request.GET.get("entity_type") or request.POST.get("entity_type"),
+        )
         if content_type is None:
             return None, ""
         model = content_type.model_class()
@@ -2114,6 +2125,8 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
 
         from django.http import HttpResponse
 
+        from apps.core.exports import neutralize
+
         period = self._period()
         doc_types, rows = self._rows(period)
         response = HttpResponse(content_type="text/csv; charset=utf-8")
@@ -2123,12 +2136,14 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
         writer = csv.writer(response)
         writer.writerow(
             ["period", "cost_center", "flights", "records"]
-            + [doc_type.code for doc_type in doc_types]
+            + [neutralize(doc_type.code) for doc_type in doc_types]
             + ["status", "reviewed_by"]
         )
         for row in rows:
             review = row["review"]
-            writer.writerow(
+            # Códigos de faena y nombres de usuario los escribe una persona: una
+            # celda que empieza con `=` la ejecuta la planilla (`CsvExportMixin`).
+            cells = (
                 [
                     period.strftime("%Y-%m"),
                     row["cost_center"].code,
@@ -2143,6 +2158,7 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
                     else "",
                 ]
             )
+            writer.writerow([neutralize(cell) for cell in cells])
         return response
 
     def get_context_data(self, **kwargs):
