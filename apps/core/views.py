@@ -345,6 +345,19 @@ def lookup_by_pk(queryset, raw_pk):
         return None
 
 
+def filter_or_none(queryset, **lookups):
+    """`queryset.filter(**lookups)`, or an empty queryset when a value is malformed.
+
+    The list version of `lookup_by_pk`: `?doc_type=abc` on a UUID column raises
+    while the filter is built (a 500). A value that cannot exist matches
+    nothing, the same as a well-formed id that is not there.
+    """
+    try:
+        return queryset.filter(**lookups)
+    except (ValueError, ValidationError):
+        return queryset.none()
+
+
 def apply_cost_center_filter(request, queryset, path):
     """LV-351: `?cost_center=<uuid>` sobre una lista, y qué mostrar de él.
 
