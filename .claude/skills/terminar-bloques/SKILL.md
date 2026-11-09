@@ -21,6 +21,10 @@ Los scripts viven en `.claude/skills/terminar-bloques/scripts/` (se llaman con `
 | `wait_ci.ps1 -Number N` | espera el CI hasta 9 min; salida 0 verde, 1 falló, 2 sigue (volver a llamarlo) |
 | `merge_pr.ps1 -Number N` | fusiona **sólo** con todo en verde y `CLEAN`, y comprueba que el commit está en `origin/main` |
 | `deploy_plan.ps1 -From <hash de la VM>` | lista lo que falta subir y escribe **sólo** los bloques de comandos necesarios |
+| `land_branch.ps1 -Branch codex/x -Title "…(LV-N)" -Note "…"` | **el camino corto**: pone la rama al día con `origin/main` (`land.ps1`), abre el PR, espera el CI y fusiona; se detiene al primer fallo. La rama tiene que estar en un worktree propio y commiteada. Correrlo en segundo plano: tarda 10–15 min por el CI |
+| `land.ps1` | lo llama `land_branch`: fusiona `origin/main` resolviendo solo `CHANGELOG`, `MASTER_PLAN` y el `.po` (conserva ambos lados), regenera el `.mo` (`dedupe_po.py`), y **frena** si el PR borraría una migración o un test (guardia de reversión, `LV-409`) o un `LV-N` de los registros (fila fantasma) |
+
+**Gate local en esta máquina:** el gate completo (`scripts/verify.ps1`) dura 15–45 min y dos a la vez han tumbado el equipo. En PR chicos se corren sólo las pruebas de las apps tocadas, `ruff check`, `ruff format --check` y `privacy_scan`, y decide el CI de GitHub (suite completa). Un solo gate local a la vez, y sólo para cambios grandes o riesgosos.
 
 ## 1. Qué bloques se hacen
 

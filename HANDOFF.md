@@ -1,5 +1,70 @@
 # HANDOFF — AeroControl
 
+## ▶️ 2026-11-09 — retomar en la CLI de Claude (lista de pendientes)
+
+**Producción (`p340`) = `9f3802b`** (último RESUMEN pegado, 2026-11-05). Todo lo de abajo que diga «fusionado» está en `main` y **no** en la VM.
+
+### Cómo retomar
+1. `git fetch origin && git log --oneline -5 origin/main` y `gh pr list --state open`: lo que cambió desde esta nota manda.
+2. Skills: `/aerocontrol` (contexto), `/terminar-bloques` (bloque → PR → CI → fusión), `/desplegar-p340` (solo cuando el usuario despliega), `/pendientes-github` (al cerrar la tanda), `/diseno-ui` (pantallas).
+3. Integrar una rama, de punta a punta y en segundo plano: `pwsh -File .claude/skills/terminar-bloques/scripts/land_branch.ps1 -Branch codex/x -Title "…(LV-N)" -Note "…"` (detalle en `/terminar-bloques`).
+4. **Gate local:** no correr `scripts/verify.ps1` en paralelo ni en PR chicos (tumba el equipo). Pruebas de las apps tocadas, `ruff check`, `ruff format --check` y `python tools/kit/privacy_scan.py`; decide el CI.
+5. Despliegue: `cd /opt/aerocontrol && bash scripts/deploy.sh --dry-run`, luego `bash scripts/deploy.sh`; leer el `=== RESUMEN` y que `HEAD == origin/main` diga «sí».
+
+### En curso (verificar el estado antes de seguir)
+| Fila | Rama / PR | Estado al escribir esto |
+|---|---|---|
+| `LV-421` guardar en el modal sin recargar (UX T9) | `codex/guardar-sin-recargar`, PR #242 | CI había fallado en `test_lv377` (regex atado al formato viejo del bloque de mensajes); arreglado en `e9fd4b1`, esperando CI para fusionar. Lleva estáticos (`app.js`, `htmx-state.css`). |
+| `LV-422` lista de aeronaves al estándar visual (PR A) | `codex/aeronaves-lista`, worktree `.claude/worktrees/agent-ac2f953b19482b9da` | **A medias, sin commit**: `views.py`, `_aircraft_rows.html`, `aircraft_list.html`, `.po`/`.mo` y `test_lv422_aircraft_list_standard.py`. Revisar, terminar, probar y commitear. |
+
+**Diseño de aeronaves (Opus, 2026-11-05), para LV-422 y el siguiente:**
+- **PR A, lista:**
+  - Estado en `id-chip id-chip--{status_tone}` con glifo.
+  - Seguro con `_expiry_badge` y el trámite en `id-chip--info`.
+  - Ubicación en texto, con `cc-chip` cuando está en faena.
+  - Centro de costo en `cc-chip` o `cc-chip is-empty`.
+  - Acciones: «Editar» con `btn-outline-secondary`, más el menú «⋯» (`generic/_row_menu.html`, `row-menu.js`) con archivar, restaurar y «¿Puede volar?».
+  - Columnas en este orden: Matrícula, Estado, Seguro (`col-flex`), Ubicación, Centro de costo, Acciones.
+  - Filtros como `OperatorList` (LV-413): `insurance`, `condition` (incluye `grounded`) y `cost_center`.
+  - Cuatro filtros rápidos: seguro vencido, seguro vence en ≤30 días, fuera de servicio y sin centro de costo.
+  - Búsqueda por número de serie.
+  - `select_related`.
+- **PR B, ficha y formulario (`LV-423`, por hacer):**
+  - `_entity_head` sin imagen repetida.
+  - Estado una sola vez: se quita de `fleet-hero-facts` y de la tabla genérica (`exclude=`).
+  - Las horas de vuelo pasan al hero.
+  - Franja de disponibilidad con `aircraft_check`, un alias público de `_check_aircraft` en `apps/operations/readiness.py`, más el enlace a «¿Puedo volar?».
+  - Mantención en `id-chip`.
+  - `back` subido de `OperatorDetail` a `RegistryDetail`.
+  - Formulario en secciones (`fieldset cc-form-section`), como faenas.
+- **Restricciones:**
+  - No agregar CSS a `app.css` ni a `identity.css` (256 KB al límite).
+  - No tocar `base.html`; si se toca, hay que regenerar los snapshots de informes.
+
+### Cola (alternar un PR de auditoría con uno visual)
+- **Auditoría:**
+  - #13: `MaintenanceComplete.post` sin `set_audit_context`.
+  - #14: `X-Request-ID` del cliente sin validar (`core/middleware.py`).
+  - #15: cortes de urgencia 7/15/30 repetidos en `digest.py`, `workboard/models.py`, `reports.py` y `compliance/models.py`.
+  - #17: limpieza de `workshop-intake-pending/` (datos personales).
+  - #19/#20: código muerto y normalizadores duplicados.
+  - #5/#11: aislamiento por empresa, **antes** de crear una 2.ª empresa.
+- **Visual (`ux-investigacion`):**
+  - «Exportar» a la barra de la tabla, con PDF como formato principal.
+  - Barra superior en móvil (375 px).
+  - Ficha de mantención con `_entity_head`.
+  - Autocompletado en los selects largos (faena, aeronave, operador).
+  - Diálogo de confirmación propio, en lugar de `window.confirm` y los `onsubmit` en línea.
+  - Tokens de categoría y `forced-colors`.
+  - Una sola fecha, `d-m-Y`.
+- **Del usuario (no se programa sin su decisión):**
+  - Permiso 706: centro desplazado sin radio frente al plan.
+  - Revisión a ojo del mapa de permisos, de la tabla de permisos por centro y de la tarjeta de espacio aéreo.
+- **Opcional:** `openspec/config.yaml` inválido desde antes; `test_lv367_visual` si vuelve a fallar por tiempo.
+
+### Próximo despliegue
+Lo que haya entre `9f3802b` y `main`: hoy `LV-420`, más `LV-421` y `LV-422` cuando se fusionen. Ninguno trae migración; `LV-421` y `LV-422` traen estáticos (`collectstatic`).
+
 ## ✅ 2026-11-05 — dos despliegues más; producción = `9f3802b`
 
 Leído de los RESÚMENES que pegó el usuario.
