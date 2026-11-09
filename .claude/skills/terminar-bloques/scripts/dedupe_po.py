@@ -17,8 +17,18 @@ for entry in po:
     key = (entry.msgctxt, entry.msgid, entry.msgid_plural)
     if key in seen:
         first = seen[key]
-        if (first.msgstr, dict(first.msgstr_plural)) != (entry.msgstr, dict(entry.msgstr_plural)):
-            print("DIFIEREN:", entry.msgid[:70], "|", first.msgstr[:50], "|", entry.msgstr[:50])
+        if (first.msgstr, dict(first.msgstr_plural)) != (
+            entry.msgstr,
+            dict(entry.msgstr_plural),
+        ):
+            print(
+                "DIFIEREN:",
+                entry.msgid[:70],
+                "|",
+                first.msgstr[:50],
+                "|",
+                entry.msgstr[:50],
+            )
             sys.exit(1)
         drop.append(entry)
     else:
