@@ -2,7 +2,7 @@
 
 ## ▶️ 2026-11-09 — retomar en la CLI de Claude (lista de pendientes)
 
-**Producción (`p340`) = `9f3802b`** (último RESUMEN pegado, 2026-11-05). Todo lo de abajo que diga «fusionado» está en `main` y **no** en la VM.
+**Producción (`p340`) = `ec7861b`** (RESUMEN pegado 2026-11-10: `DEPLOY OK 9f3802b -> ec7861b`, 19 commits, 0 migraciones, 2 estáticos, `active`, health 200, 17 timers, HEAD == origin/main). Lleva `LV-420` a `LV-424`. Lo que diga «fusionado» después de eso está en `main` y **no** en la VM.
 
 ### Cómo retomar
 1. `git fetch origin && git log --oneline -5 origin/main` y `gh pr list --state open`: lo que cambió desde esta nota manda.
@@ -14,8 +14,10 @@
 ### En curso (verificar el estado antes de seguir)
 | Fila | Rama / PR | Estado al escribir esto |
 |---|---|---|
-| `LV-421` guardar en el modal sin recargar (UX T9) | `codex/guardar-sin-recargar`, PR #242 | CI había fallado en `test_lv377` (regex atado al formato viejo del bloque de mensajes); arreglado en `e9fd4b1`, esperando CI para fusionar. Lleva estáticos (`app.js`, `htmx-state.css`). |
-| `LV-422` lista de aeronaves al estándar visual (PR A) | `codex/aeronaves-lista`, worktree `.claude/worktrees/agent-ac2f953b19482b9da` | **A medias, sin commit**: `views.py`, `_aircraft_rows.html`, `aircraft_list.html`, `.po`/`.mo` y `test_lv422_aircraft_list_standard.py`. Revisar, terminar, probar y commitear. |
+| `LV-425` purga de PDF provisionales abandonados (auditoría #17) | `codex/purga-pendientes-taller` | Listo; integrándose. Sin migración ni estáticos. Timer en la VM **opcional** (hay limpieza oportunista al subir). |
+| `LV-426` ficha de mantención al estándar (`_entity_head`) | `codex/mantencion-ficha` | Listo; integrándose. Sin migración ni estáticos. |
+
+**Decisión menor pendiente:** el formulario de aeronave supera el umbral de UX-20 y siempre abre en página completa; el fragmento de modal (`_aircraft_form_content.html`) quedó cableado sin uso. Decidir si se retira.
 
 **Diseño de aeronaves (Opus, 2026-11-05), para LV-422 y el siguiente:**
 - **PR A, lista:**
@@ -46,24 +48,23 @@
   - #13: `MaintenanceComplete.post` sin `set_audit_context`.
   - #14: `X-Request-ID` del cliente sin validar (`core/middleware.py`).
   - #15: cortes de urgencia 7/15/30 repetidos en `digest.py`, `workboard/models.py`, `reports.py` y `compliance/models.py`.
-  - #17: limpieza de `workshop-intake-pending/` (datos personales).
   - #19/#20: código muerto y normalizadores duplicados.
   - #5/#11: aislamiento por empresa, **antes** de crear una 2.ª empresa.
 - **Visual (`ux-investigacion`):**
   - «Exportar» a la barra de la tabla, con PDF como formato principal.
   - Barra superior en móvil (375 px).
-  - Ficha de mantención con `_entity_head`.
   - Autocompletado en los selects largos (faena, aeronave, operador).
   - Diálogo de confirmación propio, en lugar de `window.confirm` y los `onsubmit` en línea.
   - Tokens de categoría y `forced-colors`.
   - Una sola fecha, `d-m-Y`.
 - **Del usuario (no se programa sin su decisión):**
   - Permiso 706: centro desplazado sin radio frente al plan.
-  - Revisión a ojo del mapa de permisos, de la tabla de permisos por centro y de la tarjeta de espacio aéreo.
+  - Revisión a ojo del mapa de permisos, de la tabla de permisos por centro, de la tarjeta de espacio aéreo y de la lista y ficha de aeronave.
+  - Correr `ensayo_segunda_app.sh` en la VM (guía para publicar la app de una compañera; vive fuera del repo, en Documentos del usuario).
 - **Opcional:** `openspec/config.yaml` inválido desde antes; `test_lv367_visual` si vuelve a fallar por tiempo.
 
 ### Próximo despliegue
-Lo que haya entre `9f3802b` y `main`: hoy `LV-420`, más `LV-421` y `LV-422` cuando se fusionen. Ninguno trae migración; `LV-421` y `LV-422` traen estáticos (`collectstatic`).
+Lo que haya entre `ec7861b` y `main`: `LV-425` y `LV-426` cuando se fusionen. Ninguno trae migración ni estáticos (basta `pull` + reinicio; `deploy.sh` lo detecta solo).
 
 ## ✅ 2026-11-05 — dos despliegues más; producción = `9f3802b`
 
