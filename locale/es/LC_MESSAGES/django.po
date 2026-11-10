@@ -14593,6 +14593,11 @@ msgstr "Datos técnicos"
 msgid "Assignment and status"
 msgstr "Asignación y estado"
 
+#: templates/maintenance/record_detail.html
+#, python-format
+msgid "%(registration)s · %(kind)s"
+msgstr "%(registration)s · %(kind)s"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

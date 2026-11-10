@@ -2,32 +2,40 @@
 {% load aero_tags crispy_forms_tags i18n %}
 {% block title %}{{ record }} - {% translate "Maintenance" %} - AeroControl{% endblock %}
 {% block content %}
+{% blocktranslate asvar head_title with registration=record.aircraft.registration kind=record.get_maintenance_type_display %}{{ registration }} · {{ kind }}{% endblocktranslate %}
+{% url 'maintenance-list' as maintenance_list_url %}
 <div class="card p-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3">{% translate "Maintenance record" %}</h1>
-    <div class="d-flex gap-2">
-      {% for action, label, css_class in status_actions %}{% if action != "complete" %}<form method="post" action="{{ action }}/" style="display:inline">{% csrf_token %}<button class="btn {{ css_class }}">{{ label }}</button></form>{% endif %}{% endfor %}
-      {% comment %}R2.5: same fix as permission_detail.html -- the status
-      actions above redirect back to this same URL, which pushes a fresh
-      history entry each time. data-history-back's window.history.back()
-      then lands on an earlier render of this page instead of the list, so
-      "Back" needed two clicks. This link already has one fixed
-      destination.{% endcomment %}
-      {% if can_void %}
-      {% if void_is_intake %}{% translate "Void this workshop intake? The record is archived (nothing is deleted) and its documents stay on the aircraft." as void_confirm %}{% else %}{% translate "Void this maintenance? It was never started or sent: it is archived and nothing is deleted." as void_confirm %}{% endif %}
-      <form method="post" action="{% url 'maintenance-void' record.pk %}" style="display:inline" data-confirm="{{ void_confirm }}" data-void-intake>
-        {% csrf_token %}
-        <button class="btn btn-outline-danger">{% if void_is_intake %}{% translate "Void intake" %}{% else %}{% translate "Void" %}{% endif %}</button>
-      </form>
-      {% endif %}
-      <a href="{% url 'maintenance-list' %}" class="btn btn-outline-secondary">← {% translate "Back" %}</a>
-    </div>
+  {% comment %}LV-426: la misma cabecera que las demás fichas (`_entity_head`): el título nombra
+  la aeronave y el chip dice el estado. Las transiciones y «Anular» no son acciones de la
+  cabecera genérica (dependen del estado del registro), así que van en su propia fila, y el
+  recorrido va justo debajo: el estado es lo primero que se viene a mirar.{% endcomment %}
+  {% include "generic/_entity_head.html" with object=record title=head_title chip_label=record.get_status_display chip_tone=record.status|status_tone list_url=maintenance_list_url %}
+  {% comment %}R2.5: «Volver» es el enlace de la cabecera, con un destino fijo (la lista), no
+  `history.back()`: las acciones de estado redirigen a esta misma URL y empujan una entrada nueva
+  cada vez, así que volver atrás aterrizaba en una versión anterior de esta página.{% endcomment %}
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    {% for action, label, css_class in status_actions %}{% if action != "complete" %}<form method="post" action="{{ action }}/" class="d-inline">{% csrf_token %}<button class="btn {% if forloop.first %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</button></form>{% endif %}{% endfor %}
+    {% if can_void %}
+    {% if void_is_intake %}{% translate "Void this workshop intake? The record is archived (nothing is deleted) and its documents stay on the aircraft." as void_confirm %}{% else %}{% translate "Void this maintenance? It was never started or sent: it is archived and nothing is deleted." as void_confirm %}{% endif %}
+    <form method="post" action="{% url 'maintenance-void' record.pk %}" class="d-inline" data-confirm="{{ void_confirm }}" data-void-intake>
+      {% csrf_token %}
+      <button class="btn btn-outline-danger">{% if void_is_intake %}{% translate "Void intake" %}{% else %}{% translate "Void" %}{% endif %}</button>
+    </form>
+    {% endif %}
   </div>
-  <table class="table table-bordered"><tbody>
+</div>
+{% comment %}LV-82: la escalera sale del modelo (`record.status_steps`), no de una lista escrita
+acá (la trampa R1.1); los pasos son los del camino que este registro tomó: en casa o por taller.
+LV-426: sube bajo la cabecera; el historial queda abajo con `hide_steps`.{% endcomment %}
+<div class="card mt-3 p-4" id="status-steps">
+  <h2 class="h5 mb-3">{% translate "Status" %}</h2>
+  {% include "generic/_status_steps.html" with steps=record.status_steps %}
+</div>
+<div class="card mt-3 p-4">  <table class="table table-bordered"><tbody>
     <tr><th scope="row" class="w-25">{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
     <tr><th scope="row">{% translate "Type" %}</th><td>{{ record.get_maintenance_type_display }}</td></tr>
     <tr><th scope="row">{% translate "Status" %}</th><td>
-      <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.is_at_workshop_stage %}info text-dark{% else %}secondary{% endif %}">{{ record.get_status_display }}</span>
+      <span class="id-chip id-chip--{{ record.status|status_tone }}">{{ record.get_status_display }}</span>
       {% if record.sent_without_head_office_notice %}<span class="badge sev-caution ms-1" data-intake-badge="no-notice">{% translate "Sent without notice to head office" %}</span>{% endif %}
       {% if record.workshop_dwell_is_overdue %}<span class="badge bg-danger ms-1">{% blocktranslate count days=record.days_in_current_status %}{{ days }} day in this status{% plural %}{{ days }} days in this status{% endblocktranslate %}</span>{% endif %}
     </td></tr>
@@ -50,7 +58,7 @@
   </form>
 </div>
 {% endif %}
-{% comment %}LV-82: la tabla que vivía acá a mano imprimía los códigos crudos
+{% comment %}LV-82 (historial): la tabla que vivía acá a mano imprimía los códigos crudos
 ("at_workshop", "in_transit") dentro de una página en español -- el mismo defecto
 R2.5 que ya se había arreglado en el permiso, todavía abierto acá -- y no decía
 en qué rol actuó cada persona. Ahora usa el mismo bloque que el permiso, el plan
@@ -59,5 +67,5 @@ escrita en la plantilla (la trampa R1.1). Los pasos son los del **camino que est
 registro tomó**: en casa o por taller.{% endcomment %}
 {% include "compliance/_documents_section.html" %}
 {% translate "Status history" as maintenance_history_title %}
-{% include "generic/_traceability.html" with steps=record.status_steps history_title=maintenance_history_title %}
+{% include "generic/_traceability.html" with steps=record.status_steps history_title=maintenance_history_title hide_steps=True %}
 {% endblock %}
