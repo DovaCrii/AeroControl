@@ -365,6 +365,7 @@ class MaintenanceComplete(StatusTransitionView):
                     "completion_form": form,
                 },
             )
+        from_status = record.status
         with transaction.atomic():
             record._changed_by = request.user.get_username()
             record._changed_by_user = request.user
@@ -385,6 +386,15 @@ class MaintenanceComplete(StatusTransitionView):
             from apps.compliance.alerts import resolve_open_alerts_for
 
             resolve_open_alerts_for(completed)
+        # Auditoría #13: este `post` reemplaza al de `StatusTransitionView` y se
+        # había quedado sin su `set_audit_context`; cerrar una mantención (que
+        # puede devolver la aeronave al servicio) no dejaba evento de auditoría.
+        set_audit_context(
+            request,
+            completed,
+            action="status_changed",
+            metadata={"from_status": from_status, "to_status": self.target_status},
+        )
         messages.success(request, self.success_message)
         return redirect(record)
 
