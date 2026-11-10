@@ -360,6 +360,7 @@ class MaintenanceComplete(StatusTransitionView):
                 "maintenance/record_detail.html",
                 {
                     "record": record,
+                    "object": record,
                     "history": record.history.all(),
                     "status_actions": [("complete", _("Complete"), "btn-success")],
                     "completion_form": form,
