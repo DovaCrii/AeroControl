@@ -14533,6 +14533,46 @@ msgstr "No se pudo actualizar la lista. Vuelva a intentarlo."
 msgid "Insurance in force"
 msgstr "Seguro vigente"
 
+#: templates/registry/aircraft_list.html
+msgid "Insurance lapsed"
+msgstr "Seguro vencido"
+
+#: templates/registry/aircraft_list.html
+msgid "Insurance due ≤30 days"
+msgstr "Seguro por vencer (30 días o menos)"
+
+#: templates/registry/aircraft_list.html
+msgid "Insurance with no date on file"
+msgstr "Seguro sin fecha registrada"
+
+#: templates/registry/aircraft_list.html
+msgid "Insurance needing attention"
+msgstr "Seguro que requiere atención"
+
+#: templates/registry/aircraft_list.html
+msgid "Damaged or in maintenance"
+msgstr "Mal estado o en mantenimiento"
+
+#: templates/registry/aircraft_list.html
+msgid "Out of service"
+msgstr "Fuera de servicio"
+
+#: templates/registry/aircraft_list.html
+msgid "Registration, model, serial number or cost center…"
+msgstr "Matrícula, modelo, número de serie o centro de costo…"
+
+#: templates/registry/aircraft_list.html
+msgid "Any insurance state"
+msgstr "Cualquier estado del seguro"
+
+#: templates/registry/aircraft_list.html
+msgid "Active and archived"
+msgstr "Activos y archivados"
+
+#: templates/registry/_aircraft_rows.html
+msgid "Can it fly?"
+msgstr "¿Puede volar?"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

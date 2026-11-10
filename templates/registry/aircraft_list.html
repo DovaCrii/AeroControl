@@ -3,17 +3,38 @@
 
 {% block list_actions %}<a class="btn btn-outline-secondary" href="{% url 'aircraft-import' %}">{% translate "Import" %}</a>{% endblock %}
 
-{% block extrahead %}<link rel="stylesheet" href="{% static 'css/expiry-band.css' %}">{% endblock %}
+{% comment %}LV-422: la lista de aeronaves al estándar del padrón de operadores (LV-413):
+`operators.css` trae los atajos (`op-quick`), y `row-menu.js` el menú «⋯» de cada fila.{% endcomment %}
+{% block extrahead %}<link rel="stylesheet" href="{% static 'css/operators.css' %}"><link rel="stylesheet" href="{% static 'css/expiry-band.css' %}">{% endblock %}
+
+{% block extrascripts %}<script defer src="{% static 'js/row-menu.js' %}"></script>{% endblock %}
 
 {% block list_table_class %}table-normalized{% endblock %}
 
+{% comment %}LV-422: la barra de filtros como la de operadores: la búsqueda dice qué campos mira
+(placeholder) y tres selectores rotulados que se combinan entre sí y con ella. Cada selector
+refresca la tabla por htmx con todo el formulario (`hx-include`), y los atajos y la paginación
+viajan fuera de banda en el parcial de filas (LV-410).{% endcomment %}
+{% block list_filters %}
+<div class="id-filter id-filter--grow"><label class="id-filter-label" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-insurance">{% translate "Insurance" %}</label><select class="form-select" id="id-filter-insurance" name="insurance" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "Any insurance state" %}</option>{% for value, label in insurance_choices %}<option value="{{ value }}" {% if filters.insurance == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-condition">{% translate "Status" %}</label><select class="form-select" id="id-filter-condition" name="condition" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All statuses" %}</option>{% for value, label in condition_choices %}<option value="{{ value }}" {% if filters.condition == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-cost-center">{% translate "Cost center" %}</label><select class="form-select" id="id-filter-cost-center" name="cost_center" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All cost centers" %}</option><option value="none" {% if filters.cost_center == 'none' %}selected{% endif %}>{% translate "Unassigned" %}</option>{% for cc in cost_center_options %}<option value="{{ cc.pk }}" {% if filters.cost_center == cc.pk|stringformat:'s' %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-record">{% translate "Records" %}</label><select class="form-select" id="id-filter-record" name="is_active" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "Active and archived" %}</option><option value="active" {% if request.GET.is_active == 'active' %}selected{% endif %}>{% translate "Active" %}</option><option value="archived" {% if request.GET.is_active == 'archived' %}selected{% endif %}>{% translate "Archived" %}</option></select></div>
+<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button>{% if is_filtered %} <a class="btn btn-link" href="{{ request.path }}">{% translate "Clear filters" %}</a>{% endif %}</div>
+{% endblock %}
+
+{% block list_intro %}{% include "registry/_operator_quick_filters.html" %}{% endblock %}
+
+{% comment %}LV-422: matrícula, estado, seguro, ubicación, faena y acciones. El seguro es la
+columna que absorbe el sobrante (`col-flex`): lleva la fecha y, a veces, el trámite.{% endcomment %}
 {% block list_colgroup %}
 <colgroup>
   <col class="col-primary">
-  <col class="col-compact">
   <col class="col-status">
   <col class="col-flex">
   <col class="col-text">
+  <col class="col-compact">
   <col class="col-actions">
 </colgroup>
 {% endblock %}
@@ -23,10 +44,10 @@ registration -- this list already had the two-line block, it just sat in the
 second column; now it is the pattern the other three follow.{% endcomment %}
 {% block list_header %}
 {% worktable_th _("Registration") "registration" %}
-{% worktable_th _("Cost center") "cost_center" %}
 {% worktable_th _("Status") "status" "" "cell-status" %}
-{% worktable_th _("Location") "location" "" "cell-status" %}
 {% worktable_th _("Insurance") "insurance" "" "cell-status" %}
+{% worktable_th _("Location") "location" %}
+{% worktable_th _("Cost center") "cost_center" %}
 {% endblock %}
 
 {% block table_body %}{% include "registry/_aircraft_rows.html" %}{% endblock %}

@@ -10,13 +10,10 @@
     pone el fabricante, y es el que no se puede confundir.{% endcomment %}
     {% if object.serial_number %}<span class="table-primary-sub cell-truncate font-monospace" title="{% translate "Serial number" %}: {{ object.serial_number }}">S/N {{ object.serial_number }}</span>{% endif %}
   </td>
-  <td class="cell-truncate">{% if object.cost_center %}<span title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="text-muted">{% translate "Unassigned" %}</span>{% endif %}</td>
-  <td class="cell-status">{% if object.status == "active" %}<span class="badge bg-success">{% translate "Active" %}</span>{% elif object.status == "damaged" %}<span class="badge bg-danger">{% translate "Damaged" %}</span>{% elif object.status == "maintenance" %}<span class="badge bg-warning text-dark">{% translate "Maintenance" %}</span>{% else %}<span class="badge bg-secondary">{% translate "Retired" %}</span>{% endif %}</td>
-  <td class="cell-status">
-    {% if object.current_location == "headquarters" %}<span class="badge bg-secondary-subtle text-secondary-emphasis">{% translate "Headquarters" %}</span>
-    {% elif object.current_location == "on_site" %}<span class="badge bg-info-subtle text-info-emphasis"{% if object.current_site %} title="{{ object.current_site }}"{% endif %}>{% translate "On site" %}</span>
-    {% else %}<span class="badge sev-caution">{% translate "In maintenance" %}</span>{% endif %}
-  </td>
+  {% comment %}LV-422: el estado como `.id-chip` (palabra + color + glifo), con el tono de la
+  tabla única `status_tone` para que «Activo» no sea verde aquí y de otro color en otra
+  ficha. El archivado, junto al estado, que es donde se lee.{% endcomment %}
+  <td class="text-nowrap cell-status"><span class="id-chip id-chip--{{ object.status|status_tone }}"><span aria-hidden="true">{% if object.status == "active" %}✓{% elif object.status == "damaged" %}✕{% elif object.status == "maintenance" %}●{% else %}▣{% endif %}</span> {{ object.get_status_display }}</span>{% if not object.is_active %} <span class="id-chip id-chip--neutral"><span aria-hidden="true">▣</span> {% translate "Archived" %}</span>{% endif %}</td>
   <td class="cell-status">
     {% comment %}LV-81: la fecha y el estado del trámite son dos hechos y se
     muestran los dos. Antes sólo se veía la insignia para "pending", así que un
@@ -24,11 +21,25 @@
     una aeronave sin seguro alguno -- y "faltante" no se veía nunca, que es
     justamente lo que hay que poder barrer de un vistazo en la lista.{% endcomment %}
     {% if object.insurance_expiry %}{% translate "Insurance in force" as in_force %}{% include "registry/_expiry_badge.html" with state=object.insurance_state expiry=object.insurance_expiry in_force_label=in_force %}{% endif %}
-    {% if object.insurance_status != "active" %}<span class="badge bg-info-subtle text-info-emphasis">{{ object.get_insurance_status_display }}</span>
+    {% comment %}LV-422: el trámite es un `.id-chip--info` fijo y no `status_tone("filed")`,
+    que daría verde: un seguro presentado y esperando a la JAC no es un seguro vigente.{% endcomment %}
+    {% if object.insurance_status != "active" %}<span class="id-chip id-chip--info"><span aria-hidden="true">◆</span> {{ object.get_insurance_status_display }}</span>
     {% elif not object.insurance_expiry %}{% include "registry/_expiry_badge.html" with state=object.insurance_state expiry=None %}{% endif %}
   </td>
-  <td class="text-end">
-    <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-primary">{% translate "Edit" %}</a>
+  {% comment %}LV-422: la ubicación es texto; sólo «En faena» lleva el código de la faena en un
+  `cc-chip` (el nombre, en el `title`).{% endcomment %}
+  <td class="cell-truncate">{{ object.get_current_location_display }}{% if object.current_location == "on_site" and object.current_site %} <span class="cc-chip" title="{{ object.current_site }}">{{ object.current_site.code }}</span>{% endif %}</td>
+  <td class="cell-truncate">{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="cc-chip is-empty">{% translate "Unassigned" %}</span>{% endif %}</td>
+  {% comment %}LV-422: «Editar» sigue abriendo el modal; archivar y restaurar pasan al menú «⋯»
+  (permisos como la ficha: `delete_aircraft` archiva, `change_aircraft` restaura), junto al atajo
+  a «¿Puedo volar?» con esta aeronave ya elegida.{% endcomment %}
+  <td class="text-end text-nowrap">
+    <div class="id-rowactions">
+      <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-secondary">{% translate "Edit" %}</a>
+      {% translate "Can it fly?" as fly_label %}{% translate "Archive" as archive_label %}{% translate "Restore" as restore_label %}
+      {% url 'can-i-fly' as fly_url %}{% url 'aircraft-archive' object.pk as archive_url %}{% url 'aircraft-restore' object.pk as restore_url %}
+      {% with pk_text=object.pk|stringformat:"s" %}{% include "generic/_row_menu.html" with renew_href=fly_url|add:"?aircraft="|add:pk_text renew_label=fly_label show_renew=object.is_active is_active=object.is_active archive_action=archive_url archive_label=archive_label show_archive=perms.registry.delete_aircraft restore_action=restore_url restore_label=restore_label show_restore=perms.registry.change_aircraft %}{% endwith %}
+    </div>
   </td>
 </tr>
 {% empty %}
@@ -54,4 +65,4 @@ con cada letra en su propia linea. Hay un guardian que cruza este numero con los
   {% endif %}
 </td></tr>
 {% endfor %}
-{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% include "registry/_operator_quick_filters.html" with oob=True %}{% endif %}
