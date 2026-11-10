@@ -50,7 +50,7 @@ una franja compacta.{% endcomment %}
 <div class="id-filters">{% block worktable_filters %}{% endblock %}</div>
 {% include "generic/_bulk_bar.html" %}
 {% include "generic/_worktable_toolbar.html" %}
-<div id="table-wrapper" class="card">
+<div id="table-wrapper" data-refresh-on-save class="card">
   <div class="table-responsive">
     {% comment %}`UX-09`: `wt-pending` sólo cuando **hay** columnas que esconder.
     Sin él, la tabla se dibujaría entera y el JS le sacaría columnas encima, o

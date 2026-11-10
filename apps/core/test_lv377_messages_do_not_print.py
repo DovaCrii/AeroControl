@@ -36,7 +36,8 @@ def test_the_flash_message_is_drawn_on_screen(archived_page):
 
 
 def test_the_message_wrapper_is_hidden_when_printing(archived_page):
-    wrapper = re.search(r'<div class="([^"]*)" aria-live="polite">', archived_page)
+    # LV-421: el bloque es `#page-messages`, siempre presente; se busca por su id.
+    wrapper = re.search(r'<div id="page-messages" class="([^"]*)"', archived_page)
     assert wrapper, "el bloque de mensajes debería existir con un mensaje pendiente"
     assert "d-print-none" in wrapper.group(1).split()
 

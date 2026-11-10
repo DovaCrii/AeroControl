@@ -421,6 +421,82 @@
   document.getElementById('generic-modal').addEventListener('hidden.bs.modal', function () {
     if (modalTrigger) { modalTrigger.focus(); }
   });
+  // LV-421: guardar en el modal sin recargar. La lista que se quiere refrescar
+  // se marca con `data-refresh-on-save` y un `id`; se pide la página de nuevo
+  // SIN la cabecera HX-Request (con ella las vistas de lista devuelven sólo el
+  // cuerpo de la tabla) y se reemplazan la región y `#page-messages`, que
+  // trae el aviso de éxito de la sesión. Si no hay región o algo falla, se
+  // recarga guardando la posición de la página.
+  var SCROLL_KEY = 'ac-scroll-restore';
+  function here() { return window.location.pathname + window.location.search; }
+  function reloadKeepingScroll() {
+    try {
+      window.sessionStorage.setItem(
+        SCROLL_KEY, JSON.stringify({ path: here(), y: window.scrollY })
+      );
+    } catch (e) { /* sin almacenamiento: se recarga sin posición */ }
+    window.location.reload();
+  }
+  function restoreScroll() {
+    var saved = null;
+    try {
+      saved = JSON.parse(window.sessionStorage.getItem(SCROLL_KEY));
+      window.sessionStorage.removeItem(SCROLL_KEY);
+    } catch (e) { return; }
+    if (saved && saved.path === here() && typeof saved.y === 'number') {
+      window.scrollTo(0, saved.y);
+    }
+  }
+  restoreScroll();
+  function announceMessages() {
+    var box = document.getElementById('page-messages');
+    var alert = box && box.querySelector('.alert');
+    if (!alert) return;
+    alert.setAttribute('tabindex', '-1');
+    alert.focus({ preventScroll: true });
+    var rect = alert.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      // Fuera de la vista: se reutiliza el mismo aviso, flotante un momento.
+      box.classList.add('page-messages--floating');
+      window.setTimeout(function () {
+        box.classList.remove('page-messages--floating');
+      }, 6000);
+    }
+  }
+  function refreshAfterSave() {
+    var region = document.querySelector('[data-refresh-on-save][id]');
+    if (!region || !window.fetch || !window.DOMParser) {
+      reloadKeepingScroll();
+      return;
+    }
+    window.fetch(window.location.href, { credentials: 'same-origin' })
+      .then(function (response) {
+        if (!response.ok || response.redirected) throw new Error('refresh');
+        return response.text();
+      })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var fresh = doc.getElementById(region.id);
+        if (!fresh) throw new Error('region');
+        region.replaceWith(fresh);
+        var box = document.getElementById('page-messages');
+        var incoming = doc.getElementById('page-messages');
+        if (box && incoming) {
+          box.className = incoming.className;
+          box.innerHTML = incoming.innerHTML;
+        }
+        if (window.htmx) window.htmx.process(fresh);
+        // Mismo aviso que el intercambio de htmx: worktable.js rotula las filas
+        // nuevas y reaplica columnas escondidas y casillas.
+        (fresh.querySelector('table') || fresh).dispatchEvent(
+          new CustomEvent('htmx:afterSwap', {
+            bubbles: true, detail: { target: fresh, elt: fresh, xhr: null }
+          })
+        );
+        announceMessages();
+      })
+      .catch(reloadKeepingScroll);
+  }
   document.body.addEventListener('modal-form-success', function () {
     // UX-19: guardado quiere decir que ya no hay nada que perder. Sin esto, el
     // camino feliz terminaría preguntando "¿cerrar y perder los cambios?" justo
@@ -428,7 +504,7 @@
     // porque enseña a contestar que sí sin leer.
     modalDirty = false;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('generic-modal')).hide();
-    window.location.reload();
+    refreshAfterSave();
   });
 
   // Progressive enhancement for former inline JS (V.10 CSP: no inline handlers,
