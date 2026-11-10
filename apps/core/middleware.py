@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import time
 import uuid
 
@@ -57,6 +58,19 @@ def build_csp(report_uri="", frame_ancestors="'none'"):
 
 MUTATING_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
+#: Auditoría #14: el `X-Request-ID` del cliente se acepta sólo si es corto y de
+#: caracteres seguros. Va al log, a la cabecera de la respuesta y a
+#: `AuditEvent.request_id` (64 caracteres): uno largo rompería la escritura de la
+#: auditoría en una base que respete el largo, y uno con saltos de línea
+#: falsificaría líneas del registro.
+REQUEST_ID_RE = re.compile(r"[A-Za-z0-9._-]{1,64}")
+
+
+def client_request_id(request):
+    """El `X-Request-ID` del cliente si es válido; si no, `None` (se genera uno)."""
+    raw = request.headers.get("X-Request-ID", "")
+    return raw if REQUEST_ID_RE.fullmatch(raw) else None
+
 
 class AuditWriteFailed(Exception):
     """T1.4: la auditoría de una mutación no se pudo escribir (modo fail-closed)."""
@@ -108,7 +122,7 @@ class RequestMetricsMiddleware:
     def __call__(self, request):
         from django.conf import settings
 
-        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+        request_id = client_request_id(request) or uuid.uuid4().hex
         request.request_id = request_id
         started = time.perf_counter()
         # El interruptor se lee en cada petición y no al arrancar: un test, o un
