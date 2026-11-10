@@ -1232,11 +1232,128 @@ class AircraftList(RegistryList):
         "location": "current_location",
         "insurance": "insurance_expiry",
     }
-    search_fields = ["registration", "model", "manufacturer"]
+    # LV-422: también por número de serie y por faena, que es como se las nombra en terreno.
+    search_fields = [
+        "registration",
+        "model",
+        "manufacturer",
+        "serial_number",
+        "cost_center__code",
+    ]
+    # LV-422: los filtros propios de esta lista (además de `q` y de «activo/archivado»),
+    # los mismos tres que varían los atajos y que cuentan como «hay un filtro puesto».
+    FILTER_KEYS = ("insurance", "condition", "cost_center")
+    INSURANCE_CHOICES = (
+        ("lapsed", gettext_lazy("Insurance lapsed")),
+        ("soon", gettext_lazy("Insurance due ≤30 days")),
+        ("missing", gettext_lazy("Insurance with no date on file")),
+        ("attention", gettext_lazy("Insurance needing attention")),
+    )
+    # «Fuera de servicio» = dañada o en mantenimiento: lo que hoy no puede volar.
+    GROUNDED = ("damaged", "maintenance")
+
+    def _filter_params(self):
+        """Los filtros pedidos, ya limpios: lo desconocido se ignora (convención del repo)."""
+        get = self.request.GET
+        return {key: get.get(key, "").strip() for key in self.FILTER_KEYS}
+
+    def condition_choices(self):
+        """Los estados de la flota más el atajo «fuera de servicio»."""
+        return [
+            *Aircraft.STATUS_CHOICES,
+            ("grounded", gettext_lazy("Damaged or in maintenance")),
+        ]
+
+    def apply_filters(self, queryset, params):
+        """LV-422: seguro, estado y faena, combinables (Y). Una clave o valor
+        desconocido no filtra ni falla."""
+        # LV-242: el criterio del seguro vive en `selectors` para que la lista muestre
+        # exactamente los que la tarjeta del panel contó.
+        queryset = filter_by_insurance(
+            queryset, params.get("insurance"), timezone.localdate()
+        )
+        condition = params.get("condition")
+        if condition == "grounded":
+            queryset = queryset.filter(status__in=self.GROUNDED)
+        elif condition in {value for value, _label in Aircraft.STATUS_CHOICES}:
+            queryset = queryset.filter(status=condition)
+        cost_center = params.get("cost_center")
+        if cost_center == "none":
+            queryset = queryset.filter(cost_center__isnull=True)
+        elif cost_center:
+            from apps.core.views import lookup_by_pk
+
+            # Un pk malformado o de otra empresa no filtra por nada visible: lista vacía,
+            # no un 500 ni una fuga.
+            chosen = lookup_by_pk(
+                self.scope_by_tenant(CostCenter.objects.all()), cost_center
+            )
+            queryset = (
+                queryset.filter(cost_center=chosen) if chosen else queryset.none()
+            )
+        return queryset
+
+    def _quick_filters(self):
+        """LV-422: los atajos con su conteo, como en el padrón de operadores (LV-413). El
+        número es **el de filas que trae el clic**: se cuenta con todos los filtros puestos
+        y el del atajo encima. Un atajo activo se apaga con el mismo clic."""
+        chips = (
+            ("insurance", "lapsed", _("Insurance lapsed")),
+            ("insurance", "soon", _("Insurance due ≤30 days")),
+            ("condition", "grounded", _("Out of service")),
+            ("cost_center", "none", _("No cost center")),
+        )
+        current = self._filter_params()
+        result = []
+        for key, value, label in chips:
+            params = dict(current, **{key: value})
+            query = self.request.GET.copy()
+            for drop in ("page", "export"):
+                query.pop(drop, None)
+            active = current.get(key) == value
+            if active:
+                query.pop(key, None)
+            else:
+                query[key] = value
+            result.append(
+                {
+                    "label": label,
+                    "count": self.apply_filters(self._base_queryset, params).count(),
+                    "active": active,
+                    "url": f"?{query.urlencode()}",
+                }
+            )
+        return result
+
+    def _cost_center_options(self):
+        """Las faenas que tienen aeronaves visibles: el selector no ofrece nada que la
+        lista no pueda mostrar."""
+        return (
+            self.scope_by_tenant(CostCenter.objects.all())
+            .filter(aircraft__isnull=False)
+            .distinct()
+            .order_by(Length("code"), "code")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        params = self._filter_params()
+        context["filters"] = params
+        context["insurance_choices"] = self.INSURANCE_CHOICES
+        context["condition_choices"] = self.condition_choices()
+        context["cost_center_options"] = self._cost_center_options()
+        context["quick_filters"] = self._quick_filters()
+        context["is_filtered"] = context.get("is_filtered") or any(params.values())
+        context["search_placeholder"] = _(
+            "Registration, model, serial number or cost center…"
+        )
+        return context
 
     def get_queryset(self):
         # R3.2: no Meta.ordering fell back to created_at.
-        queryset = self.scope_by_tenant(super().get_queryset())
+        queryset = self.scope_by_tenant(
+            super().get_queryset().select_related("cost_center", "current_site")
+        )
         # LV-280: `order_by` encima de lo que dejó `SortableColumnsMixin` lo
         # pisaría, y el clic en el encabezado no haría nada. El orden por defecto
         # sólo entra cuando nadie pidió otro.
@@ -1245,11 +1362,12 @@ class AircraftList(RegistryList):
         # LV-242: `?insurance=` acota por el estado de la póliza, y es lo que hace
         # que la tarjeta del panel lleve a alguna parte. Decía "1 vencido" y el
         # clic traía las dieciséis aeronaves, así que el número informaba y no
-        # servía. El criterio vive en `selectors` para que la lista muestre
-        # exactamente los que la tarjeta contó.
-        return filter_by_insurance(
-            queryset, self.request.GET.get("insurance"), timezone.localdate()
-        )
+        # servía.
+        # LV-422: ahora es uno de tres filtros combinables (`apply_filters`); lo de
+        # antes —empresa, búsqueda y estado— queda guardado como la base sobre la que
+        # se cuentan los atajos.
+        self._base_queryset = queryset
+        return self.apply_filters(queryset, self._filter_params())
 
 
 class AircraftDetail(RegistryDetail):
