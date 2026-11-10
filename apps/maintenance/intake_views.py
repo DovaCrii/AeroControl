@@ -254,6 +254,9 @@ class WorkshopIntakeUpload(IntakePermissionMixin, View):
 
         uploaded.seek(0)
         sha = hashlib.sha256(uploaded.read()).hexdigest()
+        from apps.core import intake_pending
+
+        intake_pending.purge_stale_pending_safely()
         with uploaded_file_cleanup() as stored:
             path = f"{PENDING_PREFIX}{uuid4()}.pdf"
             get_document_storage().save(path, uploaded)
