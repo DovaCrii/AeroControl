@@ -14573,6 +14573,26 @@ msgstr "Activos y archivados"
 msgid "Can it fly?"
 msgstr "¿Puede volar?"
 
+#: templates/registry/aircraft_detail.html
+msgid "Availability"
+msgstr "Disponibilidad"
+
+#: templates/registry/aircraft_detail.html
+msgid "Nothing blocks this aircraft according to the records"
+msgstr "Nada impide volar con esta aeronave según los registros"
+
+#: templates/registry/aircraft_detail.html
+msgid "Check with operator and site"
+msgstr "Comprobar con operador y faena"
+
+#: templates/registry/_aircraft_form_fields.html
+msgid "Technical data"
+msgstr "Datos técnicos"
+
+#: templates/registry/_aircraft_form_fields.html
+msgid "Assignment and status"
+msgstr "Asignación y estado"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

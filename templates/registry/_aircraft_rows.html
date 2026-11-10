@@ -1,7 +1,7 @@
 {% load aero_tags i18n static %}
 {% for object in objects %}
 <tr data-pk="{{ object.pk }}">
-  <td><a href="{{ object.pk }}/" class="table-primary-value">{{ object.registration }}</a>
+  <td><a href="{{ object.pk }}/{% if list_query %}?back={{ list_query|urlencode:'' }}{% endif %}" class="table-primary-value">{{ object.registration }}</a>
     {% if object.model or object.manufacturer %}<span class="table-primary-sub cell-truncate" title="{{ object.model }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}">{{ object.model|default:"—" }}{% if object.manufacturer %} · {{ object.manufacturer }}{% endif %}</span>{% endif %}
     {% comment %}El número de serie, a la vista y no sólo en la ficha: es la
     identidad con la que la aeronave aparece en la garantía, en el registro de la

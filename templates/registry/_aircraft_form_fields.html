@@ -1,0 +1,41 @@
+{% load crispy_forms_tags i18n %}
+{% comment %}LV-423: el formulario de la aeronave en secciones (Identificación / Datos técnicos /
+Seguro JAC / Asignación y estado), como el de la faena (`_costcenter_form_fields.html`).
+Compartido por la página completa y el fragmento del modal.
+
+**Esta plantilla dibuja campo por campo, así que un campo de `AircraftForm.Meta.fields` que no
+esté acá no es sólo invisible: se borra al guardar** (el navegador no envía lo que no existe).
+Es la lección de LV-211; `test_lv423_aircraft_detail_standard` cruza los dos.{% endcomment %}
+{% include "generic/_duplicate_hint.html" %}
+{% include "generic/_form_errors.html" %}
+{{ form.non_field_errors }}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Identification" %}</legend>
+  {{ form.registration|as_crispy_field }}
+  {{ form.type|as_crispy_field }}
+  {{ form.model|as_crispy_field }}
+  {{ form.manufacturer|as_crispy_field }}
+  {{ form.year|as_crispy_field }}
+  {{ form.serial_number|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "Technical data" %}</legend>
+  {{ form.max_takeoff_weight_kg|as_crispy_field }}
+  {{ form.basic_weight_kg|as_crispy_field }}
+  {{ form.vlos|as_crispy_field }}
+  {{ form.parachute|as_crispy_field }}
+  {{ form.authorized_services|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-4">
+  <legend class="h6 section-title mb-3">{% translate "JAC insurance" %}</legend>
+  {{ form.insurance_status|as_crispy_field }}
+  {{ form.insurance_expiry|as_crispy_field }}
+</fieldset>
+<fieldset class="cc-form-section mb-0">
+  <legend class="h6 section-title mb-3">{% translate "Assignment and status" %}</legend>
+  {{ form.cost_center|as_crispy_field }}
+  {{ form.status|as_crispy_field }}
+  {{ form.current_location|as_crispy_field }}
+  {{ form.current_site|as_crispy_field }}
+</fieldset>

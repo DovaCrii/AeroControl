@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{{ title|default:'Form' }} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-423: el formulario de la aeronave en secciones; ver `_aircraft_form_fields.html`.
+Tiene más de ocho campos, así que lleva el borrador (UX-23) como el formulario genérico.{% endcomment %}
+<div class="form-shell card p-4">
+  <div class="page-header">
+    <h1 class="h3">{% if title %}{{ title }}{% elif view.object %}{{ view.object }}{% else %}{% translate "New record" %}{% endif %}</h1>
+  </div>
+
+  <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    {% include "registry/_aircraft_form_fields.html" %}
+    {% include "generic/_form_draft.html" %}
+    <div class="form-actions form-actions--sticky d-flex gap-2 mt-4 flex-wrap align-items-center">
+      <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+      {% include "generic/_form_draft_button.html" %}
+      <a href="{% url 'dashboard' %}" data-history-back class="btn btn-link">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script defer src="{% static 'js/form-draft.js' %}"></script>
+{% endblock %}

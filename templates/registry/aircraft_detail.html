@@ -4,12 +4,12 @@
 {% block content %}
 <div class="card p-4">
   {% aircraft_art object as art %}
-  {% include "generic/_entity_head.html" with art=model_image_url|default:art.url art_alt=object.model chip_label=object.get_status_display chip_tone=object.status|status_tone %}
+  {% comment %}LV-423: la cabecera va **sin** `art`: la imagen sale una vez, en el héroe de abajo.{% endcomment %}
+  {% include "generic/_entity_head.html" with art="" chip_label=object.get_status_display chip_tone=object.status|status_tone %}
   <nav class="entity-nav" aria-label="{% translate 'Sections' %}">
     <a href="#section-insurance">{% translate "JAC insurance" %}</a>
     <a href="#section-documents">{% translate "Documents" %}</a>
     {% if open_maintenance is not None %}<a href="#section-maintenance">{% translate "Maintenance & status" %}</a>{% endif %}
-    {% if total_flight_hours is not None %}<a href="#section-hours">{% translate "Flight hours" %}</a>{% endif %}
     {% if movements is not None %}<a href="#section-movements">{% translate "Movement history" %}</a>{% endif %}
   </nav>
   {% comment %}LV-303: la aeronave a lo grande, con sus datos clave al lado. Una miniatura junto
@@ -30,13 +30,38 @@
       <div><dt>{% translate "Model" %}</dt><dd>{{ object.model|default:"—" }}</dd></div>
       <div><dt>{% translate "Manufacturer" %}</dt><dd>{{ object.manufacturer|default:"—" }}</dd></div>
       <div><dt>{% translate "Serial number" %}</dt><dd class="font-monospace">{{ object.serial_number|default:"—" }}</dd></div>
-      <div><dt>{% translate "Status" %}</dt><dd>{{ object.get_status_display }}</dd></div>
+      {% comment %}LV-423: el estado ya está en el chip de la cabecera; acá van la faena, la ubicación
+      (con su faena, como en la lista) y las horas de vuelo, que antes eran una tarjeta aparte.{% endcomment %}
+      <div><dt>{% translate "Cost Center" %}</dt><dd>{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="cc-chip is-empty">{% translate "Unassigned" %}</span>{% endif %}</dd></div>
+      <div><dt>{% translate "Current location" %}</dt><dd>{{ object.get_current_location_display }}{% if object.current_location == "on_site" and object.current_site %} <span class="cc-chip" title="{{ object.current_site }}">{{ object.current_site.code }}</span>{% endif %}</dd></div>
+      {% if total_flight_hours is not None %}<div><dt>{% translate "Flight hours" %}</dt><dd>{{ total_flight_hours }}</dd></div>{% endif %}
       {% if model_image_upload_url %}<div><dt class="visually-hidden">{% translate "Official image" %}</dt><dd><a href="{{ model_image_upload_url }}" class="small">{% if model_image %}{% translate "Replace the official image of the model" %}{% else %}{% translate "Load the official image of the model" %}{% endif %}</a></dd></div>{% endif %}
     </dl>
   </div>
 
-  {% include "generic/_fields_detail_table.html" %}
+  {% include "generic/_fields_detail_table.html" with exclude="registration,model,manufacturer,serial_number,status,current_location,current_site,cost_center,insurance_status,insurance_expiry" %}
 </div>
+
+{% comment %}LV-423: lo que, según los registros, impide volar con esta aeronave. Es la regla de
+«¿Puedo volar?» (`aircraft_check`), no una copia. No se dibuja de baja ni archivada.{% endcomment %}
+{% if readiness %}
+<section class="card mt-3 p-3" data-aircraft-readiness aria-labelledby="aircraft-readiness-title">
+  <h2 class="h6 mb-2" id="aircraft-readiness-title">{% translate "Availability" %}</h2>
+  {% if readiness.blockers or readiness.warnings %}
+  <ul class="list-unstyled mb-2">
+    {% for item in readiness.blockers %}
+    <li class="can-fly-item can-fly-item-blocker"><a href="{{ item.url }}">{{ item.label }}</a> — {{ item.detail }}</li>
+    {% endfor %}
+    {% for item in readiness.warnings %}
+    <li class="can-fly-item can-fly-item-warning"><a href="{{ item.url }}">{{ item.label }}</a> — {{ item.detail }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="mb-2"><span class="id-chip id-chip--ok"><span aria-hidden="true">✓</span> {% translate "Nothing blocks this aircraft according to the records" %}</span></p>
+  {% endif %}
+  <a href="{% url 'can-i-fly' %}?aircraft={{ object.pk }}" class="small">{% translate "Check with operator and site" %} →</a>
+</section>
+{% endif %}
 
 {% comment %}LV-81: el seguro JAC con su ciclo real y su trazabilidad, con la
 misma forma que el permiso -- que es la pantalla que el usuario ya lee todos los
@@ -92,7 +117,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
       {% for m in open_maintenance %}
       <tr>
         <td><a href="{% url 'maintenance-detail' m.pk %}">{{ m.get_maintenance_type_display }}</a></td>
-        <td><span class="badge bg-warning text-dark">{{ m.get_status_display }}</span></td>
+        <td><span class="id-chip id-chip--{{ m.status|status_tone }}">{{ m.get_status_display }}</span></td>
         <td>{{ m.scheduled_date|date:"d-m-Y"|default:"—" }}</td>
       </tr>
       {% endfor %}
@@ -119,13 +144,6 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
     </tbody>
   </table>
   {% endif %}
-</div>
-{% endif %}
-
-{% if total_flight_hours is not None %}
-<div class="card mt-3 p-4 entity-section" id="section-hours">
-  <h2 class="h5 mb-2">{% translate "Flight hours" %}</h2>
-  <p class="mb-0">{% translate "Cumulative flight time recorded for this aircraft:" %} <strong>{{ total_flight_hours }}</strong></p>
 </div>
 {% endif %}
 
