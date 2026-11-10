@@ -189,6 +189,10 @@ def _check_aircraft(aircraft, today):
     return check
 
 
+#: LV-423: alias público para la ficha de la aeronave; la regla es la de siempre.
+aircraft_check = _check_aircraft
+
+
 def _check_operator(operator, today):
     from apps.compliance.models import Document
     from apps.registry.models import KnowledgeAssessment, Qualification

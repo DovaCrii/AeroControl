@@ -168,6 +168,19 @@ class RegistryDetail(
         context["can_archive"] = user.has_perm(
             f"{meta.app_label}.delete_{meta.model_name}"
         )
+        # LV-413 / LV-423: «Volver a la lista» vuelve a la búsqueda, los filtros y la página
+        # de donde se vino (fichas del operador y de la aeronave). `?back=` es sólo una
+        # cadena de consulta: se re-arma con `QueryDict` sobre la ruta fija de la lista,
+        # así que no puede apuntar a otro sitio (nada de redirección abierta).
+        back = self.request.GET.get("back", "")
+        if back:
+            from django.http import QueryDict
+
+            query = QueryDict(back, mutable=True)
+            for drop in ("back", "export"):
+                query.pop(drop, None)
+            if query:
+                context["list_url"] = f"{context['list_url']}?{query.urlencode()}"
         return context
 
 
@@ -776,6 +789,11 @@ class CostCenterDetail(RegistryDetail):
 _AircraftAutoList, _AircraftAutoDetail, AircraftCreate, AircraftUpdate = make_views(
     Aircraft, AircraftForm, "Aircraft"
 )
+# LV-423: el formulario de la aeronave en secciones (como el de la faena, LV-36), tanto en
+# página completa (Editar desde la ficha) como en el modal HTMX (Editar desde la lista).
+for _aircraft_view in (AircraftCreate, AircraftUpdate):
+    _aircraft_view.template_name = "registry/aircraft_form.html"
+    _aircraft_view.htmx_template_name = "registry/_aircraft_form_content.html"
 (
     _OperatorAutoList,
     _OperatorAutoDetail,
@@ -1347,6 +1365,11 @@ class AircraftList(RegistryList):
         context["search_placeholder"] = _(
             "Registration, model, serial number or cost center…"
         )
+        # LV-423: la consulta de la lista viaja en el enlace a la ficha (`?back=`).
+        back = self.request.GET.copy()
+        for drop in ("export", "back"):
+            back.pop(drop, None)
+        context["list_query"] = back.urlencode()
         return context
 
     def get_queryset(self):
@@ -1435,7 +1458,22 @@ class AircraftDetail(RegistryDetail):
             context["total_flight_hours"] = None
         context.update(self._insurance_context())
         context.update(self._model_image_context())
+        context["readiness"] = self._readiness_context()
         return context
+
+    def _readiness_context(self):
+        """LV-423: lo que, según los registros, impide volar con esta aeronave.
+
+        Es la misma regla de «¿Puedo volar?» (`aircraft_check`), sin reimplementarla. No se
+        calcula para una aeronave de baja o archivada: no es una condición sobre la que
+        alguien pueda actuar.
+        """
+        from apps.operations.readiness import aircraft_check
+
+        aircraft = self.object
+        if not aircraft.is_active or aircraft.status in Aircraft.TERMINAL_STATUSES:
+            return None
+        return aircraft_check(aircraft, timezone.localdate())
 
     def _model_image_context(self):
         """LV-399: la foto oficial del modelo, si alguien la cargó; si no, la silueta."""
@@ -1582,19 +1620,6 @@ class OperatorDetail(RegistryDetail):
         from .selectors import movements_for_resource
 
         context = super().get_context_data(**kwargs)
-        # LV-413: «Volver a la lista» vuelve a la búsqueda, los filtros y la página de
-        # donde se vino. `?back=` es sólo una cadena de consulta: se re-arma con
-        # `QueryDict` sobre la ruta fija de la lista, así que no puede apuntar a otro
-        # sitio (nada de redirección abierta).
-        back = self.request.GET.get("back", "")
-        if back:
-            from django.http import QueryDict
-
-            query = QueryDict(back, mutable=True)
-            for drop in ("back", "export"):
-                query.pop(drop, None)
-            if query:
-                context["list_url"] = f"{context['list_url']}?{query.urlencode()}"
         if self.request.user.has_perm("registry.view_resourcemovementlog"):
             context["movements"] = movements_for_resource("operator", self.object.pk)
         else:
