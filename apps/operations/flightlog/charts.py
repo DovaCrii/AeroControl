@@ -64,4 +64,5 @@ def line_chart(series, y_label: str, x_label: str):
         f'transform="rotate(-90 12 {(TOP + H - BOTTOM) / 2:.0f})">{escape(y_label)}</text>'
     )
     parts.append(f'<polyline class="fa-line" points="{path}"/></svg>')
-    return mark_safe("".join(parts))  # noqa: S308 - sólo números y rótulos escapados
+    # Sólo números formateados con `:.1f`/`:.0f` (fallan si no son números) y rótulos escapados.
+    return mark_safe("".join(parts))  # noqa: S308  # nosec B308 B703
