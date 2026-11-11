@@ -39,12 +39,14 @@
     var list = tiles || [];
     var chosen = list.find(function (t) { return t.default; }) || list[0];
     var bases = {};
+    var shown = null;
     list.forEach(function (t) {
       var layer = L.tileLayer(t.url, { attribution: t.attribution || "", maxZoom: t.maxZoom || 19 });
       bases[t.name || t.id] = layer;
-      if (t === chosen) { layer.addTo(map); }
+      if (t === chosen) { layer.addTo(map); shown = layer; }
     });
     if (list.length > 1) { L.control.layers(bases, null, { position: "topright" }).addTo(map); }
+    return shown;
   }
 
   /* Regreso automático: línea discontinua clara sobre el tramo, con halo oscuro. */
@@ -120,7 +122,7 @@
       var data = JSON.parse(node.textContent);
       var L = window.L;
       var map = L.map(container, { zoomControl: true });
-      addTiles(L, map, data.tiles);
+      var base = addTiles(L, map, data.tiles);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
       var track = drawTrack(L, map, data.points);
       var hasReturn = drawReturn(L, map, data.returnPath);
@@ -139,6 +141,8 @@
       });
       legend(L, map, track, data.i18n, hasReturn);
       map.fitBounds(track.group.getBounds(), { padding: [24, 24] });
+      /* LV-430: el reporte imprimible reencuadra y espera las teselas antes de imprimir. */
+      container._fa = { map: map, bounds: track.group.getBounds(), base: base };
     } catch (error) {
       fail(container, error, "init");
     }

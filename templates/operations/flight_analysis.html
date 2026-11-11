@@ -14,7 +14,12 @@
   {% translate "Flight analysis" as page_title %}
   <div class="page-header">
     {% include "generic/_page_header.html" %}
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+      {% if analysis.status == "ok" %}
+      <a href="{% url 'flight-analysis-report' analysis.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-primary" id="fa-report-link">{% translate "Download report" %}</a>
+      <a href="{% url 'flight-analysis-kml' analysis.pk %}" class="btn btn-sm btn-outline-primary" id="fa-kml-link">{% translate "Download KML" %}</a>
+      <a href="{% url 'flight-analysis-csv' analysis.pk %}" class="btn btn-sm btn-outline-primary" id="fa-csv-link">{% translate "Download CSV" %}</a>
+      {% endif %}
       <a href="{% url 'document-download' analysis.document.pk %}" class="btn btn-sm btn-outline-primary">{% translate "Download log" %}</a>
       <a href="{{ back.url }}" class="btn btn-sm btn-outline-secondary">{{ back.label }}</a>
     </div>

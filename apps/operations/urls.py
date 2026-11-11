@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .flightlog import report as flight_report_view
 from .flightlog import views as flight_analysis_view
 from .flightlog import log_views as flight_log_views
 
@@ -45,6 +46,22 @@ urlpatterns = [
         "flight-logs/new/",
         flight_log_views.FlightLogUpload.as_view(),
         name="flight-log-upload",
+    ),
+    # LV-430: reporte imprimible (A4, se guarda como PDF desde el navegador), KML y CSV.
+    path(
+        "flight-analysis/<uuid:pk>/report/",
+        flight_report_view.FlightReportView.as_view(),
+        name="flight-analysis-report",
+    ),
+    path(
+        "flight-analysis/<uuid:pk>/kml/",
+        flight_report_view.FlightKmlView.as_view(),
+        name="flight-analysis-kml",
+    ),
+    path(
+        "flight-analysis/<uuid:pk>/csv/",
+        flight_report_view.FlightCsvView.as_view(),
+        name="flight-analysis-csv",
     ),
     path(
         "permissions/<uuid:pk>/edit/",
