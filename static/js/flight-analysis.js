@@ -33,11 +33,26 @@
     return node;
   }
 
+  /* Todas las capas base configuradas (GEO_TILE_PROVIDERS), con selector; la marcada por defecto
+     (satélite) arranca visible. */
   function addTiles(L, map, tiles) {
-    var chosen = (tiles || []).find(function (t) { return t.default; }) || (tiles || [])[0];
-    if (chosen) {
-      L.tileLayer(chosen.url, { attribution: chosen.attribution || "", maxZoom: chosen.maxZoom || 19 }).addTo(map);
-    }
+    var list = tiles || [];
+    var chosen = list.find(function (t) { return t.default; }) || list[0];
+    var bases = {};
+    list.forEach(function (t) {
+      var layer = L.tileLayer(t.url, { attribution: t.attribution || "", maxZoom: t.maxZoom || 19 });
+      bases[t.name || t.id] = layer;
+      if (t === chosen) { layer.addTo(map); }
+    });
+    if (list.length > 1) { L.control.layers(bases, null, { position: "topright" }).addTo(map); }
+  }
+
+  /* Regreso automático: línea discontinua clara sobre el tramo, con halo oscuro. */
+  function drawReturn(L, map, path) {
+    if (!path || path.length < 2) { return false; }
+    L.polyline(path, { color: HALO, weight: 7, opacity: 0.9 }).addTo(map);
+    L.polyline(path, { color: "#ffffff", weight: 3, opacity: 1, dashArray: "8 8" }).addTo(map);
+    return true;
   }
 
   function drawTrack(L, map, points) {
@@ -63,7 +78,7 @@
     marker.addTo(group);
   }
 
-  function legend(L, map, info, i18n) {
+  function legend(L, map, info, i18n, hasReturn) {
     var control = L.control({ position: "bottomright" });
     control.onAdd = function () {
       var box = L.DomUtil.create("div", "fa-legend");
@@ -82,6 +97,16 @@
         ends.appendChild(text(info.hi.toFixed(0)));
         box.appendChild(ends);
       }
+      if (hasReturn) {
+        var row = document.createElement("div");
+        row.className = "fa-legend-return";
+        var sample = document.createElement("span");
+        sample.className = "fa-legend-dash";
+        sample.setAttribute("aria-hidden", "true");
+        row.appendChild(sample);
+        row.appendChild(text(" " + i18n.returnLeg));
+        box.appendChild(row);
+      }
       return box;
     };
     control.addTo(map);
@@ -98,16 +123,21 @@
       addTiles(L, map, data.tiles);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
       var track = drawTrack(L, map, data.points);
+      var hasReturn = drawReturn(L, map, data.returnPath);
       var markers = L.featureGroup().addTo(map);
-      if (data.takeoff) { mark(L, markers, data.takeoff, "#22c55e", data.i18n.takeoff); }
-      if (data.landing) { mark(L, markers, data.landing, "#111827", data.i18n.landing); }
+      if (data.sameSpot && data.takeoff) {
+        mark(L, markers, data.takeoff, "#22c55e", data.i18n.takeoffLanding);
+      } else {
+        if (data.takeoff) { mark(L, markers, data.takeoff, "#22c55e", data.i18n.takeoff); }
+        if (data.landing) { mark(L, markers, data.landing, "#111827", data.i18n.landing); }
+      }
       (data.events || []).forEach(function (event) {
         var color = event.level === "critical" ? "#dc2626" : "#f59e0b";
         var label = (event.level === "critical" ? data.i18n.critical : data.i18n.warning) +
           " " + event.when + ": " + event.text;
         mark(L, markers, [event.lat, event.lon], color, label);
       });
-      legend(L, map, track, data.i18n);
+      legend(L, map, track, data.i18n, hasReturn);
       map.fitBounds(track.group.getBounds(), { padding: [24, 24] });
     } catch (error) {
       fail(container, error, "init");

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -15,7 +16,8 @@ from .types import FlightLogError
 logger = logging.getLogger(__name__)
 
 FLIGHT_LOG_TYPE = "flight-log-txt"
-PARSER_VERSION = "phase1-stub"
+PARSER_VERSION = "dji-1"
+KEYCHAIN_PREFIX = "flightlog-keychains"
 
 
 def is_flight_log(document) -> bool:
@@ -28,21 +30,46 @@ def is_flight_log(document) -> bool:
     )
 
 
+def _restore_keychains(storage, key, cache: Path) -> None:
+    """Si ya hay llaves guardadas de este log, las deja en `cache`: así se lee sin red."""
+    try:
+        if storage.exists(key):
+            with storage.open(key) as source:
+                cache.write_bytes(source.read())
+    except Exception:  # noqa: BLE001 - sin caché se vuelven a pedir; no es un fallo del análisis
+        logger.warning("flight log keychain cache not readable for %s", key)
+
+
+def _store_keychains(storage, key, cache: Path) -> None:
+    """Guarda las llaves que el lector dejó en `cache` en el almacenamiento privado."""
+    try:
+        if cache.is_file() and cache.stat().st_size:
+            storage.save(key, io.BytesIO(cache.read_bytes()))
+    except Exception:  # noqa: BLE001 - la caché es una comodidad
+        logger.warning("flight log keychain cache not stored for %s", key)
+
+
 def _parse_document(document):
     """Trae el archivo del almacenamiento a un temporal con su nombre original y lo lee."""
     from apps.compliance.storage import get_document_storage
 
     name = PurePosixPath((document.title or "log.txt").replace("\\", "/")).name
+    storage = get_document_storage()
     with tempfile.TemporaryDirectory() as folder:
         target = Path(folder) / name
         try:
-            with get_document_storage().open(document.file_path) as source:
+            with storage.open(document.file_path) as source:
                 target.write_bytes(source.read())
         except Exception as exc:  # noqa: BLE001 - un archivo ilegible es un log incompleto
             raise FlightLogError(
                 FlightLogError.INCOMPLETE, "file not readable"
             ) from exc
-        return parse_flight_log(target)
+        cache = Path(folder) / "keychains.json"
+        key = f"{KEYCHAIN_PREFIX}/{document.pk}.json"
+        _restore_keychains(storage, key, cache)
+        track = parse_flight_log(target, keychain_cache=cache)
+        _store_keychains(storage, key, cache)
+        return track
 
 
 def analyze_document(document, analysis=None):

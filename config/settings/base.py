@@ -176,6 +176,10 @@ DOCUMENTS_ROOT = Path(config("DOCUMENTS_DIR", default=str(BASE_DIR / "media")))
 BACKUP_KEEP = config("BACKUP_KEEP", default=14, cast=int)
 # LV-401: respaldos que se conservan (base y documentos), por cantidad.
 BACKUP_KEEP = config("BACKUP_KEEP", default=14, cast=int)
+# LV-429: lector de logs DJI. Binario del envoltorio `tools/dji-log-json` (vacío: sin lector) y
+# clave de la API de DJI; ambos sólo por entorno. La clave nunca se escribe en logs ni mensajes.
+DJI_LOG_PARSER_BIN = config("DJI_LOG_PARSER_BIN", default="")
+DJI_API_KEY = config("DJI_API_KEY", default="")
 DOCUMENTS_STORAGE_BACKEND = config("DOCUMENTS_STORAGE_BACKEND", default="local")
 DOCUMENTS_STORAGE_BUCKET = config("DOCUMENTS_STORAGE_BUCKET", default="")
 DOCUMENTS_STORAGE_ENDPOINT_URL = config("DOCUMENTS_STORAGE_ENDPOINT_URL", default="")

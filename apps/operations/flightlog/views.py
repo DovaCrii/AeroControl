@@ -16,9 +16,17 @@ from apps.core.audit import set_audit_context
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.core.views import ModelViewPermissionRequiredMixin
 
+from apps.registry.models import Aircraft, normalize_serial
+
 from ..models import FlightLogAnalysis, FlightRecord
 from .charts import line_chart
-from .types import FlightTrack
+from .explanations import explain
+from .narrative import build_narrative
+from .types import FlightTrack, haversine_m
+
+# Despegue y aterrizaje a menos de esta distancia se dibujan con un solo marcador.
+SAME_SPOT_M = 15
+PLACEHOLDER = "\0aircraft"
 
 
 def _not_provided():
@@ -40,6 +48,10 @@ def error_text(code: str) -> str:
         ),
         "missing_api_key": _(
             "The DJI key needed to read this log is not configured on the server."
+        ),
+        "keychain_error": _(
+            "DJI could not provide the keys to read this log. Check the server key and its "
+            "internet access, then try again."
         ),
         "parser_unavailable": _(
             "The DJI log reader is not installed yet, so this log cannot be analysed for now."
@@ -72,8 +84,10 @@ def _summary_rows(track: FlightTrack):
         distance = f"{s.distance_m:,.0f} m"
     take = f"{s.takeoff[0]:.5f}, {s.takeoff[1]:.5f}" if s.takeoff else None
     land = f"{s.landing[0]:.5f}, {s.landing[1]:.5f}" if s.landing else None
+    utc = f"{s.started_at_utc} (UTC)" if s.started_at_utc else None
     return [
         (_("Start"), start),
+        (_("Start (UTC)"), utc),
         (_("Duration (min:s)"), _clock(s.duration_s)),
         (_("Distance flown"), distance),
         (_("Maximum height above takeoff"), _num(s.max_height_m, "m")),
@@ -95,6 +109,38 @@ def _nearest_position(track: FlightTrack, t: float):
     return best.lat, best.lon
 
 
+def registry_aircraft(track: FlightTrack, tenant_id):
+    """La aeronave del registro con el número de serie que dice el log, **sólo de este tenant**.
+
+    La normalización es la de `apps.registry` (mayúsculas, sin espacios) y no hay coincidencia
+    aproximada: sin serie exacta no hay aeronave, y no se supone ninguna.
+    """
+    serial = normalize_serial((track.aircraft or {}).get("serial"))
+    if not serial:
+        return None
+    return (
+        Aircraft.objects.filter(tenant_id=tenant_id, serial_number=serial)
+        .select_related("cost_center")
+        .first()
+    )
+
+
+def _return_path(track: FlightTrack):
+    leg = track.return_leg
+    if not leg:
+        return []
+    return [
+        [p.lat, p.lon]
+        for p in track.points
+        if p.lat is not None and p.lon is not None and leg[0] <= p.t <= leg[1]
+    ]
+
+
+def _same_spot(track: FlightTrack) -> bool:
+    take, land = track.summary.takeoff, track.summary.landing
+    return bool(take and land and haversine_m(*take, *land) < SAME_SPOT_M)
+
+
 def map_payload(track: FlightTrack) -> dict:
     """Lo que dibuja `flight-analysis.js`: sólo datos, entregados por `json_script`."""
     located = [p for p in track.points if p.lat is not None and p.lon is not None]
@@ -110,7 +156,7 @@ def map_payload(track: FlightTrack) -> dict:
                     "lon": pos[1],
                     "level": event.level,
                     "when": _clock(event.t),
-                    "text": event.explanation or event.raw_text,
+                    "text": explain(event.code, event.explanation) or event.raw_text,
                 }
             )
     return {
@@ -119,7 +165,11 @@ def map_payload(track: FlightTrack) -> dict:
         "takeoff": track.summary.takeoff,
         "landing": track.summary.landing,
         "events": events,
+        "returnPath": _return_path(track),
+        "sameSpot": _same_spot(track),
         "i18n": {
+            "takeoffLanding": _("Takeoff and landing"),
+            "returnLeg": _("Automatic return"),
             "takeoff": _("Takeoff"),
             "landing": _("Landing"),
             "height": _("Height above takeoff (m)"),
@@ -180,7 +230,7 @@ def _event_rows(track: FlightTrack):
             "time": _clock(e.t),
             "level": e.level,
             "level_label": levels.get(e.level, e.level),
-            "explanation": e.explanation,
+            "explanation": explain(e.code, e.explanation),
             "raw_text": e.raw_text,
             "inferred": e.inferred,
         }
@@ -232,12 +282,7 @@ class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
         operation = [
             (_("Permit"), permission.permission_number or str(permission)),
             (_("Cost center"), str(permission.cost_center)),
-            (
-                _("Aircraft"),
-                f"{record.aircraft.registration} · {record.aircraft.model}"
-                if record
-                else missing,
-            ),
+            (_("Aircraft"), PLACEHOLDER),
             (_("Operator"), str(record.pilot) if record else missing),
             (
                 _("Date"),
@@ -249,7 +294,6 @@ class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
                 "analysis": analysis,
                 "permission": permission,
                 "record": record,
-                "operation": operation,
                 "not_provided": missing,
                 "records": list(
                     permission.records.filter(is_active=True).order_by(
@@ -261,12 +305,21 @@ class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
                 ),
             }
         )
+        ok = analysis.status == FlightLogAnalysis.STATUS_OK
+        context["operation"] = self._with_aircraft(
+            operation,
+            FlightTrack.from_dict(analysis.result) if ok else FlightTrack(),
+            permission,
+            record,
+        )
         if analysis.status == FlightLogAnalysis.STATUS_ERROR:
             context["error_text"] = error_text(analysis.error_code)
         elif analysis.status == FlightLogAnalysis.STATUS_OK:
             track = FlightTrack.from_dict(analysis.result)
             context.update(
                 {
+                    "narrative": build_narrative(track),
+                    "has_return": bool(track.return_leg),
                     "track": track,
                     "summary_rows": _summary_rows(track),
                     "map_data": map_payload(track),
@@ -280,6 +333,35 @@ class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
                 }
             )
         return context
+
+    def _with_aircraft(self, operation, track, permission, record):
+        """Rellena la fila «Aircraft»: registro (por serie) > operación enlazada > «Not provided»,
+        más el modelo que dice el log marcado como tal. Nunca se inventa un dato."""
+        missing = _not_provided()
+        matched = registry_aircraft(track, permission.cost_center.tenant_id)
+        log_model = (track.aircraft or {}).get("log_model")
+        extra = []
+        if matched is not None:
+            aircraft = f"{matched.registration} · {matched.model}"
+            extra.append(
+                (
+                    _("Aircraft cost center"),
+                    str(matched.cost_center) if matched.cost_center else missing,
+                )
+            )
+        elif record:
+            aircraft = f"{record.aircraft.registration} · {record.aircraft.model}"
+        else:
+            aircraft = missing
+        if matched is None and log_model:
+            aircraft = f"{aircraft} · {log_model} ({_('according to the log')})"
+        rows = []
+        for label, value in operation:
+            if value == PLACEHOLDER:
+                rows += [(label, aircraft), *extra]
+            else:
+                rows.append((label, value))
+        return rows
 
     def post(self, request, *args, **kwargs):
         if not request.user.has_perm("operations.change_flightrecord"):
