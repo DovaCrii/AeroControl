@@ -1,0 +1,70 @@
+/* LV-430: reporte de vuelo imprimible (A4 vertical). Techo propio de 10 KB (lo vigila test_lv430).
+   Paleta y tipografía del manual de marca (apps/core/branding.py): BLUE #1E418C, CYAN #60C4F5,
+   GRAY_DARK #4D4D4D, GRAY_LIGHT #B3B3B3, Helvetica. Se carga después de flight-analysis.css. */
+.fr-body { margin: 0; background: #eceff4; color: #4D4D4D; font: 10pt/1.45 Helvetica, Arial, sans-serif; }
+.fr-toolbar { max-width: 17cm; margin: 1rem auto 0; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.fr-btn { display: inline-block; padding: .4rem .8rem; border: 1px solid #1E418C; border-radius: .4rem; background: #fff; color: #1E418C; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.fr-btn-primary { background: #1E418C; color: #fff; }
+.fr-hint { flex-basis: 100%; margin: 0; font-size: 9pt; }
+.fr-page { width: 17cm; max-width: 100%; box-sizing: border-box; margin: 1rem auto; padding: 1cm; background: #fff; }
+.fr-head { display: flex; gap: 1cm; align-items: center; border-bottom: 3px solid #1E418C; padding-bottom: .4cm; margin-bottom: .5cm; }
+.fr-logo { width: 4.2cm; height: auto; }
+.fr-head-text { flex: 1; }
+.fr-page .page-title { margin: 0 0 .15cm; color: #1E418C; font-size: 22pt; font-weight: 700; line-height: 1.1; }
+.fr-meta { margin: 0; }
+.fr-synthetic { margin: 0 0 .4cm; padding: .2cm .3cm; border: 1px solid #B3B3B3; font-weight: 700; }
+.fr-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-bottom: .6cm; background: #1E418C; border: 2px solid #1E418C; border-radius: .2cm; overflow: hidden; }
+.fr-kpi { background: #1E418C; color: #fff; padding: .3cm .35cm; display: flex; flex-direction: column; }
+.fr-kpi-label { color: #60C4F5; font-size: 8.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+.fr-kpi-value { font-size: 22pt; font-weight: 700; line-height: 1.15; }
+.fr-kpi-value small { margin-left: .15cm; font-size: 10pt; font-weight: 400; color: #60C4F5; }
+.fr-section { margin-bottom: .6cm; }
+.fr-section h2 { margin: 0 0 .2cm; padding-left: .25cm; border-left: 4px solid #60C4F5; color: #1E418C; font-size: 13pt; font-weight: 700; }
+.fr-alert { margin: .2cm 0 0; padding: .2cm .3cm; border-left: 4px solid #b91c1c; background: #fdecec; color: #7f1d1d; font-weight: 700; }
+.fr-note { margin: .15cm 0 0; font-size: 8.5pt; }
+.fr-reading { color: #1E418C; }
+.fr-page .fa-map { width: 100%; height: 9cm; border: 1px solid #B3B3B3; border-radius: 0; }
+.fr-figure { margin: 0 0 .4cm; max-width: none; }
+.fr-figure figcaption { font-weight: 700; color: #1E418C; }
+.fr-figure .fa-chart .fa-line { stroke: #1E418C; }
+.fr-timeline { width: 100%; height: auto; }
+.fr-ph-takeoff { fill: #60C4F5; }
+.fr-ph-work { fill: #1E418C; }
+.fr-ph-return { fill: #4D4D4D; }
+.fr-ph-landing { fill: #B3B3B3; }
+.fr-ph-label { font-size: 11px; font-weight: 700; fill: #fff; }
+.fr-pl-takeoff, .fr-pl-landing { fill: #1b1b1b; }
+.fr-tick { font-size: 10px; fill: #4D4D4D; }
+.fr-mk line { stroke-width: 1.5; }
+.fr-mk-warning line { stroke: #b45309; }
+.fr-mk-warning polygon { fill: #f59e0b; stroke: #b45309; }
+.fr-mk-critical line { stroke: #b91c1c; }
+.fr-mk-critical polygon { fill: #dc2626; stroke: #7f1d1d; }
+.fr-legend { display: flex; flex-wrap: wrap; gap: .15cm .5cm; margin: .15cm 0 0; padding: 0; list-style: none; font-size: 8.5pt; }
+.fr-sw { display: inline-block; width: .35cm; height: .35cm; margin-right: .15cm; vertical-align: -.07cm; }
+.fr-sw-takeoff { background: #60C4F5; }
+.fr-sw-work { background: #1E418C; }
+.fr-sw-return { background: #4D4D4D; }
+.fr-sw-landing { background: #B3B3B3; }
+.fr-sw-warning { background: #f59e0b; border-radius: 50%; }
+.fr-sw-critical { background: #dc2626; border-radius: 50%; }
+.fr-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+.fr-table th { background: #1E418C; color: #fff; text-align: left; }
+.fr-table th, .fr-table td { padding: .12cm .2cm; border-bottom: 1px solid #B3B3B3; vertical-align: top; }
+.fr-table tr { break-inside: avoid; }
+.fr-raw { color: #4D4D4D; overflow-wrap: anywhere; }
+.fr-page .fr-facts { grid-template-columns: repeat(2, 1fr); gap: .2cm; }
+.fr-page .fr-facts > div { border-color: #B3B3B3; border-radius: 0; padding: .15cm .25cm; }
+.fr-page .fr-facts dt { color: #4D4D4D; }
+.fr-page .fr-facts dd { color: #1E418C; }
+.fr-limits { padding-left: .5cm; }
+.fr-foot { display: flex; align-items: center; gap: .5cm; margin-top: .8cm; padding-top: .4cm; border-top: 1px solid #B3B3B3; font-size: 8.5pt; }
+.fr-seal { width: 28mm; height: 28mm; padding: 3mm; flex: none; }
+.fr-foot p { margin: 0; }
+@page { size: A4 portrait; margin: 12mm; @bottom-right { content: counter(page) " / " counter(pages); font: 8pt Helvetica, Arial, sans-serif; color: #4D4D4D; } }
+@media print {
+  .fr-body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fr-noprint { display: none !important; }
+  .fr-page { margin: 0 auto; padding: 0 1cm; } /* mismo ancho útil que en pantalla: el mapa no cambia de tamaño al imprimir */
+  .fr-keep, .fr-figure { break-inside: avoid; }
+}

@@ -250,12 +250,8 @@ def _limitation_text(item: str) -> str:
     return item
 
 
-class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
-    """Lectura: `view_flightrecord` y el tenant del permiso. El enlace a una operación
-    (POST) exige además `change_flightrecord`."""
-
-    model = FlightRecord
-    template_name = "operations/flight_analysis.html"
+class AnalysisLookupMixin:
+    """El análisis de la URL, siempre acotado al tenant del permiso (404 si es de otro)."""
 
     def get_analysis(self) -> FlightLogAnalysis:
         queryset = scope_queryset_to_tenant(
@@ -272,6 +268,16 @@ class FlightAnalysisView(ModelViewPermissionRequiredMixin, TemplateView):
             return queryset.get(pk=self.kwargs["pk"])
         except FlightLogAnalysis.DoesNotExist as exc:
             raise Http404 from exc
+
+
+class FlightAnalysisView(
+    AnalysisLookupMixin, ModelViewPermissionRequiredMixin, TemplateView
+):
+    """Lectura: `view_flightrecord` y el tenant del permiso. El enlace a una operación
+    (POST) exige además `change_flightrecord`."""
+
+    model = FlightRecord
+    template_name = "operations/flight_analysis.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
