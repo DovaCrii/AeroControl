@@ -20,6 +20,7 @@ from apps.core.exports import neutralize
 from apps.core.views import ModelViewPermissionRequiredMixin
 
 from ..models import FlightLogAnalysis, FlightRecord
+from .compliance import timeline_flags
 from .explanations import explain
 from .narrative import _final_battery
 from .service import PARSER_VERSION
@@ -56,12 +57,19 @@ def csv_cell(value):
     return neutralize(value)
 
 
-def _aircraft_facts(track: FlightTrack, permission, record):
-    """Matrícula, modelo y serie: del registro si hubo cruce por serie (o de la operación
-    enlazada); si no, lo que dice el log, marcado como tal."""
+def _aircraft_facts(track: FlightTrack, analysis, record):
+    """Matrícula, modelo y serie: la aeronave elegida al subir el log (LV-431), o la del
+    registro por serie (o de la operación enlazada); si no, lo que dice el log, marcado.
+
+    Recibe el análisis y no el permiso: un log subido desde «Flight logs» no tiene permiso,
+    y leer `permission.cost_center` ahí era un 500 en el reporte, el KML y el CSV. El tenant
+    sale del centro de costo, que el análisis siempre tiene (constraint permiso-o-centro y
+    `save()` lo copia del permiso)."""
     missing = _not_provided()
     log = track.aircraft or {}
-    known = registry_aircraft(track, permission.cost_center.tenant_id)
+    known = analysis.aircraft or registry_aircraft(
+        track, analysis.cost_center.tenant_id
+    )
     if known is None and record is not None:
         known = record.aircraft
     if known is not None:
@@ -160,8 +168,10 @@ def _readings(track: FlightTrack) -> dict:
     return out
 
 
-def _timeline(track: FlightTrack):
+def _timeline(track: FlightTrack, flags=()):
     labels = {
+        "area": _("Outside the authorized area"),
+        "height": _("Over the authorized height"),
         "title": _("Flight phases and warnings"),
         "takeoff": _("Takeoff"),
         "work": _("Work"),
@@ -178,7 +188,7 @@ def _timeline(track: FlightTrack):
         (phase, labels[phase])
         for phase in dict.fromkeys(p for p, *_r in phase_segments(track))
     ]
-    return timeline_svg(track, labels, mark_text), legend
+    return timeline_svg(track, labels, mark_text, flags), legend
 
 
 def _file_slug(analysis, track, facts) -> str:
@@ -202,8 +212,9 @@ class FlightReportView(FlightAnalysisView):
         if analysis.status != FlightLogAnalysis.STATUS_OK:
             raise Http404
         track = context["track"]
-        facts = _aircraft_facts(track, analysis.permission, analysis.flight_record)
-        svg, legend = _timeline(track)
+        facts = _aircraft_facts(track, analysis, analysis.flight_record)
+        compliance = context["compliance"]
+        svg, legend = _timeline(track, timeline_flags(compliance))
         charts = context["charts"]
         readings = _readings(track)
         for chart in charts:
@@ -223,6 +234,7 @@ class FlightReportView(FlightAnalysisView):
                 "start_text": start or missing,
                 "kpis": _kpis(track),
                 "timeline": svg,
+                "timeline_flagged": bool(compliance["segments"]),
                 "timeline_legend": legend,
                 "charts": charts,
                 "operator": str(record.pilot) if record else missing,
@@ -246,7 +258,7 @@ class _ExportView(AnalysisLookupMixin, ModelViewPermissionRequiredMixin, View):
         if analysis.status != FlightLogAnalysis.STATUS_OK:
             raise Http404
         track = FlightTrack.from_dict(analysis.result)
-        facts = _aircraft_facts(track, analysis.permission, analysis.flight_record)
+        facts = _aircraft_facts(track, analysis, analysis.flight_record)
         return self.render(analysis, track, facts, _file_slug(analysis, track, facts))
 
 

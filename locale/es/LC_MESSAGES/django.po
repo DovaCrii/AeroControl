@@ -15154,6 +15154,129 @@ msgstr "Trabajo"
 msgid "Flight path"
 msgstr "Trayectoria de vuelo"
 
+msgid "The flight log is not linked to a permit."
+msgstr "El log de vuelo no está vinculado a un permiso."
+
+msgid "The permit has no area geometry (no KMZ plan and no centre with radius)."
+msgstr ""
+"El permiso no tiene geometría de área (ni plan KMZ ni centro con radio)."
+
+msgid "The log has no position data to compare with the area."
+msgstr "El log no tiene datos de posición para compararlos con el área."
+
+msgid "The permit has no maximum altitude registered."
+msgstr "El permiso no tiene una altura máxima registrada."
+
+msgid "The log has no height data to compare with the altitude limit."
+msgstr "El log no tiene datos de altura para compararlos con el límite."
+
+msgid "No authorized area to compare"
+msgstr "Sin área autorizada para comparar"
+
+#, python-format
+msgid ""
+"The aircraft left the authorized area for %(seconds)s s (up to %(meters)s m "
+"outside)."
+msgstr ""
+"La aeronave salió del área autorizada durante %(seconds)s s (hasta "
+"%(meters)s m fuera)."
+
+msgid "The whole flight stayed inside the authorized area."
+msgstr "Todo el vuelo se mantuvo dentro del área autorizada."
+
+#, python-format
+msgid ""
+"The aircraft exceeded the authorized height of %(limit)s m for %(seconds)s s "
+"(up to %(peak)s m above takeoff)."
+msgstr ""
+"La aeronave superó la altura autorizada de %(limit)s m durante %(seconds)s s "
+"(hasta %(peak)s m sobre el despegue)."
+
+#, python-format
+msgid "The whole flight stayed under the authorized height of %(limit)s m."
+msgstr "Todo el vuelo se mantuvo bajo la altura autorizada de %(limit)s m."
+
+msgid "Inside the area and under the height for the whole flight"
+msgstr "Dentro del área y bajo la altura durante todo el vuelo"
+
+msgid "No deviation found in the comparison that could be made"
+msgstr "Sin desviaciones en la comparación que se pudo hacer"
+
+msgid "Outside the area and over the height, according to the log"
+msgstr "Fuera del área y sobre la altura, según el log"
+
+msgid "Left the authorized area, according to the log"
+msgstr "Salió del área autorizada, según el log"
+
+msgid "Exceeded the authorized height, according to the log"
+msgstr "Superó la altura autorizada, según el log"
+
+#, python-format
+msgid ""
+"Position accuracy: GPS error is typically a few metres, so a point is "
+"counted as outside only beyond %(tol)s m from the area edge."
+msgstr ""
+"Precisión de posición: el error del GPS suele ser de unos pocos metros, por "
+"eso un punto se cuenta como fuera sólo a más de %(tol)s m del borde del área."
+
+msgid ""
+"Height reference: the log records height above the takeoff point, not above "
+"the ground or sea level. If the terrain differs from the takeoff point, the "
+"real height above ground differs from what is compared here."
+msgstr ""
+"Referencia de altura: el log registra la altura sobre el punto de despegue, "
+"no sobre el terreno ni sobre el nivel del mar. Si el terreno difiere del "
+"punto de despegue, la altura real sobre el suelo es distinta de la que aquí "
+"se compara."
+
+msgid ""
+"This comparison is an aid to review the flight; it does not replace the "
+"pilot's report or the DGAC's assessment."
+msgstr ""
+"Esta comparación es una ayuda para revisar el vuelo; no reemplaza el informe "
+"del piloto ni la evaluación de la DGAC."
+
+msgid "outside the area"
+msgstr "fuera del área"
+
+msgid "over the height"
+msgstr "sobre la altura"
+
+msgid "Authorized area"
+msgstr "Área autorizada"
+
+msgid "Outside the authorized area"
+msgstr "Fuera del área autorizada"
+
+msgid "Over the authorized height"
+msgstr "Sobre la altura autorizada"
+
+msgid "Permit linked to the flight log."
+msgstr "Permiso vinculado al log de vuelo."
+
+msgid "Authorized area and altitude"
+msgstr "Área y altura autorizadas"
+
+msgid ""
+"The shaded outline is the authorized area; red stretches are where the log "
+"is outside it or over the authorized height."
+msgstr ""
+"El contorno sombreado es el área autorizada; los tramos rojos son donde el "
+"log está fuera de ella o sobre la altura autorizada."
+
+msgid ""
+"Red bands mark the stretches outside the authorized area (bottom edge) or "
+"over the authorized height (top edge)."
+msgstr ""
+"Las bandas rojas marcan los tramos fuera del área autorizada (borde "
+"inferior) o sobre la altura autorizada (borde superior)."
+
+msgid "Permit this log belongs to"
+msgstr "Permiso al que pertenece este log"
+
+msgid "Link permit"
+msgstr "Vincular permiso"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

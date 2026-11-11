@@ -68,3 +68,10 @@
   .fr-page { margin: 0 auto; padding: 0 1cm; } /* mismo ancho útil que en pantalla: el mapa no cambia de tamaño al imprimir */
   .fr-keep, .fr-figure { break-inside: avoid; }
 }
+/* LV-432: el reporte no carga identity.css; el chip de veredicto lleva sus colores aquí. */
+.fr-body .id-chip { display: inline-block; padding: .05cm .3cm; border: 1px solid #c4ccd8; border-radius: 1cm; font-weight: 700; font-size: 10pt; background: #eceff4; color: #384252; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+.fr-body .id-chip--ok { background: #e4f6ea; border-color: #a7d9b8; color: #1f7a43; }
+.fr-body .id-chip--warning { background: #fdf1dc; border-color: #ecc98a; color: #8a5a12; }
+.fr-body .id-chip--critical { background: #fce4e6; border-color: #f0b0b6; color: #a52834; }
+.fr-flag { fill: #dc2626; }
+.fr-comp-lines, .fr-comp-segments, .fr-comp-caveats { margin: .15cm 0 0; padding-left: .5cm; font-size: 9pt; }

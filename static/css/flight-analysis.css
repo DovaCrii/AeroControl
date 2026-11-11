@@ -20,3 +20,10 @@
 @media (max-width: 575.98px) { .fa-map { height: 22rem; } }
 .fa-legend-return { margin-top: .35rem; display: flex; align-items: center; }
 .fa-legend-dash { display: inline-block; width: 1.6rem; border-top: 3px dashed #111827; margin-right: .25rem; }
+/* LV-432: área y altura autorizadas. */
+.fa-legend-swatch { display: inline-block; width: 1.6rem; height: .7rem; margin-right: .25rem; border-radius: .15rem; }
+.fa-legend-area { border: 2px solid #1E418C; background: rgba(96, 196, 245, .25); }
+.fa-legend-out { background: #dc2626; }
+.fa-legend-over { background: repeating-linear-gradient(90deg, #dc2626 0 3px, transparent 3px 7px); }
+.fa-comp-lines { padding-left: 1.1rem; margin-bottom: .5rem; }
+.fa-comp-caveats, .fa-comp-segments { padding-left: 1.1rem; }
