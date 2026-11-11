@@ -14598,6 +14598,214 @@ msgstr "Asignación y estado"
 msgid "%(registration)s · %(kind)s"
 msgstr "%(registration)s · %(kind)s"
 
+msgid "Analysed"
+msgstr "Analizado"
+
+msgid "Back to operations"
+msgstr "Volver a las operaciones"
+
+msgid "Battery (%)"
+msgstr "Batería (%)"
+
+msgid "Battery over time"
+msgstr "Batería en el tiempo"
+
+msgid "Charts"
+msgstr "Gráficos"
+
+msgid "Distance flown"
+msgstr "Distancia recorrida"
+
+msgid "Download log"
+msgstr "Descargar el log"
+
+msgid "Duration (min:s)"
+msgstr "Duración (min:s)"
+
+msgid "Event timeline"
+msgstr "Cronología de eventos"
+
+msgid "Flight analysis"
+msgstr "Análisis de vuelo"
+
+msgid "Flight log"
+msgstr "Log de vuelo"
+
+msgid ""
+"Ground speed. Sudden peaks can point to strong wind or a fast manoeuvre."
+msgstr ""
+"Velocidad sobre el suelo. Los picos bruscos pueden indicar viento fuerte o "
+"una maniobra rápida."
+
+msgid "Height above takeoff (m)"
+msgstr "Altura sobre el despegue (m)"
+
+msgid ""
+"Height above the takeoff point. A steady climb, a plateau and a descent is a"
+" normal flight."
+msgstr ""
+"Altura sobre el punto de despegue. Una subida sostenida, una meseta y un "
+"descenso son un vuelo normal."
+
+msgid "Height not recorded"
+msgstr "Altura no registrada"
+
+msgid "Height over time"
+msgstr "Altura en el tiempo"
+
+msgid "Landing"
+msgstr "Aterrizaje"
+
+msgid "Landing point (lat, lon)"
+msgstr "Punto de aterrizaje (lat, lon)"
+
+msgid "Level"
+msgstr "Nivel"
+
+msgid "Limitations and uninterpreted fields"
+msgstr "Limitaciones y campos sin interpretar"
+
+msgid "Link"
+msgstr "Enlazar"
+
+msgid "Log file"
+msgstr "Archivo del log"
+
+msgid "Maximum distance from takeoff"
+msgstr "Distancia máxima al despegue"
+
+msgid "Maximum height above takeoff"
+msgstr "Altura máxima sobre el despegue"
+
+msgid "Maximum speed"
+msgstr "Velocidad máxima"
+
+msgid "No events in the log."
+msgstr "El log no trae eventos."
+
+msgid "None reported."
+msgstr "Ninguna informada."
+
+msgid "Not interpreted"
+msgstr "Sin interpretar"
+
+msgid "Not provided"
+msgstr "No informado"
+
+msgid "Not recorded in this log."
+msgstr "No quedó registrado en este log."
+
+msgid "Operation linked to the flight log."
+msgstr "Operación enlazada al log de vuelo."
+
+msgid "Operation this log belongs to"
+msgstr "Operación a la que pertenece este log"
+
+msgid "Original log text"
+msgstr "Texto original del log"
+
+msgid ""
+"Remaining battery charge. It should fall steadily; a sharp drop deserves a "
+"look."
+msgstr ""
+"Nivel de batería restante. Debería bajar de forma pareja; una caída "
+"brusca merece revisarse."
+
+msgid "Speed (m/s)"
+msgstr "Velocidad (m/s)"
+
+msgid "Speed over time"
+msgstr "Velocidad en el tiempo"
+
+msgid "Start"
+msgstr "Inicio"
+
+msgid "Synthetic example data"
+msgstr "Datos sintéticos de ejemplo"
+
+msgid "Synthetic example data: not a real flight."
+msgstr "Datos sintéticos de ejemplo: no es un vuelo real."
+
+msgid "Takeoff"
+msgstr "Despegue"
+
+msgid "Takeoff point (lat, lon)"
+msgstr "Punto de despegue (lat, lon)"
+
+msgid "The DJI key needed to read this log is not configured on the server."
+msgstr ""
+"La clave de DJI necesaria para leer este log no está configurada en el "
+"servidor."
+
+msgid ""
+"The DJI log reader is not installed yet, so this log cannot be analysed for "
+"now."
+msgstr ""
+"El lector de logs de DJI aún no está instalado, así que por ahora este log "
+"no se puede analizar."
+
+msgid ""
+"The line is the path the aircraft followed, coloured by height above the "
+"takeoff point. The green marker is the takeoff, the dark one the landing, "
+"and the amber and red markers are warnings and critical events recorded in "
+"the log."
+msgstr ""
+"La línea es el camino que siguió la aeronave, coloreada según la altura "
+"sobre el punto de despegue. El marcador verde es el despegue, el oscuro el "
+"aterrizaje, y los marcadores ámbar y rojo son advertencias y eventos "
+"críticos registrados en el log."
+
+msgid "The log could not be analysed."
+msgstr "No se pudo analizar el log."
+
+msgid "The log does not have enough position data to draw a trajectory."
+msgstr ""
+"El log no tiene datos de posición suficientes para dibujar una trayectoria."
+
+msgid "The log has no position data, so there is no map."
+msgstr "El log no tiene datos de posición, por eso no hay mapa."
+
+msgid ""
+"The log is incomplete or could not be read. Download it again from the "
+"aircraft or controller and attach it again."
+msgstr ""
+"El log está incompleto o no se pudo leer. Conviene descargarlo de nuevo "
+"desde la aeronave o el control y adjuntarlo otra vez."
+
+msgid "The map could not be drawn."
+msgstr "No se pudo dibujar el mapa."
+
+msgid "The trajectory was thinned from %(total)s to %(kept)s points."
+msgstr "La trayectoria se redujo de %(total)s a %(kept)s puntos."
+
+msgid ""
+"This file is not a supported flight log format. Attach the original log "
+"file."
+msgstr ""
+"Este archivo no es un formato de log de vuelo compatible. Debe adjuntarse el"
+" archivo original del log."
+
+msgid "Time"
+msgstr "Hora"
+
+msgid "Time (min:s)"
+msgstr "Tiempo (min:s)"
+
+msgid "Trajectory map"
+msgstr "Mapa de la trayectoria"
+
+msgid "flight log analyses"
+msgstr "análisis de logs de vuelo"
+
+msgid "flight log analysis"
+msgstr "análisis de log de vuelo"
+
+msgid "inferred"
+msgstr "inferido"
+
+msgid "time zone not determined"
+msgstr "zona horaria no determinada"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

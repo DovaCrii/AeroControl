@@ -94,7 +94,10 @@
         <tr>
           <td><a href="{% url 'document-detail' item.document.pk %}">{{ item.document.title }}</a></td>
           <td>{% if item.size is not None %}{{ item.size|filesizeformat }}{% else %}—{% endif %}</td>
-          <td><a class="btn btn-sm btn-outline-primary" href="{% url 'document-download' item.document.pk %}">{% translate "Download" %}</a></td>
+          <td class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'document-download' item.document.pk %}">{% translate "Download" %}</a>
+            {% if item.analysis and perms.operations.view_flightrecord %}<a class="btn btn-sm btn-outline-primary" href="{% url 'flight-analysis' item.analysis.pk %}">{% translate "Flight analysis" %}</a>{% endif %}
+          </td>
         </tr>
       {% empty %}
         <tr><td colspan="3" class="text-muted">{% translate "No flight log attached yet." %}</td></tr>

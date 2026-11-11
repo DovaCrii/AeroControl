@@ -38,6 +38,9 @@
       <tr><th scope="row">{% translate "Pilot" %}</th><td>{{ record.pilot }}</td></tr>
       <tr><th scope="row">{% translate "Aircraft" %}</th><td>{{ record.aircraft }}</td></tr>
       <tr><th scope="row">{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
+      {% for analysis in record.log_analyses.all %}
+      <tr><th scope="row">{% translate "Flight log" %}</th><td><a href="{% url 'flight-analysis' analysis.pk %}">{% translate "Flight analysis" %}</a></td></tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>

@@ -1917,3 +1917,60 @@ class PreflightAnswer(BaseModel):
 
     def __str__(self):
         return f"{self.text}: {self.get_value_display()}"
+
+
+class FlightLogAnalysis(BaseModel):
+    """LV-427: el análisis de un log de vuelo adjunto a un permiso.
+
+    El `Document` (tipo `flight-log-txt`) cuelga del **permiso**, no de una operación, así que
+    `flight_record` es opcional: se enlaza después, desde la pantalla de análisis. Un fallo del
+    lector se guarda como `status=error` con su código; nunca impide subir el archivo.
+    `result` es el `FlightTrack` serializado, con los puntos submuestreados a 2000.
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_OK = "ok"
+    STATUS_ERROR = "error"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, _("Pending")),
+        (STATUS_OK, _("Analysed")),
+        (STATUS_ERROR, _("Error")),
+    ]
+
+    permission = models.ForeignKey(
+        FlightPermission, on_delete=models.PROTECT, related_name="log_analyses"
+    )
+    flight_record = models.ForeignKey(
+        FlightRecord,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="log_analyses",
+    )
+    document = models.ForeignKey(
+        "compliance.Document", on_delete=models.PROTECT, related_name="log_analyses"
+    )
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    error_code = models.CharField(max_length=30, blank=True)
+    error_message = models.CharField(max_length=300, blank=True)
+    result = models.JSONField(default=dict, blank=True)
+    parser_version = models.CharField(max_length=40, blank=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("flight log analysis")
+        verbose_name_plural = _("flight log analyses")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["document"], name="ops_flightlog_one_per_document"
+            ),
+            models.CheckConstraint(
+                condition=Q(status__in=["pending", "ok", "error"]),
+                name="ops_flightlog_status_valid",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.document} ({self.status})"
