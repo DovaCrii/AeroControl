@@ -39,6 +39,10 @@ ROLE_PERMISSIONS = {
         "change_flightrecord",
         "delete_flightrecord",
         "view_flightrecord",
+        # LV-431: la sección «Flight logs». Quien vuela sube sus logs y los lee; el log
+        # es evidencia, así que no se edita ni se borra (`change`/`delete` no se dan).
+        "add_flightloganalysis",
+        "view_flightloganalysis",
         "add_kanbantask",
         "change_kanbantask",
         "view_kanbantask",
@@ -154,6 +158,8 @@ ROLE_PERMISSIONS = {
         # LV-218(b): igual con la revisión de NOTAM. Cumplimiento la audita; no
         # la produce, porque no es quien vuela.
         "view_notamreview",
+        # LV-431: Cumplimiento lee los logs de vuelo como evidencia; no los sube.
+        "view_flightloganalysis",
         # R7.4: Compliance owns the internal validation and the release gate
         # (ISO 8.6) -- the whole point is that whoever produced the survey is
         # not the one who signs it off.
@@ -227,6 +233,7 @@ ROLE_PERMISSIONS = {
         "view_maintenancehistory",
         "view_flightpermission",
         "view_flightrecord",
+        "view_flightloganalysis",
         "view_permissionhistory",
         "view_kanbanboard",
         "view_kanbanstage",

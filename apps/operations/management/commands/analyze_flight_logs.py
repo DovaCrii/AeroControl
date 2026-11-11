@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from apps.compliance.models import Document
 from apps.operations.flightlog.service import FLIGHT_LOG_TYPE, analyze_document
 from apps.operations.models import FlightLogAnalysis, FlightPermission, FlightRecord
+from apps.registry.models import Aircraft
 
 
 class Command(BaseCommand):
@@ -42,7 +43,10 @@ class Command(BaseCommand):
             documents = [(a.document, a) for a in existing]
             analysed = FlightLogAnalysis.objects.values_list("document_id", flat=True)
             missing = Document.objects.filter(
-                content_type=ContentType.objects.get_for_model(FlightPermission),
+                content_type__in=[
+                    ContentType.objects.get_for_model(FlightPermission),
+                    ContentType.objects.get_for_model(Aircraft),
+                ],
                 doc_type__code=FLIGHT_LOG_TYPE,
                 is_active=True,
                 is_current_version=True,

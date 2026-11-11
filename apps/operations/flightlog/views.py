@@ -21,6 +21,7 @@ from apps.registry.models import Aircraft, normalize_serial
 from ..models import FlightLogAnalysis, FlightRecord
 from .charts import line_chart
 from .explanations import explain
+from .independent import back_link, serial_mismatch_warning
 from .narrative import build_narrative
 from .types import FlightTrack, haversine_m
 
@@ -253,16 +254,25 @@ def _limitation_text(item: str) -> str:
 class AnalysisLookupMixin:
     """El análisis de la URL, siempre acotado al tenant del permiso (404 si es de otro)."""
 
+    def has_permission(self):
+        # LV-431: quien ve la sección «Flight logs» abre el análisis sin pedir además `view_flightrecord`.
+        user = self.request.user
+        return user.has_perm("operations.view_flightrecord") or user.has_perm(
+            "operations.view_flightloganalysis"
+        )
+
     def get_analysis(self) -> FlightLogAnalysis:
         queryset = scope_queryset_to_tenant(
             FlightLogAnalysis.objects.filter(is_active=True).select_related(
-                "permission__cost_center",
+                "permission",
+                "cost_center",
+                "aircraft",
                 "flight_record__aircraft",
                 "flight_record__pilot",
                 "document",
             ),
             self.request.user,
-            "permission__cost_center__tenant_id",
+            "cost_center__tenant_id",
         )
         try:
             return queryset.get(pk=self.kwargs["pk"])
@@ -286,8 +296,13 @@ class FlightAnalysisView(
         record = analysis.flight_record
         missing = _not_provided()
         operation = [
-            (_("Permit"), permission.permission_number or str(permission)),
-            (_("Cost center"), str(permission.cost_center)),
+            (
+                _("Permit"),
+                (permission.permission_number or str(permission))
+                if permission
+                else missing,
+            ),
+            (_("Cost center"), str(analysis.cost_center)),
             (_("Aircraft"), PLACEHOLDER),
             (_("Operator"), str(record.pilot) if record else missing),
             (
@@ -305,7 +320,10 @@ class FlightAnalysisView(
                     permission.records.filter(is_active=True).order_by(
                         "-actual_date", "-departure_time"
                     )
-                ),
+                )
+                if permission
+                else [],
+                "back": back_link(analysis),
                 "can_link": self.request.user.has_perm(
                     "operations.change_flightrecord"
                 ),
@@ -315,7 +333,7 @@ class FlightAnalysisView(
         context["operation"] = self._with_aircraft(
             operation,
             FlightTrack.from_dict(analysis.result) if ok else FlightTrack(),
-            permission,
+            analysis,
             record,
         )
         if analysis.status == FlightLogAnalysis.STATUS_ERROR:
@@ -324,6 +342,7 @@ class FlightAnalysisView(
             track = FlightTrack.from_dict(analysis.result)
             context.update(
                 {
+                    "serial_warning": serial_mismatch_warning(analysis, track),
                     "narrative": build_narrative(track),
                     "has_return": bool(track.return_leg),
                     "track": track,
@@ -340,11 +359,13 @@ class FlightAnalysisView(
             )
         return context
 
-    def _with_aircraft(self, operation, track, permission, record):
+    def _with_aircraft(self, operation, track, analysis, record):
         """Rellena la fila «Aircraft»: registro (por serie) > operación enlazada > «Not provided»,
         más el modelo que dice el log marcado como tal. Nunca se inventa un dato."""
         missing = _not_provided()
-        matched = registry_aircraft(track, permission.cost_center.tenant_id)
+        matched = analysis.aircraft or registry_aircraft(
+            track, analysis.cost_center.tenant_id
+        )
         log_model = (track.aircraft or {}).get("log_model")
         extra = []
         if matched is not None:
@@ -373,6 +394,8 @@ class FlightAnalysisView(
         if not request.user.has_perm("operations.change_flightrecord"):
             raise PermissionDenied
         analysis = self.get_analysis()
+        if analysis.permission is None:
+            raise Http404
         pk = request.POST.get("flight_record", "")
         if pk == "":
             record = None

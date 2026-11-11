@@ -166,6 +166,15 @@ FLIGHT = NavGroup(
             ),
             detail_url_names=("record-detail",),
         ),
+        # LV-431: los logs de vuelo se revisan por sí solos, no desde un permiso.
+        NavItem(
+            "flight-log-list",
+            _("Flight logs"),
+            "flight-log",
+            "flight",
+            permissions=("operations.view_flightloganalysis",),
+            active_url_names=("flight-log-upload", "flight-analysis"),
+        ),
         ENVIRONMENT,
     ),
 )

@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **«Logs de vuelo» como sección propia, por centro de costo y aeronave (`LV-431`, `codex/logs-vuelo-independientes`).** Ítem «Flight logs» en el menú (grupo Vuelo) con lista filtrable (centro de costo, aeronave, estado, fechas; búsqueda por matrícula, serie o archivo) y alta propia: centro de costo → aeronave → `.TXT` DJI → permiso DGAC opcional. El archivo queda como documento de la aeronave y se analiza al subirlo; si la serie del log no coincide con la aeronave elegida, el análisis lo avisa. `FlightLogAnalysis` admite no tener permiso (`cost_center`, `aircraft`, `uploaded_by`; migraciones `0035`–`0037` con relleno de las filas existentes). Permisos nuevos en roles: Operations sube y lee, Compliance y Viewer leen.
 - Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Lector de logs DJI real, fase 2 (`LV-429`, `codex/lector-logs-dji`).** El adaptador DJI deja de ser un stub: invoca el envoltorio `tools/dji-log-json` (crate `dji-log-parser`, MIT) con `DJI_LOG_PARSER_BIN` y `DJI_API_KEY` (sólo entorno). Mapea puntos, resumen (km→m, hora de Santiago y UTC), eventos sin repetir por aparición, regreso automático y aeronave cruzada con el registro por número de serie dentro del tenant. La pantalla suma un resumen escrito con hechos del log, avisos de batería baja al aterrizar y un mapa con selector de capas, un solo marcador cuando despegue y aterrizaje coinciden y el regreso automático en línea discontinua. Las llaves de DJI se guardan por documento y la segunda lectura va sin red.
 - **Lector de logs de vuelo, fase 1: estructura y pantalla con mapa (`LV-427`, `codex/lector-logs-vuelo`).** Al adjuntar el `.TXT` de log de vuelo a un permiso se crea un análisis (`FlightLogAnalysis`, migración `operations.0034`) y la pantalla «Análisis de vuelo» (`/operations/flight-analysis/<id>/`, permiso `view_flightrecord` y alcance por empresa) muestra los datos de la operación, el mapa de la trayectoria (Leaflet, polilínea coloreada por altura, despegue, aterrizaje y eventos), el resumen con zona horaria, gráficos de altura, velocidad y batería, la cronología de eventos y las limitaciones. Un fallo del lector nunca rompe la subida: queda en el análisis con su código. Comando `analyze_flight_logs [--record <pk>] [--retry-errors]`. **El lector DJI real todavía no está conectado** (el adaptador DJI es un stub que responde «lector no instalado»); sólo el adaptador sintético, marcado «Datos sintéticos de ejemplo», produce resultados.
@@ -90,7 +91,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Mapa de Espacio aéreo: capa «Permisos en trámite» (`LV-379`, `codex/mapa-permisos-en-tramite`).** Capa aparte, apagada por omisión, con los permisos de vuelo solicitados a la DGAC y aún sin aprobar (contorno punteado magenta con halo y reloj de arena). Mismo endpoint y permiso que «Permisos vigentes» (`?layer=pending`), acotada por empresa; los sin ubicación no se dibujan y se cuentan en la pista. Sin operadores ni matrículas. Sin migración; lleva estáticos.
 
 - **Cumplimiento v4: dos correcciones de la revisión (`LV-376`).** Un permiso vigente a 30 días o menos con la renovación ya solicitada no ofrece «Renovar» ni dice «renovar ya», sino que la renovación está solicitada; y la tarjeta «Faenas sin permiso» cuenta sólo las faenas sin solicitud ni permiso, así tarjeta, tira y tabla coinciden y cada faena cuenta en una sola tarjeta. Sin migración.
@@ -143,7 +143,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Lo geoespacial dentro del permiso: selector de plan con vista previa y «Subir un KMZ nuevo» en el formulario (`LV-368`, fase 5). Sin migración; LLEVA ESTÁTICOS (`permission-plan-picker.js`, `mini-map.js`) y 12 cadenas nuevas (`.mo` versionado).** Al dar de alta **o editar** un permiso ya no hay que cambiar de pestaña: se elige el plan y el formulario muestra al instante lo que trae (tabla, modalidad, aeródromo más cercano, comuna y región, y un mini-mapa de solo lectura), sin rellenar las casillas a la fuerza: el relleno sigue ocurriendo al guardar y solo llena huecos. Si el KMZ no está subido, se sube sin salir, en un recuadro que abre la importación de siempre (mismo lector, mismas validaciones, mismo permiso) con la faena ya puesta, y el plan nuevo queda elegido. Las casillas que el plan llenará lo dicen. Elegir o cambiar el plan al editar vincula por la misma función que la ficha, con su auditoría y su bitácora, y no pisa lo escrito. La ficha muestra la misma lectura del plan vinculado dentro de «Ubicación y área». Además, la importación y el enlace «separar en solicitudes» ya no abren faenas ni planes de otra empresa.
 - **Mini-mapa de solo lectura de un plan y vista previa «lo que trae el plan» (`LV-368`, fase 4). Sin migración; LLEVA ESTÁTICOS (`static/js/geo/mini-map.js`, `static/css/geo-mini-map.css`) y 8 cadenas nuevas (`.mo` versionado).** Un mapa que dibuja el centro, el círculo o los vértices del área (corredor, triangular, cuadricular) y el aeródromo más cercano de un plan, con Leaflet y las teselas que ya se usaban, sin herramientas de edición. Va dentro de un recuadro plegable (abierto en escritorio, cerrado en móvil) y no se dibuja hasta que el recuadro mida algo, para no colgarse con el contenedor oculto; si falla, la consola dice dónde y por qué. Además, una vista parcial que devuelve, para un plan y una faena, la tabla de lo que el archivo trae y lo que falta, la modalidad, el aeródromo con su distancia y la comuna y la región con la marca «Derivada»; con más de un área no elige ninguna y manda a separarlas en solicitudes. Pide el permiso de ver planes, y un plan o una faena de otra empresa responde 404. Aún no se usa en el formulario: eso llega en la fase 5.
 - **Espacio aéreo desde el AIP-Chile: la capa del AIP en el mapa (`LV-361`, fase 5). Sin migración; LLEVA ESTÁTICOS (`airspace-map.js`, `airspace.css`, plantilla, `collectstatic`) y traducciones nuevas (`.mo` recompilado).** Con un snapshot AIP publicado, `data.json` sirve las zonas aprobadas del AIP (nunca las pendientes, rechazadas, archivadas ni de un borrador) con la insignia «AIP · AMDT n (fecha)»; la forma de Google de una zona que el AIP ya trae pasa a la capa «Referencia Google» (apagada por omisión) y las zonas que sólo trae Google (SC-D12, SC-P77, navales) van a esa capa rotuladas «referencia» con «Solo mapa Google (no está en el AIP vigente)»; aeródromos, pistas y FIR no cambian. Una zona aprobada sólo como texto (arco o sector) se busca y tiene ficha con su texto y la nota «sin forma dibujada», pero no se dibuja. «Diferencia con Google: X m» aparece donde existe el cruce, sin color ni veredicto hasta que la persona fije `AIRSPACE_CROSSCHECK_THRESHOLD_M` (con él, símbolo y texto en ámbar, nunca rojo). Los conteos no duplican una zona presente en ambas fuentes; la fila «Fuente» y la franja dicen qué fuente alimenta qué, con la atribución textual del AIP y un chip de frescura que se pone ámbar si la tabla de snapshots conoce una AMDT más nueva (sin consultar nada; el aviso de NOTAM/SUP queda siempre visible). El ETag pasa a ser un digest de las dos fotos cuando hay AIP publicado. **Sin snapshot AIP publicado todo es idéntico a antes** (payload byte a byte, ETag y pantalla). Pruebas con datos sintéticos, incluido el script real en Node contra un Leaflet de mentira, contraste calculado y mutaciones comprobadas; ningún dato del AIP entra en git.
@@ -308,7 +307,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Skills de diseño UI fijadas (`LV-334`).** `ui-ux-pro-max`, `web-design-guidelines` y `bencium-controlled-ux-designer`, revisadas y fijadas a un commit, más la skill propia `diseno-ui` con su verificador de contraste (`.claude/skills/VENDOR.md`). Sin cambios de CSS, plantillas ni tokens.
 - **Skill `pendientes-github` (`LV-311`).** Inventario de solo lectura de PR abiertos, ramas fusionadas y worktrees, y la receta para cerrarlos con Opus decidiendo, Sonnet implementando y Haiku revisando; `orquestar` queda alineada.
 - **Auditoría atómica con cada cambio, apagada por omisión (`T1.4`, paso 2).** Con
@@ -352,7 +350,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Ordenar por columna en seis listas más (`LV-280`, segunda tanda).** Asignaciones de
   operador y de aeronave, tipos de documento, reglas de alerta, tipos de habilitación y
   etiquetas del tablero se ordenan con un clic en el encabezado, ascendente y descendente.
@@ -432,7 +429,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Skills de flujo para agentes (`LV-272`).** `/abrir-pr`, `/cerrar-tarea`, `/verificar` y
   `/desplegar-p340`: el agente crea, verifica y fusiona sus PR con el CI verde, y el
   usuario sólo despliega en `p340`. Recogen los errores de esta jornada —commits en una
@@ -718,7 +714,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **«Revisar antes de emitir» en el informe mensual (`LV-265`).** Avisa, sólo en
   pantalla, de un permiso vigente cuya faena no sale en la tabla de cobertura, de
   faenas nombradas en el texto escrito que no existen en el informe, de la
@@ -829,7 +824,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Ver qué cambió entre dos informes (`LV-251`).** El botón «Ver los cambios»
   compara el informe con su revisión anterior —qué se corrigió— o con el del mes
   anterior —cómo se movió la operación—: los 18 indicadores con su diferencia, los
@@ -972,7 +966,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Se registra por qué se cerró un plan, para poder contarlo (`LV-178`).** Dos
   motivos: **rechazo de la DGAC** y **modificación interna**, más *Otro* que
   exige decir cuál. Son cosas distintas y por eso se cuentan aparte: diez
@@ -1031,7 +1024,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **El panel y el informe dicen cuántos permisos hay vigentes (`LV-201`).** La
   fila de indicadores mostraba flota, seguros y credenciales, y ninguna cifra del
   objeto que la aplicación existe para tramitar. Ahora hay una cuarta: permisos
@@ -1500,7 +1492,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Prueba interna de conocimientos por operador (`LV-158`).** Cada operador rinde
   desde su propia sesión —el resultado se archiva en su ficha, junto a la credencial
   y las habilitaciones— y la revisión dice **en qué se equivocó y cuál era la
@@ -1632,7 +1623,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **El KMZ entrega sus datos apenas se sube, sin separarlo (`R10.1`).** La
   ficha del plan geoespacial trae ahora **"Datos para SIGO"**: el punto centro
   en grados, minutos y segundos, el radio en metros, y el **aeródromo más
@@ -1837,7 +1827,6 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **La solicitud de seguro a la JAC tiene dónde guardarse (`LV-121`).** Faltaba
   la mitad que **va**: el formulario que se manda a la JAC pidiendo la
   aprobación del seguro. Con sólo la resolución que vuelve, la carpeta de una
@@ -2206,7 +2195,6 @@ AeroLink (`X.1`–`X.3`).
 
 ### Added
 
-- Reporte de vuelo imprimible con formato J.E.J. (logo, sello Levantamiento Digital, KPI, mapa satelital, línea de tiempo de fases, gráficos con lectura, avisos y trazabilidad) más descargas KML y CSV del log analizado (LV-430).
 - **Inventario de baterías con ciclos y salud (`R7.2`, ISO 7.1.3).**
   `registry.Battery` con serial como llave de cruce, ciclos, salud, firmware y
   —clave— `source`/`synced_at` para saber de dónde vino el dato y qué tan fresco

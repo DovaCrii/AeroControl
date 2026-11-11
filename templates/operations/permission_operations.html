@@ -82,6 +82,7 @@
   <h2 class="h5">{% translate "Attach flight log" %}</h2>
   <p class="small text-muted mb-2">{% translate "Required format: .TXT" %}</p>
   {% if upload_url %}<p><a href="{{ upload_url }}" class="btn btn-sm btn-upload">{% translate "Upload .TXT" %}</a></p>{% endif %}
+  {% if perms.operations.view_flightloganalysis %}<p class="small"><a href="{% url 'flight-log-list' %}?cost_center={{ permission.cost_center_id }}">{% translate "Flight logs" %}</a> {% translate "of this cost center" %}</p>{% endif %}
   <div class="table-responsive">
     <table class="table table-sm align-middle">
       <thead><tr>

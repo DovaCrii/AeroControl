@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from .flightlog import report as flight_report_view
 from .flightlog import views as flight_analysis_view
+from .flightlog import log_views as flight_log_views
 
 urlpatterns = [
     # `UX-27`: la pregunta de quien está en faena, y por eso encabeza la lista.
@@ -36,6 +37,15 @@ urlpatterns = [
         "flight-analysis/<uuid:pk>/",
         flight_analysis_view.FlightAnalysisView.as_view(),
         name="flight-analysis",
+    ),
+    # LV-431: «Flight logs» como sección propia (centro de costo + aeronave, sin permiso).
+    path(
+        "flight-logs/", flight_log_views.FlightLogList.as_view(), name="flight-log-list"
+    ),
+    path(
+        "flight-logs/new/",
+        flight_log_views.FlightLogUpload.as_view(),
+        name="flight-log-upload",
     ),
     # LV-430: reporte imprimible (A4, se guarda como PDF desde el navegador), KML y CSV.
     path(

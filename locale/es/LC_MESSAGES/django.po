@@ -14692,8 +14692,12 @@ msgstr "Sin interpretar"
 msgid "Not provided"
 msgstr "No informado"
 
-msgid "DJI could not provide the keys to read this log. Check the server key and its internet access, then try again."
-msgstr "DJI no entregó las llaves para leer este registro. Revise la clave del servidor y su acceso a internet, y vuelva a intentarlo."
+msgid ""
+"DJI could not provide the keys to read this log. Check the server key and "
+"its internet access, then try again."
+msgstr ""
+"DJI no entregó las llaves para leer este registro. Revise la clave del "
+"servidor y su acceso a internet, y vuelva a intentarlo."
 
 msgid "Start (UTC)"
 msgstr "Inicio (UTC)"
@@ -14716,14 +14720,20 @@ msgstr "El vuelo en resumen"
 msgid "The dashed line is the automatic return to the home point."
 msgstr "La línea discontinua es el regreso automático al punto de origen."
 
-msgid "The remaining battery is only enough to fly back to the home point. The aircraft advises returning now."
-msgstr "La batería restante sólo alcanza para volver al punto de origen. La aeronave aconseja regresar ahora."
+msgid ""
+"The remaining battery is only enough to fly back to the home point. The "
+"aircraft advises returning now."
+msgstr ""
+"La batería restante sólo alcanza para volver al punto de origen. La aeronave"
+" aconseja regresar ahora."
 
 msgid "The aircraft reported an altitude zone or altitude limit."
 msgstr "La aeronave informó una zona de altitud o un límite de altitud."
 
 msgid "The camera stabilizer (gimbal) reached the end of its movement range."
-msgstr "El estabilizador de la cámara (gimbal) llegó al final de su rango de movimiento."
+msgstr ""
+"El estabilizador de la cámara (gimbal) llegó al final de su rango de "
+"movimiento."
 
 msgid "The aircraft switched to automatic return to the home point."
 msgstr "La aeronave pasó a regreso automático al punto de origen."
@@ -14734,11 +14744,19 @@ msgstr "La aeronave despegó de forma automática."
 msgid "The aircraft started an automatic landing."
 msgstr "La aeronave inició un aterrizaje automático."
 
-msgid "The aircraft stopped near the ground and waited for the landing to be confirmed."
-msgstr "La aeronave se detuvo cerca del suelo y esperó la confirmación del aterrizaje."
+msgid ""
+"The aircraft stopped near the ground and waited for the landing to be "
+"confirmed."
+msgstr ""
+"La aeronave se detuvo cerca del suelo y esperó la confirmación del "
+"aterrizaje."
 
-msgid "The flight controller reported the GPS attitude mode (GPSAtti), a position-assisted flight mode."
-msgstr "El controlador de vuelo informó el modo de actitud con GPS (GPSAtti), un modo de vuelo asistido por posición."
+msgid ""
+"The flight controller reported the GPS attitude mode (GPSAtti), a position-"
+"assisted flight mode."
+msgstr ""
+"El controlador de vuelo informó el modo de actitud con GPS (GPSAtti), un "
+"modo de vuelo asistido por posición."
 
 msgid "The motors were started."
 msgstr "Se encendieron los motores."
@@ -14746,12 +14764,19 @@ msgstr "Se encendieron los motores."
 msgid "The return-to-home system reported that it was active."
 msgstr "El sistema de regreso al punto de origen informó que estaba activo."
 
-msgid "No plain-language explanation for this entry; see the original log text."
-msgstr "Esta entrada no tiene una explicación en lenguaje claro; vea el texto original del log."
+msgid ""
+"No plain-language explanation for this entry; see the original log text."
+msgstr ""
+"Esta entrada no tiene una explicación en lenguaje claro; vea el texto "
+"original del log."
 
 #, python-format
-msgid "The flight lasted %(minutes)s min, covered %(km)s km and reached %(height)s m above the takeoff point."
-msgstr "El vuelo duró %(minutes)s min, recorrió %(km)s km y llegó a %(height)s m sobre el punto de despegue."
+msgid ""
+"The flight lasted %(minutes)s min, covered %(km)s km and reached %(height)s "
+"m above the takeoff point."
+msgstr ""
+"El vuelo duró %(minutes)s min, recorrió %(km)s km y llegó a %(height)s m "
+"sobre el punto de despegue."
 
 #, python-format
 msgid "The flight lasted %(minutes)s min."
@@ -14766,12 +14791,20 @@ msgid "It reached %(height)s m above the takeoff point."
 msgstr "Llegó a %(height)s m sobre el punto de despegue."
 
 #, python-format
-msgid "At minute %(minute)s the aircraft warned that the battery was only enough to return, and it flew back in automatic mode."
-msgstr "En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para regresar, y volvió en modo automático."
+msgid ""
+"At minute %(minute)s the aircraft warned that the battery was only enough to"
+" return, and it flew back in automatic mode."
+msgstr ""
+"En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para"
+" regresar, y volvió en modo automático."
 
 #, python-format
-msgid "At minute %(minute)s the aircraft warned that the battery was only enough to return."
-msgstr "En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para regresar."
+msgid ""
+"At minute %(minute)s the aircraft warned that the battery was only enough to"
+" return."
+msgstr ""
+"En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para"
+" regresar."
 
 #, python-format
 msgid "At minute %(minute)s the aircraft started an automatic return."
@@ -14801,8 +14834,8 @@ msgid ""
 "Remaining battery charge. It should fall steadily; a sharp drop deserves a "
 "look."
 msgstr ""
-"Nivel de batería restante. Debería bajar de forma pareja; una caída "
-"brusca merece revisarse."
+"Nivel de batería restante. Debería bajar de forma pareja; una caída brusca "
+"merece revisarse."
 
 msgid "Speed (m/s)"
 msgstr "Velocidad (m/s)"
@@ -14899,6 +14932,228 @@ msgstr "inferido"
 msgid "time zone not determined"
 msgstr "zona horaria no determinada"
 
+msgid "The permit belongs to a different cost center."
+msgstr "El permiso pertenece a otro centro de costo."
+
+msgid "The aircraft does not belong to the selected cost center."
+msgstr "La aeronave no pertenece al centro de costo elegido."
+
+msgid "Back to flight logs"
+msgstr "Volver a los logs de vuelo"
+
+msgid ""
+"The serial in the log (%(log)s) does not match the selected aircraft "
+"(%(aircraft)s)."
+msgstr ""
+"La serie que dice el log (%(log)s) no coincide con la aeronave elegida "
+"(%(aircraft)s)."
+
+msgid "Flight log file (.TXT)"
+msgstr "Archivo del log de vuelo (.TXT)"
+
+msgid "DGAC permit (optional)"
+msgstr "Permiso DGAC (opcional)"
+
+msgid "Select a cost center"
+msgstr "Seleccione un centro de costo"
+
+msgid "Select an aircraft"
+msgstr "Seleccione una aeronave"
+
+msgid "Upload the .TXT file of the flight log."
+msgstr "Suba el archivo .TXT del log de vuelo."
+
+msgid "The file is too large (50 MB maximum)."
+msgstr "El archivo es demasiado grande (máximo 50 MB)."
+
+msgid "The file is empty."
+msgstr "El archivo está vacío."
+
+msgid ""
+"This does not look like a DJI flight log. The file name should be "
+"DJIFlightRecord_….txt."
+msgstr ""
+"Esto no parece un log de vuelo DJI. El nombre del archivo debería ser "
+"DJIFlightRecord_….txt."
+
+msgid "Flight logs"
+msgstr "Logs de vuelo"
+
+msgid "Registration, serial number or file name…"
+msgstr "Matrícula, número de serie o nombre del archivo…"
+
+msgid "Flight log saved."
+msgstr "Log de vuelo guardado."
+
+msgid "Upload flight log"
+msgstr "Subir log de vuelo"
+
+msgid "Distance"
+msgstr "Distancia"
+
+msgid "Max. height"
+msgstr "Altura máx."
+
+msgid "Final battery"
+msgstr "Batería final"
+
+msgid "Upload date"
+msgstr "Fecha de subida"
+
+msgid "No flight logs yet."
+msgstr "Aún no hay logs de vuelo."
+
+msgid "Upload the first flight log"
+msgstr "Subir el primer log de vuelo"
+
+msgid "View analysis"
+msgstr "Ver análisis"
+
+msgid ""
+"Choose the cost center and the aircraft that flew, then attach the DJI "
+"flight log (.TXT). It is analysed right away; the permit is optional."
+msgstr ""
+"Elija el centro de costo y la aeronave que voló, y adjunte el log de vuelo "
+"DJI (.TXT). Se analiza de inmediato; el permiso es opcional."
+
+msgid "Upload and analyse"
+msgstr "Subir y analizar"
+
+msgid "of this cost center"
+msgstr "de este centro de costo"
+
+#: LV-430
+msgid "Flight report"
+msgstr "Reporte de vuelo"
+
+#: LV-430
+msgid "Print / Save as PDF"
+msgstr "Imprimir / Guardar como PDF"
+
+#: LV-430
+msgid "Download KML"
+msgstr "Descargar KML"
+
+#: LV-430
+msgid "Download CSV"
+msgstr "Descargar CSV"
+
+#: LV-430
+msgid "Download report"
+msgstr "Descargar reporte"
+
+#: LV-430
+msgid "Back to analysis"
+msgstr "Volver al análisis"
+
+#: LV-430
+msgid ""
+"In the print dialog choose Save as PDF as the destination and leave "
+"Background graphics on, so the map and colours are kept. If the satellite "
+"map looks incomplete, wait a few seconds and print again."
+msgstr ""
+"En el cuadro de impresión elija Guardar como PDF como destino y deje "
+"activados los gráficos de fondo, para conservar el mapa y los colores. Si el"
+" mapa satelital se ve incompleto, espere unos segundos e imprima de nuevo."
+
+#: LV-430
+msgid "Executive summary"
+msgstr "Resumen ejecutivo"
+
+#: LV-430
+msgid "Flight timeline"
+msgstr "Línea de tiempo del vuelo"
+
+#: LV-430
+msgid ""
+"Phases are inferred from the height and the automatic return recorded in the"
+" log; the marks show where the aircraft reported a warning."
+msgstr ""
+"Las fases se infieren de la altura y del regreso automático registrados en "
+"el log; las marcas muestran dónde la aeronave emitió un aviso."
+
+#: LV-430
+msgid "Warnings and events"
+msgstr "Avisos y eventos"
+
+#: LV-430
+msgid "Operation data"
+msgstr "Datos de la operación"
+
+#: LV-430
+msgid "Aircraft registration"
+msgstr "Matrícula de la aeronave"
+
+#: LV-430
+msgid "Aircraft model"
+msgstr "Modelo de la aeronave"
+
+#: LV-430
+msgid "Operation date"
+msgstr "Fecha de la operación"
+
+#: LV-430
+msgid "Start (local time and time zone)"
+msgstr "Inicio (hora local y zona horaria)"
+
+#: LV-430
+msgid "Log format"
+msgstr "Formato del log"
+
+#: LV-430
+msgid "Reader version"
+msgstr "Versión del lector"
+
+#: LV-430
+msgid "Analysis date"
+msgstr "Fecha del análisis"
+
+#: LV-430
+msgid "Generated by AeroControl"
+msgstr "Generado por AeroControl"
+
+#: LV-430
+msgid "Printed"
+msgstr "Impreso"
+
+#: LV-430
+msgid "min:s"
+msgstr "min:s"
+
+#: LV-430
+msgid "Maximum height"
+msgstr "Altura máxima"
+
+#: LV-430
+msgid "Maximum height: %(max)s m above takeoff, reached at %(time)s."
+msgstr "Altura máxima: %(max)s m sobre el despegue, alcanzada a los %(time)s."
+
+#: LV-430
+msgid "Top speed: %(ms)s m/s (%(kmh)s km/h) at %(time)s; average %(avg)s m/s."
+msgstr ""
+"Velocidad máxima: %(ms)s m/s (%(kmh)s km/h) a los %(time)s; promedio %(avg)s"
+" m/s."
+
+#: LV-430
+msgid "The battery went from %(start)s%% to %(end)s%%."
+msgstr "La batería pasó de %(start)s%% a %(end)s%%."
+
+#: LV-430
+msgid "The aircraft warned at %(time)s, with %(pct)s%% left."
+msgstr "La aeronave avisó a los %(time)s, con %(pct)s%% restante."
+
+#: LV-430
+msgid "Flight phases and warnings"
+msgstr "Fases del vuelo y avisos"
+
+#: LV-430
+msgid "Work"
+msgstr "Trabajo"
+
+#: LV-430
+msgid "Flight path"
+msgstr "Trayectoria de vuelo"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
@@ -14959,127 +15214,3 @@ msgstr "zona horaria no determinada"
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
-
-#: LV-430
-msgid "Flight report"
-msgstr "Reporte de vuelo"
-
-#: LV-430
-msgid "Print / Save as PDF"
-msgstr "Imprimir / Guardar como PDF"
-
-#: LV-430
-msgid "Download KML"
-msgstr "Descargar KML"
-
-#: LV-430
-msgid "Download CSV"
-msgstr "Descargar CSV"
-
-#: LV-430
-msgid "Download report"
-msgstr "Descargar reporte"
-
-#: LV-430
-msgid "Back to analysis"
-msgstr "Volver al análisis"
-
-#: LV-430
-msgid "In the print dialog choose Save as PDF as the destination and leave Background graphics on, so the map and colours are kept. If the satellite map looks incomplete, wait a few seconds and print again."
-msgstr "En el cuadro de impresión elija Guardar como PDF como destino y deje activados los gráficos de fondo, para conservar el mapa y los colores. Si el mapa satelital se ve incompleto, espere unos segundos e imprima de nuevo."
-
-#: LV-430
-msgid "Executive summary"
-msgstr "Resumen ejecutivo"
-
-#: LV-430
-msgid "Flight timeline"
-msgstr "Línea de tiempo del vuelo"
-
-#: LV-430
-msgid "Phases are inferred from the height and the automatic return recorded in the log; the marks show where the aircraft reported a warning."
-msgstr "Las fases se infieren de la altura y del regreso automático registrados en el log; las marcas muestran dónde la aeronave emitió un aviso."
-
-#: LV-430
-msgid "Warnings and events"
-msgstr "Avisos y eventos"
-
-#: LV-430
-msgid "Operation data"
-msgstr "Datos de la operación"
-
-#: LV-430
-msgid "Aircraft registration"
-msgstr "Matrícula de la aeronave"
-
-#: LV-430
-msgid "Aircraft model"
-msgstr "Modelo de la aeronave"
-
-#: LV-430
-msgid "Operation date"
-msgstr "Fecha de la operación"
-
-#: LV-430
-msgid "Start (local time and time zone)"
-msgstr "Inicio (hora local y zona horaria)"
-
-#: LV-430
-msgid "Log format"
-msgstr "Formato del log"
-
-#: LV-430
-msgid "Reader version"
-msgstr "Versión del lector"
-
-#: LV-430
-msgid "Analysis date"
-msgstr "Fecha del análisis"
-
-#: LV-430
-msgid "Generated by AeroControl"
-msgstr "Generado por AeroControl"
-
-#: LV-430
-msgid "Printed"
-msgstr "Impreso"
-
-#: LV-430
-msgid "min:s"
-msgstr "min:s"
-
-#: LV-430
-msgid "Maximum height"
-msgstr "Altura máxima"
-
-#: LV-430
-msgid "Final battery"
-msgstr "Batería final"
-
-#: LV-430
-msgid "Maximum height: %(max)s m above takeoff, reached at %(time)s."
-msgstr "Altura máxima: %(max)s m sobre el despegue, alcanzada a los %(time)s."
-
-#: LV-430
-msgid "Top speed: %(ms)s m/s (%(kmh)s km/h) at %(time)s; average %(avg)s m/s."
-msgstr "Velocidad máxima: %(ms)s m/s (%(kmh)s km/h) a los %(time)s; promedio %(avg)s m/s."
-
-#: LV-430
-msgid "The battery went from %(start)s%% to %(end)s%%."
-msgstr "La batería pasó de %(start)s%% a %(end)s%%."
-
-#: LV-430
-msgid "The aircraft warned at %(time)s, with %(pct)s%% left."
-msgstr "La aeronave avisó a los %(time)s, con %(pct)s%% restante."
-
-#: LV-430
-msgid "Flight phases and warnings"
-msgstr "Fases del vuelo y avisos"
-
-#: LV-430
-msgid "Work"
-msgstr "Trabajo"
-
-#: LV-430
-msgid "Flight path"
-msgstr "Trayectoria de vuelo"
