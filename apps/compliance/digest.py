@@ -9,16 +9,12 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from apps.compliance.urgency import HORIZON_DAYS, URGENCY_BUCKETS, urgency_bucket
 from apps.registry.models import CostCenter
 
-# Ordered most urgent first; the last bound is the digest horizon.
-BUCKETS = [
-    ("overdue", None),
-    ("due_7", 7),
-    ("due_15", 15),
-    ("due_30", 30),
-]
-HORIZON_DAYS = 30
+# Ordered most urgent first; the last bound is the digest horizon. Los cortes
+# viven en `apps.compliance.urgency` (LV-428).
+BUCKETS = [("overdue", None), *URGENCY_BUCKETS]
 
 # LV-148: una escala, dos representaciones. El mismo tramo se pintaba distinto en
 # dos pantallas —insignia en la bandeja de alertas, texto de color en el panel— y
@@ -162,16 +158,7 @@ ENTITY_TONES = {
 
 def bucket_for(expiry, today):
     """Return the urgency bucket key for an expiry date."""
-    if expiry < today:
-        return "overdue"
-    days_left = (expiry - today).days
-    if days_left <= 7:
-        return "due_7"
-    if days_left <= 15:
-        return "due_15"
-    if days_left <= HORIZON_DAYS:
-        return "due_30"
-    return None
+    return urgency_bucket((expiry - today).days)
 
 
 # LV-240: acá vivía `_documents_for`, la mitad documental de la recolección propia

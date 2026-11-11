@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.compliance.digest import HORIZON_DAYS
+from apps.compliance.urgency import URGENCY_BUCKETS
 from apps.compliance.kpis import operational_kpis, permit_counts
 from apps.compliance.models import Alert, Document
 from apps.core.tenancy import DEFAULT_TENANT_SLUG, scope_queryset_to_visible_tenants
@@ -346,9 +347,7 @@ def _cost_center_row(cost_center, doc_type, today):
     # loaded the cost center's whole document table per row, which turns the
     # report from instant to seconds within a few years of accumulation.
     boundaries = {
-        "due_7": today + timedelta(days=7),
-        "due_15": today + timedelta(days=15),
-        "due_30": today + timedelta(days=30),
+        key: today + timedelta(days=cutoff) for key, cutoff in URGENCY_BUCKETS
     }
     counted = documents.aggregate(
         total=Count("pk"),

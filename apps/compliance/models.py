@@ -15,6 +15,7 @@ from uuid import uuid4
 from apps.core.models import BaseModel, OperationalTenant
 from apps.core.tenancy import get_default_tenant
 from apps.workboard.models import KanbanBoard, KanbanStage, KanbanTask
+from .urgency import URGENCY_BUCKETS, urgency_bucket
 from .watchables import resolve_model, watchable_fields
 
 DGAC_BOARD_NAME = "Cumplimiento DGAC"
@@ -924,10 +925,12 @@ class Alert(EffectivenessVerificationMixin, BaseModel):
         value = self._watched_value()
         if not isinstance(value, date):
             return "medium"
-        days_left = (value - timezone.localdate()).days
-        if days_left < 0:
+        # Prioridad = tramo de urgencia: vencido es critico, el tramo mas
+        # urgente es alto, el resto medio (LV-428: sin corte propio).
+        bucket = urgency_bucket((value - timezone.localdate()).days)
+        if bucket == "overdue":
             return "critical"
-        if days_left <= 7:
+        if bucket == URGENCY_BUCKETS[0][0]:
             return "high"
         return "medium"
 

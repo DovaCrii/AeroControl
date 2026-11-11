@@ -1,9 +1,8 @@
-from datetime import timedelta
-
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from apps.compliance.urgency import urgency_bucket
 from apps.core.models import BaseModel, OperationalTenant
 from apps.registry.models import Operator
 from django.contrib.auth import get_user_model
@@ -195,15 +194,7 @@ class KanbanTask(BaseModel):
         the app. Empty string covers no due date or more than 30 days out."""
         if not self.due_date:
             return ""
-        if self.due_date < today:
-            return "overdue"
-        if self.due_date <= today + timedelta(days=7):
-            return "due_7"
-        if self.due_date <= today + timedelta(days=15):
-            return "due_15"
-        if self.due_date <= today + timedelta(days=30):
-            return "due_30"
-        return ""
+        return urgency_bucket((self.due_date - today).days) or ""
 
 
 class KanbanTaskLabel(BaseModel):
