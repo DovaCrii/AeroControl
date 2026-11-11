@@ -1,0 +1,158 @@
+{% load i18n static %}{% get_current_language as LANGUAGE_CODE %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% translate "Flight report" %} - AeroControl</title>
+<link rel="stylesheet" href="{% static 'css/flight-analysis.css' %}">
+{% if has_map %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endif %}
+<link rel="stylesheet" href="{% static 'css/flight-report.css' %}">
+</head>
+<body class="fr-body">
+<div class="fr-toolbar fr-noprint">
+  <button type="button" id="fr-print" class="fr-btn fr-btn-primary">{% translate "Print / Save as PDF" %}</button>
+  <a class="fr-btn" href="{% url 'flight-analysis-kml' analysis.pk %}">{% translate "Download KML" %}</a>
+  <a class="fr-btn" href="{% url 'flight-analysis-csv' analysis.pk %}">{% translate "Download CSV" %}</a>
+  <a class="fr-btn" href="{% url 'flight-analysis' analysis.pk %}">{% translate "Back to analysis" %}</a>
+  <p class="fr-hint">{% translate "In the print dialog choose Save as PDF as the destination and leave Background graphics on, so the map and colours are kept. If the satellite map looks incomplete, wait a few seconds and print again." %}</p>
+</div>
+
+<main class="fr-page">
+  <header class="fr-head">
+    <img class="fr-logo" src="{% static logo_static %}" alt="J.E.J. Ingenieria S.A.">
+    <div class="fr-head-text">
+      {% translate "Flight report" as page_title %}
+      {% include "generic/_page_header.html" %}
+      <p class="fr-meta"><strong>{% translate "Aircraft" %}:</strong> {{ header_aircraft }}</p>
+      <p class="fr-meta"><strong>{% translate "Date" %}:</strong> {{ start_text }}</p>
+      <p class="fr-meta"><strong>{% translate "Permit" %}:</strong> {{ permission.permission_number|default:permission }}</p>
+    </div>
+  </header>
+
+  {% if track.synthetic %}<p class="fr-synthetic" role="status">{% translate "Synthetic example data" %}</p>{% endif %}
+
+  <div class="fr-kpis" id="fr-kpis">
+    {% for kpi in kpis %}
+    <div class="fr-kpi">
+      <span class="fr-kpi-label">{{ kpi.label }}</span>
+      <span class="fr-kpi-value">{% if kpi.value %}{{ kpi.value }}<small>{{ kpi.unit }}</small>{% else %}&mdash;{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <section class="fr-section" aria-labelledby="fr-sum-h">
+    <h2 id="fr-sum-h">{% translate "Executive summary" %}</h2>
+    <p id="fa-narrative">{{ narrative.text }}</p>
+    {% if low_battery %}<p class="fr-alert" role="status" id="fa-low-battery">{{ low_battery }}</p>{% endif %}
+  </section>
+
+  <section class="fr-section fr-keep" aria-labelledby="fr-map-h">
+    <h2 id="fr-map-h">{% translate "Trajectory map" %}</h2>
+    {% if has_map %}
+    <div id="fa-map" class="fa-map" role="region" aria-label="{% translate 'Trajectory map' %}"></div>
+    <p class="mini-map-fallback fa-map-fallback fr-note" hidden>{% translate "The map could not be drawn." %}</p>
+    {{ map_data|json_script:"fa-map-data" }}
+    <p class="fr-note">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}{% if has_return %} {% translate "The dashed line is the automatic return to the home point." %}{% endif %}</p>
+    {% else %}
+    <p class="fr-note">{% translate "The log has no position data, so there is no map." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="fr-section fr-keep" aria-labelledby="fr-tl-h">
+    <h2 id="fr-tl-h">{% translate "Flight timeline" %}</h2>
+    {% if timeline %}
+    <div id="fr-timeline">{{ timeline }}</div>
+    <ul class="fr-legend">
+      {% for phase, label in timeline_legend %}<li><span class="fr-sw fr-sw-{{ phase }}"></span>{{ label }}</li>{% endfor %}
+      <li><span class="fr-sw fr-sw-warning"></span>{% translate "Warning" %}</li>
+      <li><span class="fr-sw fr-sw-critical"></span>{% translate "Critical" %}</li>
+    </ul>
+    <p class="fr-note">{% translate "Phases are inferred from the height and the automatic return recorded in the log; the marks show where the aircraft reported a warning." %}</p>
+    {% else %}
+    <p class="fr-note">{% translate "Not recorded in this log." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="fr-section" aria-labelledby="fr-ch-h">
+    <h2 id="fr-ch-h">{% translate "Charts" %}</h2>
+    {% for chart in charts %}
+    <figure class="fr-figure fr-keep" id="fa-chart-{{ chart.key }}">
+      <figcaption>{{ chart.title }}</figcaption>
+      {% if chart.svg %}{{ chart.svg }}{% else %}<p class="fr-note">{% translate "Not recorded in this log." %}</p>{% endif %}
+      <p class="fr-note">{{ chart.note }}{% if chart.reading %} <strong class="fr-reading">{{ chart.reading }}</strong>{% endif %}</p>
+    </figure>
+    {% endfor %}
+  </section>
+
+  <section class="fr-section" aria-labelledby="fr-ev-h">
+    <h2 id="fr-ev-h">{% translate "Warnings and events" %}</h2>
+    <table class="fr-table" id="fa-events">
+      <thead><tr>
+        <th scope="col">{% translate "Time" %}</th>
+        <th scope="col">{% translate "Level" %}</th>
+        <th scope="col">{% translate "What it means" %}</th>
+        <th scope="col">{% translate "Original log text" %}</th>
+      </tr></thead>
+      <tbody>
+      {% for e in event_rows %}
+        <tr>
+          <td>{{ e.time }}</td>
+          <td><span class="fa-level fa-level-{{ e.level }}">{{ e.level_label }}</span></td>
+          <td>{{ e.explanation }}{% if e.inferred %} <em>({% translate "inferred" %})</em>{% endif %}</td>
+          <td class="fr-raw">{{ e.raw_text }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4">{% translate "No events in the log." %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="fr-section fr-keep" aria-labelledby="fr-op-h">
+    <h2 id="fr-op-h">{% translate "Operation data" %}</h2>
+    <dl class="fr-facts" id="fr-operation">
+      <div><dt>{% translate "Permit" %}</dt><dd>{{ permission.permission_number|default:permission }}</dd></div>
+      <div><dt>{% translate "Cost center" %}</dt><dd>{{ permission.cost_center }}</dd></div>
+      <div><dt>{% translate "Aircraft registration" %}</dt><dd>{{ aircraft.registration }}</dd></div>
+      <div><dt>{% translate "Aircraft model" %}</dt><dd>{{ aircraft.model }}</dd></div>
+      <div><dt>{% translate "Serial number" %}</dt><dd>{{ aircraft.serial }}</dd></div>
+      <div><dt>{% translate "Operator" %}</dt><dd>{{ operator }}</dd></div>
+      <div><dt>{% translate "Operation date" %}</dt><dd>{{ record_date }}</dd></div>
+      <div><dt>{% translate "Start (local time and time zone)" %}</dt><dd>{{ start_text }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="fr-section fr-keep" aria-labelledby="fr-tr-h">
+    <h2 id="fr-tr-h">{% translate "Traceability" %}</h2>
+    <dl class="fr-facts" id="fr-trace">
+      <div><dt>{% translate "Log file" %}</dt><dd>{{ analysis.document.title }}</dd></div>
+      <div><dt>{% translate "Log format" %}</dt><dd>{{ source_format }}</dd></div>
+      <div><dt>{% translate "Reader version" %}</dt><dd>{{ parser_version }}</dd></div>
+      <div><dt>{% translate "Analysis date" %}</dt><dd>{{ analysis.analyzed_at|date:"d-m-Y H:i" }}</dd></div>
+    </dl>
+    <ul class="fr-note fr-limits">
+      {% for item in limitations %}<li>{{ item }}</li>{% endfor %}
+      {% for item in uninterpreted %}<li>{% translate "Not interpreted" %}: {{ item }}</li>{% endfor %}
+      {% if not limitations and not uninterpreted %}<li>{% translate "None reported." %}</li>{% endif %}
+    </ul>
+  </section>
+
+  <footer class="fr-foot">
+    <img class="fr-seal" src="{% static 'img/brand/LD_sello_claro.svg' %}" alt="Levantamiento Digital">
+    <p>{% translate "Generated by AeroControl" %} &middot; {% translate "Printed" %} {% now "d-m-Y H:i" %}</p>
+  </footer>
+</main>
+
+{% if has_map %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script src="{% static 'js/flight-analysis.js' %}"></script>
+{% endif %}
+<script src="{% static 'js/flight-report.js' %}"></script>
+</body>
+</html>
