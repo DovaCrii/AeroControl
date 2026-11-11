@@ -56,7 +56,8 @@ class TestThereIsOneSpriteAndTheMenuUsesIt:
         # existe, que no falla, dibuja nada.
         # 30 desde `LV-358`: la sección «Entorno» trae su propio símbolo.
         # 31 desde `LV-398`: «Cómo funciona» (un poste indicador).
-        assert len(_symbol_ids()) == 31
+        # 32 desde `LV-431`: «Logs de vuelo» (una hoja con la traza de un vuelo).
+        assert len(_symbol_ids()) == 32
 
     def test_the_menu_no_longer_draws_the_icons_itself(self):
         """El criterio de la fila: `base.html` pierde los `path` de navegación.
@@ -175,7 +176,7 @@ class TestNoTwoSymbolsDrawTheSameThing:
         symbols = re.findall(
             r'<symbol id="([^"]+)"[^>]*>(.*?)</symbol>', _sprite(), re.DOTALL
         )
-        assert len(symbols) == 31
+        assert len(symbols) == 32
 
         by_drawing = {}
         for sid, drawing in symbols:

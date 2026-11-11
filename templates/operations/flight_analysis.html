@@ -16,9 +16,13 @@
     {% include "generic/_page_header.html" %}
     <div class="d-flex gap-2">
       <a href="{% url 'document-download' analysis.document.pk %}" class="btn btn-sm btn-outline-primary">{% translate "Download log" %}</a>
-      <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "Back to operations" %}</a>
+      <a href="{{ back.url }}" class="btn btn-sm btn-outline-secondary">{{ back.label }}</a>
     </div>
   </div>
+
+  {% if serial_warning %}
+  <div class="alert alert-warning" role="status" id="fa-serial-warning">{{ serial_warning }}</div>
+  {% endif %}
 
   {% if track.synthetic %}
   <div class="alert alert-warning fa-synthetic" role="status">{% translate "Synthetic example data" %}</div>

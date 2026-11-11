@@ -97,6 +97,8 @@ def test_flight_holds_the_permission_flow_and_the_environment(groups):
         "permission-list",
         "geo-plan-list",
         "record-list",
+        # LV-431: los logs de vuelo se revisan por sí solos, no desde un permiso.
+        "flight-log-list",
         "environment-hub",
     }
 
@@ -133,11 +135,11 @@ def test_sites_and_movements_hold_where_each_thing_is(groups):
 def test_the_menu_keeps_exactly_the_same_destinations(groups):
     """F2 reagrupa y renombra; **no suma ni quita** un destino. Son los
     veinticuatro de siempre (entre ellos, «Entorno»), más «Cómo funciona», que
-    LV-398 sumó al bloque de arriba a propósito."""
+    LV-398 sumó al bloque de arriba a propósito, y «Flight logs» (LV-431)."""
     everything = {item.url_name for item in (*NAV_TOP, *NAV_FOOTER)}
     everything |= set().union(*groups.values())
 
-    assert len(everything) == 25
+    assert len(everything) == 26
 
 
 def test_no_menu_row_is_left_outside_a_group(markup, groups):

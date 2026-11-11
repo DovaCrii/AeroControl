@@ -21,13 +21,33 @@ KEYCHAIN_PREFIX = "flightlog-keychains"
 
 
 def is_flight_log(document) -> bool:
-    """¿Es el `.TXT` de log de vuelo colgado de un permiso?"""
+    """¿Es el `.TXT` de log de vuelo colgado de un permiso o (LV-431) de una aeronave?"""
+    from apps.registry.models import Aircraft
+
     from .. import models
 
-    return (
-        document.doc_type.code == FLIGHT_LOG_TYPE
-        and document.content_type.model_class() is models.FlightPermission
+    return document.doc_type.code == FLIGHT_LOG_TYPE and (
+        document.content_type.model_class() in (models.FlightPermission, Aircraft)
     )
+
+
+def _owner_defaults(document) -> dict:
+    """Lo que ubica al análisis según de qué cuelga el documento (permiso o aeronave)."""
+    from apps.registry.models import Aircraft
+
+    from ..models import FlightPermission
+
+    if document.content_type.model_class() is Aircraft:
+        aircraft = Aircraft.objects.filter(pk=document.object_id).first()
+        return {
+            "aircraft_id": document.object_id,
+            "cost_center_id": aircraft.cost_center_id if aircraft else None,
+        }
+    permission = FlightPermission.objects.filter(pk=document.object_id).first()
+    return {
+        "permission_id": document.object_id,
+        "cost_center_id": permission.cost_center_id if permission else None,
+    }
 
 
 def _restore_keychains(storage, key, cache: Path) -> None:
@@ -78,7 +98,7 @@ def analyze_document(document, analysis=None):
 
     if analysis is None:
         analysis, _created = FlightLogAnalysis.objects.get_or_create(
-            document=document, defaults={"permission_id": document.object_id}
+            document=document, defaults=_owner_defaults(document)
         )
     try:
         track = _parse_document(document).downsampled()

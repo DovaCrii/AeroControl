@@ -59,6 +59,8 @@ NAV_MODULE_STEMS = {
         "flight-request",
         "geo-plan",
         "record",
+        "flight-log",
+        "flight-analysis",
         "calendar",
         "ops-calendar",
         "preflight",

@@ -1937,8 +1937,37 @@ class FlightLogAnalysis(BaseModel):
         (STATUS_ERROR, _("Error")),
     ]
 
+    # LV-431: el permiso ya no es obligatorio. Un log se revisa por sí solo: lo que lo ubica es
+    # el centro de costo y la aeronave. Las filas nuevas desde la sección «Flight logs» exigen
+    # los dos en el formulario; en la base son nulables para no romper las filas anteriores
+    # (que el permiso ubica) y porque la aeronave sólo se conoce cuando el alta la eligió.
     permission = models.ForeignKey(
-        FlightPermission, on_delete=models.PROTECT, related_name="log_analyses"
+        FlightPermission,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="log_analyses",
+    )
+    cost_center = models.ForeignKey(
+        CostCenter,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="flight_log_analyses",
+    )
+    aircraft = models.ForeignKey(
+        Aircraft,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="flight_log_analyses",
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
     )
     flight_record = models.ForeignKey(
         FlightRecord,
@@ -1970,7 +1999,47 @@ class FlightLogAnalysis(BaseModel):
                 condition=Q(status__in=["pending", "ok", "error"]),
                 name="ops_flightlog_status_valid",
             ),
+            # LV-431: sin permiso, el centro de costo es lo que ubica al log (y a su tenant).
+            models.CheckConstraint(
+                condition=Q(permission__isnull=False) | Q(cost_center__isnull=False),
+                name="ops_flightlog_permission_or_cost_center",
+            ),
         ]
 
     def __str__(self):
         return f"{self.document} ({self.status})"
+
+    def clean(self):
+        """LV-431: la aeronave es del centro de costo elegido y el permiso, de ese mismo centro.
+
+        Validado acá y no sólo en el formulario: el admin, un import o un script no pasan
+        por él (AGENTS.md).
+        """
+        errors = {}
+        centre = self.cost_center
+        if self.permission_id and centre is None:
+            centre = self.permission.cost_center
+        if self.permission_id and self.cost_center_id:
+            if self.permission.cost_center_id != self.cost_center_id:
+                errors["permission"] = _(
+                    "The permit belongs to a different cost center."
+                )
+        if self.aircraft_id and centre is not None:
+            if (
+                self.aircraft.cost_center_id != centre.pk
+                or self.aircraft.tenant_id != centre.tenant_id
+            ):
+                errors["aircraft"] = _(
+                    "The aircraft does not belong to the selected cost center."
+                )
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        # Una fila ubicada sólo por su permiso (el flujo anterior a LV-431) hereda su centro.
+        if self.cost_center_id is None and self.permission_id:
+            self.cost_center_id = self.permission.cost_center_id
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = {*update_fields, "cost_center"}
+        super().save(*args, **kwargs)

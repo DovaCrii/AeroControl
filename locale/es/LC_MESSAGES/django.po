@@ -14899,6 +14899,84 @@ msgstr "inferido"
 msgid "time zone not determined"
 msgstr "zona horaria no determinada"
 
+msgid "The permit belongs to a different cost center."
+msgstr "El permiso pertenece a otro centro de costo."
+
+msgid "The aircraft does not belong to the selected cost center."
+msgstr "La aeronave no pertenece al centro de costo elegido."
+
+msgid "Back to flight logs"
+msgstr "Volver a los logs de vuelo"
+
+msgid "The serial in the log (%(log)s) does not match the selected aircraft (%(aircraft)s)."
+msgstr "La serie que dice el log (%(log)s) no coincide con la aeronave elegida (%(aircraft)s)."
+
+msgid "Flight log file (.TXT)"
+msgstr "Archivo del log de vuelo (.TXT)"
+
+msgid "DGAC permit (optional)"
+msgstr "Permiso DGAC (opcional)"
+
+msgid "Select a cost center"
+msgstr "Seleccione un centro de costo"
+
+msgid "Select an aircraft"
+msgstr "Seleccione una aeronave"
+
+msgid "Upload the .TXT file of the flight log."
+msgstr "Suba el archivo .TXT del log de vuelo."
+
+msgid "The file is too large (50 MB maximum)."
+msgstr "El archivo es demasiado grande (máximo 50 MB)."
+
+msgid "The file is empty."
+msgstr "El archivo está vacío."
+
+msgid "This does not look like a DJI flight log. The file name should be DJIFlightRecord_….txt."
+msgstr "Esto no parece un log de vuelo DJI. El nombre del archivo debería ser DJIFlightRecord_….txt."
+
+msgid "Flight logs"
+msgstr "Logs de vuelo"
+
+msgid "Registration, serial number or file name…"
+msgstr "Matrícula, número de serie o nombre del archivo…"
+
+msgid "Flight log saved."
+msgstr "Log de vuelo guardado."
+
+msgid "Upload flight log"
+msgstr "Subir log de vuelo"
+
+msgid "Distance"
+msgstr "Distancia"
+
+msgid "Max. height"
+msgstr "Altura máx."
+
+msgid "Final battery"
+msgstr "Batería final"
+
+msgid "Upload date"
+msgstr "Fecha de subida"
+
+msgid "No flight logs yet."
+msgstr "Aún no hay logs de vuelo."
+
+msgid "Upload the first flight log"
+msgstr "Subir el primer log de vuelo"
+
+msgid "View analysis"
+msgstr "Ver análisis"
+
+msgid "Choose the cost center and the aircraft that flew, then attach the DJI flight log (.TXT). It is analysed right away; the permit is optional."
+msgstr "Elija el centro de costo y la aeronave que voló, y adjunte el log de vuelo DJI (.TXT). Se analiza de inmediato; el permiso es opcional."
+
+msgid "Upload and analyse"
+msgstr "Subir y analizar"
+
+msgid "of this cost center"
+msgstr "de este centro de costo"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

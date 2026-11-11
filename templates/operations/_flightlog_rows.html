@@ -1,0 +1,39 @@
+{% load aero_tags i18n static %}
+{% for object in objects %}
+{% with d=object.digest %}
+<tr data-pk="{{ object.pk }}">
+  <td class="text-nowrap"><a href="{% url 'flight-analysis' object.pk %}" class="table-primary-value">{{ d.date }}</a>
+    <span class="table-primary-sub">{{ d.time }}{% if not d.started %} · {% translate "Upload date" %}{% endif %}</span></td>
+  <td class="cell-truncate">{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="cc-chip is-empty">{% translate "Unassigned" %}</span>{% endif %}</td>
+  <td>{% if object.aircraft %}<span class="table-primary-value">{{ object.aircraft.registration }}</span>
+    <span class="table-primary-sub cell-truncate" title="{{ object.aircraft.model }}">{{ object.aircraft.model|default:"—" }}{% if object.aircraft.serial_number %} · S/N {{ object.aircraft.serial_number }}{% endif %}</span>
+    {% else %}<span class="text-muted">—</span>{% endif %}
+    <span class="table-primary-sub cell-truncate" title="{{ object.document.title }}">{{ object.document.title }}</span></td>
+  <td class="text-end text-nowrap">{{ d.duration|default:"—" }}</td>
+  <td class="text-end text-nowrap">{% if d.distance_m is not None %}{{ d.distance_m|floatformat:0 }} m{% else %}—{% endif %}</td>
+  <td class="text-end text-nowrap">{% if d.max_height_m is not None %}{{ d.max_height_m|floatformat:0 }} m{% else %}—{% endif %}</td>
+  <td class="text-end text-nowrap">{% if d.battery_pct is not None %}{{ d.battery_pct|floatformat:0 }} %{% else %}—{% endif %}</td>
+  {% comment %}Estado como `.id-chip` (palabra + color + glifo): analizado en verde, error en rojo,
+  pendiente en ámbar; el color nunca va solo.{% endcomment %}
+  <td class="text-nowrap cell-status">{% if object.status == "ok" %}<span class="id-chip id-chip--ok"><span aria-hidden="true">✓</span> {% translate "Analysed" %}</span>{% elif object.status == "error" %}<span class="id-chip id-chip--critical" title="{{ object.error_code }}"><span aria-hidden="true">✕</span> {% translate "Error" %}</span>{% else %}<span class="id-chip id-chip--warning"><span aria-hidden="true">●</span> {% translate "Pending" %}</span>{% endif %}</td>
+  <td class="text-end">{% if object.status == "ok" %}{{ d.warnings }}{% else %}—{% endif %}</td>
+  <td class="text-end text-nowrap">
+    <div class="id-rowactions"><a href="{% url 'flight-analysis' object.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "View analysis" %}</a></div>
+  </td>
+</tr>
+{% endwith %}
+{% empty %}
+{% comment %}`colspan` = el número exacto de `<col>` de la lista (10), no un 99: ver
+`_operator_rows.html` y `LV-162`.{% endcomment %}
+<tr><td colspan="10" class="text-center text-muted py-4">
+  {% static 'img/illustrations/drone-scan.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}
+  {% if is_filtered %}
+    {% translate "No records match the current filters." %}
+    <a href="{{ request.path }}">{% translate "Clear filters" %}</a>
+  {% else %}
+    {% translate "No flight logs yet." %}
+    {% if can_upload %}<a href="{% url 'flight-log-upload' %}">{% translate "Upload the first flight log" %}</a>{% endif %}
+  {% endif %}
+</td></tr>
+{% endfor %}
+{% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}

@@ -281,6 +281,9 @@ class TestTheSelectionIsExplicitInTheMarkup:
             "aircraft_list.html",
             "costcenter_list.html",
             "document_list.html",
+            # LV-431: «Flight logs»; revisada en la prueba de anchos (LV-162) y con el
+            # `colspan` exacto (10) en `_flightlog_rows.html`.
+            "flightlog_list.html",
             "nonconformity_list.html",
             "operator_list.html",
             "permission_list.html",

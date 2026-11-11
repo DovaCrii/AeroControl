@@ -1,0 +1,51 @@
+{% extends "generic/list.html" %}
+{% load aero_tags i18n static %}
+
+{% comment %}LV-431: «Flight logs» como lista propia, con el estándar de las listas del padrón
+(operadores LV-413, aeronaves LV-422): tabla normalizada, filtros rotulados que se combinan y
+refrescan la tabla por htmx, y el centro de costo como `cc-chip`.{% endcomment %}
+{% block list_actions %}{% endblock %}
+{% block list_primary_actions %}{% if can_upload %}<a class="btn btn-upload" href="{% url 'flight-log-upload' %}">+ {% translate "Upload flight log" %}</a>{% endif %}{% endblock %}
+
+{% block list_table_class %}table-normalized{% endblock %}
+
+{% block list_filters %}
+<div class="id-filter id-filter--grow"><label class="id-filter-label" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}<span id="search-spinner" class="htmx-indicator small text-muted">{% translate "Searching…" %}</span></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-cost-center">{% translate "Cost center" %}</label><select class="form-select" id="id-filter-cost-center" name="cost_center" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All cost centers" %}</option>{% for cc in cost_center_options %}<option value="{{ cc.pk }}" {% if filters.cost_center == cc.pk|stringformat:'s' %}selected{% endif %}>{{ cc.code }} - {{ cc.name }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-aircraft">{% translate "Aircraft" %}</label><select class="form-select" id="id-filter-aircraft" name="aircraft" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All aircraft" %}</option>{% for ac in aircraft_options %}<option value="{{ ac.pk }}" {% if filters.aircraft == ac.pk|stringformat:'s' %}selected{% endif %}>{{ ac.registration }} · {{ ac.model }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-status">{% translate "Status" %}</label><select class="form-select" id="id-filter-status" name="status" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"><option value="">{% translate "All statuses" %}</option>{% for value, label in status_choices %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-from">{% translate "From" %}</label><input class="form-control" type="date" id="id-filter-from" name="date_from" value="{{ filters.date_from }}" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"></div>
+<div class="id-filter"><label class="id-filter-label" for="id-filter-to">{% translate "To" %}</label><input class="form-control" type="date" id="id-filter-to" name="date_to" value="{{ filters.date_to }}" hx-get="{{ request.path }}" hx-trigger="change" hx-include="closest form" hx-target="#table-body" hx-push-url="true"></div>
+<div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Search" %}</button>{% if is_filtered %} <a class="btn btn-link" href="{{ request.path }}">{% translate "Clear filters" %}</a>{% endif %}</div>
+{% endblock %}
+
+{% comment %}Fecha y hora, faena, aeronave (absorbe el sobrante), cuatro cifras, estado, avisos y
+acciones. El `<colgroup>` lleva un `<col>` más que encabezados: el de Acciones.{% endcomment %}
+{% block list_colgroup %}
+<colgroup>
+  <col class="col-compact">
+  <col class="col-icon">
+  <col class="col-flex">
+  <col class="col-icon">
+  <col class="col-numeric">
+  <col class="col-numeric">
+  <col class="col-numeric">
+  <col class="col-status">
+  <col class="col-icon">
+  <col class="col-actions">
+</colgroup>
+{% endblock %}
+
+{% block list_header %}
+{% worktable_th _("Flight date") "date" %}
+{% worktable_th _("Cost center") "cost_center" %}
+{% worktable_th _("Aircraft") "aircraft" %}
+<th scope="col" class="text-end">{% translate "Duration" %}</th>
+<th scope="col" class="text-end">{% translate "Distance" %}</th>
+<th scope="col" class="text-end">{% translate "Max. height" %}</th>
+<th scope="col" class="text-end">{% translate "Final battery" %}</th>
+{% worktable_th _("Status") "status" "" "cell-status" %}
+<th scope="col" class="text-end">{% translate "Warnings" %}</th>
+{% endblock %}
+
+{% block table_body %}{% include "operations/_flightlog_rows.html" %}{% endblock %}
