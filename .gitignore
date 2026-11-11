@@ -55,3 +55,6 @@ static/vendor/**/*.map
 private/
 .env.*
 !.env.example
+
+# LV-429: artefactos de compilacion del lector DJI
+tools/dji-log-json/target/

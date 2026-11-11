@@ -18,3 +18,5 @@
 .fa-level-warning { color: #b45309; }
 .fa-level-critical { color: #b91c1c; }
 @media (max-width: 575.98px) { .fa-map { height: 22rem; } }
+.fa-legend-return { margin-top: .35rem; display: flex; align-items: center; }
+.fa-legend-dash { display: inline-block; width: 1.6rem; border-top: 3px dashed #111827; margin-right: .25rem; }

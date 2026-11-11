@@ -27,12 +27,14 @@ class FlightLogError(Exception):
     INSUFFICIENT_DATA = "insufficient_data"
     MISSING_API_KEY = "missing_api_key"
     PARSER_UNAVAILABLE = "parser_unavailable"
+    KEYCHAIN_ERROR = "keychain_error"
     CODES = (
         UNSUPPORTED_FORMAT,
         INCOMPLETE,
         INSUFFICIENT_DATA,
         MISSING_API_KEY,
         PARSER_UNAVAILABLE,
+        KEYCHAIN_ERROR,
     )
 
     def __init__(self, code: str, message: str = ""):
@@ -65,6 +67,7 @@ class FlightEvent:
 @dataclass
 class FlightSummary:
     started_at: str | None = None  # ISO 8601, con zona si se conoce
+    started_at_utc: str | None = None
     timezone: str | None = None
     duration_s: float | None = None
     distance_m: float | None = None
@@ -84,6 +87,11 @@ class FlightTrack:
     source_format: str = ""
     limitations: list[str] = field(default_factory=list)
     synthetic: bool = False
+    # LV-429: lo que el propio log dice de la aeronave (`log_model`, `serial`); nunca se completa
+    # con datos del registro acá: el cruce con el registro lo hace la vista, por tenant.
+    aircraft: dict = field(default_factory=dict)
+    # [t_inicio, t_fin] del regreso automático a casa, en segundos del log; `None` si no hubo.
+    return_leg: list[float] | None = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -98,6 +106,8 @@ class FlightTrack:
             source_format=data.get("source_format", ""),
             limitations=list(data.get("limitations", [])),
             synthetic=bool(data.get("synthetic", False)),
+            aircraft=dict(data.get("aircraft") or {}),
+            return_leg=data.get("return_leg"),
         )
 
     def downsampled(self, limit: int = MAX_POINTS) -> FlightTrack:

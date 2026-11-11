@@ -6,6 +6,7 @@ import json
 import re
 from pathlib import Path
 
+from .dji import run_parser, to_track
 from .types import (
     FlightEvent,
     FlightLogError,
@@ -44,7 +45,7 @@ class SyntheticAdapter:
     def detect(self, path: Path) -> bool:
         return _read_synthetic_json(path) is not None
 
-    def parse(self, path: Path) -> FlightTrack:
+    def parse(self, path: Path, keychain_cache: Path | None = None) -> FlightTrack:
         data = _read_synthetic_json(path)
         try:
             points = [
@@ -90,13 +91,11 @@ class SyntheticAdapter:
 
 
 class DjiAdapter:
-    """DJI `FlightRecord*.txt`: reconocido por el nombre, **todavía sin lector real**.
+    """DJI `FlightRecord*.txt`, leído con el envoltorio `tools/dji-log-json` (ver `dji.py`).
 
-    TODO fase 2: invocar el CLI `dji-log-parser` (MIT) con `subprocess.run([...], shell=False)`,
-    ruta en `settings.DJI_LOG_PARSER_BIN` y clave de la API de DJI en la variable de entorno
-    `DJI_API_KEY` (sin ella: `missing_api_key`; sin el binario: `parser_unavailable`). Nunca
-    escribir la clave en logs ni en mensajes de error. La salida JSON del CLI se traduce a
-    `TrackPoint`/`FlightEvent`, dejando en `uninterpreted` lo que no se sepa explicar.
+    Sin `settings.DJI_LOG_PARSER_BIN` el error es `parser_unavailable`; sin clave de la API de
+    DJI (y sin llaves en caché), `missing_api_key`. Con `keychain_cache` las llaves del log se
+    guardan tras el primer pedido y la segunda lectura no necesita red.
     """
 
     name = "dji"
@@ -104,11 +103,8 @@ class DjiAdapter:
     def detect(self, path: Path) -> bool:
         return bool(DJI_NAME.match(path.name))
 
-    def parse(self, path: Path) -> FlightTrack:
-        raise FlightLogError(
-            FlightLogError.PARSER_UNAVAILABLE,
-            "the DJI log reader is not connected yet",
-        )
+    def parse(self, path: Path, keychain_cache: Path | None = None) -> FlightTrack:
+        return to_track(run_parser(path, keychain_cache))
 
 
 ADAPTERS = (SyntheticAdapter(), DjiAdapter())

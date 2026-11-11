@@ -14692,6 +14692,99 @@ msgstr "Sin interpretar"
 msgid "Not provided"
 msgstr "No informado"
 
+msgid "DJI could not provide the keys to read this log. Check the server key and its internet access, then try again."
+msgstr "DJI no entregó las llaves para leer este registro. Revise la clave del servidor y su acceso a internet, y vuelva a intentarlo."
+
+msgid "Start (UTC)"
+msgstr "Inicio (UTC)"
+
+msgid "Takeoff and landing"
+msgstr "Despegue y aterrizaje"
+
+msgid "Automatic return"
+msgstr "Regreso automático"
+
+msgid "Aircraft cost center"
+msgstr "Centro de costo de la aeronave"
+
+msgid "according to the log"
+msgstr "según el log"
+
+msgid "Flight at a glance"
+msgstr "El vuelo en resumen"
+
+msgid "The dashed line is the automatic return to the home point."
+msgstr "La línea discontinua es el regreso automático al punto de origen."
+
+msgid "The remaining battery is only enough to fly back to the home point. The aircraft advises returning now."
+msgstr "La batería restante sólo alcanza para volver al punto de origen. La aeronave aconseja regresar ahora."
+
+msgid "The aircraft reported an altitude zone or altitude limit."
+msgstr "La aeronave informó una zona de altitud o un límite de altitud."
+
+msgid "The camera stabilizer (gimbal) reached the end of its movement range."
+msgstr "El estabilizador de la cámara (gimbal) llegó al final de su rango de movimiento."
+
+msgid "The aircraft switched to automatic return to the home point."
+msgstr "La aeronave pasó a regreso automático al punto de origen."
+
+msgid "The aircraft took off automatically."
+msgstr "La aeronave despegó de forma automática."
+
+msgid "The aircraft started an automatic landing."
+msgstr "La aeronave inició un aterrizaje automático."
+
+msgid "The aircraft stopped near the ground and waited for the landing to be confirmed."
+msgstr "La aeronave se detuvo cerca del suelo y esperó la confirmación del aterrizaje."
+
+msgid "The flight controller reported the GPS attitude mode (GPSAtti), a position-assisted flight mode."
+msgstr "El controlador de vuelo informó el modo de actitud con GPS (GPSAtti), un modo de vuelo asistido por posición."
+
+msgid "The motors were started."
+msgstr "Se encendieron los motores."
+
+msgid "The return-to-home system reported that it was active."
+msgstr "El sistema de regreso al punto de origen informó que estaba activo."
+
+msgid "No plain-language explanation for this entry; see the original log text."
+msgstr "Esta entrada no tiene una explicación en lenguaje claro; vea el texto original del log."
+
+#, python-format
+msgid "The flight lasted %(minutes)s min, covered %(km)s km and reached %(height)s m above the takeoff point."
+msgstr "El vuelo duró %(minutes)s min, recorrió %(km)s km y llegó a %(height)s m sobre el punto de despegue."
+
+#, python-format
+msgid "The flight lasted %(minutes)s min."
+msgstr "El vuelo duró %(minutes)s min."
+
+#, python-format
+msgid "It covered %(km)s km."
+msgstr "Recorrió %(km)s km."
+
+#, python-format
+msgid "It reached %(height)s m above the takeoff point."
+msgstr "Llegó a %(height)s m sobre el punto de despegue."
+
+#, python-format
+msgid "At minute %(minute)s the aircraft warned that the battery was only enough to return, and it flew back in automatic mode."
+msgstr "En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para regresar, y volvió en modo automático."
+
+#, python-format
+msgid "At minute %(minute)s the aircraft warned that the battery was only enough to return."
+msgstr "En el minuto %(minute)s la aeronave avisó que la batería sólo alcanzaba para regresar."
+
+#, python-format
+msgid "At minute %(minute)s the aircraft started an automatic return."
+msgstr "En el minuto %(minute)s la aeronave inició un regreso automático."
+
+#, python-format
+msgid "It landed with %(pct)s%% battery."
+msgstr "Aterrizó con %(pct)s%% de batería."
+
+#, python-format
+msgid "Low battery at landing: %(pct)s%%, under %(limit)s%%."
+msgstr "Batería baja al aterrizar: %(pct)s%%, bajo el %(limit)s%%."
+
 msgid "Not recorded in this log."
 msgstr "No quedó registrado en este log."
 
