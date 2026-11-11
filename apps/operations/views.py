@@ -79,6 +79,7 @@ from .flight_requests import (
 )
 from .models import (
     FlightPermission,
+    FlightLogAnalysis,
     FlightRecord,
     FlightRequest,
     FlightRequestWorkItem,
@@ -1762,13 +1763,26 @@ class PermissionOperations(
             is_current_version=True,
         ).order_by("-created_at")
         storage = get_document_storage()
+        # LV-427: el análisis automático de cada log (si existe) para enlazar su pantalla.
+        analyses = {
+            a.document_id: a
+            for a in FlightLogAnalysis.objects.filter(
+                permission=permission, is_active=True
+            )
+        }
         rows = []
         for document in documents:
             try:
                 size = storage.size(document.file_path)
             except Exception:  # noqa: BLE001 - un archivo ausente se muestra sin tamaño
                 size = None
-            rows.append({"document": document, "size": size})
+            rows.append(
+                {
+                    "document": document,
+                    "size": size,
+                    "analysis": analyses.get(document.pk),
+                }
+            )
         return rows
 
     def post(self, request, *args, **kwargs):

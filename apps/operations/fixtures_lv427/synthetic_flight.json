@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "started_at": "2030-01-01T12:00:00-03:00",
+  "timezone": "UTC-03:00",
+  "points": [
+    {"t": 0,  "lat": 10.000, "lon": 20.000, "height_m": 0,  "speed_ms": 0,  "battery_pct": 100, "satellites": 14},
+    {"t": 30, "lat": 10.001, "lon": 20.000, "height_m": 50, "speed_ms": 8,  "battery_pct": 92,  "satellites": 15},
+    {"t": 60, "lat": 10.002, "lon": 20.000, "height_m": 10, "speed_ms": 4,  "battery_pct": 85,  "satellites": 15}
+  ],
+  "events": [
+    {"t": 0, "level": "info", "code": "motors_on", "raw_text": "SYNTH motors started", "explanation": "The motors were started."},
+    {"t": 30, "level": "warning", "code": "weak_signal", "raw_text": "SYNTH signal weak", "explanation": "The radio link was weak for a moment.", "inferred": true},
+    {"t": 60, "level": "critical", "code": "low_battery", "raw_text": "SYNTH battery critical", "explanation": "The battery reached a critical level."}
+  ],
+  "uninterpreted": ["SYNTH_unknown_field_7"]
+}

@@ -1,0 +1,20 @@
+/* LV-427: pantalla «Flight analysis». Techo propio de 8 KB (lo vigila test_lv427). */
+.fa-section { margin-bottom: 1.5rem; }
+.fa-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.fa-facts > div { border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .5rem; padding: .6rem .8rem; }
+.fa-facts dt { font-size: .8rem; font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
+.fa-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.fa-map { height: 28rem; border-radius: .5rem; border: 1px solid var(--bs-border-color, #dee2e6); }
+.fa-legend { background: rgba(255, 255, 255, .92); color: #111827; padding: .4rem .6rem; border-radius: .4rem; font-size: .75rem; min-width: 9rem; }
+.fa-legend-bar { height: .6rem; border-radius: .3rem; margin: .25rem 0; }
+.fa-legend-ends { display: flex; justify-content: space-between; }
+.fa-figure { margin: 0 0 1.25rem; max-width: 42rem; }
+.fa-chart { width: 100%; height: auto; }
+.fa-chart .fa-axis { stroke: currentColor; stroke-width: 1; opacity: .6; }
+.fa-chart .fa-grid { stroke: currentColor; stroke-width: .5; opacity: .15; }
+.fa-chart .fa-tick, .fa-chart .fa-label { fill: currentColor; font-size: 11px; }
+.fa-chart .fa-line { fill: none; stroke: #2563eb; stroke-width: 2; stroke-linejoin: round; }
+.fa-level { font-weight: 600; }
+.fa-level-warning { color: #b45309; }
+.fa-level-critical { color: #b91c1c; }
+@media (max-width: 575.98px) { .fa-map { height: 22rem; } }

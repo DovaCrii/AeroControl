@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .flightlog import views as flight_analysis_view
 
 urlpatterns = [
     # `UX-27`: la pregunta de quien está en faena, y por eso encabeza la lista.
@@ -28,6 +29,12 @@ urlpatterns = [
         "permissions/<uuid:pk>/operations/",
         views.PermissionOperations.as_view(),
         name="permission-operations",
+    ),
+    # LV-427: el análisis de un log de vuelo adjunto (mapa, resumen, gráficos, eventos).
+    path(
+        "flight-analysis/<uuid:pk>/",
+        flight_analysis_view.FlightAnalysisView.as_view(),
+        name="flight-analysis",
     ),
     path(
         "permissions/<uuid:pk>/edit/",

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{% translate "Flight analysis" %} - AeroControl{% endblock %}
+{% block extrahead %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/flight-analysis.css' %}">
+{% if has_map %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous">
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="card p-4 fa-page">
+  {% translate "Flight analysis" as page_title %}
+  <div class="page-header">
+    {% include "generic/_page_header.html" %}
+    <div class="d-flex gap-2">
+      <a href="{% url 'document-download' analysis.document.pk %}" class="btn btn-sm btn-outline-primary">{% translate "Download log" %}</a>
+      <a href="{% url 'permission-operations' permission.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "Back to operations" %}</a>
+    </div>
+  </div>
+
+  {% if track.synthetic %}
+  <div class="alert alert-warning fa-synthetic" role="status">{% translate "Synthetic example data" %}</div>
+  {% endif %}
+
+  <section class="fa-section" aria-labelledby="fa-op">
+    <h2 class="h5" id="fa-op">{% translate "Operation" %}</h2>
+    <dl class="fa-facts">
+      {% for label, value in operation %}
+      <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
+      {% endfor %}
+    </dl>
+    <p class="small text-muted mb-1">{% translate "Log file" %}: {{ analysis.document.title }}</p>
+    {% if can_link and records %}
+    <form method="post" class="d-flex gap-2 align-items-center flex-wrap" id="fa-link-form">
+      {% csrf_token %}
+      <label for="fa-record" class="small mb-0">{% translate "Operation this log belongs to" %}</label>
+      <select name="flight_record" id="fa-record" class="form-select form-select-sm w-auto">
+        <option value="">{{ not_provided }}</option>
+        {% for r in records %}<option value="{{ r.pk }}"{% if r.pk == analysis.flight_record_id %} selected{% endif %}>{{ r.actual_date|date:"d-m-Y" }} {{ r.departure_time|time:"H:i" }} · {{ r.aircraft.registration }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-primary">{% translate "Link" %}</button>
+    </form>
+    {% endif %}
+  </section>
+
+  {% if analysis.status == "error" %}
+  <div class="alert alert-danger" role="alert" id="fa-error" data-error-code="{{ analysis.error_code }}">{{ error_text }}</div>
+  {% elif analysis.status == "ok" %}
+
+  <section class="fa-section" aria-labelledby="fa-map-h">
+    <h2 class="h5" id="fa-map-h">{% translate "Trajectory map" %}</h2>
+    <p class="small text-muted">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}</p>
+    {% if has_map %}
+    <div id="fa-map" class="fa-map" role="region" aria-label="{% translate 'Trajectory map' %}"></div>
+    <p class="mini-map-fallback fa-map-fallback small text-muted" hidden>{% translate "The map could not be drawn." %}</p>
+    {{ map_data|json_script:"fa-map-data" }}
+    {% else %}
+    <p class="text-muted">{% translate "The log has no position data, so there is no map." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="fa-section" aria-labelledby="fa-sum-h">
+    <h2 class="h5" id="fa-sum-h">{% translate "Summary" %}</h2>
+    <dl class="fa-facts">
+      {% for label, value in summary_rows %}
+      <div><dt>{{ label }}</dt><dd>{% if value %}{{ value }}{% else %}{{ not_provided }}{% endif %}</dd></div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="fa-section" aria-labelledby="fa-ch-h">
+    <h2 class="h5" id="fa-ch-h">{% translate "Charts" %}</h2>
+    {% for chart in charts %}
+    <figure class="fa-figure" id="fa-chart-{{ chart.key }}">
+      <figcaption class="fw-semibold">{{ chart.title }}</figcaption>
+      {% if chart.svg %}{{ chart.svg }}{% else %}<p class="text-muted small">{% translate "Not recorded in this log." %}</p>{% endif %}
+      <p class="small text-muted">{{ chart.note }}</p>
+    </figure>
+    {% endfor %}
+  </section>
+
+  <section class="fa-section" aria-labelledby="fa-ev-h">
+    <h2 class="h5" id="fa-ev-h">{% translate "Event timeline" %}</h2>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle" id="fa-events">
+        <thead><tr>
+          <th scope="col">{% translate "Time" %}</th>
+          <th scope="col">{% translate "Level" %}</th>
+          <th scope="col">{% translate "What it means" %}</th>
+          <th scope="col">{% translate "Original log text" %}</th>
+        </tr></thead>
+        <tbody>
+        {% for e in event_rows %}
+          <tr>
+            <td>{{ e.time }}</td>
+            <td><span class="fa-level fa-level-{{ e.level }}">{{ e.level_label }}</span></td>
+            <td>{{ e.explanation }}{% if e.inferred %} <span class="badge text-bg-secondary">{% translate "inferred" %}</span>{% endif %}</td>
+            <td class="small text-muted">{{ e.raw_text }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-muted">{% translate "No events in the log." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="fa-section" aria-labelledby="fa-lim-h">
+    <h2 class="h5" id="fa-lim-h">{% translate "Limitations and uninterpreted fields" %}</h2>
+    <ul class="small">
+      {% for item in limitations %}<li>{{ item }}</li>{% endfor %}
+      {% for item in uninterpreted %}<li>{% translate "Not interpreted" %}: {{ item }}</li>{% endfor %}
+      {% if not limitations and not uninterpreted %}<li class="text-muted">{% translate "None reported." %}</li>{% endif %}
+    </ul>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+{% if has_map %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script src="{% static 'js/flight-analysis.js' %}"></script>
+{% endif %}
+{% endblock %}
