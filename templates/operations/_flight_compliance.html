@@ -1,0 +1,20 @@
+{% load i18n %}
+<div id="fa-compliance" class="fa-comp" data-level="{{ compliance.level }}">
+  <p class="fa-comp-verdict"><span class="id-chip id-chip--{{ compliance.level }}" id="fa-comp-verdict">{{ compliance.verdict }}</span></p>
+  {% if compliance.available %}
+  <ul class="fa-comp-lines" id="fa-comp-lines">
+    {% for line in compliance.lines %}<li>{{ line }}</li>{% endfor %}
+  </ul>
+  {% if compliance.segment_text %}
+  <ul class="{{ note_class }} fa-comp-segments" id="fa-comp-segments">
+    {% for text in compliance.segment_text %}<li>{{ text }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% for reason in compliance.reasons %}<p class="{{ note_class }}">{{ reason }}</p>{% endfor %}
+  <ul class="{{ note_class }} fa-comp-caveats" id="fa-comp-caveats">
+    {% for caveat in compliance.caveats %}<li>{{ caveat }}</li>{% endfor %}
+  </ul>
+  {% else %}
+  {% for reason in compliance.reasons %}<p class="{{ note_class }}" id="fa-comp-reason">{{ reason }}</p>{% endfor %}
+  {% endif %}
+</div>

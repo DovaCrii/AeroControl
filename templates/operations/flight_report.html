@@ -50,13 +50,18 @@
     {% if low_battery %}<p class="fr-alert" role="status" id="fa-low-battery">{{ low_battery }}</p>{% endif %}
   </section>
 
+  <section class="fr-section fr-keep" aria-labelledby="fr-comp-h">
+    <h2 id="fr-comp-h">{% translate "Authorized area and altitude" %}</h2>
+    {% include "operations/_flight_compliance.html" with note_class="fr-note" %}
+  </section>
+
   <section class="fr-section fr-keep" aria-labelledby="fr-map-h">
     <h2 id="fr-map-h">{% translate "Trajectory map" %}</h2>
     {% if has_map %}
     <div id="fa-map" class="fa-map" role="region" aria-label="{% translate 'Trajectory map' %}"></div>
     <p class="mini-map-fallback fa-map-fallback fr-note" hidden>{% translate "The map could not be drawn." %}</p>
     {{ map_data|json_script:"fa-map-data" }}
-    <p class="fr-note">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}{% if has_return %} {% translate "The dashed line is the automatic return to the home point." %}{% endif %}</p>
+    <p class="fr-note">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}{% if has_return %} {% translate "The dashed line is the automatic return to the home point." %}{% endif %}{% if compliance.available %} {% translate "The shaded outline is the authorized area; red stretches are where the log is outside it or over the authorized height." %}{% endif %}</p>
     {% else %}
     <p class="fr-note">{% translate "The log has no position data, so there is no map." %}</p>
     {% endif %}
@@ -71,7 +76,7 @@
       <li><span class="fr-sw fr-sw-warning"></span>{% translate "Warning" %}</li>
       <li><span class="fr-sw fr-sw-critical"></span>{% translate "Critical" %}</li>
     </ul>
-    <p class="fr-note">{% translate "Phases are inferred from the height and the automatic return recorded in the log; the marks show where the aircraft reported a warning." %}</p>
+    <p class="fr-note">{% translate "Phases are inferred from the height and the automatic return recorded in the log; the marks show where the aircraft reported a warning." %}{% if timeline_flagged %} {% translate "Red bands mark the stretches outside the authorized area (bottom edge) or over the authorized height (top edge)." %}{% endif %}</p>
     {% else %}
     <p class="fr-note">{% translate "Not recorded in this log." %}</p>
     {% endif %}

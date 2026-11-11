@@ -20,6 +20,7 @@ from apps.core.exports import neutralize
 from apps.core.views import ModelViewPermissionRequiredMixin
 
 from ..models import FlightLogAnalysis, FlightRecord
+from .compliance import timeline_flags
 from .explanations import explain
 from .narrative import _final_battery
 from .service import PARSER_VERSION
@@ -160,8 +161,10 @@ def _readings(track: FlightTrack) -> dict:
     return out
 
 
-def _timeline(track: FlightTrack):
+def _timeline(track: FlightTrack, flags=()):
     labels = {
+        "area": _("Outside the authorized area"),
+        "height": _("Over the authorized height"),
         "title": _("Flight phases and warnings"),
         "takeoff": _("Takeoff"),
         "work": _("Work"),
@@ -178,7 +181,7 @@ def _timeline(track: FlightTrack):
         (phase, labels[phase])
         for phase in dict.fromkeys(p for p, *_r in phase_segments(track))
     ]
-    return timeline_svg(track, labels, mark_text), legend
+    return timeline_svg(track, labels, mark_text, flags), legend
 
 
 def _file_slug(analysis, track, facts) -> str:
@@ -203,7 +206,8 @@ class FlightReportView(FlightAnalysisView):
             raise Http404
         track = context["track"]
         facts = _aircraft_facts(track, analysis.permission, analysis.flight_record)
-        svg, legend = _timeline(track)
+        compliance = context["compliance"]
+        svg, legend = _timeline(track, timeline_flags(compliance))
         charts = context["charts"]
         readings = _readings(track)
         for chart in charts:
@@ -223,6 +227,7 @@ class FlightReportView(FlightAnalysisView):
                 "start_text": start or missing,
                 "kpis": _kpis(track),
                 "timeline": svg,
+                "timeline_flagged": bool(compliance["segments"]),
                 "timeline_legend": legend,
                 "charts": charts,
                 "operator": str(record.pilot) if record else missing,

@@ -23,6 +23,7 @@ CLIMB_M = 10.0
 W, H = 640, 92
 LEFT, RIGHT = 8, 8
 BAR_TOP, BAR_H = 36, 24
+FLAG_H = 6
 PHASES = ("takeoff", "work", "return", "landing")
 
 
@@ -84,11 +85,13 @@ def warning_marks(track: FlightTrack):
     ]
 
 
-def timeline_svg(track: FlightTrack, labels: dict, mark_text):
+def timeline_svg(track: FlightTrack, labels: dict, mark_text, flags=None):
     """El `<svg>` (SafeString) o `None` sin tramo medible.
 
     `labels`: nombre traducido de cada fase y `time`; `mark_text(t, nivel, texto)` da el texto
-    que acompaña a cada marca (ya traducido).
+    que acompaña a cada marca (ya traducido). LV-432: `flags` = `[(inicio, fin, 'area'|'height')]`
+    marca con una banda roja los tramos fuera del área (borde inferior de la barra) o sobre la
+    altura autorizada (borde superior); `labels` puede traer `area` y `height` como título.
     """
     segments = phase_segments(track)
     if not segments:
@@ -116,6 +119,16 @@ def timeline_svg(track: FlightTrack, labels: dict, mark_text):
                 f'y="{BAR_TOP + BAR_H / 2 + 4}" text-anchor="middle">'
                 f"{escape(labels[phase])}</text>"
             )
+    for start, end, kind in flags or ():
+        x = px(start)
+        w = max(px(end) - x, 3.0)
+        y = BAR_TOP + BAR_H - FLAG_H if kind == "area" else BAR_TOP
+        parts.append(
+            f'<rect class="fr-flag fr-flag-{kind}" data-flag="{kind}" x="{x:.1f}" '
+            f'y="{y}" width="{w:.1f}" height="{FLAG_H}"><title>'
+            f"{escape(labels.get(kind, kind))} {_clock(start - t0)}-{_clock(end - t0)}"
+            "</title></rect>"
+        )
     for t, level, text in warning_marks(track):
         x = px(t)
         parts.append(

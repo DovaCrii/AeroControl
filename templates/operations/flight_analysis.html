@@ -66,13 +66,28 @@
 
   <section class="fa-section" aria-labelledby="fa-map-h">
     <h2 class="h5" id="fa-map-h">{% translate "Trajectory map" %}</h2>
-    <p class="small text-muted">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}{% if has_return %} {% translate "The dashed line is the automatic return to the home point." %}{% endif %}</p>
+    <p class="small text-muted">{% translate "The line is the path the aircraft followed, coloured by height above the takeoff point. The green marker is the takeoff, the dark one the landing, and the amber and red markers are warnings and critical events recorded in the log." %}{% if has_return %} {% translate "The dashed line is the automatic return to the home point." %}{% endif %}{% if compliance.available %} {% translate "The shaded outline is the authorized area; red stretches are where the log is outside it or over the authorized height." %}{% endif %}</p>
     {% if has_map %}
     <div id="fa-map" class="fa-map" role="region" aria-label="{% translate 'Trajectory map' %}"></div>
     <p class="mini-map-fallback fa-map-fallback small text-muted" hidden>{% translate "The map could not be drawn." %}</p>
     {{ map_data|json_script:"fa-map-data" }}
     {% else %}
     <p class="text-muted">{% translate "The log has no position data, so there is no map." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="fa-section" aria-labelledby="fa-comp-h">
+    <h2 class="h5" id="fa-comp-h">{% translate "Authorized area and altitude" %}</h2>
+    {% include "operations/_flight_compliance.html" with note_class="small text-muted" %}
+    {% if permit_choices %}
+    <form method="post" class="d-flex gap-2 align-items-center flex-wrap" id="fa-permit-form">
+      {% csrf_token %}
+      <label for="fa-permit" class="small mb-0">{% translate "Permit this log belongs to" %}</label>
+      <select name="permission" id="fa-permit" class="form-select form-select-sm w-auto" required>
+        {% for p in permit_choices %}<option value="{{ p.pk }}">{{ p.permission_number|default:p }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-primary">{% translate "Link permit" %}</button>
+    </form>
     {% endif %}
   </section>
 

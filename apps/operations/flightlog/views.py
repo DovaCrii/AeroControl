@@ -18,8 +18,9 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 
 from apps.registry.models import Aircraft, normalize_serial
 
-from ..models import FlightLogAnalysis, FlightRecord
+from ..models import FlightLogAnalysis, FlightPermission, FlightRecord
 from .charts import line_chart
+from .compliance import check_flight, map_overlay
 from .explanations import explain
 from .independent import back_link, serial_mismatch_warning
 from .narrative import build_narrative
@@ -177,6 +178,9 @@ def map_payload(track: FlightTrack) -> dict:
             "noHeight": _("Height not recorded"),
             "critical": _("Critical"),
             "warning": _("Warning"),
+            "authorizedArea": _("Authorized area"),
+            "outsideArea": _("Outside the authorized area"),
+            "overHeight": _("Over the authorized height"),
         },
     }
 
@@ -327,6 +331,7 @@ class FlightAnalysisView(
                 "can_link": self.request.user.has_perm(
                     "operations.change_flightrecord"
                 ),
+                "permit_choices": self._permit_choices(analysis),
             }
         )
         ok = analysis.status == FlightLogAnalysis.STATUS_OK
@@ -340,14 +345,22 @@ class FlightAnalysisView(
             context["error_text"] = error_text(analysis.error_code)
         elif analysis.status == FlightLogAnalysis.STATUS_OK:
             track = FlightTrack.from_dict(analysis.result)
+            result = check_flight(
+                track,
+                permission,
+                with_plans=self.request.user.has_perm("geo.view_geoplan"),
+            )
+            map_data = map_payload(track)
+            map_data["compliance"] = map_overlay(result)
             context.update(
                 {
+                    "compliance": result,
                     "serial_warning": serial_mismatch_warning(analysis, track),
                     "narrative": build_narrative(track),
                     "has_return": bool(track.return_leg),
                     "track": track,
                     "summary_rows": _summary_rows(track),
-                    "map_data": map_payload(track),
+                    "map_data": map_data,
                     "has_map": any(
                         p.lat is not None and p.lon is not None for p in track.points
                     ),
@@ -358,6 +371,42 @@ class FlightAnalysisView(
                 }
             )
         return context
+
+    def _permit_choices(self, analysis):
+        """Permisos que se pueden vincular a un análisis sin permiso: sólo los de su centro de
+        costo (y por tanto de su tenant), y sólo a quien puede modificar el análisis."""
+        if (
+            analysis.permission_id
+            or analysis.cost_center_id is None
+            or not self.request.user.has_perm("operations.change_flightloganalysis")
+        ):
+            return []
+        return list(
+            FlightPermission.objects.filter(
+                is_active=True, cost_center_id=analysis.cost_center_id
+            ).order_by("-created_at")
+        )
+
+    def _link_permit(self, request):
+        if not request.user.has_perm("operations.change_flightloganalysis"):
+            raise PermissionDenied
+        analysis = self.get_analysis()
+        if analysis.permission_id or analysis.cost_center_id is None:
+            raise Http404
+        try:
+            pk = uuid.UUID(request.POST.get("permission", ""))
+        except ValueError as exc:
+            raise Http404 from exc
+        permit = FlightPermission.objects.filter(
+            is_active=True, cost_center_id=analysis.cost_center_id, pk=pk
+        ).first()
+        if permit is None:
+            raise Http404
+        analysis.permission = permit
+        analysis.save(update_fields=["permission", "updated_at"])
+        set_audit_context(request, analysis, action="update")
+        messages.success(request, _("Permit linked to the flight log."))
+        return redirect("flight-analysis", pk=analysis.pk)
 
     def _with_aircraft(self, operation, track, analysis, record):
         """Rellena la fila «Aircraft»: registro (por serie) > operación enlazada > «Not provided»,
@@ -391,6 +440,8 @@ class FlightAnalysisView(
         return rows
 
     def post(self, request, *args, **kwargs):
+        if "permission" in request.POST:
+            return self._link_permit(request)
         if not request.user.has_perm("operations.change_flightrecord"):
             raise PermissionDenied
         analysis = self.get_analysis()

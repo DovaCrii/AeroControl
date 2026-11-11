@@ -74,13 +74,38 @@
     return { group: group, lo: lo, hi: hi, hasHeight: heights.length > 0 };
   }
 
+  /* LV-432: área autorizada del permiso (polígono de su plan KMZ o círculo del permiso): contorno
+     azul J.E.J. y relleno tenue, debajo de la trayectoria. Devuelve sus límites o null. */
+  var AREA_STROKE = "#1E418C";
+  var AREA_FILL = "#60C4F5";
+  var OUT_COLOR = "#dc2626";
+
+  function drawArea(L, map, area) {
+    if (!area) { return null; }
+    var style = { color: AREA_STROKE, weight: 2.5, opacity: 1, fillColor: AREA_FILL, fillOpacity: 0.12 };
+    var group = L.featureGroup().addTo(map);
+    (area.polygons || []).forEach(function (rings) { L.polygon(rings, style).addTo(group); });
+    if (area.circle) {
+      L.circle([area.circle.lat, area.circle.lon], Object.assign({ radius: area.circle.radius_m }, style)).addTo(group);
+    }
+    return group.getLayers().length ? group : null;
+  }
+
+  /* Tramos fuera del área (rojo continuo) o sobre la altura (rojo discontinuo), sobre la trayectoria. */
+  function drawBreaches(L, map, paths, dash) {
+    (paths || []).forEach(function (path) {
+      if (path.length < 2) { return; }
+      L.polyline(path, { color: HALO, weight: 9, opacity: 0.85 }).addTo(map);
+      L.polyline(path, { color: OUT_COLOR, weight: 5, opacity: 1, dashArray: dash || null }).addTo(map);
+    });
+  }
   function mark(L, group, latlon, fill, label) {
     var marker = L.circleMarker(latlon, { radius: 7, color: HALO, weight: 2, fillColor: fill, fillOpacity: 1 });
     marker.bindTooltip(text(label), { direction: "top" });
     marker.addTo(group);
   }
 
-  function legend(L, map, info, i18n, hasReturn) {
+  function legend(L, map, info, i18n, hasReturn, extra) {
     var control = L.control({ position: "bottomright" });
     control.onAdd = function () {
       var box = L.DomUtil.create("div", "fa-legend");
@@ -109,6 +134,16 @@
         row.appendChild(text(" " + i18n.returnLeg));
         box.appendChild(row);
       }
+      (extra || []).forEach(function (item) {
+        var line = document.createElement("div");
+        line.className = "fa-legend-return";
+        var swatch = document.createElement("span");
+        swatch.className = "fa-legend-swatch fa-legend-" + item.kind;
+        swatch.setAttribute("aria-hidden", "true");
+        line.appendChild(swatch);
+        line.appendChild(text(" " + item.label));
+        box.appendChild(line);
+      });
       return box;
     };
     control.addTo(map);
@@ -124,8 +159,12 @@
       var map = L.map(container, { zoomControl: true });
       var base = addTiles(L, map, data.tiles);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
+      var over = data.compliance || {};
+      var areaLayer = drawArea(L, map, over.area);
       var track = drawTrack(L, map, data.points);
       var hasReturn = drawReturn(L, map, data.returnPath);
+      drawBreaches(L, map, over.outside, null);
+      drawBreaches(L, map, over.over, "3 8");
       var markers = L.featureGroup().addTo(map);
       if (data.sameSpot && data.takeoff) {
         mark(L, markers, data.takeoff, "#22c55e", data.i18n.takeoffLanding);
@@ -139,10 +178,16 @@
           " " + event.when + ": " + event.text;
         mark(L, markers, [event.lat, event.lon], color, label);
       });
-      legend(L, map, track, data.i18n, hasReturn);
-      map.fitBounds(track.group.getBounds(), { padding: [24, 24] });
+      var extra = [];
+      if (areaLayer) { extra.push({ kind: "area", label: data.i18n.authorizedArea }); }
+      if ((over.outside || []).length) { extra.push({ kind: "out", label: data.i18n.outsideArea }); }
+      if ((over.over || []).length) { extra.push({ kind: "over", label: data.i18n.overHeight }); }
+      legend(L, map, track, data.i18n, hasReturn, extra);
+      var bounds = track.group.getBounds();
+      if (areaLayer) { bounds = bounds.extend(areaLayer.getBounds()); }
+      map.fitBounds(bounds, { padding: [24, 24] });
       /* LV-430: el reporte imprimible reencuadra y espera las teselas antes de imprimir. */
-      container._fa = { map: map, bounds: track.group.getBounds(), base: base };
+      container._fa = { map: map, bounds: bounds, base: base };
     } catch (error) {
       fail(container, error, "init");
     }
