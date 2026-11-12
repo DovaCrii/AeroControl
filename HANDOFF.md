@@ -2,7 +2,7 @@
 
 ## ▶️ 2026-11-09 — retomar en la CLI de Claude (lista de pendientes)
 
-**Producción (`p340`) = `04f694f`** (RESUMEN pegado 2026-11-12: `DEPLOY OK 87560b4 -> 04f694f`, 3 migraciones aplicadas (`operations 0035`–`0037`) con respaldo restorable, 10 estáticos, `active`, health 200, 17 timers, HEAD == origin/main; antes `198ae60 -> 87560b4` con `LV-429`). Lleva hasta `LV-432` (lector DJI real, reporte, «Logs de vuelo» y área del permiso). Lo que diga «fusionado» después de eso está en `main` y **no** en la VM: `LV-433` (mapa del análisis, sólo estáticos).
+**Producción (`p340`) = `94b37b0`** (RESUMEN pegado 2026-11-12: `DEPLOY OK 6c1c999 -> 94b37b0`, sin migraciones, 2 estáticos, HEAD == origin/main; antes `04f694f -> 6c1c999` y `87560b4 -> 04f694f` con `operations 0035`–`0037`). Lleva hasta `LV-435` (mapa del análisis, serie DJI de 16 caracteres, cronología sin duplicados, ubicación por comuna, avisos con el tema). El análisis guardado se rehízo con `analyze_flight_logs --outdated` (1 log, lector `dji-2`). ⚠️ **Los grupos de producción no tenían los permisos nuevos** (`view/add_flightloganalysis`, y Administrator tampoco «todos»): `deploy.sh` no corre `bootstrap_roles`, así que un usuario no superusuario no veía «Logs de vuelo». Se dictó una sincronización que sólo **agrega** permisos (no toca el grupo «Dirección», propio de producción); falta confirmar su salida y llevarla a `deploy.sh` en un PR propio. Lo que diga «fusionado» después de eso está en `main` y **no** en la VM: `LV-436` (contraste del análisis, sólo estáticos).
 
 ### Cómo retomar
 1. `git fetch origin && git log --oneline -5 origin/main` y `gh pr list --state open`: lo que cambió desde esta nota manda.

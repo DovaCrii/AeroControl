@@ -68,7 +68,7 @@
 
   <section class="fa-section" aria-labelledby="fa-nar-h">
     <h2 class="h5" id="fa-nar-h">{% translate "Flight at a glance" %}</h2>
-    <p id="fa-narrative">{{ narrative.text }}</p>
+    <p id="fa-narrative" class="fa-narrative">{{ narrative.text }}</p>
     {% if narrative.low_battery %}<div class="fa-notice fa-notice--warning" role="status" id="fa-low-battery"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg><p>{{ narrative.low_battery }}</p></div>{% endif %}
   </section>
 
@@ -110,6 +110,7 @@
 
   <section class="fa-section" aria-labelledby="fa-ch-h">
     <h2 class="h5" id="fa-ch-h">{% translate "Charts" %}</h2>
+    <div class="fa-charts">
     {% for chart in charts %}
     <figure class="fa-figure" id="fa-chart-{{ chart.key }}">
       <figcaption class="fw-semibold">{{ chart.title }}</figcaption>
@@ -117,6 +118,7 @@
       <p class="small text-muted">{{ chart.note }}</p>
     </figure>
     {% endfor %}
+    </div>
   </section>
 
   <section class="fa-section" aria-labelledby="fa-ev-h">

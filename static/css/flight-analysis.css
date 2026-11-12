@@ -2,13 +2,20 @@
    LV-435: tipografía del cuerpo en todo, avisos y chips con los tokens `--sev-*` (con respaldo en
    claro: el reporte imprimible no carga app.css). */
 .fa-section { margin-bottom: 2rem; }
-.fa-section > h2 { margin-bottom: .75rem; padding-bottom: .35rem; border-bottom: 1px solid var(--ac-border, #dee2e6); font-weight: 600; }
+.fa-section > h2 { margin-bottom: .75rem; padding: 0 0 .35rem .6rem; border-bottom: 1px solid var(--ac-border, #dee2e6); border-left: 4px solid var(--ac-primary, #087f78); color: var(--ac-text, #172238); font-weight: 700; }
 .fa-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem; margin-bottom: .75rem; }
-.fa-facts > div { border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .5rem; padding: .6rem .8rem; }
-.fa-facts dt { font-size: var(--fs-md, .85rem); font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
-.fa-facts dd { margin: 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
-.fa-sub { display: block; font-size: var(--fs-md, .85rem); font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
-.fa-note { margin: 0 0 .5rem; font-size: var(--fs-md, .85rem); color: var(--bs-secondary-color, #6c757d); }
+.fa-facts > div { border: 1px solid var(--bs-border-color, #dee2e6); border-top: 3px solid var(--ac-primary, #087f78); border-radius: .5rem; padding: .6rem .8rem; background: var(--ac-surface-raised, #fff); }
+.fa-facts dt { font-size: .8rem; font-weight: 600; letter-spacing: .02em; color: var(--ac-primary, #087f78); }
+.fa-facts dd { margin: .15rem 0 0; font-size: 1.1rem; font-weight: 700; color: var(--ac-text, #172238); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fa-sub { display: block; font-size: .9rem; font-weight: 500; color: var(--ac-text-secondary, #44526a); }
+.fa-note { margin: 0 0 .5rem; font-size: var(--fs-md, .85rem); color: var(--ac-text-secondary, #44526a); }
+/* LV-436: el relato del vuelo destacado, y las notas del pie de cada bloque con el texto secundario (no el apagado). */
+.fa-narrative { margin: 0 0 1rem; padding: .8rem 1rem; border-left: 4px solid var(--ac-primary, #087f78); border-radius: .5rem; background: var(--ac-primary-soft, #d8f5f1); color: var(--ac-text, #172238); font-size: 1.05rem; line-height: 1.55; }
+.fa-page .text-muted { color: var(--ac-text-secondary, #44526a) !important; }
+.fa-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); gap: 1rem; }
+.fa-charts .fa-figure { max-width: none; margin: 0; padding: .8rem 1rem; border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .5rem; background: var(--ac-surface-raised, #fff); }
+.fa-charts .fa-figure p { margin: .35rem 0 0; }
+#fa-events td:first-child { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .fa-map { height: 28rem; border-radius: .5rem; border: 1px solid var(--bs-border-color, #dee2e6); }
 .fa-legend { background: rgba(255, 255, 255, .92); color: #111827; padding: .4rem .6rem; border-radius: .4rem; font-size: .75rem; min-width: 9rem; }
 .fa-legend-bar { height: .6rem; border-radius: .3rem; margin: .25rem 0; }
@@ -18,11 +25,12 @@
 :root { --fa-line: #1E418C; }
 [data-theme="dark"] { --fa-line: #60C4F5; }
 .fa-chart { width: 100%; height: auto; font-family: inherit; }
-.fa-chart .fa-axis { stroke: currentColor; stroke-width: 1; opacity: .6; }
-.fa-chart .fa-grid { stroke: currentColor; stroke-width: .5; opacity: .15; }
-.fa-chart .fa-tick, .fa-chart .fa-label { fill: currentColor; font-size: 11px; }
-.fa-chart .fa-area { fill: var(--fa-line); fill-opacity: .12; stroke: none; }
-.fa-chart .fa-line { fill: none; stroke: var(--fa-line); stroke-width: 2; stroke-linejoin: round; }
+.fa-chart { color: var(--ac-text-secondary, #44526a); }
+.fa-chart .fa-axis { stroke: currentColor; stroke-width: 1; opacity: .8; }
+.fa-chart .fa-grid { stroke: currentColor; stroke-width: .5; opacity: .25; }
+.fa-chart .fa-tick, .fa-chart .fa-label { fill: currentColor; font-size: 12px; font-weight: 500; }
+.fa-chart .fa-area { fill: var(--fa-line); fill-opacity: .22; stroke: none; }
+.fa-chart .fa-line { fill: none; stroke: var(--fa-line); stroke-width: 2.5; stroke-linejoin: round; }
 @media (max-width: 575.98px) { .fa-map { height: 22rem; } }
 .fa-legend-return { margin-top: .35rem; display: flex; align-items: center; }
 .fa-legend-dash { display: inline-block; width: 1.6rem; border-top: 3px dashed #111827; margin-right: .25rem; }

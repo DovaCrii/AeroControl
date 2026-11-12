@@ -58,6 +58,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Más contraste en la pantalla de análisis del log de vuelo (`LV-436`, `codex/log-contraste`).** Rótulos en el color primario, valores más grandes con el texto principal, tarjetas con borde de color, el relato del vuelo destacado, notas con el texto secundario y los gráficos en tarjetas de dos columnas con ejes legibles. Contrastes AA en los dos temas. Sin migración; lleva `collectstatic`.
+
 - **Análisis y reporte del log de vuelo (LV-435).** Ubicación del despegue (comuna, provincia, región; referencial, calculada al dibujar y sin guardar) en el análisis, el reporte y el KML; chip de veredicto con la tipografía del cuerpo; fechas del resumen en d-m-Y; avisos y niveles con los tokens de severidad del tema; gráficos con la última etiqueta del eje X completa, color por variable CSS y relleno suave. Sólo estáticos y código, sin migración.
 
 - **Pruebas estables bajo `-n auto` (`LV-414`, `codex/handoff-y-tests-inestables`).** Un autouse en `conftest.py` desactiva el idioma activo antes y después de cada prueba: las que usan `Accept-Language` lo dejaban filtrarse al siguiente test del mismo worker. `node_run` de LV-367 espera hasta 180 s y muestra el error de Node. Sin migración.
