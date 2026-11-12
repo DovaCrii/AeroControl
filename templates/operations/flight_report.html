@@ -47,6 +47,8 @@
   <section class="fr-section" aria-labelledby="fr-sum-h">
     <h2 id="fr-sum-h">{% translate "Executive summary" %}</h2>
     <p id="fa-narrative">{{ narrative.text }}</p>
+    {% if place_sentence %}<p id="fr-place">{{ place_sentence }}</p>{% endif %}
+    <p class="fr-note" id="fr-place-note">{{ place_note }}</p>
     {% if low_battery %}<p class="fr-alert" role="status" id="fa-low-battery">{{ low_battery }}</p>{% endif %}
   </section>
 
@@ -106,7 +108,7 @@
       {% for e in event_rows %}
         <tr>
           <td>{{ e.time }}</td>
-          <td><span class="fa-level fa-level-{{ e.level }}">{{ e.level_label }}</span></td>
+          <td><span class="fa-chip fa-chip--sm fa-chip--{{ e.level }}">{{ e.level_label }}</span></td>
           <td>{{ e.explanation }}{% if e.inferred %} <em>({% translate "inferred" %})</em>{% endif %}</td>
           <td class="fr-raw">{{ e.raw_text }}</td>
         </tr>
@@ -127,6 +129,7 @@
       <div><dt>{% translate "Serial number" %}</dt><dd>{{ aircraft.serial }}</dd></div>
       <div><dt>{% translate "Operator" %}</dt><dd>{{ operator }}</dd></div>
       <div><dt>{% translate "Operation date" %}</dt><dd>{{ record_date }}</dd></div>
+      {% if place %}<div id="fr-place-card"><dt>{% translate "Location (takeoff)" %}</dt><dd>{{ place.comuna }}, {{ place.provincia }}<br>{{ place.region }}</dd></div>{% endif %}
       <div><dt>{% translate "Start (local time and time zone)" %}</dt><dd>{{ start_text }}</dd></div>
     </dl>
   </section>

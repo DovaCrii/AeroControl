@@ -22,6 +22,7 @@ from apps.core.views import ModelViewPermissionRequiredMixin
 from ..models import FlightLogAnalysis, FlightRecord
 from .compliance import timeline_flags
 from .explanations import explain
+from .location import flight_place, place_sentence
 from .narrative import _final_battery
 from .service import PARSER_VERSION
 from .timeline import phase_segments, timeline_svg
@@ -333,7 +334,11 @@ class FlightKmlView(_ExportView):
             f"<coordinates>{_coords(track, relative)}</coordinates></LineString></Placemark>",
         ]
         if s.takeoff:
-            parts.append(_placemark(_("Takeoff"), "", *s.takeoff))
+            parts.append(
+                _placemark(
+                    _("Takeoff"), place_sentence(flight_place(track)), *s.takeoff
+                )
+            )
         if s.landing:
             parts.append(_placemark(_("Landing"), "", *s.landing))
         for event in track.events:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from django.conf import settings
 from django.contrib import messages
@@ -23,6 +24,7 @@ from .charts import line_chart
 from .compliance import check_flight, map_overlay
 from .explanations import explain
 from .independent import back_link, serial_mismatch_warning
+from .location import flight_place, place_note, place_sentence
 from .narrative import build_narrative
 from .types import FlightTrack, haversine_m
 
@@ -68,6 +70,17 @@ def _clock(seconds):
     return f"{seconds // 60}:{seconds % 60:02d}"
 
 
+def format_moment(iso):
+    """`2026-09-18T12:26:48-03:00` -> `18-09-2026 12:26:48` (una sola fecha d-m-Y); lo que no
+    se puede leer queda como vino."""
+    if not iso:
+        return None
+    try:
+        return f"{datetime.fromisoformat(iso):%d-%m-%Y %H:%M:%S}"
+    except ValueError:
+        return iso
+
+
 def _num(value, unit, digits=1):
     if value is None:
         return None
@@ -77,7 +90,7 @@ def _num(value, unit, digits=1):
 def _summary_rows(track: FlightTrack):
     s = track.summary
     tz = s.timezone or _("time zone not determined")
-    start = f"{s.started_at} ({tz})" if s.started_at else None
+    start = f"{format_moment(s.started_at)} ({tz})" if s.started_at else None
     speed = None
     if s.max_speed_ms is not None:
         speed = f"{s.max_speed_ms:.1f} m/s ({s.max_speed_ms * 3.6:.1f} km/h)"
@@ -86,7 +99,7 @@ def _summary_rows(track: FlightTrack):
         distance = f"{s.distance_m:,.0f} m"
     take = f"{s.takeoff[0]:.5f}, {s.takeoff[1]:.5f}" if s.takeoff else None
     land = f"{s.landing[0]:.5f}, {s.landing[1]:.5f}" if s.landing else None
-    utc = f"{s.started_at_utc} (UTC)" if s.started_at_utc else None
+    utc = f"{format_moment(s.started_at_utc)} (UTC)" if s.started_at_utc else None
     return [
         (_("Start"), start),
         (_("Start (UTC)"), utc),
@@ -352,8 +365,12 @@ class FlightAnalysisView(
             )
             map_data = map_payload(track)
             map_data["compliance"] = map_overlay(result)
+            place = flight_place(track)
             context.update(
                 {
+                    "place": place,
+                    "place_sentence": place_sentence(place),
+                    "place_note": place_note(),
                     "compliance": result,
                     "serial_warning": serial_mismatch_warning(analysis, track),
                     "narrative": build_narrative(track),

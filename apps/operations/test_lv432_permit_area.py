@@ -285,7 +285,7 @@ class TestScreen:
         analysis = _analysis(square_permit, _track(EAST_OUT))
         html = _page(analysis).content.decode()
         block = html.split('id="fa-compliance"', 1)[1].split("</section>", 1)[0]
-        assert "id-chip--critical" in block
+        assert "fa-chip--critical" in block
         assert 'id="fa-comp-caveats"' in block and "GPS" in block
 
     def test_without_a_plan_permission_the_area_is_not_exposed(self, square_permit):
@@ -298,7 +298,7 @@ class TestScreen:
         FlightLogAnalysis.objects.filter(pk=analysis.pk).update(permission=None)
         html = _page(analysis).content.decode()
         assert 'id="fa-comp-reason"' in html
-        assert "id-chip--info" in html
+        assert "fa-chip--info" in html
 
     def test_it_is_still_403_without_permission_and_404_across_tenants(
         self, square_permit
@@ -319,7 +319,7 @@ class TestReport:
         ).content.decode()
         assert html.index('id="fr-comp-h"') < html.index('id="fr-map-h"')
         assert html.index('id="fr-sum-h"') < html.index('id="fr-comp-h"')
-        assert 'id="fa-comp-verdict"' in html and "id-chip--critical" in html
+        assert 'id="fa-comp-verdict"' in html and "fa-chip--critical" in html
 
     def test_the_timeline_marks_the_stretch_outside(self, square_permit):
         analysis = _analysis(square_permit, _track(EAST_OUT))
@@ -336,7 +336,7 @@ class TestReport:
         html = client.get(
             reverse("flight-analysis-report", args=[analysis.pk])
         ).content.decode()
-        assert "data-flag=" not in html and "id-chip--ok" in html
+        assert "data-flag=" not in html and "fa-chip--ok" in html
 
 
 # ── vincular el permiso desde el análisis ────────────────────────────────────
