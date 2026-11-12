@@ -14858,6 +14858,24 @@ msgstr "Despegue"
 msgid "Takeoff point (lat, lon)"
 msgstr "Punto de despegue (lat, lon)"
 
+msgid "Location (takeoff)"
+msgstr "Ubicación (despegue)"
+
+#, python-format
+msgid ""
+"Took off in the commune of %(comuna)s (%(provincia)s province, %(region)s)."
+msgstr ""
+"Despegó en la comuna de %(comuna)s (provincia de %(provincia)s, %(region)s)."
+
+msgid ""
+"Reference only: the commune comes from the simplified communal boundaries of "
+"the BCN (about 111 m), so near a boundary the neighbouring commune may "
+"appear. If the takeoff is outside the mapped communes, no location is shown."
+msgstr ""
+"Referencial: la comuna sale de los límites comunales simplificados de la BCN "
+"(unos 111 m), así que cerca de un límite puede aparecer la comuna vecina. Si "
+"el despegue queda fuera de las comunas mapeadas, no se muestra la ubicación."
+
 msgid "The DJI key needed to read this log is not configured on the server."
 msgstr ""
 "La clave de DJI necesaria para leer este log no está configurada en el "

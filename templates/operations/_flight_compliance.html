@@ -1,6 +1,6 @@
 {% load i18n %}
 <div id="fa-compliance" class="fa-comp" data-level="{{ compliance.level }}">
-  <p class="fa-comp-verdict"><span class="id-chip id-chip--{{ compliance.level }}" id="fa-comp-verdict">{{ compliance.verdict }}</span></p>
+  <p class="fa-comp-verdict"><span class="fa-chip fa-chip--{{ compliance.level }}" id="fa-comp-verdict">{{ compliance.verdict }}</span></p>
   {% if compliance.available %}
   <ul class="fa-comp-lines" id="fa-comp-lines">
     {% for line in compliance.lines %}<li>{{ line }}</li>{% endfor %}

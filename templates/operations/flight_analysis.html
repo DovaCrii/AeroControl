@@ -26,11 +26,11 @@
   </div>
 
   {% if serial_warning %}
-  <div class="alert alert-warning" role="status" id="fa-serial-warning">{{ serial_warning }}</div>
+  <div class="fa-notice fa-notice--warning" role="status" id="fa-serial-warning"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><p>{{ serial_warning }}</p></div>
   {% endif %}
 
   {% if track.synthetic %}
-  <div class="alert alert-warning fa-synthetic" role="status">{% translate "Synthetic example data" %}</div>
+  <div class="fa-notice fa-notice--info fa-synthetic" role="status"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons-ui.svg' %}#icon-info"/></svg><p>{% translate "Synthetic example data" %}</p></div>
   {% endif %}
 
   <section class="fa-section" aria-labelledby="fa-op">
@@ -39,8 +39,10 @@
       {% for label, value in operation %}
       <div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>
       {% endfor %}
+      {% if place %}<div id="fa-place"><dt>{% translate "Location (takeoff)" %}</dt><dd>{{ place.comuna }}, {{ place.provincia }}<span class="fa-sub">{{ place.region }}</span></dd></div>{% endif %}
     </dl>
-    <p class="small text-muted mb-1">{% translate "Log file" %}: {{ analysis.document.title }}</p>
+    {% if analysis.status == "ok" %}<p class="fa-note" id="fa-place-note">{{ place_note }}</p>{% endif %}
+    <p class="fa-note">{% translate "Log file" %}: {{ analysis.document.title }}</p>
     {% if can_link and records %}
     <form method="post" class="d-flex gap-2 align-items-center flex-wrap" id="fa-link-form">
       {% csrf_token %}
@@ -55,13 +57,13 @@
   </section>
 
   {% if analysis.status == "error" %}
-  <div class="alert alert-danger" role="alert" id="fa-error" data-error-code="{{ analysis.error_code }}">{{ error_text }}</div>
+  <div class="fa-notice fa-notice--critical" role="alert" id="fa-error" data-error-code="{{ analysis.error_code }}"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><p>{{ error_text }}</p></div>
   {% elif analysis.status == "ok" %}
 
   <section class="fa-section" aria-labelledby="fa-nar-h">
     <h2 class="h5" id="fa-nar-h">{% translate "Flight at a glance" %}</h2>
     <p id="fa-narrative">{{ narrative.text }}</p>
-    {% if narrative.low_battery %}<div class="alert alert-warning" role="status" id="fa-low-battery">{{ narrative.low_battery }}</div>{% endif %}
+    {% if narrative.low_battery %}<div class="fa-notice fa-notice--warning" role="status" id="fa-low-battery"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-battery-list"/></svg><p>{{ narrative.low_battery }}</p></div>{% endif %}
   </section>
 
   <section class="fa-section" aria-labelledby="fa-map-h">
@@ -125,8 +127,8 @@
         {% for e in event_rows %}
           <tr>
             <td>{{ e.time }}</td>
-            <td><span class="fa-level fa-level-{{ e.level }}">{{ e.level_label }}</span></td>
-            <td>{{ e.explanation }}{% if e.inferred %} <span class="badge text-bg-secondary">{% translate "inferred" %}</span>{% endif %}</td>
+            <td><span class="fa-chip fa-chip--sm fa-chip--{{ e.level }}">{{ e.level_label }}</span></td>
+            <td>{{ e.explanation }}{% if e.inferred %} <span class="fa-chip fa-chip--sm fa-chip--neutral">{% translate "inferred" %}</span>{% endif %}</td>
             <td class="small text-muted">{{ e.raw_text }}</td>
           </tr>
         {% empty %}

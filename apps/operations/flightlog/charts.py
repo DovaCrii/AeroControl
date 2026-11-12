@@ -10,7 +10,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
 W, H = 640, 190
-LEFT, RIGHT, TOP, BOTTOM = 52, 12, 10, 34
+LEFT, RIGHT, TOP, BOTTOM = 58, 16, 10, 34
 
 
 def _clock(seconds: float) -> str:
@@ -47,13 +47,14 @@ def line_chart(series, y_label: str, x_label: str):
         y = py(v)
         parts.append(
             f'<line class="fa-grid" x1="{LEFT}" y1="{y:.1f}" x2="{W - RIGHT}" y2="{y:.1f}"/>'
-            f'<text class="fa-tick" x="{LEFT - 6}" y="{y + 4:.1f}" text-anchor="end">'
+            f'<text class="fa-tick" x="{LEFT - 8}" y="{y + 4:.1f}" text-anchor="end">'
             f"{v:.0f}</text>"
         )
-    for t in (t0, (t0 + t1) / 2, t1):
+    # Primera y última etiqueta ancladas hacia dentro: la última no se corta en el borde.
+    for t, anchor in ((t0, "start"), ((t0 + t1) / 2, "middle"), (t1, "end")):
         parts.append(
             f'<text class="fa-tick" x="{px(t):.1f}" y="{H - BOTTOM + 14}" '
-            f'text-anchor="middle">{_clock(t - t0)}</text>'
+            f'text-anchor="{anchor}">{_clock(t - t0)}</text>'
         )
     parts.append(
         f'<text class="fa-label" x="{(LEFT + W - RIGHT) / 2:.0f}" y="{H - 4}" '
@@ -63,6 +64,9 @@ def line_chart(series, y_label: str, x_label: str):
         f'<text class="fa-label" x="12" y="{(TOP + H - BOTTOM) / 2:.0f}" text-anchor="middle" '
         f'transform="rotate(-90 12 {(TOP + H - BOTTOM) / 2:.0f})">{escape(y_label)}</text>'
     )
+    base = H - BOTTOM
+    area = f"{px(t0):.1f},{base} {path} {px(t1):.1f},{base}"
+    parts.append(f'<polygon class="fa-area" points="{area}"/>')
     parts.append(f'<polyline class="fa-line" points="{path}"/></svg>')
     # Sólo números formateados con `:.1f`/`:.0f` (fallan si no son números) y rótulos escapados.
     return mark_safe("".join(parts))  # noqa: S308  # nosec B308 B703

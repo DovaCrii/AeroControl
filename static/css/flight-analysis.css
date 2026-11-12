@@ -1,22 +1,28 @@
-/* LV-427: pantalla «Flight analysis». Techo propio de 8 KB (lo vigila test_lv427). */
-.fa-section { margin-bottom: 1.5rem; }
+/* LV-427: pantalla «Flight analysis». Techo propio de 8 KB (lo vigila test_lv427).
+   LV-435: tipografía del cuerpo en todo, avisos y chips con los tokens `--sev-*` (con respaldo en
+   claro: el reporte imprimible no carga app.css). */
+.fa-section { margin-bottom: 2rem; }
+.fa-section > h2 { margin-bottom: .75rem; padding-bottom: .35rem; border-bottom: 1px solid var(--ac-border, #dee2e6); font-weight: 600; }
 .fa-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: .75rem; margin-bottom: .75rem; }
 .fa-facts > div { border: 1px solid var(--bs-border-color, #dee2e6); border-radius: .5rem; padding: .6rem .8rem; }
-.fa-facts dt { font-size: .8rem; font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
-.fa-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.fa-facts dt { font-size: var(--fs-md, .85rem); font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
+.fa-facts dd { margin: 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+.fa-sub { display: block; font-size: var(--fs-md, .85rem); font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
+.fa-note { margin: 0 0 .5rem; font-size: var(--fs-md, .85rem); color: var(--bs-secondary-color, #6c757d); }
 .fa-map { height: 28rem; border-radius: .5rem; border: 1px solid var(--bs-border-color, #dee2e6); }
 .fa-legend { background: rgba(255, 255, 255, .92); color: #111827; padding: .4rem .6rem; border-radius: .4rem; font-size: .75rem; min-width: 9rem; }
 .fa-legend-bar { height: .6rem; border-radius: .3rem; margin: .25rem 0; }
 .fa-legend-ends { display: flex; justify-content: space-between; }
-.fa-figure { margin: 0 0 1.25rem; max-width: 42rem; }
-.fa-chart { width: 100%; height: auto; }
+.fa-figure { margin: 0 0 1.5rem; max-width: 42rem; }
+.fa-figure figcaption { margin-bottom: .25rem; }
+:root { --fa-line: #1E418C; }
+[data-theme="dark"] { --fa-line: #60C4F5; }
+.fa-chart { width: 100%; height: auto; font-family: inherit; }
 .fa-chart .fa-axis { stroke: currentColor; stroke-width: 1; opacity: .6; }
 .fa-chart .fa-grid { stroke: currentColor; stroke-width: .5; opacity: .15; }
 .fa-chart .fa-tick, .fa-chart .fa-label { fill: currentColor; font-size: 11px; }
-.fa-chart .fa-line { fill: none; stroke: #2563eb; stroke-width: 2; stroke-linejoin: round; }
-.fa-level { font-weight: 600; }
-.fa-level-warning { color: #b45309; }
-.fa-level-critical { color: #b91c1c; }
+.fa-chart .fa-area { fill: var(--fa-line); fill-opacity: .12; stroke: none; }
+.fa-chart .fa-line { fill: none; stroke: var(--fa-line); stroke-width: 2; stroke-linejoin: round; }
 @media (max-width: 575.98px) { .fa-map { height: 22rem; } }
 .fa-legend-return { margin-top: .35rem; display: flex; align-items: center; }
 .fa-legend-dash { display: inline-block; width: 1.6rem; border-top: 3px dashed #111827; margin-right: .25rem; }
@@ -27,3 +33,16 @@
 .fa-legend-over { background: repeating-linear-gradient(90deg, #dc2626 0 3px, transparent 3px 7px); }
 .fa-comp-lines { padding-left: 1.1rem; margin-bottom: .5rem; }
 .fa-comp-caveats, .fa-comp-segments { padding-left: 1.1rem; }
+/* LV-435: chip de veredicto y de nivel (tipografía del cuerpo, sin mayúsculas forzadas). */
+.fa-chip { display: inline-flex; align-items: center; gap: .35em; padding: .2em .8em; border: 1px solid var(--sev-nominal-border, #c4ccd8); border-radius: 999px; background: var(--sev-nominal-bg, #eceff4); color: var(--sev-nominal-text, #384252); font: inherit; font-size: .95em; font-weight: 600; line-height: 1.4; }
+.fa-chip--sm { padding: .05em .6em; font-size: .85em; white-space: nowrap; }
+.fa-chip--ok { background: var(--id-ok-bg, #e4f6ea); border-color: var(--id-ok-border, #a7d9b8); color: var(--id-ok-text, #1f7a43); }
+.fa-chip--info { background: var(--sev-advisory-bg, #e0f4f8); border-color: var(--sev-advisory-border, #9fd6e2); color: var(--sev-advisory-text, #14707f); }
+.fa-chip--warning { background: var(--sev-warning-bg, #fdf1dc); border-color: var(--sev-warning-border, #ecc98a); color: var(--sev-warning-text, #8a5a12); }
+.fa-chip--critical { background: var(--sev-critical-bg, #fce4e6); border-color: var(--sev-critical-border, #f0b0b6); color: var(--sev-critical-text, #a52834); }
+/* Avisos: fondo suave, borde izquierdo de color e icono del sprite. */
+.fa-notice { display: flex; gap: .6rem; align-items: flex-start; margin: 0 0 1rem; padding: .7rem .9rem; border: 1px solid var(--sev-warning-border); border-left-width: 4px; border-radius: .5rem; background: var(--sev-warning-bg); color: var(--sev-warning-text); }
+.fa-notice p { margin: 0; }
+.fa-notice-icon { flex: none; width: 1.25rem; height: 1.25rem; margin-top: .1rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.fa-notice--info { background: var(--sev-advisory-bg); border-color: var(--sev-advisory-border); color: var(--sev-advisory-text); }
+.fa-notice--critical { background: var(--sev-critical-bg); border-color: var(--sev-critical-border); color: var(--sev-critical-text); }
