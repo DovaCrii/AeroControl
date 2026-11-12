@@ -19,6 +19,7 @@ from apps.core.exports import neutralize
 from apps.core.models import OperationalTenant
 from apps.core.testing import login_as
 from apps.operations.flightlog.report import _readings, csv_cell
+from apps.operations.flightlog.service import PARSER_VERSION
 from apps.operations.flightlog.timeline import phase_segments
 from apps.operations.flightlog.types import (
     FlightEvent,
@@ -135,7 +136,7 @@ class TestPrintableReport:
         assert "DGAC-0900" in operation and "Faena X" in operation
         trace = _region(page, 'id="fr-trace"', "</dl>")
         assert analysis.document.title in trace
-        assert "dji-1" in trace and "dji" in trace
+        assert PARSER_VERSION in trace and "dji" in trace
 
     def test_registry_data_replaces_the_log_when_the_serial_matches(self, fake, permit):
         Aircraft.objects.create(
