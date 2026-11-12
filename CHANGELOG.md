@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Fixed
+
+- **El mapa del análisis de vuelo y del reporte se dibuja (`LV-433`, `codex/mapa-log-vista`).** Con un log real mostraba «No se pudo dibujar el mapa»: las capas se agregaban antes de dar vista al mapa.
+
 ### Added
 
 - **Área y altura autorizadas del permiso sobre el análisis del vuelo (`LV-432`, `codex/logs-area-permiso`).** El análisis compara la trayectoria con el área del permiso (plan KMZ o círculo) y su altura máxima: veredicto con chip, segundos y metros fuera, mapa con el área y los tramos resaltados, bloque en el reporte imprimible y bandas rojas en su línea de tiempo. Tolerancia de 10 m y salvedades de referencia de altura y precisión GPS siempre visibles. Se puede vincular un permiso desde el análisis.

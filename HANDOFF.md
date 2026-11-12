@@ -2,7 +2,7 @@
 
 ## ▶️ 2026-11-09 — retomar en la CLI de Claude (lista de pendientes)
 
-**Producción (`p340`) = `198ae60`** (RESUMEN pegado 2026-11-11: `DEPLOY OK c78505e -> 198ae60`, 1 migración aplicada con respaldo restorable, 2 estáticos, `active`, health 200, 17 timers, HEAD == origin/main). Lleva hasta `LV-428` y `LV-427` (fase 1 del lector de logs). Lo que diga «fusionado» después de eso está en `main` y **no** en la VM.
+**Producción (`p340`) = `04f694f`** (RESUMEN pegado 2026-11-12: `DEPLOY OK 87560b4 -> 04f694f`, 3 migraciones aplicadas (`operations 0035`–`0037`) con respaldo restorable, 10 estáticos, `active`, health 200, 17 timers, HEAD == origin/main; antes `198ae60 -> 87560b4` con `LV-429`). Lleva hasta `LV-432` (lector DJI real, reporte, «Logs de vuelo» y área del permiso). Lo que diga «fusionado» después de eso está en `main` y **no** en la VM: `LV-433` (mapa del análisis, sólo estáticos).
 
 ### Cómo retomar
 1. `git fetch origin && git log --oneline -5 origin/main` y `gh pr list --state open`: lo que cambió desde esta nota manda.

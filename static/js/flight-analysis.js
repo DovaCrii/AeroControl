@@ -157,6 +157,11 @@
       var data = JSON.parse(node.textContent);
       var L = window.L;
       var map = L.map(container, { zoomControl: true });
+      /* La vista va ANTES que las capas: con el mapa sin centro, Leaflet difiere las capas y al
+         llegar la vista las agrega con el renderer sin límites (`_clipPoints` → «reading 'min'»).
+         Pasó en producción con el primer log real (LV-433). */
+      map.fitBounds(L.latLngBounds(data.points.map(function (p) { return [p[0], p[1]]; })),
+        { padding: [24, 24] });
       var base = addTiles(L, map, data.tiles);
       L.control.scale({ metric: true, imperial: false }).addTo(map);
       var over = data.compliance || {};
