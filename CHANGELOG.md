@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La serie cortada del log DJI ya no da aviso de «no coincide», y la cronología no repite filas (`LV-434`, `codex/log-serie-cronologia`).** `analyze_flight_logs --outdated` rehace los análisis guardados.
 - **El mapa del análisis de vuelo y del reporte se dibuja (`LV-433`, `codex/mapa-log-vista`).** Con un log real mostraba «No se pudo dibujar el mapa»: las capas se agregaban antes de dar vista al mapa.
 
 ### Added

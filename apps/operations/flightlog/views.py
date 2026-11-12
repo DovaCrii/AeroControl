@@ -22,7 +22,7 @@ from ..models import FlightLogAnalysis, FlightPermission, FlightRecord
 from .charts import line_chart
 from .compliance import check_flight, map_overlay
 from .explanations import explain
-from .independent import back_link, serial_mismatch_warning
+from .independent import DJI_SERIAL_FIELD, back_link, serial_mismatch_warning
 from .narrative import build_narrative
 from .types import FlightTrack, haversine_m
 
@@ -120,11 +120,13 @@ def registry_aircraft(track: FlightTrack, tenant_id):
     serial = normalize_serial((track.aircraft or {}).get("serial"))
     if not serial:
         return None
-    return (
-        Aircraft.objects.filter(tenant_id=tenant_id, serial_number=serial)
-        .select_related("cost_center")
-        .first()
-    )
+    fleet = Aircraft.objects.filter(tenant_id=tenant_id).select_related("cost_center")
+    exact = fleet.filter(serial_number=serial).first()
+    if exact or len(serial) != DJI_SERIAL_FIELD:
+        return exact
+    # Serie cortada por el formato DJI (LV-434): vale sólo si una única aeronave empieza así.
+    candidates = list(fleet.filter(serial_number__startswith=serial)[:2])
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def _return_path(track: FlightTrack):
