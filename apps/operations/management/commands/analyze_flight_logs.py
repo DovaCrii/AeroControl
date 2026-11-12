@@ -40,7 +40,9 @@ class Command(BaseCommand):
             # LV-434: lo ya analizado con otro `PARSER_VERSION` se rehace (las llaves del log
             # quedaron guardadas, así que no hace falta la API de DJI).
             stale = (
-                FlightLogAnalysis.objects.filter(status=FlightLogAnalysis.STATUS_OK)
+                FlightLogAnalysis.objects.filter(
+                    status=FlightLogAnalysis.STATUS_OK, is_active=True
+                )
                 .exclude(parser_version=PARSER_VERSION)
                 .select_related("document")
             )
@@ -54,13 +56,15 @@ class Command(BaseCommand):
                 raise CommandError(f"No flight record {options['record']}.")
             targets = list(
                 FlightLogAnalysis.objects.filter(
-                    flight_record_id=options["record"], status__in=statuses
+                    flight_record_id=options["record"],
+                    status__in=statuses,
+                    is_active=True,
                 ).select_related("document")
             )
             documents = [(a.document, a) for a in targets]
         else:
             existing = FlightLogAnalysis.objects.filter(
-                status__in=statuses
+                status__in=statuses, is_active=True
             ).select_related("document")
             documents = [(a.document, a) for a in existing]
             analysed = FlightLogAnalysis.objects.values_list("document_id", flat=True)

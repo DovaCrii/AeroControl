@@ -111,7 +111,14 @@ class FlightLogList(SearchMixin, ModelViewPermissionRequiredMixin, ListView):
         "aircraft__model",
         "document__title",
     ]
-    FILTER_KEYS = ("cost_center", "aircraft", "status", "date_from", "date_to")
+    FILTER_KEYS = (
+        "cost_center",
+        "aircraft",
+        "status",
+        "date_from",
+        "date_to",
+        "is_active",
+    )
 
     def _params(self):
         get = self.request.GET
@@ -127,17 +134,18 @@ class FlightLogList(SearchMixin, ModelViewPermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         started = KT("result__summary__started_at_utc")
-        queryset = (
-            super()
-            .get_queryset()
-            .filter(is_active=True)
-            .select_related("cost_center", "aircraft", "document", "permission")
-            .annotate(
-                flight_day=Coalesce(
-                    Substr(started, 1, 10),
-                    Cast(TruncDate("created_at"), CharField()),
-                    output_field=CharField(),
-                )
+        queryset = super().get_queryset()
+        # LV-437: por defecto sólo los vigentes; `?is_active=archived` (que el padre ya aplica)
+        # muestra los archivados.
+        if self.request.GET.get("is_active") != "archived":
+            queryset = queryset.filter(is_active=True)
+        queryset = queryset.select_related(
+            "cost_center", "aircraft", "document", "permission"
+        ).annotate(
+            flight_day=Coalesce(
+                Substr(started, 1, 10),
+                Cast(TruncDate("created_at"), CharField()),
+                output_field=CharField(),
             )
         )
         params = self._params()

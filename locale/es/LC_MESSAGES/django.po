@@ -6865,6 +6865,35 @@ msgstr "Escriba el motivo antes de archivar."
 msgid "Write it for whoever reads this a year from now."
 msgstr "Escríbalo para quien lea esto en un año."
 
+msgid "Archive log"
+msgstr "Archivar log"
+
+msgid "Archive this flight log?"
+msgstr "¿Archivar este log de vuelo?"
+
+msgid ""
+"Archiving hides the log from the list; nothing is deleted. The analysis and "
+"its downloads stay available from the Archived filter, and it can be "
+"restored."
+msgstr ""
+"Archivar oculta el log de la lista; no se borra nada. El análisis y sus "
+"descargas siguen disponibles con el filtro Archivados, y se puede restaurar."
+
+msgid "Flight log archived. Use the Archived filter to find or restore it."
+msgstr ""
+"Log de vuelo archivado. Use el filtro Archivados para encontrarlo o "
+"restaurarlo."
+
+msgid "Flight log restored."
+msgstr "Log de vuelo restaurado."
+
+msgid "Current logs"
+msgstr "Logs vigentes"
+
+#, python-format
+msgid "Archived on %(when)s by %(who)s. Reason: %(reason)s"
+msgstr "Archivado el %(when)s por %(who)s. Motivo: %(reason)s"
+
 #: .\templates\operations\permission_detail.html:19
 msgid "Change status"
 msgstr "Cambiar estado"
