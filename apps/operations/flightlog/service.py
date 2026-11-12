@@ -16,7 +16,9 @@ from .types import FlightLogError
 logger = logging.getLogger(__name__)
 
 FLIGHT_LOG_TYPE = "flight-log-txt"
-PARSER_VERSION = "dji-1"
+# Subirla cuando cambia lo que se extrae del log: `analyze_flight_logs --outdated` rehace los
+# análisis guardados con otra versión. dji-2 (LV-434): cronología sin filas duplicadas.
+PARSER_VERSION = "dji-2"
 KEYCHAIN_PREFIX = "flightlog-keychains"
 
 

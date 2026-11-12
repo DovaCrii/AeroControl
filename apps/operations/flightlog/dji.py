@@ -55,10 +55,16 @@ _TEXT_RULES = (
     (
         "gimbal_limit",
         re.compile(
-            r"(gimbal|estabilizador).*(limit|l[ií]mite)|(limit|l[ií]mite).*(gimbal|estabilizador)"
+            r"(gimbal|estabilizador).*(limit|l[ií]mite|endpoint)"
+            r"|(limit|l[ií]mite).*(gimbal|estabilizador)"
         ),
     ),
 )
+
+# LV-434: la app escribe el *tip* «Flight mode changed to X.» en el mismo cuadro en que `flycState` pasa a
+# X, y ese cambio ya da su propio evento (con explicación); el aviso de la app sólo duplicaba la
+# fila, sin explicar nada.
+_REDUNDANT_TIP = re.compile(r"^flight mode changed to\b", re.IGNORECASE)
 
 
 def _env() -> dict:
@@ -209,8 +215,16 @@ def _events(frames: list):
             continue
         last_t = float(t)
         items = set(_app_items(frame))
+        seen_codes: set = set()
         for kind, text in sorted(items - previous_items):
+            if kind == "tip" and _REDUNDANT_TIP.match(text):
+                continue
             code = _classify(text)
+            # El mismo aviso llega a veces en dos idiomas en el mismo cuadro («Gimbal yaw axis
+            # endpoint reached.» y «Se ha alcanzado el límite…»): una sola fila por código.
+            if code and (kind, code) in seen_codes:
+                continue
+            seen_codes.add((kind, code))
             events.append(
                 FlightEvent(
                     t=last_t,
