@@ -18,6 +18,21 @@ def back_link(analysis) -> dict:
     return {"url": reverse("flight-log-list"), "label": _("Back to flight logs")}
 
 
+# LV-434: el log DJI guarda la serie de la aeronave en un campo de 16 caracteres, así que una
+# serie de 20 caracteres llega con sus primeros 16 (p. ej. «AAAA…» de 20 → sus 16 primeros). No es coincidencia
+# aproximada: es el truncado del formato, y sólo se acepta con exactamente ese largo.
+DJI_SERIAL_FIELD = 16
+
+
+def same_serial(log_serial, registered) -> bool:
+    log_serial, registered = normalize_serial(log_serial), normalize_serial(registered)
+    if not log_serial or not registered:
+        return False
+    if log_serial == registered:
+        return True
+    return len(log_serial) == DJI_SERIAL_FIELD and registered.startswith(log_serial)
+
+
 def serial_mismatch_warning(analysis, track) -> str:
     """Aviso si la serie que dice el log no es la de la aeronave elegida en el alta.
 
@@ -28,7 +43,7 @@ def serial_mismatch_warning(analysis, track) -> str:
     log_serial = normalize_serial((track.aircraft or {}).get("serial"))
     if aircraft is None or not log_serial:
         return ""
-    if normalize_serial(aircraft.serial_number) == log_serial:
+    if same_serial(log_serial, aircraft.serial_number):
         return ""
     return _(
         "The serial in the log (%(log)s) does not match the selected aircraft (%(aircraft)s)."
