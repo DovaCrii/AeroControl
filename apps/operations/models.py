@@ -1987,6 +1987,19 @@ class FlightLogAnalysis(BaseModel):
     result = models.JSONField(default=dict, blank=True)
     parser_version = models.CharField(max_length=40, blank=True)
     analyzed_at = models.DateTimeField(null=True, blank=True)
+    # LV-437: un log subido mal o que falló se archiva (nunca se borra) con un motivo escrito.
+    # Condición de cierre de este retiro: no hay paso 2; el archivo es el estado final y el
+    # log sigue como evidencia (detalle y descargas siguen abriendo).
+    archive_reason = models.TextField(blank=True, editable=False)
+    archived_at = models.DateTimeField(null=True, blank=True, editable=False)
+    archived_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="+",
+    )
 
     class Meta:
         verbose_name = _("flight log analysis")
@@ -2034,6 +2047,56 @@ class FlightLogAnalysis(BaseModel):
                 )
         if errors:
             raise ValidationError(errors)
+
+    def archive(self, user, reason):
+        """LV-437: retira el log de las listas, con motivo obligatorio. No borra nada.
+
+        Valida acá y no sólo en el formulario. El `Document` del `.TXT` se archiva también
+        (deja de figurar entre los documentos del permiso o la aeronave) con `update_fields`
+        que no incluye `file_path`: la señal de `Document` no vuelve a analizar.
+        """
+        reason = (reason or "").strip()
+        if not reason:
+            raise ValidationError(
+                {"archive_reason": _("Write the reason before archiving.")}
+            )
+        self.is_active = False
+        self.archive_reason = reason
+        self.archived_at = timezone.now()
+        self.archived_by = user if getattr(user, "is_authenticated", False) else None
+        self.save(
+            update_fields=[
+                "is_active",
+                "archive_reason",
+                "archived_at",
+                "archived_by",
+                "updated_at",
+            ]
+        )
+        self._set_document_active(False)
+
+    def restore(self, user=None):
+        """LV-437: trae de vuelta un log archivado; el motivo anterior queda en la auditoría."""
+        self.is_active = True
+        self.archive_reason = ""
+        self.archived_at = None
+        self.archived_by = None
+        self.save(
+            update_fields=[
+                "is_active",
+                "archive_reason",
+                "archived_at",
+                "archived_by",
+                "updated_at",
+            ]
+        )
+        self._set_document_active(True)
+
+    def _set_document_active(self, active):
+        document = self.document
+        if document.is_active != active:
+            document.is_active = active
+            document.save(update_fields=["is_active", "updated_at"])
 
     def save(self, *args, **kwargs):
         # Una fila ubicada sólo por su permiso (el flujo anterior a LV-431) hereda su centro.

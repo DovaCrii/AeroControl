@@ -7,15 +7,19 @@ from datetime import datetime
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 
 from apps.core.audit import set_audit_context
 from apps.core.tenancy import scope_queryset_to_tenant
-from apps.core.views import ModelViewPermissionRequiredMixin
+from apps.core.views import (
+    ModelPermissionRequiredMixin,
+    ModelViewPermissionRequiredMixin,
+)
 
 from apps.registry.models import Aircraft, normalize_serial
 
@@ -282,7 +286,8 @@ class AnalysisLookupMixin:
 
     def get_analysis(self) -> FlightLogAnalysis:
         queryset = scope_queryset_to_tenant(
-            FlightLogAnalysis.objects.filter(is_active=True).select_related(
+            # LV-437: un log archivado sigue abriendo (es evidencia) y sus descargas también.
+            FlightLogAnalysis.objects.select_related(
                 "permission",
                 "cost_center",
                 "aircraft",
@@ -297,6 +302,63 @@ class AnalysisLookupMixin:
             return queryset.get(pk=self.kwargs["pk"])
         except FlightLogAnalysis.DoesNotExist as exc:
             raise Http404 from exc
+
+
+class _FlightLogArchiveBase(ModelPermissionRequiredMixin, View):
+    """LV-437: quien puede subir un log (`add_flightloganalysis`) puede retirar uno mal subido.
+    Acotado al tenant del centro de costo: de otro tenant, 404."""
+
+    model = FlightLogAnalysis
+    permission_action = "add"
+
+    def get_analysis(self, pk, *, active):
+        queryset = scope_queryset_to_tenant(
+            FlightLogAnalysis.objects.select_related("document", "cost_center"),
+            self.request.user,
+            "cost_center__tenant_id",
+        )
+        return get_object_or_404(queryset, pk=pk, is_active=active)
+
+
+class FlightLogArchive(_FlightLogArchiveBase):
+    """Archiva (no borra) un log con un motivo escrito obligatorio; confirma antes."""
+
+    def _confirm(self, request, analysis, error=None):
+        return render(
+            request,
+            "operations/flightlog_archive_confirm.html",
+            {"analysis": analysis, "reason_missing": error, "title": _("Archive log")},
+            status=400 if error else 200,
+        )
+
+    def get(self, request, pk):
+        return self._confirm(request, self.get_analysis(pk, active=True))
+
+    def post(self, request, pk):
+        analysis = self.get_analysis(pk, active=True)
+        try:
+            with transaction.atomic():
+                analysis.archive(request.user, request.POST.get("reason"))
+        except ValidationError as exc:
+            return self._confirm(
+                request, analysis, exc.message_dict["archive_reason"][0]
+            )
+        set_audit_context(request, analysis, action="flight_log_archived")
+        messages.success(
+            request,
+            _("Flight log archived. Use the Archived filter to find or restore it."),
+        )
+        return redirect("flight-log-list")
+
+
+class FlightLogRestore(_FlightLogArchiveBase):
+    def post(self, request, pk):
+        analysis = self.get_analysis(pk, active=False)
+        with transaction.atomic():
+            analysis.restore(request.user)
+        set_audit_context(request, analysis, action="flight_log_restored")
+        messages.success(request, _("Flight log restored."))
+        return redirect("flight-analysis", pk=analysis.pk)
 
 
 class FlightAnalysisView(
@@ -343,8 +405,10 @@ class FlightAnalysisView(
                 if permission
                 else [],
                 "back": back_link(analysis),
-                "can_link": self.request.user.has_perm(
-                    "operations.change_flightrecord"
+                "can_link": analysis.is_active
+                and self.request.user.has_perm("operations.change_flightrecord"),
+                "can_archive": self.request.user.has_perm(
+                    "operations.add_flightloganalysis"
                 ),
                 "permit_choices": self._permit_choices(analysis),
             }
@@ -395,7 +459,8 @@ class FlightAnalysisView(
         """Permisos que se pueden vincular a un análisis sin permiso: sólo los de su centro de
         costo (y por tanto de su tenant), y sólo a quien puede modificar el análisis."""
         if (
-            analysis.permission_id
+            not analysis.is_active
+            or analysis.permission_id
             or analysis.cost_center_id is None
             or not self.request.user.has_perm("operations.change_flightloganalysis")
         ):
@@ -459,6 +524,9 @@ class FlightAnalysisView(
         return rows
 
     def post(self, request, *args, **kwargs):
+        if not self.get_analysis().is_active:
+            # Un log archivado se consulta; para tocarlo primero se restaura.
+            raise PermissionDenied
         if "permission" in request.POST:
             return self._link_permit(request)
         if not request.user.has_perm("operations.change_flightrecord"):

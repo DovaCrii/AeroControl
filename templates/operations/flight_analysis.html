@@ -22,8 +22,14 @@
       {% endif %}
       <a href="{% url 'document-download' analysis.document.pk %}" class="btn btn-sm btn-outline-primary">{% translate "Download log" %}</a>
       <a href="{{ back.url }}" class="btn btn-sm btn-outline-secondary">{{ back.label }}</a>
+      {% if can_archive and analysis.is_active %}<a href="{% url 'flight-log-archive' analysis.pk %}" class="btn btn-sm btn-outline-danger" id="fa-archive-link">{% translate "Archive log" %}</a>{% endif %}
     </div>
   </div>
+
+  {% if not analysis.is_active %}
+  <div class="fa-notice fa-notice--warning" role="status" id="fa-archived"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><p>{% blocktranslate with when=analysis.archived_at|date:"d-m-Y H:i" who=analysis.archived_by|default_if_none:"—" reason=analysis.archive_reason %}Archived on {{ when }} by {{ who }}. Reason: {{ reason }}{% endblocktranslate %}</p>
+    {% if can_archive %}<form method="post" action="{% url 'flight-log-restore' analysis.pk %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary" id="fa-restore-btn">{% translate "Restore" %}</button></form>{% endif %}</div>
+  {% endif %}
 
   {% if serial_warning %}
   <div class="fa-notice fa-notice--warning" role="status" id="fa-serial-warning"><svg class="fa-notice-icon" aria-hidden="true"><use href="{% static 'img/icons.svg' %}#icon-alert-list"/></svg><p>{{ serial_warning }}</p></div>

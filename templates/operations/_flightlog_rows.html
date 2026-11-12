@@ -15,7 +15,7 @@
   <td class="text-end text-nowrap">{% if d.battery_pct is not None %}{{ d.battery_pct|floatformat:0 }} %{% else %}—{% endif %}</td>
   {% comment %}Estado como `.id-chip` (palabra + color + glifo): analizado en verde, error en rojo,
   pendiente en ámbar; el color nunca va solo.{% endcomment %}
-  <td class="text-nowrap cell-status">{% if object.status == "ok" %}<span class="id-chip id-chip--ok"><span aria-hidden="true">✓</span> {% translate "Analysed" %}</span>{% elif object.status == "error" %}<span class="id-chip id-chip--critical" title="{{ object.error_code }}"><span aria-hidden="true">✕</span> {% translate "Error" %}</span>{% else %}<span class="id-chip id-chip--warning"><span aria-hidden="true">●</span> {% translate "Pending" %}</span>{% endif %}</td>
+  <td class="text-nowrap cell-status">{% if object.status == "ok" %}<span class="id-chip id-chip--ok"><span aria-hidden="true">✓</span> {% translate "Analysed" %}</span>{% elif object.status == "error" %}<span class="id-chip id-chip--critical" title="{{ object.error_code }}"><span aria-hidden="true">✕</span> {% translate "Error" %}</span>{% else %}<span class="id-chip id-chip--warning"><span aria-hidden="true">●</span> {% translate "Pending" %}</span>{% endif %}{% if not object.is_active %} <span class="id-chip id-chip--neutral">{% translate "Archived" %}</span>{% endif %}</td>
   <td class="text-end">{% if object.status == "ok" %}{{ d.warnings }}{% else %}—{% endif %}</td>
   <td class="text-end text-nowrap">
     <div class="id-rowactions"><a href="{% url 'flight-analysis' object.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "View analysis" %}</a></div>

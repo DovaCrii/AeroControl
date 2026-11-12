@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Archive log" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-437: confirmación del servidor con motivo obligatorio. Archivar no borra: el log
+y su `.TXT` quedan como evidencia y se pueden restaurar.{% endcomment %}
+<div class="card p-4">
+  <h1 class="h3">{% translate "Archive this flight log?" %}</h1>
+  <p class="text-muted">{{ analysis.document.title }}{% if analysis.cost_center %} · {{ analysis.cost_center.code }}{% endif %}</p>
+
+  <div class="alert alert-warning">
+    {% translate "Archiving hides the log from the list; nothing is deleted. The analysis and its downloads stay available from the Archived filter, and it can be restored." %}
+  </div>
+
+  <form method="post" id="flightlog-archive-form">{% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label" for="reason">{% translate "Reason for archiving" %}</label>
+      <textarea class="form-control {% if reason_missing %}is-invalid{% endif %}" id="reason" name="reason" rows="3" required></textarea>
+      {% if reason_missing %}<div class="invalid-feedback">{{ reason_missing }}</div>{% endif %}
+      <div class="form-text">{% translate "Write it for whoever reads this a year from now." %}</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger" type="submit">{% translate "Archive log" %}</button>
+      <a href="{% url 'flight-analysis' analysis.pk %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

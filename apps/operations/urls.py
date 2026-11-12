@@ -38,6 +38,17 @@ urlpatterns = [
         flight_analysis_view.FlightAnalysisView.as_view(),
         name="flight-analysis",
     ),
+    # LV-437: archivar y restaurar un log (motivo obligatorio; `add_flightloganalysis`).
+    path(
+        "flight-analysis/<uuid:pk>/archive/",
+        flight_analysis_view.FlightLogArchive.as_view(),
+        name="flight-log-archive",
+    ),
+    path(
+        "flight-analysis/<uuid:pk>/restore/",
+        flight_analysis_view.FlightLogRestore.as_view(),
+        name="flight-log-restore",
+    ),
     # LV-431: «Flight logs» como sección propia (centro de costo + aeronave, sin permiso).
     path(
         "flight-logs/", flight_log_views.FlightLogList.as_view(), name="flight-log-list"
