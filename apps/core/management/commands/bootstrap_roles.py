@@ -259,7 +259,36 @@ ROLE_PERMISSIONS = {
 class Command(BaseCommand):
     help = "Create or update the standard AeroControl authorization groups."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--add-only",
+            action="store_true",
+            help=(
+                "Only add the permissions each role is missing; never remove one and "
+                "never touch other groups (safe to run on production on every deploy)."
+            ),
+        )
+
+    def _add_only(self):
+        """LV-438: sync permissions by ADDING. `set()` would drop what was granted by hand."""
+        all_permissions = Permission.objects.all()
+        total = 0
+        wanted = {
+            name: all_permissions.filter(codename__in=codenames)
+            for name, codenames in ROLE_PERMISSIONS.items()
+        }
+        wanted["Administrator"] = all_permissions
+        for name, permissions in wanted.items():
+            group, _ = Group.objects.get_or_create(name=name)
+            missing = list(permissions.exclude(pk__in=group.permissions.all()))
+            group.permissions.add(*missing)
+            total += len(missing)
+            self.stdout.write(f"Role {name}: {len(missing)} permissions added")
+        self.stdout.write(self.style.SUCCESS(f"Total permissions added: {total}"))
+
     def handle(self, *args, **options):
+        if options["add_only"]:
+            return self._add_only()
         all_permissions = Permission.objects.all()
         for name, codenames in ROLE_PERMISSIONS.items():
             group, _ = Group.objects.get_or_create(name=name)
