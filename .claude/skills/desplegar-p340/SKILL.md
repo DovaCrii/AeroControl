@@ -71,20 +71,18 @@ bloque antes de dictar el siguiente.
 → la primera línea debe ser `## main...origin/main`, **no** `## HEAD (no branch)`, y el hash, el que
 se esperaba. Si dice otro hash, se dicta el despliegue desde **ese** y no desde el último conocido.
 
-**B. Entorno y respaldo** — `set -a && source <(sudo cat /etc/aerocontrol.env) && set +a && echo
-"$DJANGO_SETTINGS_MODULE" && uv run python manage.py backup && uv run python manage.py verify_backup`
-→ debe salir `config.settings.prod`, `Backup created` y `…: restorable.`. **El respaldo va antes del
+**B. Entorno y respaldo** — `cd /opt/aerocontrol && bash scripts/deploy.sh --manage deploy_status && bash scripts/deploy.sh --manage backup && bash scripts/deploy.sh --manage verify_backup`
+→ debe salir `config.settings.prod`, `Backup created` y `…: restorable.` (`--manage` corre con el entorno de producción vía `systemd-run`; `/etc/aerocontrol.env` es root 600 y `source` da *Permission denied*). **El respaldo va antes del
 `pull`** (es el de la base con el código viejo, y es el que se restaura si algo sale mal). Si el diff
 **no** toca migraciones, el bloque se acorta a la carga y el `echo`, sin respaldo. El `sudo` pide la
 contraseña **del usuario**: nadie la escribe en el chat ni como comando.
 
-**C. Código y migraciones** — `git pull && git log --oneline -1 && uv run python manage.py migrate
---no-input` (con `uv sync --no-dev` entre el `pull` y el `migrate` si el diff toca `pyproject.toml` o
+**C. Código y migraciones** — `git pull && git log --oneline -1 && bash scripts/deploy.sh --manage migrate --no-input && bash scripts/deploy.sh --manage bootstrap_roles --add-only` (con `uv sync --no-dev` entre el `pull` y el `migrate` si el diff toca `pyproject.toml` o
 `uv.lock`). Debe mostrar `<hash-viejo>..<hash-nuevo>`, los archivos, y `Applying … OK` por cada
 migración nueva. **El `pull` es el paso que se omitió dos veces el 2026-10-05**: «Already up to date»
 con algo pendiente es una alarma. Sin migraciones, el bloque es sólo `git pull && git log --oneline -1`.
 
-**D. Estáticos y reinicio** — `uv run python manage.py collectstatic --no-input && sudo systemctl
+**D. Estáticos y reinicio** — `bash scripts/deploy.sh --manage collectstatic --no-input && sudo systemctl
 restart aerocontrol && systemctl is-active aerocontrol && git log --oneline -1` (sin el `collectstatic`
 si el diff no toca `static/**`). Debe terminar en `active` y en el hash de `origin/main`, y el
 `collectstatic` debe copiar **al menos 1**. El hash final es la única prueba de que llegó.
@@ -96,8 +94,9 @@ se repite por eso.
 
 - **Tras un rollback** (`git checkout <commit>`) la VM queda en HEAD desprendido: `git pull` no despliega nada y `uv sync`, `collectstatic` y el reinicio corren igual sobre el código viejo, sin error. Volver con `git checkout main` el mismo día.
 - **Archivo que se va a versionar y ya existe sin versionar en la VM**: apartarlo allá antes (`mv` a `~`, no `rm`; `diff` después). Si no, `git pull` se niega y el resto corre sobre código viejo con respuestas plausibles.
-- **Cargar el entorno con `set -a`** (`source` solo define variables de shell y `manage.py` cae a `config.settings.dev`); verificar `DJANGO_SETTINGS_MODULE` y `DB_PATH` con `echo` antes de migrar.
-- **Un 500 tras desplegar**: `uv run python manage.py showmigrations <app> | tail -6`; una migración sin `[X]` con código nuevo que la usa lo explica sin leer el traceback.
+- **Correr `manage.py` a mano en la VM**: `bash scripts/deploy.sh --manage <cmd> [args]` (entorno de producción por `systemd-run`, sin pull, migrate ni reinicio). No se carga el entorno con `source`/`set -a`: el archivo es root 600. Antes de migrar a mano, `--manage deploy_status` debe decir `config.settings.prod`.
+- **Permisos de roles**: el script los sincroniza solo tras `migrate` (`bootstrap_roles --add-only`: sólo agrega, nunca quita un permiso dado a mano ni toca grupos propios como «Dirección»). Sin él, un permiso nuevo no llegaba a los grupos de producción (LV-431). En el Plan B manual va en el bloque C.
+- **Un 500 tras desplegar**: `bash scripts/deploy.sh --manage showmigrations <app> | tail -6`; una migración sin `[X]` con código nuevo que la usa lo explica sin leer el traceback.
 - **Nunca se despliega encendido**: el service worker (`SERVICE_WORKER_ENABLED=False`; `docs/dev/postmortem-2026-09-08-service-worker.md`) ni un trabajo programado sin registrar su timer y verlo en `list-timers`. Una función que notifica se comprueba en producción (`--dry-run`, `list-timers`), no sólo con tests.
 
 ## 3. Confirmar leyendo la terminal
