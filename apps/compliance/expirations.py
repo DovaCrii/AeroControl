@@ -344,11 +344,12 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     # para "saber cómo está la condición de los profesionales", y una vigencia
     # que nadie ve venir no sirve para eso. Sólo la **última** de cada operador:
     # los intentos anteriores son historial, y su vencimiento ya no es trabajo.
+    # LV-439: sólo cuentan los **aprobados**; un reprobado no acredita vigencia.
     assessments = (
         tenant(
             without_departed(
                 KnowledgeAssessment.objects.filter(
-                    is_active=True, expires_on__lte=cutoff
+                    is_active=True, passed=True, expires_on__lte=cutoff
                 )
             ),
             "operator__tenant_id",

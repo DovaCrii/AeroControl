@@ -1181,6 +1181,10 @@ msgstr "Revisión de cumplimiento mensual"
 msgid "Knowledge assessment"
 msgstr "Evaluación de conocimientos"
 
+#: .\apps\operations\readiness.py:244
+msgid "The last attempt was not passed."
+msgstr "El último intento no fue aprobado."
+
 #: .\apps\core\backups.py:108
 msgid "The backup file named in the manifest is not there"
 msgstr "El archivo de respaldo que nombra el manifiesto no está"
