@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La credencial DGAC real se lee al dar de alta un operador (`LV-448`, `codex/credencial-formato-dgac`).** El lector reconoce el formato numerado de la DGAC (número, titular, RUT, emisión y vencimiento) y el aviso ya no dice que completó el formulario cuando no reconoció nada. Sin migración ni estáticos; cambia el `.mo`.
+
 - **Una prueba de conocimientos reprobada ya no cuenta como vigente (`LV-439`, `codex/evaluacion-reprobada`).** «¿Puedo volar?» y la lista de vencimientos tomaban la fecha del último intento aunque estuviera reprobado; ahora la vigencia es la del último intento aprobado (un reprobado posterior no anula un aprobado vigente) y quien sólo tiene reprobados queda bloqueado. Sin migración ni estáticos.
 - **Los permisos nuevos de los roles llegan solos a producción, y `deploy.sh --manage` corre comandos de `manage.py` con el entorno de la VM (`LV-438`, `codex/deploy-permisos`).** `deploy.sh` ahora corre `bootstrap_roles --add-only` tras `migrate` (sólo agrega permisos; nunca quita ni toca grupos propios como «Dirección»). Sin migración ni estáticos.
 - **La serie cortada del log DJI ya no da aviso de «no coincide», y la cronología no repite filas (`LV-434`, `codex/log-serie-cronologia`).** `analyze_flight_logs --outdated` rehace los análisis guardados.

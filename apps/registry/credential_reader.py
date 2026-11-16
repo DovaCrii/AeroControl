@@ -217,7 +217,87 @@ def credential_from_text(text):
         proposal = _propose(field, lines)
         if proposal is not None:
             proposals[field] = proposal
+    # El formato numerado de la DGAC, cuando está, manda sobre las etiquetas sueltas.
+    proposals.update(_dgac_layout(lines, text or ""))
     return proposals
+
+
+# LV-448: el formato REAL de la credencial DGAC (visto el 2026-11-16 en credenciales
+# reales, sin copiar ningún dato al repositorio) es el de una licencia OACI: cada campo
+# va precedido de un número romano, en español e inglés. Las etiquetas genéricas de
+# arriba no lo leían: el prefijo «III)» impedía reconocer «Nº», el titular no lleva
+# rótulo, el RUT queda varias líneas debajo de «RUT / PASSPORT» y la emisión se llama
+# «FECHA OTORGAMIENTO / DATE ISSUED», con la fecha en la línea siguiente.
+#   III) Nº <número>                          → número de credencial
+#   IV) <nombre> (a veces sigue en la línea siguiente) → titular
+#   XIV) Validez Certificado / Certificate Validity <fecha> → vencimiento
+#   FECHA OTORGAMIENTO / DATE ISSUED  ⏎ <fecha> → emisión
+#   RUT / PASSPORT ... <un único RUT en el documento> → RUT
+_ROMAN_FIELD = re.compile(r"^\s*(?P<num>[IVXL]{1,5})\)\s*(?P<rest>.*)$")
+_ISSUED_LABEL = re.compile(r"fecha\s+(?:de\s+)?otorgamiento|date\s+issued")
+_RUT_LABEL = re.compile(r"^\s*r\.?\s?u\.?\s?t\.?\s*/\s*passport")
+
+
+def _dgac_layout(lines, text):
+    """Propuestas del formato numerado de la DGAC; `{}` si el texto no lo tiene."""
+    numbered = []
+    for index, line in enumerate(lines):
+        match = _ROMAN_FIELD.match(line)
+        if match:
+            numbered.append((match["num"], match["rest"].strip(), index))
+    present = {num for num, _rest, _index in numbered}
+    if "III" not in present or not ({"IV", "XIV"} & present):
+        return {}
+    out = {}
+
+    numbers = [rest for num, rest, _index in numbered if num == "III"]
+    if len(numbers) == 1:
+        # Sobre el texto sin caja ni tildes («Nº» → «nº»), cortando el original.
+        match = re.match(
+            r"n[o°º.]*\s*(?P<value>[a-z0-9][a-z0-9./\-]*)", _plain(numbers[0])
+        )
+        if match and any(ch.isdigit() for ch in match["value"]):
+            value = numbers[0][match.start("value") : match.end("value")].strip("./-")
+            out[NUMBER] = Proposal(value, EXACT, _fragment("III) Nº", value))
+
+    holders = [(rest, index) for num, rest, index in numbered if num == "IV"]
+    if holders and holders[0][0] and not any(ch.isdigit() for ch in holders[0][0]):
+        name, index = holders[0]
+        confidence = EXACT
+        follower = lines[index + 1].strip() if index + 1 < len(lines) else ""
+        if (
+            follower
+            and not _ROMAN_FIELD.match(follower)
+            and not any(ch.isdigit() for ch in follower)
+            and "/" not in follower
+        ):
+            name, confidence = f"{name} {follower}", DOUBTFUL
+        out[HOLDER] = Proposal(" ".join(name.split()), confidence, "IV)")
+
+    validity = [rest for num, rest, _index in numbered if num == "XIV"]
+    if len(validity) == 1:
+        dates, invalid = _dates_in(validity[0])
+        if len(dates) == 1 and not invalid:
+            out[EXPIRY_DATE] = Proposal(
+                dates[0], EXACT, _fragment("XIV)", dates[0].isoformat())
+            )
+
+    for index, line in enumerate(lines):
+        if _ISSUED_LABEL.search(_plain(line)):
+            dates, invalid = _dates_in(" ".join(lines[index : index + 3]))
+            if len(dates) == 1 and not invalid:
+                out[ISSUE_DATE] = Proposal(
+                    dates[0], EXACT, _fragment("DATE ISSUED", dates[0].isoformat())
+                )
+            break
+
+    if any(_RUT_LABEL.match(_plain(line)) for line in lines):
+        from .rut import normalize_rut
+
+        ruts = {normalize_rut(rut): rut for rut in _RUT_TEXT.findall(text)}
+        if len(ruts) == 1:
+            out[RUT] = Proposal(next(iter(ruts.values())), EXACT, "RUT / PASSPORT")
+    return out
 
 
 def _candidates(field, lines):

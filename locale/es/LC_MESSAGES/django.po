@@ -12126,6 +12126,13 @@ msgstr ""
 msgid "The file could not be read; fill in the fields by hand."
 msgstr "No se pudo leer el archivo; complete los campos a mano."
 
+msgid ""
+"The file was read, but no credential data was recognized; fill in the form "
+"by hand. The file will still be attached when you save."
+msgstr ""
+"Se leyó el archivo, pero no se reconoció ningún dato de la credencial; "
+"complete el formulario a mano. El archivo se adjunta igual al guardar."
+
 msgid "Field"
 msgstr "Campo"
 
