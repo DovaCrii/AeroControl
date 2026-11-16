@@ -39,3 +39,9 @@ CSS-referenced images cannot.
 
 Geoman is loaded only on the editable plan detail page (GEO-8); the read-only
 viewer (GEO-7) does not pull it in.
+
+## Fuentes (`static/fonts/`)
+
+| Fuente | Versión | Archivo | Licencia | Origen | Descargado |
+|---|---|---|---|---|---|
+| JetBrains Mono Regular (subconjunto latino: U+0020-007E, U+00A0-00FF, U+2013-2014, U+2022; sólo `tnum` y `zero`) | 2.304 | `fonts/JetBrainsMono-Latin.woff2` | SIL OFL 1.1, sin Reserved Font Name (`fonts/OFL-JetBrainsMono.txt`, copia literal del release) | https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip (`JetBrainsMono-Regular.woff2`, subconjunto con `pyftsubset`) | 2026-11-16 |

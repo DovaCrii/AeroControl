@@ -63,3 +63,15 @@ def test_the_layer_loads_after_identity_css():
     assert base.index("sheet.css") > base.index("identity.css")
     login = _links(LOGIN)
     assert login.index("tech.css") > login.index("identity.css")
+
+
+def test_the_mono_font_is_served_locally_and_licensed():
+    css = _css(TECH)
+    font = ROOT / "static" / "fonts" / "JetBrainsMono-Latin.woff2"
+    assert font.stat().st_size <= 40 * 1024
+    assert (ROOT / "static" / "fonts" / "OFL-JetBrainsMono.txt").is_file()
+    face = re.search(r"@font-face\s*\{[^}]*JetBrains Mono[^}]*\}", css).group(0)
+    assert "font-display: swap" in face
+    assert 'url("../fonts/JetBrainsMono-Latin.woff2")' in face
+    assert "http" not in face
+    assert re.search(r'--id-mono:\s*"JetBrains Mono",', css)
