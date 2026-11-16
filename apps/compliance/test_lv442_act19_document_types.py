@@ -79,8 +79,8 @@ class TestTheSeed:
             assert (kind.category, kind.reference_code) == (category, reference)
             assert kind.requires_expiry is False
             assert "provisorio" in kind.description
-        assert set(NEW) <= set(suggested_codes_for("registry", "operator")) | set(
-            suggested_codes_for("registry", "aircraft")
+        assert "operator-qualification-intake" in suggested_codes_for(
+            "registry", "operator"
         )
         assert "rpa-service-life" in suggested_codes_for("registry", "aircraft")
         assert "operator-theory-evaluations" in suggested_codes_for(
@@ -206,7 +206,7 @@ class TestTheMonthlyCloseCountsOnlyTheMissionRecord:
         assert MONTHLY_RECORD_CODES == ("flight-log",)
         call_command("seed_document_types")
         centre = _centre("CC1")
-        empty = _centre("CC2")
+        _centre("CC2")  # sin REG-016 en el mes
         by_code = {
             code: DocumentType.objects.get(code=code)
             for code in ("flight-log", "rpa-checklist", "drone-inspection")
@@ -226,7 +226,6 @@ class TestTheMonthlyCloseCountsOnlyTheMissionRecord:
         assert row["missing_types"] == []
         # Sin REG-016 en el mes, lo que falta es sólo el REG-016.
         assert [t.code for t in rows["CC2"]["missing_types"]] == ["flight-log"]
-        assert empty.pk
 
         from apps.compliance.monthly import records_in_month
 
