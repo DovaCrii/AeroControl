@@ -43,7 +43,7 @@ WRONG = "OPERACIÓN MÁS ALLÁ DE LA LÍNEA VISUAL (BVLOS)"
 def attempt(db, django_user_model):
     user = django_user_model.objects.create_user("piloto", password="x")
     operator = Operator.objects.create(
-        employee_id="E-1", full_name="Ana Rivas", user=user
+        employee_id="E-1", full_name="Operator A", user=user
     )
     return KnowledgeAssessment.objects.create(
         operator=operator,

@@ -11,7 +11,7 @@ en `docs/assessment-bank-format.md`.
 
 **Idempotente** por `(tipo, modelo, número)`: correrlo dos veces no duplica; una
 pregunta con el mismo número se actualiza. `--replace` **archiva** (nunca borra)
-las preguntas de los tipos presentes en el archivo que ya no vienen en él. Todo o
+las preguntas de los pares (tipo, modelo) presentes en el archivo que ya no vienen en él. Todo o
 nada: si una pregunta es inválida no se escribe ninguna.
 """
 
@@ -120,15 +120,16 @@ class Command(BaseCommand):
         parser.add_argument(
             "--replace",
             action="store_true",
-            help="Archive (never delete) the questions of the kinds in the file that it no longer lists.",
+            help="Archive (never delete) the questions of the (kind, model) pairs in the file that it no longer lists.",
         )
 
     def handle(self, *args, path, dry_run=False, replace=False, **options):
         file = Path(path).resolve()
-        tracked = (Path(settings.BASE_DIR) / "apps").resolve()
-        if tracked in file.parents:
+        base = Path(settings.BASE_DIR).resolve()
+        if base in file.parents and (base / "private") not in file.parents:
             raise CommandError(
-                "The bank must live outside the versioned code (use private/ or a path on the server)."
+                "The bank must live outside the repository or under private/ "
+                "(ignored by git); it is the exam itself."
             )
         raw_questions = _read(file)
         families = {t.code: t for t in QualificationType.objects.all()}
@@ -177,9 +178,18 @@ class Command(BaseCommand):
                 created += was_created
                 updated += not was_created
             if replace:
-                stale = AssessmentQuestion.objects.filter(
-                    is_active=True, kind__in={q["kind"] for q in parsed}
-                ).exclude(pk__in=loaded)
+                # Sólo los pares (tipo, modelo) que el archivo trae: un archivo de un
+                # solo modelo no archiva las comunes ni las de otros modelos.
+                pairs = {
+                    (q["kind"], q["family"].pk if q["family"] else None) for q in parsed
+                }
+                stale = [
+                    question
+                    for question in AssessmentQuestion.objects.filter(is_active=True)
+                    .exclude(pk__in=loaded)
+                    .select_related("aircraft_family")
+                    if (question.kind, question.aircraft_family_id) in pairs
+                ]
                 for question in stale:
                     question.is_active = False
                     question.save(update_fields=["is_active", "updated_at"])

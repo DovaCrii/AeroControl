@@ -14,7 +14,7 @@ uv run python manage.py load_assessment_bank private/banco.json             # ca
 uv run python manage.py load_assessment_bank private/banco.json --replace   # además archiva lo que ya no viene
 ```
 
-En la VM: `bash scripts/deploy.sh --manage load_assessment_bank <ruta>` con el archivo
+En la VM, en este orden: `deploy.sh` (migrate), luego `bash scripts/deploy.sh --manage load_assessment_bank <ruta> --dry-run` y, si no hay errores, el mismo sin `--dry-run`; con el archivo
 copiado antes a una ruta fuera del repo (por ejemplo `private/`).
 
 - **Idempotente** por `(tipo, modelo, número)`: volver a correrlo no duplica; una
@@ -22,8 +22,8 @@ copiado antes a una ruta fuera del repo (por ejemplo `private/`).
 - **Todo o nada**: si una pregunta es inválida no se escribe ninguna y el comando
   lista todos los problemas.
 - `--replace` **archiva** (`is_active=False`, nunca borra) las preguntas de los tipos
-  presentes en el archivo que éste ya no lista.
-- Se rechaza un archivo dentro de `apps/` (código versionado).
+  presentes en el archivo que éste ya no lista; **por par (tipo, modelo)**: un archivo con sólo las preguntas de un modelo no toca las comunes ni las de otros modelos. Nunca usar `--replace` en la primera carga.
+- Se rechaza cualquier archivo dentro del repositorio salvo bajo `private/` (ignorado por git).
 
 ## Formato
 

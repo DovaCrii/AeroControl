@@ -37,7 +37,7 @@ TODAY = timezone.localdate()
 def _operator(user=None, **kwargs):
     return Operator.objects.create(
         employee_id=kwargs.pop("employee_id", "E-1"),
-        full_name=kwargs.pop("full_name", "Ana Rivas"),
+        full_name=kwargs.pop("full_name", "Operator A"),
         user=user,
         **kwargs,
     )
@@ -249,7 +249,7 @@ class TestModelRules:
     def _attempt(self, kind, family=None):
         return KnowledgeAssessment(
             operator=Operator.objects.get_or_create(
-                employee_id="E-1", defaults={"full_name": "Ana Rivas"}
+                employee_id="E-1", defaults={"full_name": "Operator A"}
             )[0],
             kind=kind,
             aircraft_family=family,
@@ -340,13 +340,16 @@ def _question(number=1, kind="general", **extra):
 
 @pytest.mark.django_db
 class TestLoadAssessmentBank:
-    def test_the_documented_example_loads(self):
+    def test_the_documented_example_loads(self, tmp_path, settings):
         # El ejemplo de docs/ es el contrato del formato: si deja de cargar, la
-        # guía miente.
-        call_command(
-            "load_assessment_bank", "docs/examples/assessment_bank_example.json"
-        )
+        # guía miente. Se copia fuera del repo: el comando no lee desde docs/.
+        import shutil
 
+        copy = tmp_path / "example.json"
+        shutil.copy(
+            settings.BASE_DIR / "docs/examples/assessment_bank_example.json", copy
+        )
+        call_command("load_assessment_bank", str(copy))
         kinds = set(AssessmentQuestion.objects.values_list("kind", flat=True))
         assert kinds == {"general", "limitations", "annual"}
         assert AssessmentQuestion.objects.count() == 3
@@ -422,13 +425,56 @@ class TestLoadAssessmentBank:
         with pytest.raises(CommandError, match="Cannot read"):
             call_command("load_assessment_bank", str(tmp_path / "missing.json"))
 
-    def test_a_file_inside_the_versioned_code_is_refused(self, settings):
-        inside = (
-            settings.BASE_DIR / "apps" / "registry" / "bank_should_not_be_here.json"
+    @pytest.mark.parametrize(
+        "relative", ["apps/registry/bank.json", "docs/bank.json", "bank.json"]
+    )
+    def test_a_file_inside_the_repo_but_not_in_private_is_refused(
+        self, settings, relative
+    ):
+        inside = settings.BASE_DIR / relative
+
+        with pytest.raises(CommandError, match="private/"):
+            call_command("load_assessment_bank", str(inside))
+
+    def test_private_is_accepted(self, settings):
+        private = settings.BASE_DIR / "private" / "_test_bank_lv444.json"
+        private.parent.mkdir(exist_ok=True)
+        private.write_text(json.dumps({"questions": [_question()]}), encoding="utf-8")
+        try:
+            call_command("load_assessment_bank", str(private))
+        finally:
+            private.unlink()
+
+        assert AssessmentQuestion.objects.count() == 1
+
+    def test_replace_with_a_one_model_file_archives_only_that_model(self, tmp_path):
+        mavic = make_family()
+        matrice = make_family("matrice", "Matrice series", "matrice")
+        make_question("limitations", 1)  # común
+        make_question("limitations", 1, family=mavic)
+        make_question("limitations", 2, family=mavic)
+        make_question("limitations", 1, family=matrice)
+        make_question("general", 1)
+
+        call_command(
+            "load_assessment_bank",
+            _write(tmp_path, [_question(1, kind="limitations", family="mavic")]),
+            "--replace",
         )
 
-        with pytest.raises(CommandError, match="outside"):
-            call_command("load_assessment_bank", str(inside))
+        active = {
+            (q.kind, q.aircraft_family and q.aircraft_family.code, q.number)
+            for q in AssessmentQuestion.objects.filter(is_active=True)
+        }
+        assert active == {
+            ("limitations", None, 1),
+            ("limitations", "mavic", 1),
+            ("limitations", "matrice", 1),
+            ("general", None, 1),
+        }
+        assert not AssessmentQuestion.objects.get(
+            aircraft_family=mavic, number=2
+        ).is_active
 
     def test_replace_archives_what_is_no_longer_listed_and_never_deletes(
         self, tmp_path
@@ -754,7 +800,7 @@ class TestPermissions:
     def test_the_review_does_not_cross_tenants(self):
         mine = OperationalTenant.objects.create(name="Mine", slug="mine")
         theirs = OperationalTenant.objects.create(name="Theirs", slug="theirs")
-        other = _operator(employee_id="E-9", full_name="Luis Paz", tenant=theirs)
+        other = _operator(employee_id="E-9", full_name="Operator B", tenant=theirs)
         attempt = KnowledgeAssessment.objects.create(
             operator=other,
             question_count=1,
@@ -779,3 +825,89 @@ def _not_loaded():
     from django.utils.translation import gettext
 
     return gettext("The question bank is not loaded.")
+
+
+@pytest.mark.django_db
+class TestNewKindsKeepTheReadingRules:
+    """Las reglas de lectura de LV-158/LV-184 valen igual para los tipos nuevos."""
+
+    def _limitations(self, operator, family):
+        return KnowledgeAssessment.objects.create(
+            operator=operator,
+            kind="limitations",
+            aircraft_family=family,
+            question_count=1,
+            correct_count=0,
+            score_percent=0,
+            passed=False,
+            part_scores={
+                "A": {"correct": 0, "total": 1, "percent": 0, "threshold": 100}
+            },
+            answers=[
+                {
+                    "id": "1",
+                    "part": "A",
+                    "text": "Invented stem",
+                    "options": [
+                        {"key": "a", "text": "Right choice"},
+                        {"key": "b", "text": "Wrong choice"},
+                    ],
+                    "given": "b",
+                    "answer": "a",
+                    "correct": False,
+                }
+            ],
+        )
+
+    def test_an_operator_cannot_read_another_operators_attempt_of_the_same_company(
+        self,
+    ):
+        family = make_family()
+        client, _mine = _client("view_knowledgeassessment")
+        other = _operator(employee_id="E-2", full_name="Operator B")
+        theirs = self._limitations(other, family)
+
+        response = client.get(reverse("assessment-detail", args=[theirs.pk]))
+
+        assert response.status_code == 404
+
+    def test_the_owner_reads_it_and_the_key_stays_hidden_without_its_permission(self):
+        family = make_family()
+        client, mine = _client("view_knowledgeassessment")
+        attempt = self._limitations(mine, family)
+
+        body = client.get(
+            reverse("assessment-detail", args=[attempt.pk])
+        ).content.decode()
+
+        assert "Wrong choice" in body, "lo que contestó se ve"
+        assert "Right choice" not in body, "la clave es el examen"
+
+    def test_the_key_holder_sees_the_correct_answer(self):
+        family = make_family()
+        attempt = self._limitations(_operator(), family)
+        client = login_as(
+            "view_knowledgeassessment", "view_operator", "view_assessment_answers"
+        )
+
+        body = client.get(
+            reverse("assessment-detail", args=[attempt.pk])
+        ).content.decode()
+
+        assert "Right choice" in body
+
+    def test_the_history_on_the_record_lists_the_kind_with_and_without_permission(
+        self,
+    ):
+        family = make_family()
+        operator = _operator()
+        attempt = self._limitations(operator, family)
+        reader = login_as("view_operator", "view_knowledgeassessment")
+        blind = login_as("view_operator")
+
+        shown = reader.get(reverse("operator-detail", args=[operator.pk]))
+        hidden = blind.get(reverse("operator-detail", args=[operator.pk]))
+
+        assert reverse("assessment-detail", args=[attempt.pk]) in shown.content.decode()
+        assert str(family) in shown.content.decode()
+        assert hidden.context["assessments"] is None

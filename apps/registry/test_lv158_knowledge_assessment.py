@@ -39,7 +39,7 @@ TODAY = timezone.localdate()
 def _operator(user=None, **kwargs):
     return Operator.objects.create(
         employee_id=kwargs.pop("employee_id", "E-1"),
-        full_name=kwargs.pop("full_name", "Ana Rivas"),
+        full_name=kwargs.pop("full_name", "Operator A"),
         user=user,
         **kwargs,
     )
@@ -168,7 +168,7 @@ class TestReadingTheResult:
 
     def test_an_operator_cannot_read_another_persons_result(self):
         client, _mine = _client_for_operator("view_knowledgeassessment")
-        other = _operator(employee_id="E-2", full_name="Luis Paz")
+        other = _operator(employee_id="E-2", full_name="Operator B")
         theirs = self._taken(other)
 
         response = client.get(reverse("assessment-detail", args=[theirs.pk]))

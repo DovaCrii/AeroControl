@@ -35,7 +35,7 @@ def world(db):
     centre = CostCenter.objects.create(code="CC738", name="MLP")
     operator = Operator.objects.create(
         employee_id="E1",
-        full_name="Ana Rivas",
+        full_name="Operator A",
         cost_center=centre,
         credential_expiry=TODAY + timedelta(days=200),
     )
