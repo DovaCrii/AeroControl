@@ -225,19 +225,29 @@ def _check_operator(operator, today):
             ),
         )
 
-    # Sólo la última: los intentos anteriores son historial, y su vencimiento ya
-    # no es trabajo de nadie. Mismo criterio que la lista de vencimientos del
-    # panel, que ya lo resolvió así.
-    latest = (
-        KnowledgeAssessment.objects.filter(operator=operator, is_active=True)
-        .order_by("-taken_at")
-        .first()
-    )
-    if latest and latest.expires_on:
+    # LV-439: la vigencia es la del último intento **aprobado**. Un reprobado
+    # también sella `expires_on`, pero no acredita nada, y uno posterior no
+    # anula un aprobado vigente. Los intentos anteriores son historial, y su
+    # vencimiento ya no es trabajo de nadie (mismo criterio que el panel).
+    attempts = KnowledgeAssessment.objects.filter(operator=operator, is_active=True)
+    latest_passed = attempts.filter(passed=True).order_by("-taken_at").first()
+    if latest_passed and latest_passed.expires_on:
         _add(
             check,
             *_expiry_finding(
-                _("Knowledge assessment"), latest.expires_on, today, url, ""
+                _("Knowledge assessment"), latest_passed.expires_on, today, url, ""
+            ),
+        )
+    elif latest_passed is None and attempts.exists():
+        # Se rindió y no se aprobó: no es lo mismo que no haber rendido, y
+        # callarlo daría por cumplido lo que la prueba dijo que no.
+        _add(
+            check,
+            "blocker",
+            Finding(
+                label=_("Knowledge assessment"),
+                detail=_("The last attempt was not passed."),
+                url=url,
             ),
         )
 
