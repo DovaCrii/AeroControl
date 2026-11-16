@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Ficha del operador por tarjetas agrupadas (`LV-450`, `codex/detail-sheet`).** Identificación, contacto, credencial, habilitaciones, asignación y notas en tarjetas; los campos vacíos van al pie en un `<details>` (la credencial y su vencimiento se muestran como «Sin registrar»). Sin migración; lleva `collectstatic` y cambia el `.mo`.
+
 ### Fixed
 
 - **La credencial DGAC real se lee al dar de alta un operador (`LV-448`, `codex/credencial-formato-dgac`).** El lector reconoce el formato numerado de la DGAC (número, titular, RUT, emisión y vencimiento) y el aviso ya no dice que completó el formulario cuando no reconoció nada. Sin migración ni estáticos; cambia el `.mo`.

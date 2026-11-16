@@ -15435,6 +15435,23 @@ msgstr "Cada 12 a 18 meses"
 msgid "Medium maintenance (400 h or 12 months) and advanced (600 h or 18 months) at a technical service, coordinated 1 month before."
 msgstr "Mantención media (400 h o 12 meses) y avanzada (600 h o 18 meses) en servicio técnico, coordinadas 1 mes antes."
 
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "Assignment"
+msgstr "Asignación"
+
+msgid "Other data"
+msgstr "Otros datos"
+
+msgid "Not registered"
+msgstr "Sin registrar"
+
+msgid "%(n)s field not recorded"
+msgid_plural "%(n)s fields not recorded"
+msgstr[0] "%(n)s campo sin registrar"
+msgstr[1] "%(n)s campos sin registrar"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
