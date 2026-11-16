@@ -21,6 +21,11 @@ CHECKLIST_NAME = "REG-016 Rev. 2 · Verificación prevuelo (sección 4)"
 POPULATED = " (solo área poblada)"
 
 # (order, text, critical). Textos del REG-016 Rev. 2, sección 4.
+# Los ítems 14-16 («solo área poblada») son ★ en el formulario pero se siembran
+# con is_required=False: la Act. 19 mantiene la operación sólo en área no poblada
+# hasta la Act. 20, así que hoy no aplican y no deben bloquear la firma.
+# Condición para volverlos obligatorios: que la Act. 20 habilite el área poblada;
+# entonces pasar a True (en el admin, o con un nuevo seed/migración de datos).
 ITEMS = [
     (
         1,
@@ -63,19 +68,19 @@ ITEMS = [
         14,
         "Paracaídas de emergencia instalado, sin daños y con N° de serie registrado"
         + POPULATED,
-        True,
+        False,
     ),
     (
         15,
         "Despegue, vuelo y aterrizaje en modo manual (no se usa modo automático en área poblada)"
         + POPULATED,
-        True,
+        False,
     ),
     (
         16,
         "Separación de 30 m horizontales y 20 m verticales con personas, obstáculos e infraestructura"
         + POPULATED,
-        True,
+        False,
     ),
     (
         17,

@@ -8,7 +8,8 @@ from apps.operations.management.commands.seed_reg016_checklist import CHECKLIST_
 from apps.operations.models import PreflightChecklist, PreflightChecklistItem
 from apps.registry.models import Aircraft, CostCenter
 
-NON_CRITICAL = {17}
+# 14-16 (solo area poblada) y 17 no bloquean: ver el seed (Act. 19 / Act. 20).
+NOT_REQUIRED = {14, 15, 16, 17}
 
 
 @pytest.fixture
@@ -26,8 +27,8 @@ def test_seed_creates_17_items_and_is_idempotent(seeded):
 
 def test_only_the_critical_items_are_required(seeded):
     required = {i.order for i in seeded.items.all() if i.is_required}
-    assert required == set(range(1, 18)) - NON_CRITICAL
-    assert len(required) == 16
+    assert required == set(range(1, 18)) - NOT_REQUIRED
+    assert len(required) == 13
 
 
 def test_rerun_does_not_overwrite_an_edited_item(seeded):
