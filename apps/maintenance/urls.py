@@ -71,6 +71,22 @@ urlpatterns = [
         name="maintenance-complete",
     ),
     path("history/", views.MaintenanceHistoryList.as_view(), name="history-list"),
+    # LV-443: hoja de vida del RPA (REG-020), su versión imprimible y las horas base.
+    path(
+        "aircraft/<uuid:pk>/service-life/",
+        views.AircraftServiceLife.as_view(),
+        name="aircraft-service-life",
+    ),
+    path(
+        "aircraft/<uuid:pk>/service-life/pdf/",
+        views.AircraftServiceLifePdf.as_view(),
+        name="aircraft-service-life-pdf",
+    ),
+    path(
+        "aircraft/<uuid:pk>/logbook/",
+        views.AircraftLogbookUpdate.as_view(),
+        name="aircraft-logbook",
+    ),
     path(
         "aircraft/<uuid:pk>/incident/",
         views.AircraftReportIncident.as_view(),

@@ -15324,6 +15324,137 @@ msgstr "Permiso al que pertenece este log"
 msgid "Link permit"
 msgstr "Vincular permiso"
 
+msgid "Basic"
+msgstr "Básica"
+
+msgid "Advanced"
+msgstr "Avanzada"
+
+msgid "Repair"
+msgstr "Reparación"
+
+msgid "Inspection"
+msgstr "Inspección"
+
+msgid "Aircraft hours"
+msgstr "Horas de la aeronave"
+
+msgid "Certificate number"
+msgstr "N.º de certificado"
+
+msgid "Model keywords"
+msgstr "Palabras clave del modelo"
+
+msgid "Interval (months)"
+msgstr "Intervalo (meses)"
+
+msgid "Baseline date"
+msgstr "Fecha base"
+
+msgid "Hours at baseline date"
+msgstr "Horas a la fecha base"
+
+msgid "Due soon"
+msgstr "Por vencer"
+
+msgid "No data"
+msgstr "Sin dato"
+
+msgid "Accumulated flight hours"
+msgstr "Horas de vuelo acumuladas"
+
+msgid "Next maintenance by level"
+msgstr "Próxima mantención por nivel"
+
+msgid "Completed maintenance"
+msgstr "Mantenciones realizadas"
+
+msgid "Last done"
+msgstr "Última realizada"
+
+msgid "Due hours"
+msgstr "Horas de vencimiento"
+
+msgid "Service life"
+msgstr "Hoja de vida"
+
+msgid "Back to aircraft"
+msgstr "Volver a la aeronave"
+
+msgid "Print (PDF)"
+msgstr "Imprimir (PDF)"
+
+msgid "Edit baseline hours"
+msgstr "Editar horas base"
+
+msgid "Service life (REG-020)"
+msgstr "Hoja de vida (REG-020)"
+
+msgid "RPA service life"
+msgstr "Hoja de vida del RPA"
+
+msgid "AeroControl — RPA service life (REG-020)"
+msgstr "AeroControl — Hoja de vida del RPA (REG-020)"
+
+msgid "Hours of %(aircraft)s"
+msgstr "Horas de %(aircraft)s"
+
+msgid "No completed maintenance."
+msgstr "No hay mantenciones realizadas."
+
+msgid "No maintenance programme applies to this model."
+msgstr "Ningún programa de mantención aplica a este modelo."
+
+msgid "The next %(level)s maintenance was scheduled for %(date)s."
+msgstr "La próxima mantención %(level)s quedó programada para el %(date)s."
+
+msgid "Scheduled %(level)s maintenance (maintenance programme)"
+msgstr "Mantención %(level)s programada (programa de mantención)"
+
+msgid "Comma-separated words matched against the aircraft model. Leave it empty for a programme that applies to every aircraft."
+msgstr "Palabras separadas por comas que se buscan en el modelo de la aeronave. Déjelo vacío para un programa que aplique a todas las aeronaves."
+
+msgid "Interval (flight hours)"
+msgstr "Intervalo (horas de vuelo)"
+
+msgid "Leave it empty when the level is not measured in hours."
+msgstr "Déjelo vacío cuando el nivel no se mide en horas."
+
+msgid "maintenance programme"
+msgstr "programa de mantención"
+
+msgid "maintenance programmes"
+msgstr "programas de mantención"
+
+msgid "aircraft logbook"
+msgstr "libro de la aeronave"
+
+msgid "aircraft logbooks"
+msgstr "libros de aeronaves"
+
+msgid "Total flight hours of the aircraft when the maintenance was done."
+msgstr "Horas de vuelo totales de la aeronave cuando se hizo la mantención."
+
+msgid "Total flight hours on the baseline date, from the last maintenance certificate. Later flights are added to it."
+msgstr "Horas de vuelo totales a la fecha base, según el último certificado de mantención. Los vuelos posteriores se suman a ellas."
+
+msgid "Enter the date the baseline hours were read."
+msgstr "Ingrese la fecha en que se leyeron las horas base."
+
+msgid "Baseline %(hours)s h on %(date)s, plus the flights recorded after that date."
+msgstr "Base de %(hours)s h al %(date)s, más los vuelos registrados después de esa fecha."
+
+msgid "No data: the baseline hours have not been entered, so the next maintenance by hours cannot be shown."
+msgstr "Sin dato: no se han ingresado las horas base, así que no se puede mostrar la próxima mantención por horas."
+
+msgid "Whichever comes first, flight hours or time, makes the level due. A higher level restarts the lower ones."
+msgstr "Lo que ocurra primero, horas de vuelo o tiempo, deja vencido el nivel. Un nivel superior reinicia los inferiores."
+
+msgid "%(n)s month"
+msgid_plural "%(n)s months"
+msgstr[0] "%(n)s mes"
+msgstr[1] "%(n)s meses"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

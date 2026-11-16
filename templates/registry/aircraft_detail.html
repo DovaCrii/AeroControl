@@ -98,6 +98,7 @@ ahí abajo: primero en qué estado está el trámite, después el papel.{% endco
 <div class="card mt-3 p-4 entity-section" id="section-maintenance">
   <div class="d-flex justify-content-between align-items-center mb-2">
     <h2 class="h5 mb-0">{% translate "Maintenance & status" %}</h2>
+    {% if perms.registry.view_aircraft %}<a href="{% url 'aircraft-service-life' object.pk %}" class="btn btn-sm btn-outline-secondary">{% translate "Service life (REG-020)" %}</a>{% endif %}
     {% if perms.maintenance.add_maintenancerecord and object.is_active %}
     <div class="d-flex gap-2">
       {% if object.status != "damaged" %}

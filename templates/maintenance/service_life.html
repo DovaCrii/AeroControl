@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ aircraft.registration }} - {% translate "Service life" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-443: hoja de vida del RPA (JEJ-GTE-CT-REG-020). Todo sale de `levels.level_statuses`
+y del historial de mantenciones completadas; la versión imprimible usa los mismos datos.{% endcomment %}
+<div class="card p-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+      <h1 class="h3 mb-1">{% translate "RPA service life" %} · {{ aircraft.registration }}</h1>
+      <p class="text-body-secondary mb-0">{{ aircraft.manufacturer }} {{ aircraft.model }} · REG-020</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'aircraft-detail' aircraft.pk %}" class="btn btn-outline-secondary">{% translate "Back to aircraft" %}</a>
+      <a href="{% url 'aircraft-service-life-pdf' aircraft.pk %}" class="btn btn-outline-primary" hx-boost="false">{% translate "Print (PDF)" %}</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3 p-4" id="service-life-hours">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+    <h2 class="h5 mb-0">{% translate "Accumulated flight hours" %}</h2>
+    {% if can_edit_logbook %}<a href="{% url 'aircraft-logbook' aircraft.pk %}" class="btn btn-sm btn-outline-primary">{% translate "Edit baseline hours" %}</a>{% endif %}
+  </div>
+  {% if hours_now is not None %}
+  <p class="mb-1"><strong>{{ hours_now }} h</strong></p>
+  <p class="text-body-secondary small mb-0">{% blocktranslate with hours=logbook.hours_baseline date=logbook.baseline_on|date:"d-m-Y" %}Baseline {{ hours }} h on {{ date }}, plus the flights recorded after that date.{% endblocktranslate %}</p>
+  {% else %}
+  <p class="mb-0 text-body-secondary">{% translate "No data: the baseline hours have not been entered, so the next maintenance by hours cannot be shown." %}</p>
+  {% endif %}
+</div>
+
+<div class="card mt-3 p-4" id="service-life-levels">
+  <h2 class="h5 mb-2">{% translate "Next maintenance by level" %}</h2>
+  {% if levels %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Level" %}</th>
+        <th scope="col">{% translate "Rule" %}</th>
+        <th scope="col">{% translate "Last done" %}</th>
+        <th scope="col">{% translate "Due date" %}</th>
+        <th scope="col">{% translate "Due hours" %}</th>
+        <th scope="col">{% translate "State" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for item in levels %}
+        <tr data-level="{{ item.level }}">
+          <td>{{ item.level_label }}</td>
+          <td class="text-nowrap">{% if item.program.interval_hours %}{{ item.program.interval_hours }} h{% endif %}{% if item.program.interval_hours and item.program.interval_months %} / {% endif %}{% if item.program.interval_months %}{% blocktranslate count n=item.program.interval_months %}{{ n }} month{% plural %}{{ n }} months{% endblocktranslate %}{% endif %}</td>
+          <td class="text-nowrap">{% if item.last %}{{ item.last.completed_date|date:"d-m-Y" }}{% else %}—{% endif %}</td>
+          <td class="text-nowrap">{{ item.due_date|date:"d-m-Y"|default:"—" }}</td>
+          <td class="text-nowrap">{% if item.due_hours is not None %}{{ item.due_hours }} h{% else %}—{% endif %}</td>
+          <td><span class="id-chip id-chip--{{ item.state_tone }}">{{ item.state_label }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-body-secondary small mt-2 mb-0">{% translate "Whichever comes first, flight hours or time, makes the level due. A higher level restarts the lower ones." %}</p>
+  {% else %}
+  <p class="mb-0 text-body-secondary">{% translate "No maintenance programme applies to this model." %}</p>
+  {% endif %}
+</div>
+
+<div class="card mt-3 p-4" id="service-life-history">
+  <h2 class="h5 mb-2">{% translate "Completed maintenance" %}</h2>
+  {% if completed %}
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr>
+        <th scope="col">{% translate "Date" %}</th>
+        <th scope="col">{% translate "Level" %}</th>
+        <th scope="col">{% translate "Description" %}</th>
+        <th scope="col">{% translate "Aircraft hours" %}</th>
+        <th scope="col">{% translate "Certificate number" %}</th>
+        <th scope="col">{% translate "Performed by" %}</th>
+      </tr></thead>
+      <tbody>
+        {% for record in completed %}
+        <tr>
+          <td class="text-nowrap"><a href="{{ record.get_absolute_url }}">{{ record.completed_date|date:"d-m-Y"|default:"—" }}</a></td>
+          <td>{{ record.get_level_display|default:"—" }}</td>
+          <td>{{ record.description }}</td>
+          <td class="text-nowrap">{% if record.hours_at is not None %}{{ record.hours_at }} h{% else %}—{% endif %}</td>
+          <td>{{ record.certificate_number|default:"—" }}</td>
+          <td>{{ record.performed_by|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="mb-0 text-body-secondary">{% translate "No completed maintenance." %}</p>
+  {% endif %}
+</div>
+{% include "compliance/_documents_section.html" %}
+{% endblock %}
