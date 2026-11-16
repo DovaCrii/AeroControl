@@ -68,7 +68,7 @@ class TestDgacLayout:
         assert reader.EXPIRY_DATE not in props
 
     def test_two_ruts_give_no_rut(self):
-        props = reader.credential_from_text(DGAC_TEXT + "\n22222222-2")
+        props = reader.credential_from_text(DGAC_TEXT + "\n14141414-1")
 
         assert reader.RUT not in props
 
