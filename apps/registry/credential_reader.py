@@ -52,6 +52,9 @@ CLASS_ = "credential_class"
 RESTRICTIONS = "restrictions"
 HOLDER = "holder"
 RUT = "rut"
+# LV-452: sólo del formato numerado de la DGAC (no tienen etiqueta genérica).
+ADDRESS = "address"
+RATINGS = "ratings"
 
 # Los tres que se pueden guardar en la ficha; el resto es informativo o de cotejo.
 WRITABLE_FIELDS = (NUMBER, ISSUE_DATE, EXPIRY_DATE)
@@ -273,6 +276,30 @@ def _dgac_layout(lines, text):
         ):
             name, confidence = f"{name} {follower}", DOUBTFUL
         out[HOLDER] = Proposal(" ".join(name.split()), confidence, "IV)")
+
+    # LV-452: dirección (V), a veces partida en dos líneas, y habilitaciones: el texto
+    # de «XIII) OBSERVACIONES / REMARKS» hasta la fecha de otorgamiento, copiado tal
+    # cual (la ficha pide copiarlas como las dice la credencial, sin estandarizar).
+    addresses = [(rest, index) for num, rest, index in numbered if num == "V"]
+    if len(addresses) == 1 and addresses[0][0]:
+        address, index = addresses[0]
+        confidence = EXACT
+        follower = lines[index + 1].strip() if index + 1 < len(lines) else ""
+        if follower and not _ROMAN_FIELD.match(follower) and not _any_label(follower):
+            address, confidence = f"{address} {follower}", DOUBTFUL
+        out[ADDRESS] = Proposal(" ".join(address.split()), confidence, "V)")
+
+    remarks = [index for num, _rest, index in numbered if num == "XIII"]
+    if len(remarks) == 1:
+        collected = []
+        for line in lines[remarks[0] + 1 :]:
+            if _ROMAN_FIELD.match(line) or _ISSUED_LABEL.search(_plain(line)):
+                break
+            if line.strip():
+                collected.append(line.strip())
+        ratings = " ".join(" ".join(collected).split())
+        if ratings:
+            out[RATINGS] = Proposal(ratings, EXACT, "XIII)")
 
     validity = [rest for num, rest, _index in numbered if num == "XIV"]
     if len(validity) == 1:

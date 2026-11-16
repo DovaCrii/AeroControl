@@ -134,6 +134,8 @@ def initial_from(proposals):
         (reader.RUT, "rut"),
         (reader.NUMBER, "dgac_credential"),
         (reader.EXPIRY_DATE, "credential_expiry"),
+        (reader.ADDRESS, "address"),
+        (reader.RATINGS, "authorizations"),
     ):
         proposal = (proposals or {}).get(key)
         if proposal is not None:
@@ -148,6 +150,8 @@ def read_summary(proposals):
         (reader.RUT, _("RUT")),
         (reader.NUMBER, _("DGAC credential")),
         (reader.EXPIRY_DATE, _("DGAC credential expiry")),
+        (reader.ADDRESS, _("Address")),
+        (reader.RATINGS, _("Qualifications")),
     )
     read, doubtful = [], []
     for key, label in labels:
