@@ -393,8 +393,8 @@ def test_seed_alert_rules_with_optional_adds_qualification_and_maintenance():
 
     call_command("seed_alert_rules", "--with-optional")
     # LV-232: 9 = las 3 esenciales (con el umbral T-45 de la cadena) más las
-    # 6 opcionales, que no cambiaron.
-    assert AlertRule.objects.count() == 9
+    # 6 opcionales, que no cambiaron. LV-447 suma la revisión REG-016 en 24 h: 10.
+    assert AlertRule.objects.count() == 10
     assert AlertRule.objects.filter(
         entity_type="registry.qualification", field_to_watch="expiry_date"
     ).exists()

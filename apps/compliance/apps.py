@@ -36,3 +36,11 @@ class ComplianceConfig(AppConfig):
                 sender=django_apps.get_model(label),
                 dispatch_uid=f"compliance.autoclose.{label}",
             )
+
+        from .signals import open_mission_review
+
+        post_save.connect(
+            open_mission_review,
+            sender=django_apps.get_model("compliance.Document"),
+            dispatch_uid="compliance.open_mission_review",
+        )

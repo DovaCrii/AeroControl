@@ -1,4 +1,5 @@
 from contextlib import contextmanager, suppress
+from uuid import UUID
 from datetime import timedelta
 
 from django.contrib import messages
@@ -70,6 +71,7 @@ from .models import (
     Document,
     DocumentType,
     newest_first,
+    MissionReview,
     MonthlyComplianceReview,
     NonConformity,
     document_upload_path,
@@ -1393,6 +1395,8 @@ class DocumentReplace(TenantScopedChoicesMixin, ModelPermissionRequiredMixin, Fo
                     new_document.content_type = self.document.content_type
                     new_document.object_id = self.document.object_id
                     new_document.file_path = ""
+                    # LV-447: la revisión de 24 h del REG-016 pasa a la versión nueva.
+                    new_document._supersedes = self.document
                     new_document.save()
                     stored["path"] = save_uploaded_file(
                         new_document, form.cleaned_data["file"]
@@ -2272,6 +2276,110 @@ class MonthlyReviewMark(ModelPermissionRequiredMixin, View):
             },
         )
         return _redirect_back(request, fallback="monthly-review")
+
+
+class MissionReviewList(ComplianceList):
+    """LV-447: la bandeja de revisión de cada REG-016 (Manual Act. 19).
+
+    Lectura (`view_missionreview`) acotada por empresa. Muestra el muestreo del mes
+    —«revisadas en plazo / total»— y deja filtrar por faena, estado y vencidas.
+    Marcar una revisión es otra vista, con su propio permiso (`review_missionreview`).
+    """
+
+    model = MissionReview
+    htmx_template_name = "compliance/_mission_review_rows.html"
+    template_name = "compliance/mission_review_list.html"
+    search_fields = ["cost_center__code", "cost_center__name"]
+    tenant_scope = COST_CENTER_TENANT_PATH
+    sortable_columns = {
+        "cost_center": "cost_center__code",
+        "mission_date": "mission_date",
+        "due_on": "due_on",
+        "status": "status",
+    }
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .filter(is_active=True)
+            .select_related("cost_center", "document", "reviewed_by")
+        )
+        status = self.request.GET.get("status")
+        if status in dict(MissionReview.STATUS_CHOICES):
+            queryset = queryset.filter(status=status)
+        if self.request.GET.get("overdue") == "1":
+            queryset = queryset.filter(
+                status=MissionReview.STATUS_PENDING, due_on__lt=timezone.localdate()
+            )
+        cost_center = self.request.GET.get("cost_center")
+        if cost_center:
+            with suppress(ValueError):
+                queryset = queryset.filter(cost_center_id=UUID(cost_center))
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        month = MissionReview.objects.filter(
+            is_active=True,
+            mission_date__year=today.year,
+            mission_date__month=today.month,
+        )
+        month = scope_queryset_to_visible_tenants(
+            month, self.request.user, COST_CENTER_TENANT_PATH
+        )
+        context.update(
+            {
+                "status_choices": MissionReview.STATUS_CHOICES,
+                "selected_status": self.request.GET.get("status", ""),
+                "overdue_only": self.request.GET.get("overdue") == "1",
+                "month": today,
+                "month_total": month.count(),
+                "month_on_time": month.on_time().count(),
+                "cost_centers": scope_queryset_to_tenant(
+                    CostCenter.objects.filter(is_active=True).order_by("code"),
+                    self.request.user,
+                ),
+                "selected_cost_center": self.request.GET.get("cost_center", ""),
+                "can_review": self.request.user.has_perm(
+                    "compliance.review_missionreview"
+                ),
+            }
+        )
+        return context
+
+
+class MissionReviewMark(ModelPermissionRequiredMixin, View):
+    """LV-447: marcar un REG-016 como revisado (con o sin observaciones).
+
+    Pide `review_missionreview`, un permiso que **no va a ningún rol**: el Gerente de
+    Operaciones, o quien designe por escrito, lo recibe a mano. La fila se busca
+    acotada a la empresa de quien revisa, así que la de otra empresa es 404.
+    """
+
+    model = MissionReview
+    permission_action = "review"
+
+    def post(self, request, pk):
+        status = request.POST.get("status")
+        if status not in MissionReview.TERMINAL_STATUSES:
+            return HttpResponseBadRequest("invalid status")
+        review = scoped_or_404(
+            request,
+            MissionReview.objects.select_related("cost_center"),
+            COST_CENTER_TENANT_PATH,
+            pk,
+            is_active=True,
+        )
+        review.mark(status, request.user, notes=request.POST.get("notes", "").strip())
+        set_audit_context(request, review, action=f"mission_review_{status}")
+        messages.success(
+            request,
+            _("%(center)s %(date)s marked.")
+            % {"center": review.cost_center.code, "date": review.mission_date},
+        )
+        return _redirect_back(request, fallback="mission-review-list")
 
 
 class ComplianceUpdate(

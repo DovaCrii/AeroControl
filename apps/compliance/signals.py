@@ -39,6 +39,9 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+# El REG-016 (Registro Único de Misión): el código del tipo de documento (LV-442).
+MISSION_RECORD_CODE = "flight-log"
+
 
 def resolve_alerts_when_watched_date_is_renewed(sender, instance, **kwargs):
     from .models import Alert
@@ -84,3 +87,46 @@ def resolve_alerts_when_watched_date_is_renewed(sender, instance, **kwargs):
             reason=_("Validity renewed to %(date)s (automatic closure)")
             % {"date": value.isoformat()}
         )
+
+
+def open_mission_review(sender, instance, created, **kwargs):
+    """LV-447: cada REG-016 cargado abre su revisión de 24 h, una sola vez.
+
+    `post_save` y no `pre_save` (lección R6.1). Sólo cuenta el registro que se
+    carga **ahora**: versión vigente, sin `source_reference` (los importados en
+    lote no abren revisión: su `created_at` es la fecha de la importación) y con
+    fecha de misión, porque sin ella no hay plazo que medir. La revisión cuelga de
+    la faena (sujeto del documento).
+
+    Una **nueva versión** del mismo registro (`DocumentReplace`) no abre otra: el
+    llamador marca `_supersedes` y la revisión se traslada a la versión vigente.
+    Corregir la fecha de misión de un documento con la revisión aún pendiente
+    mueve el plazo con ella.
+    """
+    from apps.registry.models import CostCenter
+
+    from .models import MissionReview
+
+    if instance.doc_type.code != MISSION_RECORD_CODE:
+        return
+    if instance.content_type_id != ContentType.objects.get_for_model(CostCenter).pk:
+        return
+    previous = getattr(instance, "_supersedes", None)
+    if previous is not None:
+        MissionReview.objects.filter(document=previous).update(document=instance)
+        return
+    if not created:
+        review = MissionReview.objects.filter(document=instance).first()
+        if (
+            review is not None
+            and review.status == MissionReview.STATUS_PENDING
+            and instance.issue_date is not None
+            and instance.issue_date != review.mission_date
+        ):
+            review.mission_date = instance.issue_date
+            review.due_on = MissionReview.due_date_for(instance.issue_date)
+            review.save(update_fields=["mission_date", "due_on", "updated_at"])
+        return
+    if not instance.is_current_version or instance.source_reference:
+        return
+    MissionReview.open_for_document(instance)

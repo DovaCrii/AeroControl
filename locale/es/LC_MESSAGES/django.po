@@ -15637,4 +15637,64 @@ msgstr "%(correct)s de %(total)s correctas"
 msgid "The result is filed on your record. Every part must reach its percentage to pass."
 msgstr "El resultado queda en su ficha. Cada parte debe alcanzar su porcentaje para aprobar."
 
+# LV-447: revisión de cada REG-016 en 24 h
+msgid "Mission review"
+msgstr "Revisión de misión"
+
+msgid "mission review"
+msgstr "revisión de misión"
+
+msgid "mission reviews"
+msgstr "revisiones de misión"
+
+msgid "Mission reviews"
+msgstr "Revisiones de misión"
+
+msgid "Reviewed with observations"
+msgstr "Revisada con observaciones"
+
+msgid "Mission date"
+msgstr "Fecha de la misión"
+
+msgid "Review due on"
+msgstr "Revisar a más tardar el"
+
+msgid "Can review a mission record (REG-016)"
+msgstr "Puede revisar un registro de misión (REG-016)"
+
+msgid "A mission review comes from a document or from a flight record."
+msgstr "Una revisión de misión nace de un documento o de un registro de vuelo."
+
+#, python-format
+msgid "%(center)s %(date)s marked."
+msgstr "%(center)s %(date)s marcada."
+
+msgid "Each mission record (REG-016) is reviewed within 24 hours of the mission day."
+msgstr "Cada registro de misión (REG-016) se revisa dentro de las 24 horas siguientes al día de la misión."
+
+#, python-format
+msgid "%(on_time)s of %(total)s reviewed on time"
+msgstr "%(on_time)s de %(total)s revisadas en plazo"
+
+msgid "Overdue only"
+msgstr "Sólo atrasadas"
+
+msgid "Reviewed by"
+msgstr "Revisada por"
+
+msgid "Mark reviewed"
+msgstr "Marcar revisada"
+
+msgid "With observations"
+msgstr "Con observaciones"
+
+msgid "Late"
+msgstr "Fuera de plazo"
+
+msgid "Flight record"
+msgstr "Registro de vuelo"
+
+msgid "No mission records to review."
+msgstr "No hay registros de misión por revisar."
+
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."

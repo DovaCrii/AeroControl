@@ -1,0 +1,50 @@
+{% extends "generic/worktable.html" %}
+{% load aero_tags i18n %}
+{% comment %}`LV-447`: la bandeja de revisión de cada REG-016 (Manual Act. 19). Entra por la
+tabla de trabajo compartida; el muestreo del mes va arriba como una franja.{% endcomment %}
+{% block worktable_title %}{% translate "Mission reviews" %}{% endblock %}
+{% block worktable_heading %}{% translate "Mission reviews" %}{% endblock %}
+{% block worktable_description %}<p class="page-description mb-0">{% translate "Each mission record (REG-016) is reviewed within 24 hours of the mission day." %}</p>{% endblock %}
+{% block worktable_actions %}
+    <a class="btn btn-outline-secondary" href="?{% if request.GET %}{{ request.GET.urlencode }}&amp;{% endif %}export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
+{% endblock %}
+{% block worktable_intro %}
+<p class="mb-3" id="mission-review-sample">
+  <strong>{{ month|date:"F Y" }}</strong> ·
+  {% blocktranslate with on_time=month_on_time total=month_total %}{{ on_time }} of {{ total }} reviewed on time{% endblocktranslate %}
+</p>
+{% endblock %}
+{% block worktable_filters %}
+<form method="get" class="id-filterbar">
+  {% include "generic/_sort_state.html" %}
+  <div class="id-filter id-filter--grow"><label class="visually-hidden" for="id-filter-q">{% translate "Search" %}</label>{% include "generic/_search_input.html" with search_url=request.path input_id="id-filter-q" %}</div>
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-cc">{% translate "Cost center" %}</label>
+    <select class="form-select" id="id-filter-cc" name="cost_center">
+      <option value="">{% translate "All cost centers" %}</option>
+      {% for center in cost_centers %}<option value="{{ center.pk }}" {% if selected_cost_center == center.pk|stringformat:"s" %}selected{% endif %}>{{ center.code }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="id-filter">
+    <label class="visually-hidden" for="id-filter-status">{% translate "Status" %}</label>
+    <select class="form-select" id="id-filter-status" name="status">
+      <option value="">{% translate "All statuses" %}</option>
+      {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="id-filter id-filter--action">
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="overdue" value="1" id="id-filter-overdue" {% if overdue_only %}checked{% endif %}><label class="form-check-label" for="id-filter-overdue">{% translate "Overdue only" %}</label></div>
+  </div>
+  <div class="id-filter id-filter--action"><button class="btn btn-outline-primary">{% translate "Filter" %}</button></div>
+</form>
+{% endblock %}
+{% block worktable_header %}
+  {% worktable_th _("Cost center") "cost_center" %}
+  {% worktable_th _("Mission date") "mission_date" %}
+  {% worktable_th _("Review due on") "due_on" %}
+  {% worktable_th _("Status") "status" %}
+  <th scope="col">{% translate "Record" %}</th>
+  <th scope="col">{% translate "Reviewed by" %}</th>
+  <th scope="col" class="text-end">{% translate "Actions" %}</th>
+{% endblock %}
+{% block worktable_rows %}{% include "compliance/_mission_review_rows.html" %}{% endblock %}
