@@ -58,6 +58,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Cómo funciona» al día con la Actualización 19 del Manual de Operaciones (`LV-440`, `codex/manual-act19-contenido`).** Registro Único de Misión REG-016 Rev. 2 en lugar de bitácora, check list, NEO y baterías (subida y revisión en 24 h), inspección LVE-002 cada 6 meses o 200 h, mantención por niveles (200 h/6 meses, 400 h/12, 600 h/18), instrucción inicial obligatoria, cuestionario anual y rol «Jefe de Seguridad de Vuelo». Sin migración; sin estáticos.
+
 - **Más contraste en la pantalla de análisis del log de vuelo (`LV-436`, `codex/log-contraste`).** Rótulos en el color primario, valores más grandes con el texto principal, tarjetas con borde de color, el relato del vuelo destacado, notas con el texto secundario y los gráficos en tarjetas de dos columnas con ejes legibles. Contrastes AA en los dos temas. Sin migración; lleva `collectstatic`.
 
 - **Análisis y reporte del log de vuelo (LV-435).** Ubicación del despegue (comuna, provincia, región; referencial, calculada al dibujar y sin guardar) en el análisis, el reporte y el KML; chip de veredicto con la tipografía del cuerpo; fechas del resumen en d-m-Y; avisos y niveles con los tokens de severidad del tema; gráficos con la última etiqueta del eje X completa, color por variable CSS y relleno suave. Sólo estáticos y código, sin migración.
