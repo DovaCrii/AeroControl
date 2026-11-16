@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Ilustraciones técnicas, lote 1 (`LV-451`, `codex/tk-illustrations-1`).** `tk-operator` y `tk-quad-top`: trazo de línea que toma el color del tema (claro y oscuro) en las listas vacías de operadores, asignaciones, habilitaciones y en la lista genérica. Sin migración; lleva `collectstatic`.
 - **JetBrains Mono servida desde la app (LV-449, codex/tech-mono-font, PR2 de la dirección visual técnica).** Subconjunto latino de JetBrains Mono Regular 2.304 (12,7 KB, SIL OFL 1.1) en static/fonts/ con su licencia; --id-mono la usa primero y .tk-code ya la toma. Sin migración; lleva collectstatic.
 
 ### Fixed

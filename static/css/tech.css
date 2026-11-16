@@ -61,3 +61,8 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Trazo técnico `tk-*` (LV-451): lo que el SVG no pinta con `currentColor` es acento y lo hereda del `<use>`. */
+.tk-plate .tk-art {
+  stroke: var(--id-tk-accent);
+  fill: var(--id-tk-accent);
+}
