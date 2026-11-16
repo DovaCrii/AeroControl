@@ -62,10 +62,19 @@ ante la DGAC, y traducirlo lo convertiría en otro documento.{% endcomment %}
       </table>
     </div>
 
+    {% comment %}LV-445: bajo la tabla de metadatos, la nota de control interno de la
+    Act. 19 y, en el recuadro del estándar, el marco regulatorio. **Sólo si el payload
+    las trae**: un informe congelado antes no tiene las llaves y la portada sale
+    idéntica a como se emitió.{% endcomment %}
+    {% if payload.meta.internal_control_note %}
+    <div style="margin-top: 14px; padding-left: 24px; width: 560px; color: #52606D; font-size: 11.5px; line-height: 1.5;">{{ payload.meta.internal_control_note }}</div>
+    {% endif %}
+
     <div style="margin-top: 46px; padding-left: 24px;">
       <div style="width: 340px; border-left: 3px solid #00A7BC; padding: 4px 0 4px 14px;">
         <div style="color: #124384; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.06em;">Estándar de referencia</div>
         <div style="color: #52606D; font-size: 11.5px; line-height: 1.5; margin-top: 5px;">{{ payload.meta.standard }} — Instructivo Gestión Centralizada de Drones o RPA en Centros de Costo</div>
+        {% if payload.meta.manual_reference %}<div style="color: #52606D; font-size: 11.5px; line-height: 1.5; margin-top: 5px;">Marco regulatorio: {{ payload.meta.manual_reference }}</div>{% endif %}
       </div>
     </div>
 

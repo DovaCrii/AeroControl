@@ -54,7 +54,7 @@ def unknown_codes_in_text(payload, run):
         return []
     known = _codes(payload) | {row["cost_centre"] for row in payload.get("permits", [])}
     text = " ".join(
-        [run.period_note or ""]
+        [run.period_note or "", run.manual_note or ""]
         + [f"{f.get('title', '')} {f.get('text', '')}" for f in run.findings or []]
     )
     return sorted({f"CC{number}" for number in CODE.findall(text)} - known)
@@ -199,10 +199,48 @@ def early_cutoff_warnings(payload):
     return found
 
 
+def manual_warnings(payload):
+    """LV-445: lo que conviene saber de la sección 5 antes de emitir, sólo en pantalla.
+
+    Sin bloquear: un REG-016 fuera de plazo es un hecho, no un error del informe; y un
+    indicador pendiente es la regla «sin dato, pendiente», no un defecto.
+    """
+    manual = payload.get("manual")
+    if not manual:
+        return []
+    found = []
+    late = ((manual.get("missions") or {}).get("kpis") or {}).get("records_late") or {}
+    if late.get("value"):
+        found.append(
+            ngettext(
+                "%(count)d REG-016 was filed after the deadline (the day after the "
+                "mission).",
+                "%(count)d REG-016 were filed after the deadline (the day after the "
+                "mission).",
+                late["value"],
+            )
+            % {"count": late["value"]}
+        )
+    from apps.reporting.builder import find_missing
+
+    pending = len(find_missing(manual))
+    if pending:
+        found.append(
+            ngettext(
+                "Section 5 has %(count)d pending indicator (no data source yet).",
+                "Section 5 has %(count)d pending indicators (no data source yet).",
+                pending,
+            )
+            % {"count": pending}
+        )
+    return found
+
+
 def pre_issue_warnings(payload, run, previous=None):
     """Los avisos, ya redactados. Lista vacía si no hay nada que mirar."""
     warnings = []
     warnings.extend(early_cutoff_warnings(payload))
+    warnings.extend(manual_warnings(payload))
     # LV-378: que las cifras del documento cuadren entre sí, y que lo escrito no
     # las contradiga. Avisos, no bloqueos.
     warnings.extend(invariants.check(payload))

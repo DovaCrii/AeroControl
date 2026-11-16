@@ -149,6 +149,49 @@ def violations(payload):
     ):
         broken("I8", permits=len(permits))
 
+    found.extend(_manual_violations(payload))
+    return found
+
+
+def _manual_violations(payload):
+    """LV-445: I9 e I10, sólo si el payload trae la sección 5. Con `None` no se evalúa:
+    «Pendiente» no es una cifra que pueda descuadrar."""
+    manual = payload.get("manual")
+    if not manual:
+        return []
+    found = []
+
+    def num(node):
+        return node.get("value") if isinstance(node, dict) else None
+
+    # I9: las filas suman el total, y las tres clases —en plazo, fuera de plazo y sin
+    # evaluar— son todos los REG-016.
+    missions = manual.get("missions") or {}
+    kpis = missions.get("kpis") or {}
+    total = num(kpis.get("records_total"))
+    parts = [
+        num(kpis.get(key))
+        for key in ("records_on_time", "records_late", "records_not_assessable")
+    ]
+    rows = [row.get("records") for row in missions.get("rows") or []]
+    if total is not None and None not in parts and None not in rows:
+        if sum(rows) != total or sum(parts) != total:
+            found.append(
+                ("I9", {"total": total, "rows": sum(rows), "parts": sum(parts)})
+            )
+
+    # I10: los cuatro estados de la LVE-002 son toda la flota, y la lista de
+    # faltantes son las aeronaves que no están vigentes.
+    inspections = manual.get("inspections") or {}
+    ikpis = inspections.get("kpis") or {}
+    fleet = num(ikpis.get("fleet"))
+    states = [
+        num(ikpis.get(key)) for key in ("in_force", "lapsed", "undated", "missing")
+    ]
+    if fleet is not None and None not in states:
+        gaps = len(inspections.get("gaps") or [])
+        if sum(states) != fleet or gaps != fleet - states[0]:
+            found.append(("I10", {"fleet": fleet, "states": sum(states), "gaps": gaps}))
     return found
 
 
@@ -204,6 +247,23 @@ def _message(code, data):
             _(
                 "The figure “%(key)s” (%(kpi)s) does not match what the rows give "
                 "(%(rows)s)."
+            )
+            % data
+        )
+    if code == "I9":
+        return (
+            _(
+                "The Operations Manual section does not add up: %(rows)s REG-016 in "
+                "the rows and %(parts)s in on-time, late and not-assessable, against "
+                "%(total)s in the figure."
+            )
+            % data
+        )
+    if code == "I10":
+        return (
+            _(
+                "The LVE-002 states add up to %(states)s aircraft and the list names "
+                "%(gaps)s without a current inspection, against a fleet of %(fleet)s."
             )
             % data
         )

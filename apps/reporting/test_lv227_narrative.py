@@ -217,7 +217,7 @@ class TestThisScreenIsNotAWayIntoTheFigures:
         guarda nada — verde por el camino equivocado. Comprobado dejando el
         `"__all__"` puesto: este test cae y aquél no.
         """
-        assert set(PeriodNoteForm().fields) == {"period_note"}
+        assert set(PeriodNoteForm().fields) == {"period_note", "manual_note"}
 
     @pytest.mark.django_db
     def test_extra_keys_in_the_post_are_ignored(self, client, writer, draft):

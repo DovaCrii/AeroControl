@@ -130,6 +130,11 @@ class ReportRun(BaseModel):
     # La observación del período (página 3 del informe emitido). Un párrafo, no
     # una lista: en el informe de agosto es uno solo, sobre la vigencia otorgada.
     period_note = models.TextField(blank=True, default="")
+    # LV-445: la observación sobre el cumplimiento del Manual de Operaciones
+    # (sección 5 del informe, Act. 19). Un párrafo escrito por quien firma, con
+    # tope para que quepa en la hoja; viaja a la revisión siguiente como la
+    # observación del período.
+    manual_note = models.TextField(blank=True, default="")
     # LV-235: **"Acciones requeridas este mes"**, del Dato Ejecutivo — la única
     # sección de ese documento que no se puede calcular.
     #
@@ -182,6 +187,7 @@ class ReportRun(BaseModel):
         """
         return f"JEJ-GTE-CT-INF-RPA-{self.period:%Y-%m}"
 
+    MANUAL_NOTE_MAX = 1200
     EARLY_REASON_MIN = 10
     EARLY_REASON_MAX = 300
 
@@ -374,6 +380,9 @@ class ReportRun(BaseModel):
                 ),
                 findings=latest.findings if latest else [],
                 period_note=latest.period_note if latest else "",
+                # LV-445: la observación del Manual viaja igual (lección LV-247:
+                # un campo de narrativa que no se copia se borra en silencio).
+                manual_note=latest.manual_note if latest else "",
                 # LV-247: **las acciones también viajan**, y no viajaban. El
                 # docstring de `freeze` lo afirmaba para "la narrativa" entera, y
                 # la narrativa son tres bloques: se copiaban dos. `actions` llegó
@@ -417,6 +426,17 @@ class ReportRun(BaseModel):
         de `AGENTS.md`: validar en el formulario *y* en el modelo.
         """
         super().clean()
+        # LV-445: el tope vive acá y en el formulario; un texto más largo no cabe
+        # en la hoja y se recortaría en silencio.
+        if len(self.manual_note or "") > self.MANUAL_NOTE_MAX:
+            raise ValidationError(
+                {
+                    "manual_note": _(
+                        "The Manual observation can have at most %(max)s characters."
+                    )
+                    % {"max": self.MANUAL_NOTE_MAX}
+                }
+            )
         if not isinstance(self.findings, list):
             raise ValidationError({"findings": _("Findings must be a list.")})
         for entry in self.findings:
@@ -496,6 +516,14 @@ class ReportTemplate(BaseModel):
     addressed_to = models.CharField(_("Addressed to"), max_length=300)
     scope = models.CharField(_("Scope"), max_length=200)
     sources = models.CharField(_("Sources"), max_length=200)
+    # LV-445: el marco regulatorio y la nota de control interno de la Act. 19. Con
+    # valor por defecto vacío: un informe sin ellos se dibuja como siempre.
+    manual_reference = models.CharField(
+        _("Regulatory framework"), max_length=200, blank=True, default=""
+    )
+    internal_control_note = models.CharField(
+        _("Internal-control note"), max_length=300, blank=True, default=""
+    )
     plan_lede = models.TextField(_("Plan introduction"))
 
     class Meta:
