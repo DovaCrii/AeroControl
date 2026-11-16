@@ -129,6 +129,9 @@ ROLE_PERMISSIONS = {
         # sigue viendo qué falló y qué contestó, que es lo que sirve para
         # estudiar; lo que no ve es el examen resuelto.
         "view_assessment_answers",
+        # LV-444: el banco de preguntas cargado (lista de lectura; la clave la da el
+        # permiso de arriba). Lo carga un comando, no un usuario.
+        "view_assessmentquestion",
         "add_document",
         "change_document",
         "delete_document",
@@ -205,6 +208,13 @@ ROLE_PERMISSIONS = {
         "add_maintenancerecord",
         "change_maintenancerecord",
         "view_maintenancerecord",
+        # LV-443: la hoja de vida del RPA (REG-020) exige leer la mantención **y** la
+        # aeronave; quien la lleva carga además las horas base (el libro de la
+        # aeronave se crea la primera vez que se guarda, por eso también `add`).
+        "view_aircraft",
+        "add_aircraftlogbook",
+        "change_aircraftlogbook",
+        "view_aircraftlogbook",
     },
     # Spelled out on purpose. This used to be every permission whose codename
     # starts with "view_", which quietly handed the lowest role the API tokens,

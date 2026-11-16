@@ -217,8 +217,10 @@ queda vigilado por la regla de alertas, sin importar a qué entidad cuelga.
 
 ### Registros operacionales y cierre mensual (LV-30)
 
-Los **registros por vuelo** —bitácora (REG-015), checklist RPA (LVE-003),
-inspección de dron (LVE-002)— son otra categoría: no vencen, pero deben existir
+Los **registros por vuelo** —el Registro Único de Misión REG-016 Rev. 2, que desde la
+Actualización 19 del Manual de Operaciones (aprobada por la DGAC el 10-11-2026)
+reemplaza la bitácora REG-015, el checklist LVE-003, el formulario NEO y el registro
+de baterías, y la inspección de dron LVE-002 Rev. 1— son otra categoría: no vencen, pero deben existir
 uno por vuelo. No se confunden con los procedimientos (esos van a *Documentos de
 la empresa*) ni con la resolución JAC (esa va a la ficha de la aeronave).
 

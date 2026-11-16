@@ -1752,6 +1752,47 @@ class KnowledgeAssessment(BaseModel):
         related_name="knowledge_assessments_taken",
         verbose_name=_("Taken by"),
     )
+    # LV-444 (Act. 19, REG-019): qué se rindió. `legacy` es lo rendido antes de las
+    # evaluaciones del Manual (la prueba única de 25 preguntas y 80 %): conserva lo
+    # guardado y, mientras no venza, cuenta como cuestionario anual (transición
+    # sin bloquear a nadie el día del despliegue).
+    KIND_LEGACY = "legacy"
+    KIND_GENERAL = "general"
+    KIND_LIMITATIONS = "limitations"
+    KIND_ANNUAL = "annual"
+    KIND_CHOICES = [
+        (KIND_LEGACY, _("Previous assessment")),
+        (KIND_GENERAL, _("General exam")),
+        (KIND_LIMITATIONS, _("Limitations and emergencies")),
+        (KIND_ANNUAL, _("Annual questionnaire")),
+    ]
+    #: Los tipos que llevan modelo de RPA: la parte de limitaciones es por modelo.
+    FAMILY_KINDS = frozenset({KIND_LIMITATIONS, KIND_ANNUAL})
+
+    kind = models.CharField(
+        max_length=20,
+        choices=KIND_CHOICES,
+        default=KIND_LEGACY,
+        verbose_name=_("Assessment type"),
+    )
+    # El modelo de RPA al que corresponde la parte de limitaciones y emergencias,
+    # con el mismo catálogo con que se compara operador y aeronave
+    # (`QualificationType.model_keywords`). PROTECT: no se borra un modelo que ya
+    # tiene evaluaciones rendidas.
+    aircraft_family = models.ForeignKey(
+        "QualificationType",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="knowledge_assessments",
+        verbose_name=_("RPA model"),
+    )
+    # Una entrada por parte rendida: {"A": {"correct", "total", "percent",
+    # "threshold"}, ...}. El umbral se guarda con el intento por la misma razón
+    # que `expires_on`: cambiar la regla no reescribe lo ya rendido.
+    part_scores = models.JSONField(
+        default=dict, blank=True, verbose_name=_("Scores by part")
+    )
     taken_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Taken at"))
     question_count = models.PositiveIntegerField(verbose_name=_("Questions"))
     correct_count = models.PositiveIntegerField(verbose_name=_("Correct answers"))
@@ -1762,7 +1803,9 @@ class KnowledgeAssessment(BaseModel):
     # La vigencia se guarda y no se calcula al leer: si mañana la regla cambia de
     # 12 a 24 meses, lo ya rendido conserva la vigencia con que se rindió. Mismo
     # criterio con que `R7.4` congela los umbrales al validar un entregable.
-    expires_on = models.DateField(verbose_name=_("Valid until"))
+    # Nulo = no vence por calendario (examen general y limitaciones y
+    # emergencias: LV-444). Un nulo no alerta ni cuenta como vencido.
+    expires_on = models.DateField(null=True, blank=True, verbose_name=_("Valid until"))
     answers = models.JSONField(default=list, verbose_name=_("Answers"))
 
     class Meta:
@@ -1794,9 +1837,27 @@ class KnowledgeAssessment(BaseModel):
                 fields=["expires_on", "is_active"], name="reg_assessment_exp_idx"
             )
         ]
+        constraints = [
+            # LV-444: las limitaciones y emergencias se rinden **por modelo**, y el
+            # cuestionario anual lleva esa parte; sin modelo no hay qué evaluar.
+            models.CheckConstraint(
+                condition=(
+                    Q(kind__in=["limitations", "annual"], aircraft_family__isnull=False)
+                    | Q(kind__in=["legacy", "general"])
+                ),
+                name="reg_assessment_family_required",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.operator} · {self.taken_at:%Y-%m-%d}"
+
+    def clean(self):
+        super().clean()
+        if self.kind in self.FAMILY_KINDS and self.aircraft_family_id is None:
+            raise ValidationError(
+                {"aircraft_family": _("This assessment is taken per RPA model.")}
+            )
 
     @property
     def verdict(self):
@@ -1805,10 +1866,10 @@ class KnowledgeAssessment(BaseModel):
 
     @property
     def is_expired(self):
-        """LV-29: una vigencia vencida. Nunca hay nulo acá, así que no hay tercer caso."""
+        """LV-29: una vigencia vencida. Sin fecha (LV-444) no vence por calendario."""
         from django.utils import timezone
 
-        return self.expires_on < timezone.localdate()
+        return self.expires_on is not None and self.expires_on < timezone.localdate()
 
     @property
     def wrong_answers(self):
@@ -1819,6 +1880,85 @@ class KnowledgeAssessment(BaseModel):
         después no cambia lo que la revisión dice que pasó.
         """
         return [row for row in self.answers if not row.get("correct")]
+
+
+class AssessmentQuestion(BaseModel):
+    """LV-444: una pregunta del banco de evaluaciones (REG-019), en la base.
+
+    **El banco no está en el repositorio.** Este repo es público y las preguntas
+    con su clave son el examen: el JSON anterior (`rpas_knowledge_bank.json`)
+    publicaba cien con sus respuestas. Ahora viven aquí y se cargan con
+    `load_assessment_bank <archivo>` desde un archivo fuera del repo (`private/`
+    o una ruta de la VM). El formato está en `docs/assessment-bank-format.md`.
+
+    `aircraft_family` nulo = pregunta común a todos los modelos; con valor = una
+    de las del equipo (las "3 del equipo asignado" de limitaciones y emergencias).
+    Se archiva (`is_active=False`), nunca se borra: los intentos guardan su copia
+    de lo preguntado, pero la fila es la procedencia.
+    """
+
+    KIND_CHOICES = [
+        (KnowledgeAssessment.KIND_GENERAL, _("General exam")),
+        (KnowledgeAssessment.KIND_LIMITATIONS, _("Limitations and emergencies")),
+        (KnowledgeAssessment.KIND_ANNUAL, _("Annual questionnaire")),
+    ]
+
+    kind = models.CharField(
+        max_length=20, choices=KIND_CHOICES, verbose_name=_("Assessment type")
+    )
+    aircraft_family = models.ForeignKey(
+        QualificationType,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="assessment_questions",
+        verbose_name=_("RPA model"),
+    )
+    number = models.PositiveIntegerField(verbose_name=_("Number"))
+    text = models.TextField(verbose_name=_("Question"))
+    # [{"key": "a", "text": "..."}, ...]; la clave en minúscula.
+    options = models.JSONField(default=list)
+    answer = models.CharField(max_length=1, verbose_name=_("Correct answer"))
+    source_ref = models.CharField(max_length=150, blank=True)
+
+    class Meta:
+        verbose_name = _("assessment question")
+        verbose_name_plural = _("assessment questions")
+        ordering = ["kind", "aircraft_family_id", "number"]
+        constraints = [
+            # Idempotencia de la carga: (tipo, modelo, número). Dos restricciones
+            # porque en SQL el nulo no es igual a otro nulo.
+            models.UniqueConstraint(
+                fields=["kind", "aircraft_family", "number"],
+                condition=Q(aircraft_family__isnull=False),
+                name="reg_assessmentq_unique_family",
+            ),
+            models.UniqueConstraint(
+                fields=["kind", "number"],
+                condition=Q(aircraft_family__isnull=True),
+                name="reg_assessmentq_unique_common",
+            ),
+            # Sólo las limitaciones tienen preguntas por modelo.
+            models.CheckConstraint(
+                condition=Q(aircraft_family__isnull=True) | Q(kind="limitations"),
+                name="reg_assessmentq_family_only_limitations",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_kind_display()} #{self.number}"
+
+    def clean(self):
+        super().clean()
+        keys = [option.get("key") for option in self.options or []]
+        if len(keys) < 2 or len(set(keys)) != len(keys):
+            raise ValidationError(
+                {"options": _("A question needs at least two distinct options.")}
+            )
+        if self.answer not in keys:
+            raise ValidationError(
+                {"answer": _("The correct answer must be one of the options.")}
+            )
 
 
 # ── BLOQUE OPS (OPS-1): per-resource assignments + movement log ───────────────

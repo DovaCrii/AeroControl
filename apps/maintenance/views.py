@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
-from django.views.generic import CreateView, DetailView, ListView, View
+from django.utils import timezone
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 from django.utils.text import capfirst
 
 from apps.compliance.attachments import attached_documents_context, category_rank
@@ -24,8 +25,17 @@ from apps.core.views import (
 )
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.registry.models import Aircraft
-from .forms import MaintenanceCompletionForm, MaintenanceRecordForm
-from .models import MaintenanceHistory, MaintenanceRecord, WorkshopIntake
+from .forms import (
+    AircraftLogbookForm,
+    MaintenanceCompletionForm,
+    MaintenanceRecordForm,
+)
+from .models import (
+    AircraftLogbook,
+    MaintenanceHistory,
+    MaintenanceRecord,
+    WorkshopIntake,
+)
 
 
 # LV-372 (F-08): el tenant de una mantención es el de su aeronave.
@@ -377,11 +387,17 @@ class MaintenanceComplete(StatusTransitionView):
                 update_fields=[
                     "completed_date",
                     "performed_by",
+                    "level",
+                    "hours_at",
+                    "certificate_number",
                     "notes",
                     "status",
                     "updated_at",
                 ]
             )
+            # LV-443: a completed level opens the next scheduled one (and
+            # restarts the lower levels), so the existing alert rule warns of it.
+            follow_ups = completed.schedule_next_in_level()
             # LV-26: completing the maintenance closes its open alert, so the
             # "aircraft needs maintenance" warning does not linger once resolved.
             from apps.compliance.alerts import resolve_open_alerts_for
@@ -394,10 +410,246 @@ class MaintenanceComplete(StatusTransitionView):
             request,
             completed,
             action="status_changed",
-            metadata={"from_status": from_status, "to_status": self.target_status},
+            metadata={
+                "from_status": from_status,
+                "to_status": self.target_status,
+                **({"follow_ups": len(follow_ups)} if follow_ups else {}),
+            },
         )
         messages.success(request, self.success_message)
+        if follow_ups:
+            # The one of the level that was just completed, if it was created.
+            shown = next(
+                (item for item in follow_ups if item.level == completed.level),
+                follow_ups[0],
+            )
+            messages.info(
+                request,
+                _("The next %(level)s maintenance was scheduled for %(date)s.")
+                % {
+                    "level": shown.get_level_display().lower(),
+                    "date": shown.scheduled_date.strftime("%d-%m-%Y"),
+                },
+            )
         return redirect(record)
+
+
+# LV-443: the REG-020 sheet shows the documents that back the maintenance of an
+# aircraft: the drone inspection (LVE-002), maintenance certificates and any type
+# that carries the REG-020 form code.
+SERVICE_LIFE_DOC_CODES = ("drone-inspection", "maintenance-certificate")
+SERVICE_LIFE_CODE = "rpa-service-life"
+# The form code carries its revision ("REG-020 R0"), so match by prefix.
+SERVICE_LIFE_REFERENCE_PREFIX = "REG-020"
+
+
+class AircraftServiceLifeMixin(TenantScopedQuerysetMixin, ModelPermissionRequiredMixin):
+    """The aircraft's maintenance sheet: reading it needs **both** permissions.
+
+    `view_maintenancerecord` (what the sheet is made of) **and** `view_aircraft`
+    (whose sheet it is), and the aircraft is looked up inside the user's tenant,
+    so another company's aircraft is a 404, not a 403 that confirms it exists.
+    """
+
+    model = Aircraft
+    permission_action = "view"
+
+    def get_permission_required(self):
+        return ("maintenance.view_maintenancerecord", "registry.view_aircraft")
+
+    def get_context_data(self, **kwargs):
+        from .levels import level_statuses
+
+        context = super().get_context_data(**kwargs)
+        aircraft = self.object
+        logbook = AircraftLogbook.objects.filter(aircraft=aircraft).first()
+        hours = logbook.flight_hours() if logbook is not None else None
+        context.update(
+            aircraft=aircraft,
+            logbook=logbook,
+            hours_now=hours,
+            levels=level_statuses(aircraft, hours_now=hours),
+            completed=MaintenanceRecord.objects.filter(
+                aircraft=aircraft, is_active=True, status="completed"
+            ).order_by("-completed_date", "-created_at"),
+            can_edit_logbook=self.request.user.has_perm(
+                "maintenance.change_aircraftlogbook"
+            ),
+        )
+        return context
+
+
+class AircraftServiceLife(AircraftServiceLifeMixin, DetailView):
+    """LV-443: hoja de vida del RPA (JEJ-GTE-CT-REG-020), on screen."""
+
+    template_name = "maintenance/service_life.html"
+    context_object_name = "aircraft"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(attached_documents_context(self.request.user, self.object))
+        if context["documents"] is not None:
+            context["documents"] = context["documents"].filter(
+                Q(doc_type__code__in=SERVICE_LIFE_DOC_CODES)
+                | Q(doc_type__code=SERVICE_LIFE_CODE)
+                | Q(doc_type__reference_code__startswith=SERVICE_LIFE_REFERENCE_PREFIX)
+            )
+        return context
+
+
+class AircraftServiceLifePdf(AircraftServiceLifeMixin, DetailView):
+    """The printable version of the sheet, on the corporate letterhead."""
+
+    def render_to_response(self, context, **response_kwargs):
+        from django.utils import formats
+        from django.utils.html import escape
+        from reportlab.platypus import Paragraph, Spacer, Table
+
+        from apps.core import pdf as corepdf
+        from apps.core.exports import neutralize
+
+        aircraft = context["aircraft"]
+        styles = corepdf.executive_stylesheet()
+        today = timezone.localdate()
+
+        def cell(value, style="Cell"):
+            return Paragraph(escape(str(neutralize(value))), styles[style])
+
+        def grid(headers, rows, widths):
+            data = [[cell(head, "CellHeader") for head in headers]]
+            data += [[cell(value) for value in row] for row in rows]
+            table = Table(data, colWidths=widths, repeatRows=1)
+            table.setStyle(corepdf.executive_table_style())
+            return table
+
+        def num(value):
+            return formats.localize(value, use_l10n=True)
+
+        def day(value):
+            return value.strftime("%d-%m-%Y") if value else "—"
+
+        title = str(_("AeroControl — RPA service life (REG-020)"))
+        letterhead = corepdf.Letterhead(
+            title=title,
+            reference=corepdf.derived_reference("REG020", today),
+            generated_on=today,
+        )
+        hours = context["hours_now"]
+        elements = [
+            Paragraph(escape(title), styles["Title"]),
+            Paragraph(
+                escape(f"{aircraft.registration} · {aircraft.model}"), styles["Normal"]
+            ),
+            Paragraph(
+                escape(
+                    str(_("Accumulated flight hours"))
+                    + ": "
+                    + (f"{num(hours)} h" if hours is not None else str(_("No data")))
+                ),
+                styles["Normal"],
+            ),
+            Spacer(1, 10),
+            Paragraph(escape(str(_("Next maintenance by level"))), styles["Heading2"]),
+        ]
+        elements.append(
+            grid(
+                [_("Level"), _("Last done"), _("Due date"), _("Due hours"), _("State")],
+                [
+                    (
+                        item.level_label,
+                        day(item.last.completed_date if item.last else None),
+                        day(item.due_date),
+                        f"{num(item.due_hours)} h"
+                        if item.due_hours is not None
+                        else "—",
+                        item.state_label,
+                    )
+                    for item in context["levels"]
+                ],
+                [90, 90, 90, 90, 100],
+            )
+            if context["levels"]
+            else Paragraph(
+                escape(str(_("No maintenance programme applies to this model."))),
+                styles["Normal"],
+            )
+        )
+        elements.append(Spacer(1, 10))
+        elements.append(
+            Paragraph(escape(str(_("Completed maintenance"))), styles["Heading2"])
+        )
+        completed = list(context["completed"])
+        elements.append(
+            grid(
+                [
+                    _("Date"),
+                    _("Level"),
+                    _("Description"),
+                    _("Aircraft hours"),
+                    _("Certificate number"),
+                    _("Performed by"),
+                ],
+                [
+                    (
+                        day(record.completed_date),
+                        record.get_level_display() or "—",
+                        record.description,
+                        f"{num(record.hours_at)} h"
+                        if record.hours_at is not None
+                        else "—",
+                        record.certificate_number or "—",
+                        record.performed_by or "—",
+                    )
+                    for record in completed
+                ],
+                [55, 55, 150, 55, 70, 80],
+            )
+            if completed
+            else Paragraph(
+                escape(str(_("No completed maintenance."))), styles["Normal"]
+            )
+        )
+        return corepdf.pdf_response(
+            elements, letterhead, f"hoja-de-vida-{aircraft.registration}.pdf"
+        )
+
+
+class AircraftLogbookUpdate(ModelPermissionRequiredMixin, UpdateView):
+    """LV-443: edit the baseline hours of an aircraft (created on first save).
+
+    Needs `change_aircraftlogbook`; the aircraft is looked up inside the user's
+    tenant. The logbook row is only created when the form is saved, never on GET.
+    """
+
+    model = AircraftLogbook
+    permission_action = "change"
+    form_class = AircraftLogbookForm
+    template_name = "generic/form.html"
+
+    def get_object(self, queryset=None):
+        aircraft = get_object_or_404(
+            scope_queryset_to_tenant(
+                Aircraft._default_manager.all(), self.request.user
+            ),
+            pk=self.kwargs["pk"],
+        )
+        self.aircraft = aircraft
+        return AircraftLogbook.objects.filter(
+            aircraft=aircraft
+        ).first() or AircraftLogbook(aircraft=aircraft)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Hours of %(aircraft)s") % {"aircraft": self.aircraft}
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        set_audit_context(self.request, self.object, action="logbook_updated")
+        return response
+
+    def get_success_url(self):
+        return reverse("aircraft-service-life", kwargs={"pk": self.aircraft.pk})
 
 
 class AircraftReportIncident(ModelPermissionRequiredMixin, View):

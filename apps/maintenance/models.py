@@ -1,14 +1,45 @@
+import calendar
 import re
 import unicodedata
+from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext
 from apps.core.models import BaseModel
 from apps.core.status_history import StatusHistoryMixin
 from apps.registry.models import Aircraft
+
+# Act. 19, Annex F: the three levels of the maintenance programme. The order is
+# the rank: a higher level includes the lower ones (medium = basic + wear parts,
+# advanced = medium + main components), so completing it restarts their clocks.
+PROGRAM_LEVELS = [
+    ("basic", _("Basic")),
+    ("medium", _("Medium")),
+    ("advanced", _("Advanced")),
+]
+# What a record can be classified as: the three programme levels plus two kinds
+# of work that are not part of the programme and so never restart a clock.
+RECORD_LEVELS = PROGRAM_LEVELS + [
+    ("repair", _("Repair")),
+    ("inspection", _("Inspection")),
+]
+LEVEL_RANK = {code: rank for rank, (code, _label) in enumerate(PROGRAM_LEVELS, 1)}
+
+
+def add_months(day, months):
+    """`day` plus `months` calendar months; the day is clamped to the month's end
+    (31 Aug + 6 months is 28/29 Feb, not an error)."""
+    index = day.year * 12 + (day.month - 1) + months
+    year, month = divmod(index, 12)
+    month += 1
+    return day.replace(
+        year=year, month=month, day=min(day.day, calendar.monthrange(year, month)[1])
+    )
 
 
 class MaintenanceRecord(StatusHistoryMixin, BaseModel):
@@ -82,6 +113,105 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
     # but it is the best available proxy and only matters going forward for
     # rows created after this field existed.
     status_changed_at = models.DateTimeField(null=True, blank=True, editable=False)
+    # Act. 19 (LV-443): the level of the work, the aircraft's flight hours when it
+    # was done (read from the maintenance certificate) and that certificate's number.
+    # All optional: a record without a level is ordinary maintenance and stays
+    # outside the programme.
+    level = models.CharField(
+        max_length=12, choices=RECORD_LEVELS, blank=True, verbose_name=_("Level")
+    )
+    hours_at = models.DecimalField(
+        max_digits=8,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Aircraft hours"),
+    )
+    certificate_number = models.CharField(
+        max_length=60, blank=True, verbose_name=_("Certificate number")
+    )
+
+    @classmethod
+    def last_completed_for_level(cls, aircraft, level):
+        """The record that last restarted `level`'s clock, or `None`.
+
+        A completed record of a **higher** level counts too (advanced includes
+        medium includes basic), so the newest completed record whose rank is at
+        least `level`'s is the one that matters. Archived records and the ones
+        without a completion date do not count.
+        """
+        rank = LEVEL_RANK.get(level)
+        if rank is None:
+            return None
+        levels = [code for code, value in LEVEL_RANK.items() if value >= rank]
+        return (
+            cls.objects.filter(
+                aircraft=aircraft,
+                is_active=True,
+                status="completed",
+                level__in=levels,
+                completed_date__isnull=False,
+            )
+            .order_by("-completed_date", "-created_at")
+            .first()
+        )
+
+    def schedule_next_in_level(self):
+        """Open the next scheduled record of every level this completion restarts.
+
+        Returns the records it created. The follow-up is an ordinary `scheduled`
+        record dated `completed_date + interval_months`, so the existing alert
+        rule on `scheduled_date` ("Mantenimiento programado") warns about it with
+        no new engine. Per level:
+
+        * an open record of the same level already exists -> nothing is created
+          (completing twice never duplicates the plan);
+        * a *lower* level (restarted by this one) has an open `pending` record
+          dated sooner than the new due date -> it is moved to that date;
+        * a level whose programme has no month interval (hours only) gets no
+          dated record: its hours are only displayed.
+        """
+        rank = LEVEL_RANK.get(self.level)
+        if rank is None or self.status != "completed" or self.completed_date is None:
+            return []
+        programs = MaintenanceProgram.for_aircraft(self.aircraft)
+        created = []
+        with transaction.atomic():
+            for level, level_rank in LEVEL_RANK.items():
+                program = programs.get(level)
+                if level_rank > rank or program is None or not program.interval_months:
+                    continue
+                due = add_months(self.completed_date, program.interval_months)
+                open_records = (
+                    type(self)
+                    .objects.filter(aircraft=self.aircraft, level=level, is_active=True)
+                    .exclude(status="completed")
+                )
+                existing = open_records.first()
+                if existing is None:
+                    created.append(
+                        type(self).objects.create(
+                            aircraft=self.aircraft,
+                            maintenance_type="scheduled",
+                            level=level,
+                            description=gettext(
+                                "Scheduled %(level)s maintenance (maintenance programme)"
+                            )
+                            % {"level": dict(PROGRAM_LEVELS)[level]},
+                            scheduled_date=due,
+                            status="pending",
+                        )
+                    )
+                elif (
+                    level_rank < rank
+                    and existing.status == "pending"
+                    and existing.scheduled_date is not None
+                    and existing.scheduled_date < due
+                ):
+                    existing.scheduled_date = due
+                    existing.save(update_fields=["scheduled_date", "updated_at"])
+        return created
 
     @classmethod
     def needing_planning(cls, queryset):
@@ -697,3 +827,153 @@ class WorkshopIntake(BaseModel):
         if update_fields is not None:
             kwargs["update_fields"] = {*update_fields, "workshop_key", "workshop_order"}
         return super().save(*args, **kwargs)
+
+
+class MaintenanceProgram(BaseModel):
+    """Act. 19, Annex F: how often a model needs each level of maintenance.
+
+    The Manual is **not uniform**: the DJI models are 200 h / 6 months (basic),
+    400 h / 12 months (medium) and 600 h / 18 months (advanced), while the
+    Flyability Elios 3 and the Wingtra One go "according to the manufacturer,
+    reviewed at an authorised workshop at least every 12 months" -- months only,
+    no hours. So each interval is optional (at least one is required) and a level
+    the Manual leaves to the manufacturer is simply **not seeded**: it is
+    configured by hand when somebody has the figure, never invented.
+
+    Matched like `PreflightChecklist` / `QualificationType`: comma-separated
+    `model_keywords` against `Aircraft.model` (not `Aircraft.type`, which is
+    "RPA" for the whole fleet). Whichever interval is reached **first** (hours or
+    months) makes the level due.
+    """
+
+    name = models.CharField(max_length=150, verbose_name=_("Name"))
+    model_keywords = models.CharField(
+        max_length=250,
+        blank=True,
+        verbose_name=_("Model keywords"),
+        help_text=_(
+            "Comma-separated words matched against the aircraft model. "
+            "Leave it empty for a programme that applies to every aircraft."
+        ),
+    )
+    level = models.CharField(
+        max_length=12, choices=PROGRAM_LEVELS, verbose_name=_("Level")
+    )
+    interval_hours = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        verbose_name=_("Interval (flight hours)"),
+        help_text=_("Leave it empty when the level is not measured in hours."),
+    )
+    interval_months = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        verbose_name=_("Interval (months)"),
+    )
+
+    class Meta:
+        verbose_name = _("maintenance programme")
+        verbose_name_plural = _("maintenance programmes")
+        ordering = ["name", "level"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "level"], name="maint_program_name_level_uniq"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(interval_hours__isnull=False)
+                | models.Q(interval_months__isnull=False),
+                name="maint_program_has_interval",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.name} · {self.get_level_display()}"
+
+    def keyword_list(self):
+        return [
+            word.strip().lower()
+            for word in self.model_keywords.split(",")
+            if word.strip()
+        ]
+
+    def applies_to(self, aircraft):
+        keywords = self.keyword_list()
+        if not keywords:
+            return True
+        model = (aircraft.model or "").lower()
+        return any(keyword in model for keyword in keywords)
+
+    @classmethod
+    def for_aircraft(cls, aircraft):
+        """`{level: programme}` that applies to `aircraft`.
+
+        When several programmes cover the same level, **the one that names the
+        model wins** over a keyword-less (general) one, and ties break by name:
+        the answer must not depend on which row the database returns first.
+        """
+        chosen = {}
+        for program in cls.objects.filter(is_active=True).order_by("name"):
+            if not program.applies_to(aircraft):
+                continue
+            current = chosen.get(program.level)
+            if current is None or (
+                program.keyword_list() and not current.keyword_list()
+            ):
+                chosen[program.level] = program
+        return chosen
+
+
+class AircraftLogbook(BaseModel):
+    """Accumulated flight hours of one aircraft (the hours side of REG-020).
+
+    `hours_baseline` is the total the aircraft had on `baseline_on`, read by a
+    person from the last maintenance certificate; from then on the hours are the
+    baseline plus the duration of every flight record **after** that date. It
+    lives here and not in `registry` so this block adds no migration to that app.
+    An aircraft with no logbook has **no hours data** (`None`), which is not the
+    same as zero hours.
+    """
+
+    aircraft = models.OneToOneField(
+        Aircraft, on_delete=models.PROTECT, related_name="logbook"
+    )
+    hours_baseline = models.DecimalField(
+        max_digits=8,
+        decimal_places=1,
+        default=Decimal("0"),
+        validators=[MinValueValidator(Decimal("0"))],
+        verbose_name=_("Hours at baseline date"),
+    )
+    baseline_on = models.DateField(
+        null=True, blank=True, verbose_name=_("Baseline date")
+    )
+
+    class Meta:
+        verbose_name = _("aircraft logbook")
+        verbose_name_plural = _("aircraft logbooks")
+
+    def __str__(self):
+        return f"{self.aircraft} · {self.hours_baseline} h"
+
+    def flight_hours(self):
+        """Baseline plus the flights after `baseline_on`, in hours (1 decimal)."""
+        from apps.operations.models import FlightRecord
+
+        flights = FlightRecord.objects.filter(aircraft=self.aircraft, is_active=True)
+        if self.baseline_on is not None:
+            flights = flights.filter(actual_date__gt=self.baseline_on)
+        seconds = sum(
+            record.duration.total_seconds()
+            for record in flights.only("actual_date", "departure_time", "arrival_time")
+        )
+        return self.hours_baseline + (Decimal(seconds) / Decimal(3600)).quantize(
+            Decimal("0.1")
+        )
+
+    @classmethod
+    def hours_for(cls, aircraft):
+        """The aircraft's accumulated hours, or `None` when it has no logbook."""
+        logbook = cls.objects.filter(aircraft=aircraft).first()
+        return logbook.flight_hours() if logbook is not None else None

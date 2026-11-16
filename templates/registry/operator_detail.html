@@ -93,6 +93,7 @@ lo que hay que reforzar.{% endcomment %}
   <table class="table table-sm mb-0">
     <thead><tr>
       <th scope="col">{% translate "Taken at" %}</th>
+      <th scope="col">{% translate "Assessment type" %}</th>
       <th scope="col">{% translate "Result" %}</th>
       {% comment %}LV-158: "Score" y no "Score (%)": `makemessages` duplica el `%`
       de una cadena de plantilla (`Score (%%)` en el catálogo) y la búsqueda en
@@ -107,9 +108,10 @@ lo que hay que reforzar.{% endcomment %}
       {% for assessment in assessments %}
       <tr>
         <td>{{ assessment.taken_at|date:'d-m-Y' }}</td>
+        <td>{{ assessment.get_kind_display }}{% if assessment.aircraft_family %} · {{ assessment.aircraft_family }}{% endif %}</td>
         <td>{% if assessment.passed %}<span class="badge bg-success">{% translate "Passed" %}</span>{% else %}<span class="badge bg-danger">{% translate "Insufficient" %}</span>{% endif %}</td>
         <td>{{ assessment.score_percent }}% <span class="text-body-secondary small">({{ assessment.correct_count }}/{{ assessment.question_count }})</span></td>
-        <td>{{ assessment.expires_on|date:'d-m-Y' }}{% if assessment.is_expired %} <span class="badge sev-critical">⚠ {% translate "Overdue" %}</span>{% endif %}</td>
+        <td>{% if assessment.expires_on %}{{ assessment.expires_on|date:'d-m-Y' }}{% else %}—{% endif %}{% if assessment.is_expired %} <span class="badge sev-critical">⚠ {% translate "Overdue" %}</span>{% endif %}</td>
         <td class="text-end">
           <a class="btn btn-sm btn-outline-secondary" href="{% url 'assessment-detail' assessment.pk %}">{% translate "Review" %}</a>
           {% comment %}LV-173: archivar, nunca borrar. Va como formulario POST y
