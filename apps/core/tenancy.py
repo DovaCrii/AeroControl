@@ -114,6 +114,7 @@ FORM_CHOICE_TENANT_PATHS = {
     # LV-372 (fase 4): el motor de alertas vigila estos dos con el mismo camino.
     "registry.knowledgeassessment": ("operator__tenant_id", False),
     "compliance.monthlycompliancereview": ("cost_center__tenant_id", False),
+    "compliance.missionreview": ("cost_center__tenant_id", False),
     "compliance.document": ("tenant_id", False),
     "compliance.alertrule": ("tenant_id", False),
     "compliance.deliverable": ("cost_center__tenant_id", False),

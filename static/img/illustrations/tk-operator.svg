@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" color="#44526a" stroke="#087f78" fill="#087f78">
+  <!-- AeroControl · line-art técnico (tk). Emblema de operador RPA: radiocontrol sobre
+       retícula circular. Misma convención de tonos que tk-quad-top.svg. -->
+  <symbol id="art" viewBox="0 0 96 96">
+    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="48" cy="48" r="44" stroke-width="1.5" stroke-opacity=".35"/>
+      <path stroke-width="1.5" stroke-opacity=".35" d="M48 2v7M48 87v7M2 48h7M87 48h7"/>
+      <path stroke-width="1" stroke-opacity=".2" d="M14 30h68M10 48h76M14 66h68"/>
+      <rect x="20" y="40" width="56" height="30" rx="9" stroke-width="2"/>
+      <rect x="38" y="44" width="20" height="12" rx="2" stroke-width="1.5"/>
+      <circle cx="31" cy="58" r="6" stroke-width="2"/>
+      <circle cx="65" cy="58" r="6" stroke-width="2"/>
+      <path stroke-width="2" d="M28 40V24M68 40V24"/>
+    </g>
+    <g stroke="none">
+      <circle cx="31" cy="58" r="2.2"/>
+      <circle cx="65" cy="58" r="2.2"/>
+      <circle cx="28" cy="22" r="2.4"/>
+      <circle cx="68" cy="22" r="2.4"/>
+    </g>
+    <g fill="none" stroke-width="2" stroke-linecap="round">
+      <path d="M41 20a10 10 0 0 1 14 0M37 15a16 16 0 0 1 22 0"/>
+      <path d="M42 50h12" stroke-width="1.5"/>
+    </g>
+  </symbol>
+  <use href="#art"/>
+</svg>

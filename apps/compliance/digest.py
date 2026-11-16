@@ -153,6 +153,7 @@ ENTITY_TONES = {
     "maintenance.maintenancerecord": "aircraft",
     "compliance.document": "document",
     "compliance.monthlycompliancereview": "document",
+    "compliance.missionreview": "document",
 }
 
 

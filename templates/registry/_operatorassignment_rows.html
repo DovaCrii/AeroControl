@@ -12,6 +12,6 @@
 </tr>
 {% empty %}
 <tr><td colspan="99" class="text-center text-muted py-4">
-    {% static 'img/illustrations/team.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No records found." %}</td></tr>
+    {% static 'img/illustrations/tk-operator.svg' as art_file %}{% include "generic/_empty_art.html" with art_file=art_file art_viewbox="0 0 96 96" %}{% translate "No records found." %}</td></tr>
 {% endfor %}
 {% if is_htmx %}<div id="pagination-container" hx-swap-oob="true">{% render_pagination page_obj %}</div>{% endif %}
