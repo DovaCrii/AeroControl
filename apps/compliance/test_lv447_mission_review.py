@@ -531,3 +531,103 @@ class TestItIsReachable:
 
         assert reverse("mission-review-list") in seen.content.decode()
         assert reverse("mission-review-list") not in blind.content.decode()
+
+
+class TestReplacingMovesThePendingDeadline:
+    def _replace(self, site, kind, old, day, settings, tmp_path):
+        settings.DOCUMENTS_ROOT = str(tmp_path)
+        User.objects.create_superuser("admin447b", "b447@test.com", "password")
+        client = Client()
+        assert client.login(username="admin447b", password="password")
+        response = client.post(
+            reverse("document-replace", args=[old.pk]),
+            {
+                "title": old.title,
+                "doc_type": kind.pk,
+                "entity_type": ContentType.objects.get_for_model(CostCenter).pk,
+                "object_id": str(site.pk),
+                "issue_date": day,
+                "file": SimpleUploadedFile(
+                    "new.pdf", b"%PDF-1.4\n%%EOF\n", content_type="application/pdf"
+                ),
+            },
+        )
+        assert response.status_code == 302
+
+    def test_a_pending_review_follows_the_new_mission_date(
+        self, site, kind, settings, tmp_path
+    ):
+        old = _log(site, kind)
+
+        self._replace(site, kind, old, date(2026, 11, 14), settings, tmp_path)
+
+        review = MissionReview.objects.get()
+        assert (review.mission_date, review.due_on) == (
+            date(2026, 11, 14),
+            date(2026, 11, 15),
+        )
+
+    def test_a_reviewed_one_keeps_its_deadline(self, site, kind, settings, tmp_path):
+        old = _log(site, kind)
+        MissionReview.objects.get().mark("reviewed", None, when=local(DUE, 9))
+
+        self._replace(site, kind, old, date(2026, 11, 14), settings, tmp_path)
+
+        review = MissionReview.objects.get()
+        assert (review.mission_date, review.due_on) == (MISSION, DUE)
+
+
+class TestTheCsvExport:
+    def test_it_exports_exactly_the_declared_columns(self, site, kind):
+        _review(site, kind)
+
+        response = login_as("view_missionreview").get(
+            reverse("mission-review-list"), {"export": "csv"}
+        )
+        body = b"".join(response.streaming_content).decode("utf-8-sig")
+        header = body.splitlines()[0].split(",")
+
+        names = ("cost_center", "mission_date", "due_on", "status", "reviewed_at")
+        assert header == [
+            MissionReview._meta.get_field(n).verbose_name.title() for n in names
+        ]
+        assert len(header) == 5
+        assert "reviewed_by" not in body.lower()
+
+
+class TestTheSignalAloneOnAReplacement:
+    """La vista guarda dos veces (la segunda sólo el archivo), y esa segunda pasada
+    escondía una rama rota: acá la nueva versión se guarda **una** vez."""
+
+    def _version(self, old, day):
+        new = Document(
+            title=old.title,
+            doc_type=old.doc_type,
+            content_type=old.content_type,
+            object_id=old.object_id,
+            file_path="nuevo.pdf",
+            issue_date=day,
+        )
+        new._supersedes = old
+        new.save()
+        return new
+
+    def test_a_pending_review_moves_with_a_single_save(self, site, kind):
+        old = _log(site, kind)
+
+        new = self._version(old, date(2026, 11, 14))
+
+        review = MissionReview.objects.get()
+        assert review.document == new
+        assert (review.mission_date, review.due_on) == (
+            date(2026, 11, 14),
+            date(2026, 11, 15),
+        )
+
+    def test_a_reviewed_one_does_not_move(self, site, kind):
+        old = _log(site, kind)
+        MissionReview.objects.get().mark("reviewed", None, when=local(DUE, 9))
+
+        self._version(old, date(2026, 11, 14))
+
+        assert MissionReview.objects.get().due_on == DUE

@@ -453,6 +453,10 @@ class MissionReview(BaseModel):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
     )
+    # SET_NULL a propósito (excepción a PROTECT): borrar a un usuario no puede
+    # bloquearse por revisiones que firmó, y la revisión conserva reviewed_at y el
+    # registro de auditoría (mission_review_*) como evidencia. Es el mismo criterio
+    # de MonthlyComplianceReview.reviewed_by.
     reviewed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

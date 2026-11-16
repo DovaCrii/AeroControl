@@ -2287,6 +2287,19 @@ class MissionReviewList(ComplianceList):
     """
 
     model = MissionReview
+    # Columnas explícitas: sin ellas el mixin exportaría también quién revisó y los
+    # textos del documento o del vuelo, que no son lo que se pide sacar de la bandeja.
+    csv_filename = "mission_reviews.csv"
+    csv_fields = [
+        MissionReview._meta.get_field(name)
+        for name in (
+            "cost_center",
+            "mission_date",
+            "due_on",
+            "status",
+            "reviewed_at",
+        )
+    ]
     htmx_template_name = "compliance/_mission_review_rows.html"
     template_name = "compliance/mission_review_list.html"
     search_fields = ["cost_center__code", "cost_center__name"]

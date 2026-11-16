@@ -114,9 +114,10 @@ def open_mission_review(sender, instance, created, **kwargs):
     previous = getattr(instance, "_supersedes", None)
     if previous is not None:
         MissionReview.objects.filter(document=previous).update(document=instance)
-        return
-    if not created:
+    if previous is not None or not created:
         review = MissionReview.objects.filter(document=instance).first()
+        # Con la revisión pendiente, la fecha de misión nueva mueve el plazo; una ya
+        # revisada conserva las suyas (lo revisado se midió contra ese plazo).
         if (
             review is not None
             and review.status == MissionReview.STATUS_PENDING
