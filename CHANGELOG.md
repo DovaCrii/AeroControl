@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **JetBrains Mono servida desde la app (LV-449, codex/tech-mono-font, PR2 de la dirección visual técnica).** Subconjunto latino de JetBrains Mono Regular 2.304 (12,7 KB, SIL OFL 1.1) en static/fonts/ con su licencia; --id-mono la usa primero y .tk-code ya la toma. Sin migración; lleva collectstatic.
+
 ### Fixed
 
 - **La credencial DGAC real se lee al dar de alta un operador (`LV-448`, `codex/credencial-formato-dgac`).** El lector reconoce el formato numerado de la DGAC (número, titular, RUT, emisión y vencimiento) y el aviso ya no dice que completó el formulario cuando no reconoció nada. Sin migración ni estáticos; cambia el `.mo`.
