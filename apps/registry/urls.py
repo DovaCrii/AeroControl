@@ -85,6 +85,12 @@ urlpatterns += [
         assessment_views.KnowledgeAssessmentStart.as_view(),
         name="assessment-start",
     ),
+    # LV-444: el banco cargado (lectura; la clave sólo con su permiso propio).
+    path(
+        "assessment/bank/",
+        assessment_views.AssessmentBankList.as_view(),
+        name="assessment-bank",
+    ),
     path(
         "assessment/<uuid:pk>/",
         assessment_views.KnowledgeAssessmentDetail.as_view(),

@@ -18,11 +18,12 @@ manipular desde el navegador, y si abandona simplemente desaparece.
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views import View
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 from apps.core.audit import set_audit_context
 from apps.core.views import (
@@ -33,7 +34,7 @@ from apps.core.views import (
 from apps.core.tenancy import scope_queryset_to_tenant
 
 from . import assessments
-from .models import KnowledgeAssessment
+from .models import AssessmentQuestion, KnowledgeAssessment, QualificationType
 
 SESSION_KEY = "knowledge_assessment_questions"
 
@@ -63,38 +64,102 @@ class OperatorSelfMixin(LoginRequiredMixin):
 
 
 class KnowledgeAssessmentTake(OperatorSelfMixin, ModelPermissionRequiredMixin, View):
-    """La prueba en una sola página: 25 preguntas, un envío.
+    """Elegir qué rendir, y la prueba en una sola página, un envío.
+
+    Sin `?kind=` es la pantalla de elección (examen general, limitaciones y
+    emergencias por modelo, cuestionario anual). Con `?kind=` arma el sorteo.
 
     Una pregunta por pantalla habría exigido guardar el avance a mitad de camino
-    —o sea el estado "en curso" que esta implementación evita— y no aporta nada:
-    lo que se mide es el conocimiento, no la navegación.
+    —el estado "en curso" que esta implementación evita— y no aporta nada: lo que
+    se mide es el conocimiento, no la navegación.
     """
 
     model = KnowledgeAssessment
     permission_action = "add"
     template_name = "registry/assessment_take.html"
+    choose_template_name = "registry/assessment_choose.html"
+
+    def _choose(self, request, operator):
+        families = QualificationType.objects.filter(is_active=True).order_by("name")
+        bank_loaded = AssessmentQuestion.objects.filter(is_active=True).exists()
+        return render(
+            request,
+            self.choose_template_name,
+            {
+                "title": _("Knowledge assessment"),
+                "operator": operator,
+                "families": families,
+                "bank_loaded": bank_loaded,
+                "kinds": [
+                    {
+                        "kind": kind,
+                        "label": assessments.KIND_LABELS[kind],
+                        "needs_family": kind in assessments.FAMILY_KINDS,
+                        "parts": assessments.plan_for(kind),
+                    }
+                    for kind in ("general", "limitations", "annual")
+                ],
+                "can_see_bank": request.user.has_perm(
+                    "registry.view_assessmentquestion"
+                ),
+            },
+        )
 
     def get(self, request):
         operator = self.operator_or_none()
         if operator is None:
             return self.no_operator()
-        if not assessments.bank_is_available():
-            messages.error(request, _("The question bank is not available right now."))
-            return redirect("dashboard")
-        questions = assessments.draw_questions()
+        kind = request.GET.get("kind", "")
+        if not kind:
+            return self._choose(request, operator)
+        if kind not in assessments.PLANS:
+            messages.error(request, _("Unknown assessment type."))
+            return redirect("assessment-take")
+        family = None
+        if kind in assessments.FAMILY_KINDS:
+            family = QualificationType.objects.filter(
+                is_active=True, pk=request.GET.get("family") or 0
+            ).first()
+            if family is None:
+                messages.error(request, _("Choose the RPA model for this assessment."))
+                return redirect("assessment-take")
+        if not assessments.bank_is_available(kind, family):
+            messages.error(request, _("The question bank is not loaded."))
+            return redirect("assessment-take")
+        drawn = assessments.draw_questions(kind, family)
         # El sorteo se guarda para que recargar la página no cambie las preguntas
         # a mitad de prueba, y para poder corregir contra lo que de verdad se
         # preguntó.
-        request.session[SESSION_KEY] = [question["id"] for question in questions]
+        request.session[SESSION_KEY] = {
+            "kind": kind,
+            "family": str(family.pk) if family else None,
+            "parts": {
+                part: [question["id"] for question in questions]
+                for part, questions in drawn.items()
+            },
+        }
+        number = 0
+        parts = []
+        for plan in assessments.plan_for(kind):
+            questions = []
+            for question in drawn[plan.part]:
+                number += 1
+                questions.append({**question, "number": number})
+            parts.append(
+                {"part": plan.part, "threshold": plan.threshold, "questions": questions}
+            )
         return render(
             request,
             self.template_name,
             {
                 "title": _("Knowledge assessment"),
                 "operator": operator,
-                "questions": questions,
-                "pass_percent": assessments.PASS_PERCENT,
-                "valid_months": assessments.VALID_MONTHS,
+                "kind": kind,
+                "kind_label": assessments.KIND_LABELS[kind],
+                "family": family,
+                "parts": parts,
+                "total": number,
+                "valid_months": assessments.VALID_MONTHS if kind == "annual" else None,
             },
         )
 
@@ -102,28 +167,43 @@ class KnowledgeAssessmentTake(OperatorSelfMixin, ModelPermissionRequiredMixin, V
         operator = self.operator_or_none()
         if operator is None:
             return self.no_operator()
-        question_ids = request.session.get(SESSION_KEY) or []
-        if not question_ids:
+        drawn = request.session.get(SESSION_KEY) or {}
+        parts = drawn.get("parts") if isinstance(drawn, dict) else None
+        if not parts or drawn.get("kind") not in assessments.PLANS:
             # La sesión expiró, o alguien llegó al POST sin pasar por el sorteo.
-            # No se corrige nada a ciegas: se vuelve a sortear.
-            messages.info(
-                request, _("The assessment expired. Here is a new set of questions.")
-            )
+            # No se corrige nada a ciegas: se vuelve a elegir.
+            messages.info(request, _("The assessment expired. Choose it again."))
+            return redirect("assessment-take")
+        kind = drawn["kind"]
+        family = (
+            QualificationType.objects.filter(pk=drawn.get("family")).first()
+            if kind in assessments.FAMILY_KINDS
+            else None
+        )
+        if kind in assessments.FAMILY_KINDS and family is None:
+            messages.info(request, _("The assessment expired. Choose it again."))
             return redirect("assessment-take")
 
+        question_ids = [qid for ids in parts.values() for qid in ids]
         given = {
             question_id: request.POST.get(f"q{question_id}", "")
             for question_id in question_ids
         }
-        rows, correct, percent, passed = assessments.grade(question_ids, given)
+        rows, part_scores, passed, correct, total = assessments.grade_attempt(
+            kind, parts, given
+        )
+        percent = round(correct * 100 / (total or 1), 1)
         assessment = KnowledgeAssessment.objects.create(
             operator=operator,
             taken_by_user=request.user,
-            question_count=len(rows),
+            kind=kind,
+            aircraft_family=family,
+            question_count=total,
             correct_count=correct,
             score_percent=percent,
+            part_scores=part_scores,
             passed=passed,
-            expires_on=assessments.valid_until(timezone.localdate()),
+            expires_on=assessments.validity_for(kind, timezone.localdate()),
             answers=rows,
         )
         request.session.pop(SESSION_KEY, None)
@@ -131,17 +211,17 @@ class KnowledgeAssessmentTake(OperatorSelfMixin, ModelPermissionRequiredMixin, V
             request,
             assessment,
             action="knowledge_assessment_taken",
-            metadata={"score": str(percent), "passed": passed},
+            metadata={"kind": kind, "score": str(percent), "passed": passed},
         )
         return redirect("assessment-detail", pk=assessment.pk)
 
 
 class KnowledgeAssessmentDetail(ModelViewPermissionRequiredMixin, DetailView):
-    """El resultado: puntaje, veredicto y **en qué se equivocó**.
+    """El resultado: puntaje por parte, veredicto y **en qué se equivocó**.
 
-    Lo que se refuerza es la lista de incorrectas con su respuesta correcta al
-    lado. Sale de la copia que el intento guardó, así que sigue diciendo lo que
-    pasó aunque el banco se haya corregido después.
+    Lo que se refuerza es la lista de incorrectas. Sale de la copia que el intento
+    guardó, así que sigue diciendo lo que pasó aunque el banco se haya corregido
+    después.
     """
 
     model = KnowledgeAssessment
@@ -152,7 +232,9 @@ class KnowledgeAssessmentDetail(ModelViewPermissionRequiredMixin, DetailView):
         # Cada quien ve lo suyo; ver el historial ajeno exige el permiso de
         # lectura sobre operadores, que es el que tiene quien supervisa.
         queryset = scope_queryset_to_tenant(
-            super().get_queryset().select_related("operator", "taken_by_user"),
+            super()
+            .get_queryset()
+            .select_related("operator", "taken_by_user", "aircraft_family"),
             self.request.user,
             "operator__tenant_id",  # LV-372 (F-08): el intento es de la empresa de su operador
         )
@@ -164,7 +246,59 @@ class KnowledgeAssessmentDetail(ModelViewPermissionRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["title"] = _("Knowledge assessment")
-        context["pass_percent"] = assessments.PASS_PERCENT
+        assessment = context["assessment"]
+        # Un intento previo a LV-444 se evaluó con el 80 % de entonces.
+        context["pass_percent"] = (
+            assessments.LEGACY_PASS_PERCENT if assessment.kind == "legacy" else None
+        )
+        context["part_rows"] = [
+            {"part": part, **score}
+            for part, score in sorted((assessment.part_scores or {}).items())
+        ]
+        return context
+
+
+class AssessmentBankList(ModelViewPermissionRequiredMixin, ListView):
+    """El banco cargado: cuántas preguntas hay por tipo y modelo, y su lista.
+
+    Lectura sólo con `view_assessmentquestion`. **La clave se ve únicamente con
+    `view_assessment_answers`**: el listado sin ese permiso muestra enunciados y
+    opciones, no la respuesta (LV-184: la clave es el examen). El banco es de toda
+    la empresa, no de un tenant: lo carga un comando, no un usuario.
+    """
+
+    model = AssessmentQuestion
+    template_name = "registry/assessment_bank_list.html"
+    context_object_name = "questions"
+    paginate_by = 50
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related("aircraft_family")
+        kind = self.request.GET.get("kind")
+        if kind in dict(AssessmentQuestion.KIND_CHOICES):
+            queryset = queryset.filter(kind=kind)
+        if self.request.GET.get("archived") == "1":
+            return queryset.filter(is_active=False)
+        return queryset.filter(is_active=True)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = _("Question bank")
+        context["show_answers"] = self.request.user.has_perm(
+            "registry.view_assessment_answers"
+        )
+        context["kind_choices"] = AssessmentQuestion.KIND_CHOICES
+        context["totals"] = [
+            {
+                "kind": dict(AssessmentQuestion.KIND_CHOICES)[row["kind"]],
+                "family": row["aircraft_family__name"] or "",
+                "count": row["count"],
+            }
+            for row in AssessmentQuestion.objects.filter(is_active=True)
+            .values("kind", "aircraft_family__name")
+            .annotate(count=Count("pk"))
+            .order_by("kind", "aircraft_family__name")
+        ]
         return context
 
 

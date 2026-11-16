@@ -129,6 +129,9 @@ ROLE_PERMISSIONS = {
         # sigue viendo qué falló y qué contestó, que es lo que sirve para
         # estudiar; lo que no ve es el examen resuelto.
         "view_assessment_answers",
+        # LV-444: el banco de preguntas cargado (lista de lectura; la clave la da el
+        # permiso de arriba). Lo carga un comando, no un usuario.
+        "view_assessmentquestion",
         "add_document",
         "change_document",
         "delete_document",
