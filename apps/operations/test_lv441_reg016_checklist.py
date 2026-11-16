@@ -40,7 +40,7 @@ def test_rerun_does_not_overwrite_an_edited_item(seeded):
     assert seeded.items.count() == 17
 
 
-def test_seeded_list_applies_to_any_aircraft_and_is_served_by_the_view(seeded):
+def test_the_checklist_applies_to_any_aircraft(seeded):
     centre = CostCenter.objects.create(code="CC1", name="X", operates_flights=True)
     aircraft = Aircraft.objects.create(
         registration="RPA-1",
