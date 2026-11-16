@@ -15,6 +15,14 @@ from django.db.models import DateField, F
 from django.db.models.functions import Coalesce, TruncDate
 
 
+# LV-442: desde la Act. 19 el único registro de misión que se exige por centro de
+# costo y mes es el REG-016 (`flight-log`, «Registro único de misión»): reemplaza la
+# bitácora, el check list LVE-003, el NEO y el de baterías, y el LVE-002 ya no es
+# mensual (es de la aeronave). Los demás tipos con `is_operational_record` siguen
+# listados en Registros operacionales, pero el cierre no los cuenta ni los exige.
+MONTHLY_RECORD_CODES = ("flight-log",)
+
+
 def filed_on():
     """LV-395: the day a document counts for -- its issue date, or, when the type
     asks for none, the day it was uploaded. Without this a record with no issue
@@ -78,6 +86,7 @@ def operational_records_qs(cost_center, period):
         is_active=True,
         is_current_version=True,
         doc_type__is_operational_record=True,
+        doc_type__code__in=MONTHLY_RECORD_CODES,
         content_type=cc_ct,
         object_id=cost_center.pk,
         filed_on__gte=first,
@@ -136,6 +145,7 @@ def monthly_close_rows(period, cost_centers, doc_types):
             is_active=True,
             is_current_version=True,
             doc_type__is_operational_record=True,
+            doc_type__code__in=MONTHLY_RECORD_CODES,
             content_type=ContentType.objects.get_for_model(CostCenter),
             object_id__in=ids,
             filed_on__gte=first,

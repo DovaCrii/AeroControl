@@ -225,5 +225,8 @@ class TestCatalogIsClassified:
         )
         seeded = {code: category for code, _n, _e, _i, _o, category in DOCUMENT_TYPES}
 
+        # LV-442: `drone-inspection` pasó de operacional a aeronave en la Act. 19
+        # (`compliance/0030`); su categoría vigente la fija esa migración.
+        moved_later = {"drone-inspection": "aircraft"}
         for code, category in backfill.CATEGORY_BY_CODE.items():
-            assert seeded[code] == category
+            assert seeded[code] == moved_later.get(code, category)
