@@ -61,6 +61,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **«Cómo funciona» al día con la Actualización 19 del Manual de Operaciones (`LV-440`, `codex/manual-act19-contenido`).** Registro Único de Misión REG-016 Rev. 2 en lugar de bitácora, check list, NEO y baterías (subida y revisión en 24 h), inspección LVE-002 cada 6 meses o 200 h, mantención por niveles (200 h/6 meses, 400 h/12, 600 h/18), instrucción inicial obligatoria, cuestionario anual y rol «Jefe de Seguridad de Vuelo». Sin migración; sin estáticos.
+
 - **Act. 19 del Manual de Operaciones: tipos de documento (`LV-442`, `codex/act19-tipos-documento`).** El REG-016 Rev. 2 «Registro único de misión» reemplaza la bitácora REG-015, el check list LVE-003, el NEO y el registro de baterías (`flight-log` conserva su clave); LVE-003 queda archivado sin tocar sus documentos; LVE-002 Rev. 1 pasa a la aeronave con vencimiento; nuevos tipos REG-018, REG-019 y REG-020 (códigos provisorios); el cierre mensual cuenta sólo el REG-016. Lleva migración de datos `compliance/0030`; estáticos no.
 - **Más contraste en la pantalla de análisis del log de vuelo (`LV-436`, `codex/log-contraste`).** Rótulos en el color primario, valores más grandes con el texto principal, tarjetas con borde de color, el relato del vuelo destacado, notas con el texto secundario y los gráficos en tarjetas de dos columnas con ejes legibles. Contrastes AA en los dos temas. Sin migración; lleva `collectstatic`.
 
