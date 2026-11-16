@@ -61,7 +61,7 @@ ya existía.
 | 6.3 | Vencimiento de licencia y seguro JAC | **Existe** | `Qualification.expiry_date`, `Aircraft.insurance_expiry` (`LV-29`) |
 | 6.4 | Registro DGAC de la aeronave con vigencia | **Falta** | Hay `Aircraft.registration` (matrícula), sin vigencia asociada |
 | 6.5 | Capacitación operador ↔ modelo | **Por confirmar** | `QualificationType` es "DGAC rating per aircraft family": falta saber si la familia basta |
-| 6.6 | Vuelo ↔ bitácora / checklist / inspección | **Por confirmar** | `FlightRecord` y `DocumentType.is_operational_record`; los tres códigos existen (`flight-log`, `rpa-checklist`, `drone-inspection`) |
+| 6.6 | Vuelo ↔ Registro Único de Misión (REG-016 Rev. 2, Act. 19; reemplaza bitácora REG-015, check list LVE-003, NEO y baterías) / inspección LVE-002 | **Por confirmar** | `FlightRecord` y `DocumentType.is_operational_record`; los tres códigos existen (`flight-log`, `rpa-checklist`, `drone-inspection`) |
 | 6.7 | Incidentes según Anexo H | **Por confirmar** | `NonConformity` (R7.6), sin comparar contra el Anexo |
 
 ---

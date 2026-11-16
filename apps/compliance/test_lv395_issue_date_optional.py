@@ -251,8 +251,8 @@ class TestReadersSurviveANull:
     def test_the_monthly_close_counts_an_undated_record_by_its_upload_day(self):
         centre = CostCenter.objects.create(code="CC1", name="Faena CC1")
         doc_type = DocumentType.objects.create(
-            code="flight-log-x",
-            name="Bitácora",
+            code="flight-log",
+            name="Registro único de misión",
             requires_issue_date=False,
             is_operational_record=True,
         )

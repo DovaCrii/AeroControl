@@ -1181,6 +1181,10 @@ msgstr "Revisión de cumplimiento mensual"
 msgid "Knowledge assessment"
 msgstr "Evaluación de conocimientos"
 
+#: .\apps\operations\readiness.py:244
+msgid "The last attempt was not passed."
+msgstr "El último intento no fue aprobado."
+
 #: .\apps\core\backups.py:108
 msgid "The backup file named in the manifest is not there"
 msgstr "El archivo de respaldo que nombra el manifiesto no está"
@@ -13630,13 +13634,8 @@ msgid "Everything traceable"
 msgstr "Todo trazable"
 
 #: .\templates\core\start.html
-msgid ""
-"Permits, credentials, insurance, maintenance and logbooks are kept with "
-"their dates and their evidence, ready for an audit or the monthly report."
-msgstr ""
-"Permisos, credenciales, seguros, mantenciones y bitácoras quedan guardados "
-"con sus fechas y su respaldo, listos para una auditoría o para el informe "
-"mensual."
+msgid "Permits, credentials, insurance, maintenance and mission records (REG-016) are kept with their dates and their evidence, ready for an audit."
+msgstr "Permisos, credenciales, seguros, mantenciones y registros de misión (REG-016) se guardan con sus fechas y su respaldo, listos para una auditoría."
 
 #: .\templates\core\start.html
 msgid "Warnings in time"
@@ -13667,7 +13666,7 @@ msgid ""
 "The Head of Air Safety processes it in SIGO. It covers an area, dates, "
 "aircraft and operators: flights stay inside what it authorises."
 msgstr ""
-"Lo tramita el Jefe de Seguridad Aérea en SIGO. Cubre un área, unas fechas, "
+"Lo tramita el Jefe de Seguridad de Vuelo en SIGO. Cubre un área, unas fechas, "
 "unos drones y unos operadores: se vuela sólo dentro de lo que autoriza."
 
 #: .\templates\core\start.html
@@ -13711,23 +13710,16 @@ msgid "Maintenance up to date"
 msgstr "Mantención al día"
 
 #: .\templates\core\start.html
-msgid ""
-"Every 6 or 12 months (or whatever the client asks for), and whenever the "
-"aircraft fails."
-msgstr ""
-"Cada 6 o 12 meses (o lo que pida el mandante), y siempre que el dron falle."
+msgid "Basic every 200 h or 6 months; medium every 400 h or 12 months; advanced every 600 h or 18 months, whichever comes first, and whenever the aircraft fails. Each RPA has a life record (REG-020, provisional code)."
+msgstr "Básica cada 200 h o 6 meses; media cada 400 h o 12 meses; avanzada cada 600 h o 18 meses, lo que ocurra primero, y siempre que el dron falle. Cada RPA tiene su hoja de vida (REG-020, código provisorio)."
 
 #: .\templates\core\start.html
-msgid "Logbook and checklist"
-msgstr "Bitácora y check list"
+msgid "Single Mission Record (REG-016)"
+msgstr "Registro Único de Misión (REG-016)"
 
 #: .\templates\core\start.html
-msgid ""
-"Checklist and inspection before each flight; the signed logbook is uploaded "
-"within 2 days."
-msgstr ""
-"Check list e inspección antes de cada vuelo; la bitácora firmada se sube "
-"dentro de 2 días."
+msgid "The REG-016 Rev. 2 single mission record replaces the earlier flight, checklist, NEO and battery forms. It is uploaded to the site folder within 24 h and reviewed within 24 h."
+msgstr "El Registro Único de Misión REG-016 Rev. 2 reemplaza los formularios anteriores de vuelo, check list, NEO y baterías. Se sube a la carpeta de la faena dentro de 24 h y se revisa dentro de 24 h."
 
 #: .\templates\core\start.html
 msgid "The process, step by step"
@@ -13791,7 +13783,7 @@ msgstr ""
 
 #: .\templates\core\start.html
 msgid "The Head of Air Safety processes it in SIGO"
-msgstr "El Jefe de Seguridad Aérea lo tramita en SIGO"
+msgstr "El Jefe de Seguridad de Vuelo lo tramita en SIGO"
 
 #: .\templates\core\start.html
 msgid "5 business days to request and approve it."
@@ -13881,15 +13873,15 @@ msgstr "Semana 1: carpeta de la faena"
 
 #: .\templates\core\start.html
 msgid "IT and the Head of Air Safety open the Nextcloud folder."
-msgstr "TI y el Jefe de Seguridad Aérea abren la carpeta en Nextcloud."
+msgstr "TI y el Jefe de Seguridad de Vuelo abren la carpeta en Nextcloud."
 
 #: .\templates\core\start.html
 msgid "Operators onboarded"
 msgstr "Operadores incorporados"
 
 #: .\templates\core\start.html
-msgid "With their credential in force; training is optional."
-msgstr "Con su credencial vigente; la capacitación es opcional."
+msgid "With their credential in force; initial instruction is mandatory."
+msgstr "Con su credencial vigente; la instrucción inicial es obligatoria."
 
 #: .\templates\core\start.html .\apps\core\start_guide.py
 msgid "DGAC permit"
@@ -13916,8 +13908,8 @@ msgstr ""
 "permiso y el primer vuelo también se corren una semana."
 
 #: .\templates\core\start.html
-msgid "1 to 2 weeks; up to 4 with training"
-msgstr "1 a 2 semanas; hasta 4 con capacitación"
+msgid "1 to 2 weeks; up to 4 with initial instruction"
+msgstr "1 a 2 semanas; hasta 4 con la instrucción inicial"
 
 #: .\templates\core\start.html
 msgid "Send the DGAC credential in force"
@@ -13930,13 +13922,12 @@ msgstr ""
 "vuela."
 
 #: .\templates\core\start.html
-msgid "Training on the RPA model"
-msgstr "Capacitación en el modelo de RPA"
+msgid "Initial instruction on the RPA model"
+msgstr "Instrucción inicial en el modelo de RPA"
 
 #: .\templates\core\start.html
-msgid "Optional and recommended, through the distributor's training portals."
-msgstr ""
-"Opcional y recomendada, en los portales de capacitación del distribuidor."
+msgid "Mandatory: general exam (75 percent), limitations and emergencies exam per model (100 percent) and one qualified flight shift. A credential listing the model, or the manufacturer's certificate, validates it. Recorded in REG-018 and REG-019 (provisional codes)."
+msgstr "Obligatoria: examen general (75 por ciento), examen de limitaciones y emergencias por modelo (100 por ciento) y un turno de vuelo calificado. La convalida una credencial que incluya el modelo o el certificado del fabricante. Se registra en REG-018 y REG-019 (códigos provisorios)."
 
 #: .\templates\core\start.html
 msgid "Added to the Operations Manual and the SIGO permit"
@@ -13980,7 +13971,7 @@ msgid ""
 "Head of Air Safety for a backup aircraft."
 msgstr ""
 "La mantención se coordina con un mes de anticipación. Si el servicio no "
-"puede parar, se pide un dron de respaldo al Jefe de Seguridad Aérea."
+"puede parar, se pide un dron de respaldo al Jefe de Seguridad de Vuelo."
 
 #: .\templates\core\start.html
 msgid "Did the aircraft crash or get damaged?"
@@ -14001,7 +13992,7 @@ msgid ""
 "The ADC notifies operations management, the Head of Air Safety and the Air "
 "Operations Manager."
 msgstr ""
-"El ADC avisa a la gerencia de operaciones, al Jefe de Seguridad Aérea y al "
+"El ADC avisa a la gerencia de operaciones, al Jefe de Seguridad de Vuelo y al "
 "Gerente de Operaciones Aéreas."
 
 #: .\templates\core\start.html
@@ -14013,23 +14004,20 @@ msgid ""
 "Written report. The Head of Air Safety assesses notifying the DGAC and "
 "informs Risk Management."
 msgstr ""
-"Reporte escrito. El Jefe de Seguridad Aérea evalúa el aviso a la DGAC e "
+"Reporte escrito. El Jefe de Seguridad de Vuelo evalúa el aviso a la DGAC e "
 "informa a la Gerencia de Riesgo."
 
 #: .\templates\core\start.html
 msgid "Operator and Head of Air Safety"
-msgstr "Operador y Jefe de Seguridad Aérea"
+msgstr "Operador y Jefe de Seguridad de Vuelo"
 
 #: .\templates\core\start.html
 msgid "Within 5 days"
 msgstr "En 5 días"
 
 #: .\templates\core\start.html
-msgid ""
-"Preliminary analysis and documents in Nextcloud: logbook, photos and what "
-"happened."
-msgstr ""
-"Análisis preliminar y documentos en Nextcloud: bitácora, fotos y qué pasó."
+msgid "Preliminary analysis and documents in Nextcloud: single mission record (REG-016), photos and what happened."
+msgstr "Análisis preliminar y documentos en Nextcloud: Registro Único de Misión (REG-016), fotos y lo ocurrido."
 
 #: .\templates\core\start.html
 msgid "Specialist"
@@ -14101,20 +14089,16 @@ msgid "Each flight"
 msgstr "Cada vuelo"
 
 #: .\templates\core\start.html
-msgid "Checklist and inspection; signed logbook, uploaded within 2 days."
-msgstr "Check list e inspección; bitácora firmada, subida dentro de 2 días."
+msgid "Single Mission Record (REG-016): uploaded to the site folder within 24 h and reviewed within 24 h."
+msgstr "Registro Único de Misión (REG-016): se sube a la carpeta de la faena dentro de 24 h y se revisa dentro de 24 h."
 
 #: .\templates\core\start.html
 msgid "Each month"
 msgstr "Cada mes"
 
 #: .\templates\core\start.html
-msgid ""
-"Review permits, insurance and credentials; monthly RPA report in the first "
-"week."
-msgstr ""
-"Revisar permisos, seguros y credenciales; informe mensual RPA en la primera "
-"semana."
+msgid "Review permits, insurance and credentials; monthly sampling of mission records."
+msgstr "Revisar permisos, seguros y credenciales; muestreo mensual de los registros de misión."
 
 #: .\templates\core\start.html
 msgid "Every 3 months"
@@ -14125,24 +14109,20 @@ msgid "Renew the DGAC permit, requested 2 weeks before."
 msgstr "Renovar el permiso DGAC, pedido 2 semanas antes."
 
 #: .\templates\core\start.html
-msgid "Every 6 to 12 months"
-msgstr "Cada 6 a 12 meses"
+msgid "Every 6 months or 200 h"
+msgstr "Cada 6 meses o 200 h"
 
 #: .\templates\core\start.html
-msgid "Preventive maintenance, coordinated 1 month before."
-msgstr "Mantención preventiva, coordinada 1 mes antes."
+msgid "Drone inspection (LVE-002) and basic maintenance, whichever comes first."
+msgstr "Inspección del dron (LVE-002) y mantención básica, lo que ocurra primero."
 
 #: .\templates\core\start.html
 msgid "Every year"
 msgstr "Cada año"
 
 #: .\templates\core\start.html
-msgid ""
-"Renew the JAC insurance and check the credentials per RPA model, 2 months "
-"before."
-msgstr ""
-"Renovar el seguro JAC y revisar las credenciales por modelo de RPA, 2 meses "
-"antes."
+msgid "Renew the JAC insurance and check the credentials per RPA model, 2 months before; annual efficiency questionnaire."
+msgstr "Renovar el seguro JAC y revisar las credenciales por modelo de RPA, 2 meses antes; cuestionario anual de eficiencia."
 
 #: .\templates\core\start.html
 msgid "Contract administrator (ADC)"
@@ -14185,8 +14165,8 @@ msgid "Keeps the credential in force."
 msgstr "Mantener su credencial vigente."
 
 #: .\templates\core\start.html
-msgid "Flies safely and fills in the logbook."
-msgstr "Volar seguro y llenar la bitácora."
+msgid "Flies safely and completes the single mission record (REG-016)."
+msgstr "Volar con seguridad y completar el Registro Único de Misión (REG-016)."
 
 #: .\templates\core\start.html
 msgid "Reports incidents immediately."
@@ -14194,7 +14174,7 @@ msgstr "Avisar los incidentes de inmediato."
 
 #: .\templates\core\start.html
 msgid "Head of Air Safety"
-msgstr "Jefe de Seguridad Aérea"
+msgstr "Jefe de Seguridad de Vuelo"
 
 #: .\templates\core\start.html
 msgid "Hands over the aircraft with its papers up to date."
@@ -14221,8 +14201,8 @@ msgid "Oversees compliance."
 msgstr "Supervisar el cumplimiento."
 
 #: .\templates\core\start.html
-msgid "Issues the monthly report."
-msgstr "Emitir el informe mensual."
+msgid "Reviews each mission record within 24 h, or appoints a deputy in writing."
+msgstr "Revisar cada registro de misión dentro de 24 h, o designar por escrito a un reemplazo."
 
 #: .\templates\core\start.html
 msgid "Digital Surveying (head office)"
@@ -14241,11 +14221,8 @@ msgid "Go to AeroControl"
 msgstr "Ir a AeroControl"
 
 #: .\templates\core\start.html
-msgid ""
-"Based on the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for "
-"reference."
-msgstr ""
-"Basado en la guía visual JEJ-GRI-SS-INS-096 Rev. 0. Tiempos referenciales."
+msgid "Based on the Operations Manual, Update 19 (approved by the DGAC on 10-11-2026), and the visual guide JEJ-GRI-SS-INS-096 Rev. 0. Times are for reference."
+msgstr "Basado en el Manual de Operaciones, Actualización 19 (aprobada por la DGAC el 10-11-2026), y en la guía visual JEJ-GRI-SS-INS-096 Rev. 0. Tiempos referenciales."
 
 #: .\templates\core\start.html
 msgid "On this page"
@@ -15454,6 +15431,23 @@ msgid "%(n)s month"
 msgid_plural "%(n)s months"
 msgstr[0] "%(n)s mes"
 msgstr[1] "%(n)s meses"
+
+
+#: .\templates\core\start.html
+msgid "Annual efficiency questionnaire"
+msgstr "Cuestionario anual de eficiencia"
+
+#: .\templates\core\start.html
+msgid "Part A 75 percent, Part B (limitations and emergencies) 100 percent. After 6 months without flying the equipment a theory review is mandatory; after 2 years the initial instruction is repeated. The DGAC credential (36 months) is checked at the annual review."
+msgstr "Parte A 75 por ciento, Parte B (limitaciones y emergencias) 100 por ciento. Tras 6 meses sin volar el equipo es obligatorio un repaso teórico; tras 2 años se repite la instrucción inicial. La credencial DGAC (36 meses) se revisa en el control anual."
+
+#: .\templates\core\start.html
+msgid "Every 12 to 18 months"
+msgstr "Cada 12 a 18 meses"
+
+#: .\templates\core\start.html
+msgid "Medium maintenance (400 h or 12 months) and advanced (600 h or 18 months) at a technical service, coordinated 1 month before."
+msgstr "Mantención media (400 h o 12 meses) y avanzada (600 h o 18 meses) en servicio técnico, coordinadas 1 mes antes."
 
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
