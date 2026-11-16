@@ -9,6 +9,7 @@ from apps.core.forms import AeroModelForm
 from apps.core.tenancy import scope_form_choices, scope_queryset_to_tenant
 from apps.registry.models import Aircraft, CostCenter
 from .models import (
+    AircraftLogbook,
     MaintenanceHistory,
     MaintenanceRecord,
     WorkshopIntake,
@@ -26,8 +27,10 @@ class MaintenanceRecordForm(AeroModelForm):
             "description",
             "scheduled_date",
             "performed_by",
+            "level",
         ]
         labels = {
+            "level": _("Level"),
             # "Maintenance type" rendered untranslated (LV-8d): the derived
             # label was not in the catalog. Spelled out here so all labels are
             # controlled and translated.
@@ -50,6 +53,33 @@ class MaintenanceRecordForm(AeroModelForm):
         self.fields["aircraft"].label_from_instance = lambda obj: obj.selector_label
 
 
+class AircraftLogbookForm(AeroModelForm):
+    """LV-443: the baseline of an aircraft's accumulated hours (REG-020)."""
+
+    class Meta:
+        model = AircraftLogbook
+        fields = ["hours_baseline", "baseline_on"]
+        labels = {
+            "hours_baseline": _("Hours at baseline date"),
+            "baseline_on": _("Baseline date"),
+        }
+        help_texts = {
+            "hours_baseline": _(
+                "Total flight hours on the baseline date, from the last "
+                "maintenance certificate. Later flights are added to it."
+            ),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("hours_baseline") and not cleaned.get("baseline_on"):
+            self.add_error(
+                "baseline_on",
+                _("Enter the date the baseline hours were read."),
+            )
+        return cleaned
+
+
 class MaintenanceHistoryForm(AeroModelForm):
     class Meta:
         model = MaintenanceHistory
@@ -67,7 +97,26 @@ class MaintenanceHistoryForm(AeroModelForm):
 class MaintenanceCompletionForm(AeroModelForm):
     class Meta:
         model = MaintenanceRecord
-        fields = ["completed_date", "performed_by", "notes"]
+        # LV-443: the level, the aircraft hours and the certificate number come
+        # from the maintenance certificate, so they are captured when closing.
+        fields = [
+            "completed_date",
+            "performed_by",
+            "level",
+            "hours_at",
+            "certificate_number",
+            "notes",
+        ]
+        labels = {
+            "level": _("Level"),
+            "hours_at": _("Aircraft hours"),
+            "certificate_number": _("Certificate number"),
+        }
+        help_texts = {
+            "hours_at": _(
+                "Total flight hours of the aircraft when the maintenance was done."
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

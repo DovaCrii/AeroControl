@@ -43,6 +43,9 @@ LV-426: sube bajo la cabecera; el historial queda abajo con `hide_steps`.{% endc
     <tr><th scope="row">{% translate "Scheduled date" %}</th><td>{% if record.scheduled_date %}{{ record.scheduled_date|date:"d-m-Y" }}{% else %}<span class="badge bg-warning text-dark">{% translate "To be defined" %}</span>{% endif %}</td></tr>
     <tr><th scope="row">{% translate "Completed date" %}</th><td>{{ record.completed_date|date:"d-m-Y"|default:"—" }}</td></tr>
     <tr><th scope="row">{% translate "Performed by" %}</th><td>{{ record.performed_by|default:"—" }}</td></tr>
+    {% if record.level %}<tr><th scope="row">{% translate "Level" %}</th><td>{{ record.get_level_display }}</td></tr>{% endif %}
+    {% if record.hours_at is not None %}<tr><th scope="row">{% translate "Aircraft hours" %}</th><td>{{ record.hours_at }} h</td></tr>{% endif %}
+    {% if record.certificate_number %}<tr><th scope="row">{% translate "Certificate number" %}</th><td>{{ record.certificate_number }}</td></tr>{% endif %}
     <tr><th scope="row">{% translate "Notes" %}</th><td>{{ record.notes|default:"—" }}</td></tr>
   </tbody></table>
 </div>

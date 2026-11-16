@@ -205,6 +205,13 @@ ROLE_PERMISSIONS = {
         "add_maintenancerecord",
         "change_maintenancerecord",
         "view_maintenancerecord",
+        # LV-443: la hoja de vida del RPA (REG-020) exige leer la mantención **y** la
+        # aeronave; quien la lleva carga además las horas base (el libro de la
+        # aeronave se crea la primera vez que se guarda, por eso también `add`).
+        "view_aircraft",
+        "add_aircraftlogbook",
+        "change_aircraftlogbook",
+        "view_aircraftlogbook",
     },
     # Spelled out on purpose. This used to be every permission whose codename
     # starts with "view_", which quietly handed the lowest role the API tokens,
