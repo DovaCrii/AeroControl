@@ -97,8 +97,10 @@ class TestOneRowPerOperatingCostCentre:
         row = _rows(login_as("view_monthlycompliancereview"))[0]
 
         counts = {item["doc_type"].code: item["count"] for item in row["records"]}
-        assert counts == {"flight-log": 2, "rpa-checklist": 0}
-        assert row["missing_types"] == [checklist]
+        # LV-442: LVE-003 ya no se exige; el cierre sólo cuenta el REG-016.
+        assert counts == {"flight-log": 2}
+        assert checklist.code not in counts
+        assert row["missing_types"] == []
         assert row["records_total"] == 2
 
     def test_the_chip_shows_the_name_and_the_form_code_goes_in_the_title(self, types):
