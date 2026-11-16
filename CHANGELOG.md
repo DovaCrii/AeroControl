@@ -10,6 +10,8 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **La credencial DGAC también completa la dirección y las habilitaciones (`LV-452`, `codex/credencial-habilitaciones`).** Al cargarla en «Nuevo: operador» ahora llegan la dirección (campo V) y las habilitaciones (texto de observaciones, copiado tal cual). Sin migración ni estáticos.
+
 - **La credencial DGAC real se lee al dar de alta un operador (`LV-448`, `codex/credencial-formato-dgac`).** El lector reconoce el formato numerado de la DGAC (número, titular, RUT, emisión y vencimiento) y el aviso ya no dice que completó el formulario cuando no reconoció nada. Sin migración ni estáticos; cambia el `.mo`.
 
 - **Una prueba de conocimientos reprobada ya no cuenta como vigente (`LV-439`, `codex/evaluacion-reprobada`).** «¿Puedo volar?» y la lista de vencimientos tomaban la fecha del último intento aunque estuviera reprobado; ahora la vigencia es la del último intento aprobado (un reprobado posterior no anula un aprobado vigente) y quien sólo tiene reprobados queda bloqueado. Sin migración ni estáticos.
