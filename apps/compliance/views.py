@@ -62,7 +62,7 @@ from .forms import (
     NonConformityForm,
     OwnerForm,
 )
-from .monthly import filed_on
+from .monthly import MONTHLY_RECORD_CODES, filed_on
 from .models import (
     Alert,
     AlertRule,
@@ -2107,7 +2107,9 @@ class MonthlyReviewView(ModelViewPermissionRequiredMixin, TemplateView):
 
         doc_types = list(
             DocumentType.objects.filter(
-                is_operational_record=True, is_active=True
+                is_operational_record=True,
+                is_active=True,
+                code__in=MONTHLY_RECORD_CODES,
             ).order_by("name")
         )
         # LV-385: el nombre ya no lleva el código del formulario entre paréntesis
