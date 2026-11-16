@@ -59,6 +59,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Act. 19 del Manual de Operaciones: tipos de documento (`LV-442`, `codex/act19-tipos-documento`).** El REG-016 Rev. 2 «Registro único de misión» reemplaza la bitácora REG-015, el check list LVE-003, el NEO y el registro de baterías (`flight-log` conserva su clave); LVE-003 queda archivado sin tocar sus documentos; LVE-002 Rev. 1 pasa a la aeronave con vencimiento; nuevos tipos REG-018, REG-019 y REG-020 (códigos provisorios); el cierre mensual cuenta sólo el REG-016. Lleva migración de datos `compliance/0030`; estáticos no.
 - **Más contraste en la pantalla de análisis del log de vuelo (`LV-436`, `codex/log-contraste`).** Rótulos en el color primario, valores más grandes con el texto principal, tarjetas con borde de color, el relato del vuelo destacado, notas con el texto secundario y los gráficos en tarjetas de dos columnas con ejes legibles. Contrastes AA en los dos temas. Sin migración; lleva `collectstatic`.
 
 - **Análisis y reporte del log de vuelo (LV-435).** Ubicación del despegue (comuna, provincia, región; referencial, calculada al dibujar y sin guardar) en el análisis, el reporte y el KML; chip de veredicto con la tipografía del cuerpo; fechas del resumen en d-m-Y; avisos y niveles con los tokens de severidad del tema; gráficos con la última etiqueta del eje X completa, color por variable CSS y relleno suave. Sólo estáticos y código, sin migración.

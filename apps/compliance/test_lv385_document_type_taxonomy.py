@@ -18,7 +18,17 @@ from apps.core.testing import login_as
 MIGRATION = "apps.compliance.migrations.0028_lv385_document_type_taxonomy"
 # Tipos sembrados DESPUÉS de la migración 0028: el seed y la vista que los crea los
 # traen completos (nombre y guía), así que la migración no tiene nada que renombrar.
-CODES_AFTER_THE_MIGRATION = {"workshop-intake-receipt"}  # LV-383
+CODES_AFTER_THE_MIGRATION = {
+    "workshop-intake-receipt",  # LV-383
+    # LV-442 (compliance/0030): tipos nuevos de la Act. 19.
+    "operator-qualification-intake",
+    "operator-theory-evaluations",
+    "rpa-service-life",
+}
+# LV-442: filas que `compliance/0030` reescribe después de la 0028; el sembrado lleva
+# el texto vigente y la 0028 el histórico, así que no se cruzan. Un test de la 0030
+# vigila el seed contra ella.
+REWRITTEN_BY_ACT_19 = {"flight-log", "rpa-checklist", "drone-inspection"}
 
 
 def _migration():
@@ -62,6 +72,8 @@ class TestTheSeededCatalogIsStandardised:
         assert set(taxonomy) | CODES_AFTER_THE_MIGRATION == set(names)
         assert not set(taxonomy) & CODES_AFTER_THE_MIGRATION
         for code, (_old, new, description, ref, order) in taxonomy.items():
+            if code in REWRITTEN_BY_ACT_19:
+                continue
             assert new == names[code], code
             assert (description, ref, order) == DOCUMENT_TYPE_GUIDE[code], code
 
@@ -75,8 +87,8 @@ class TestTheSeededCatalogIsStandardised:
 
         log = DocumentType.objects.get(code="flight-log")
         assert (log.name, log.reference_code, log.sort_order) == (
-            "Bitácora de vuelo",
-            "REG-015",
+            "Registro único de misión",  # LV-442
+            "REG-016 Rev. 2",
             10,
         )
         assert log.description

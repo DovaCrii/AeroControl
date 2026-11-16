@@ -29,8 +29,17 @@ SUGGESTED_TYPE_CODES = {
         "jac-insurance-approval",
         "maintenance-certificate",
         "calibration-certificate",
+        # LV-442 (Act. 19): LVE-002 Rev. 1 y la hoja de vida (REG-020) son de la aeronave.
+        "drone-inspection",
+        "rpa-service-life",
     ],
-    ("registry", "operator"): ["dgac-credential", "medical-cert"],
+    ("registry", "operator"): [
+        "dgac-credential",
+        "medical-cert",
+        # LV-442 (Act. 19): REG-018 y REG-019, del operador.
+        "operator-qualification-intake",
+        "operator-theory-evaluations",
+    ],
     ("operations", "flightpermission"): [
         "dgac-flight-permit",
         "dgac-rpa-operation-authorization",

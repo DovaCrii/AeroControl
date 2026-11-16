@@ -168,7 +168,12 @@ DOCUMENT_TYPES = [
     #
     # LV-30: the per-flight operational records. They do not expire (a record of
     # what happened, not a validity), so requires_expiry=False.
-    ("flight-log", "Bitácora de vuelo", False, False, True, OPERATIONAL),
+    #
+    # LV-442 (Act. 19 del Manual, aprobada DGAC el 2026-11-10): la misma clave pasa a
+    # ser el REG-016 Rev. 2, «Registro único de misión», que reemplaza la bitácora
+    # REG-015, el check list LVE-003, el formulario NEO y el registro de baterías.
+    # El nombre no lleva paréntesis (LV-385): el código va en `reference_code`.
+    ("flight-log", "Registro único de misión", False, False, True, OPERATIONAL),
     # LV-290: el **registro de vuelo `.TXT`** que el portal de la DGAC pide adjuntar
     # al registrar las operaciones de una solicitud. No es la bitácora de arriba
     # (el formulario interno REG-015): es el archivo técnico que genera el control
@@ -177,15 +182,41 @@ DOCUMENT_TYPES = [
     # como un registro operacional más, y no lo es. No vence (ocurrió).
     # La migración `compliance/0027` lo crea también donde el sembrado ya corrió.
     ("flight-log-txt", "Archivo de registro de vuelo", False, False, False, DGAC),
+    # LV-442: LVE-003 sale de las altas nuevas -- el REG-016 lo reemplaza. Se archiva
+    # el tipo (`RETIRED_CODES`), no se borra: sus documentos siguen listados.
     ("rpa-checklist", "Lista de chequeo RPA", False, False, True, OPERATIONAL),
+    # LV-442: LVE-002 Rev. 1 es **de la aeronave** y vence a los 6 meses (o 200 h,
+    # o tras una falla): categoría AIRCRAFT y `requires_expiry=True`. La bandera
+    # `is_operational_record` se mantiene para que los LVE-002 ya cargados contra
+    # un centro de costo sigan listados en Registros operacionales; el cierre
+    # mensual ya no los cuenta (`monthly.MONTHLY_RECORD_CODES`).
     (
         "drone-inspection",
         "Inspección de RPA",
-        False,
+        True,
         False,
         True,
-        OPERATIONAL,
+        AIRCRAFT,
     ),
+    # LV-442: registros nuevos de la Act. 19. **Códigos provisorios** hasta que el SMS
+    # asigne los definitivos. Sin vencimiento: el manual no fija plazo.
+    (
+        "operator-qualification-intake",
+        "Calificación e ingreso del operador",
+        False,
+        False,
+        False,
+        PERSONNEL,
+    ),
+    (
+        "operator-theory-evaluations",
+        "Evaluaciones teóricas del operador",
+        False,
+        False,
+        False,
+        PERSONNEL,
+    ),
+    ("rpa-service-life", "Hoja de vida del RPA", False, False, False, AIRCRAFT),
     # R4.1/R4.8: pulled forward from R4.8 because import_document_repository
     # cannot classify anything under the Z: repository's "02.-"/"03.-"/"04.-"
     # subfolders without them. Historical records, not validities that lapse
@@ -303,9 +334,41 @@ DOCUMENT_TYPE_GUIDE = {
         "",
         50,
     ),
-    "flight-log": ("Registro interno de cada vuelo realizado", "REG-015", 10),
-    "rpa-checklist": ("Verificación del RPA antes del vuelo", "LVE-003", 20),
-    "drone-inspection": ("Revisión del estado del RPA", "LVE-002", 30),
+    "flight-log": (
+        "Reemplaza la bitácora REG-015, el check list LVE-003, el formulario NEO y "
+        "el registro de baterías; se carga por misión en el centro de costo "
+        "dentro de 24 h",
+        "REG-016 Rev. 2",
+        10,
+    ),
+    "rpa-checklist": (
+        "Retirado por la Act. 19: lo reemplaza el REG-016; sólo se consulta lo ya "
+        "cargado",
+        "LVE-003",
+        20,
+    ),
+    "drone-inspection": (
+        "Del RPA: al recibir el equipo, cada 6 meses o 200 h, o tras una falla",
+        "LVE-002 Rev. 1",
+        60,
+    ),
+    "operator-qualification-intake": (
+        "Calificación e ingreso del operador. Código provisorio hasta que el SMS "
+        "asigne el definitivo",
+        "REG-018 R0",
+        30,
+    ),
+    "operator-theory-evaluations": (
+        "Evaluaciones teóricas del operador. Código provisorio hasta que el SMS "
+        "asigne el definitivo",
+        "REG-019 R0",
+        40,
+    ),
+    "rpa-service-life": (
+        "Hoja de vida del RPA. Código provisorio hasta que el SMS asigne el definitivo",
+        "REG-020 R0",
+        70,
+    ),
     "incident-investigation-record": (
         "Análisis de un incidente y de sus causas",
         "",
@@ -331,6 +394,14 @@ DOCUMENT_TYPE_GUIDE = {
 }
 
 
+# LV-442: tipos que el sembrado crea **archivados** (`is_active=False`): ya no se
+# ofrecen en el alta, pero siguen existiendo para los documentos ya cargados.
+# Condición de cierre del paso 2 (borrar la fila): cuando no quede ningún documento
+# LVE-003 dentro de su plazo de retención y la dirección decida retirarlo; mientras
+# haya uno, `Document.doc_type` es PROTECT y la fila no se puede borrar.
+RETIRED_CODES = frozenset({"rpa-checklist"})
+
+
 class Command(BaseCommand):
     help = "Create the standard DocumentType catalog for a DGAC RPAS operation."
 
@@ -354,6 +425,7 @@ class Command(BaseCommand):
                     "is_insurance": is_insurance,
                     "is_operational_record": is_op_record,
                     "category": category,
+                    "is_active": code not in RETIRED_CODES,
                 },
             )
             created_count += int(created)
