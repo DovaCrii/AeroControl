@@ -138,6 +138,29 @@ def _classify(issue_date, created_at, source_reference):
     return "on_time" if (loaded - issue_date).days <= ON_TIME_DAYS else "late"
 
 
+def _reviewed_within_24h(centre_ids, window, cutoff, early):
+    """REG-016 revisados dentro del plazo, o `None` si no hay revisiones que medir.
+
+    Una revisión cuenta por su fecha de misión (la ventana del informe). En un corte
+    anticipado lo revisado después del corte todavía no estaba revisado. Una sola
+    consulta: el total decide entre «Pendiente» (ninguna revisión abierta) y un número.
+    """
+    from django.db.models import Count, F, Q
+
+    from apps.compliance.models import MissionReview
+
+    on_time = Q(
+        status__in=MissionReview.TERMINAL_STATUSES,
+        reviewed_at__date__lte=F("due_on"),
+    )
+    if early:
+        on_time &= Q(reviewed_at__date__lte=cutoff)
+    totals = MissionReview.objects.filter(
+        is_active=True, cost_center_id__in=centre_ids, mission_date__range=window
+    ).aggregate(total=Count("pk"), on_time=Count("pk", filter=on_time))
+    return totals["on_time"] if totals["total"] else None
+
+
 def collect_mission_records(period, window, centres, type_id, early):
     from django.contrib.contenttypes.models import ContentType
     from apps.compliance.models import Document, MonthlyComplianceReview
@@ -242,9 +265,10 @@ def collect_mission_records(period, window, centres, type_id, early):
             if missions and type_id is not None
             else None
         ),
-        # El REG-016 se revisa dentro de 24 h: la revisión por misión aún no existe
-        # (la conectará el bloque B5a). Pendiente, no cero.
-        "reviewed_within_24h": kpi(None),
+        # El REG-016 se revisa dentro de 24 h (LV-447): las revisadas a más tardar el
+        # día del plazo. Sin ninguna revisión abierta en la ventana no hay dato:
+        # Pendiente, no cero. Sólo se recalcula al construir un informe nuevo.
+        "reviewed_within_24h": kpi(_reviewed_within_24h(ids, window, cutoff, early)),
     }
     return {"rows": rows, "kpis": kpis}
 

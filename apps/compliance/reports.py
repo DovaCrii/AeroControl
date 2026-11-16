@@ -38,6 +38,7 @@ ALERT_COST_CENTER_PATHS = {
     "operations.flightpermission": "cost_center",
     "maintenance.maintenancerecord": "aircraft__cost_center",
     "compliance.monthlycompliancereview": "cost_center",
+    "compliance.missionreview": "cost_center",
     # LV-204: los tres que faltaban, y faltaban contra una lista que ya existía.
     # Pedido del usuario mirando la bandeja: *"la alerta debe mostrar de qué CC
     # pertenece la entidad, en todo tipo de caso"* — la fila de la aeronave

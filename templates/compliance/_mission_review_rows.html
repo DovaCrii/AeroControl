@@ -1,0 +1,24 @@
+{% load i18n static %}
+{% comment %}`LV-447`: las filas salen a su propio parcial (el HTMX las reemplaza). Siete columnas,
+y la fila vacía lleva ese `colspan` exacto.{% endcomment %}
+{% for object in objects %}<tr data-pk="{{ object.pk }}"{% if object.is_overdue %} data-sev="critical"{% endif %}>
+  <td><span class="fw-semibold">{{ object.cost_center.code }}</span><span class="d-block small text-body-secondary">{{ object.cost_center.name }}</span></td>
+  <td><span class="text-nowrap">{{ object.mission_date|date:"d-m-Y" }}</span></td>
+  <td><span class="text-nowrap">{{ object.due_on|date:"d-m-Y" }}</span></td>
+  <td>
+    {% if object.status == "pending" %}<span class="badge bg-{% if object.is_overdue %}danger{% else %}warning text-dark{% endif %}">{{ object.get_status_display }}</span>{% if object.is_overdue %} <span class="small text-danger">{% translate "Overdue" %}</span>{% endif %}
+    {% else %}<span class="badge bg-{% if object.status == 'reviewed' %}success{% else %}info{% endif %}">{{ object.get_status_display }}</span>{% if object.reviewed_on_time is False %} <span class="small text-danger">{% translate "Late" %}</span>{% endif %}{% endif %}
+  </td>
+  <td>{% if object.document_id %}<a href="{% url 'document-detail' object.document_id %}">{{ object.document.title }}</a>{% else %}<span class="text-body-secondary">{% translate "Flight record" %}</span>{% endif %}</td>
+  <td>{% if object.reviewed_at %}{{ object.reviewed_by.get_username|default:"—" }}<span class="d-block small text-body-secondary">{{ object.reviewed_at|date:"d-m-Y H:i" }}</span>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+  <td class="text-end">
+    {% if can_review and object.status == "pending" %}
+    <form method="post" action="{% url 'mission-review-mark' object.pk %}" class="d-inline-flex gap-1" hx-boost="false">
+      {% csrf_token %}
+      <button class="btn btn-sm btn-outline-success" name="status" value="reviewed">{% translate "Mark reviewed" %}</button>
+      <button class="btn btn-sm btn-outline-secondary" name="status" value="observed">{% translate "With observations" %}</button>
+    </form>
+    {% endif %}
+  </td>
+</tr>{% empty %}<tr><td colspan="7" class="text-center text-muted py-4">
+    {% static 'img/illustrations/documents.svg' as art_src %}{% include "generic/_empty_art.html" with src=art_src %}{% translate "No mission records to review." %}</td></tr>{% endfor %}
