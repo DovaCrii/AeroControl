@@ -330,7 +330,7 @@ Sección 5 del informe, sólo si el corte es del 2026-11-10 en adelante (`manual
 | `manual.window` | corte | `[max(1.º del mes, 2026-11-10), corte]` |
 | `manual.missions.rows[]` / `kpis` | `compliance.Document` (`flight-log`, REG-016) por faena | en plazo = cargado a más tardar el día siguiente a `issue_date`; importado en lote o sin fecha = sin evaluar; cierre mensual de `MonthlyComplianceReview` |
 | `manual.missions.kpis.missions_flown` / `missions_without_record` | `operations.FlightRecord` | pares (faena, día); `None` si no hay vuelos digitales |
-| `manual.missions.kpis.reviewed_within_24h` | — | `None` hasta B5a |
+| `manual.missions.kpis.reviewed_within_24h` | `compliance.MissionReview` (LV-447) de las faenas del informe, por `mission_date` en la ventana | revisadas a más tardar el día de `due_on` (hora local); `None` si no hay ninguna revisión; en corte anticipado sólo lo revisado hasta el corte |
 | `manual.inspections` | `Document` (`drone-inspection`, LVE-002) por aeronave de `operational_fleet()` | vigente / vencida / sin fecha / sin documento; `gaps` = matrículas no vigentes |
 | `manual.evaluations` | `registry.KnowledgeAssessment` (LV-439: sólo aprobados) y `Document` REG-018/019 | `format: "lv158"` hasta B6 |
 | `manual.maintenance` | `maintenance.MaintenanceRecord` activos | `due_by_level` `None` hasta B8 |

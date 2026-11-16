@@ -2,21 +2,7 @@
 
 ## ▶️ 2026-11-09 — retomar en la CLI de Claude (lista de pendientes)
 
-**Producción (`p340`) = `865dff6`** (RESUMEN pegado 2026-11-12: `DEPLOY OK 94b37b0 -> 865dff6`, 1 migración `operations 0038` con respaldo restorable, 1 estático, HEAD == origin/main). Lleva hasta `LV-437` (contraste del análisis `LV-436` y archivar logs `LV-437`). Los permisos de logs (`view/add_flightloganalysis`) se dieron a todas las cuentas **a mano** el 2026-11-12, sólo agregando (no se tocó el grupo «Dirección», propio de producción). Fusionado y no en la VM (tanda «Manual Act. 19», 2026-11-16):
-
-| Fila | Qué | Migración | Estáticos / pasos |
-|---|---|---|---|
-| `LV-438` | `deploy.sh` sincroniza permisos de roles (`bootstrap_roles --add-only`) y `--manage <cmd>` | — | — |
-| Django 6.1.3 | parche (`uv.lock`) | — | `uv sync` (lo hace `deploy.sh`) |
-| `LV-439` | una prueba reprobada no habilita a volar | — | `.mo` |
-| `LV-440` | «Cómo funciona» según la Act. 19 | — | `.mo` |
-| `LV-441` | check list REG-016 sección 4 | — | **después**: `bash scripts/deploy.sh --manage seed_reg016_checklist` |
-| `LV-442` | tipos de documento Act. 19 | `compliance 0030` (datos) | — |
-| `LV-443` | mantención por niveles + hoja de vida REG-020 | `maintenance 0013`–`0014` | permisos del rol Maintenance (los agrega `deploy.sh`); cargar horas base en cada hoja de vida |
-| `LV-444` | evaluaciones Act. 19, banco fuera del repo | `registry 0044`–`0045` | **después**: copiar el banco REG-019 a `private/` en la VM → `--manage load_assessment_bank <ruta> --dry-run` → sin `--dry-run` (nunca `--replace` la primera vez) |
-| `LV-445` | informe interno con la sección «Cumplimiento del Manual Act. 19» | `reporting 0007`–`0008` | `collectstatic` (`report-a4-v2.css`); antes de congelar noviembre, cargar las fases del plan Act. 19 en «Textos del informe» |
-
-Un solo despliegue lo une todo: `deploy.sh --dry-run` → `deploy.sh` (migra las 7 migraciones con respaldo, sincroniza permisos, `collectstatic`) → los dos `--manage` de arriba. Comprobar `showmigrations compliance maintenance registry reporting | tail` sin pendientes.
+**Producción (`p340`) = `00a0d8a`** (RESUMEN pegado 2026-11-16: `DEPLOY OK 865dff6 -> 00a0d8a` (50 commits), 7 migraciones aplicadas con respaldo restorable (`compliance 0030`, `maintenance 0013`–`0014`, `registry 0044`–`0045`, `reporting 0007`–`0008`), `uv sync` (Django 6.1.3), 133 estáticos, `active`, health 200, 17 timers, HEAD == origin/main). Después: `--manage bootstrap_roles --add-only` (31 permisos agregados, sin quitar) y `--manage seed_reg016_checklist` (17 ítems). Lleva hasta `LV-446` y `LV-448` (tanda «Manual Act. 19», capa `tech.css` y lectura de la credencial DGAC real). **Pendiente del usuario:** cargar el banco REG-019 (`private/` → `--manage load_assessment_bank <ruta> --dry-run` → sin `--dry-run`), las horas base de cada hoja de vida, las fases del plan Act. 19 en «Textos del informe» antes de congelar noviembre, y confirmar el umbral provisional de aviso por horas (`HOURS_NOTICE_RATIO = 0.10`). Fusionado y no en la VM: `LV-447` (revisión del REG-016 en 24 h; migración `compliance 0031`; asignar a mano `review_missionreview` al Gerente de Operaciones o designado; backfill `--manage backfill_mission_reviews --since 2026-11-10 --dry-run` → sin `--dry-run`).
 
 ### Cómo retomar
 1. `git fetch origin && git log --oneline -5 origin/main` y `gh pr list --state open`: lo que cambió desde esta nota manda.

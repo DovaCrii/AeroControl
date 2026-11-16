@@ -53,6 +53,17 @@ urlpatterns = [
         views.MonthlyCloseMark.as_view(),
         name="monthly-close-mark",
     ),
+    # LV-447: la revisión de cada REG-016 en 24 h (Manual Act. 19).
+    path(
+        "mission-review/",
+        views.MissionReviewList.as_view(),
+        name="mission-review-list",
+    ),
+    path(
+        "mission-review/<uuid:pk>/mark/",
+        views.MissionReviewMark.as_view(),
+        name="mission-review-mark",
+    ),
     path("document/new/", views.DocumentCreate.as_view(), name="document-create"),
     # LV-200 paso 3: adjuntar un papel ya cargado. Vive al lado de "nuevo"
     # porque es la otra mitad de la misma acción -- dejar el documento en la
