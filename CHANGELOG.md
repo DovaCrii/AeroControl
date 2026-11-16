@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Capa de tokens técnicos `--id-tk-*` (`LV-446`, `codex/tech-tokens`).** Nuevas hojas `static/css/tech.css` (tokens claro/oscuro, `.tk-code`, `.tk-plate`, `.tk-art`) y `static/css/sheet.css` (vacía), enlazadas tras `identity.css`; guardián `test_tech_css.py` y pares de contraste en `diseno-ui`. Sin cambio visible. Sin migración; lleva `collectstatic`.
+
 ### Fixed
 
 - **Una prueba de conocimientos reprobada ya no cuenta como vigente (`LV-439`, `codex/evaluacion-reprobada`).** «¿Puedo volar?» y la lista de vencimientos tomaban la fecha del último intento aunque estuviera reprobado; ahora la vigencia es la del último intento aprobado (un reprobado posterior no anula un aprobado vigente) y quien sólo tiene reprobados queda bloqueado. Sin migración ni estáticos.
