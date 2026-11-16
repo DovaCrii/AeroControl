@@ -5,8 +5,8 @@
 {% comment %}LV-444: el banco cargado con `load_assessment_bank`. La clave de
 respuestas se ve sólo con `view_assessment_answers` (LV-184): sin ese permiso
 la lista muestra enunciados y opciones, no cuál es la correcta.{% endcomment %}
-<div class="page-header">
-  <h1 class="h3 mb-0">{% translate "Question bank" %}</h1>
+{% translate "Question bank" as page_title %}<div class="page-header">
+  {% include "generic/_page_header.html" %}
 </div>
 
 {% if not totals %}

@@ -6,11 +6,8 @@
 general es la instrucción inicial; limitaciones y emergencias se rinden por modelo
 de RPA; el cuestionario anual lleva las dos partes. Sin banco cargado se dice, en
 vez de ofrecer algo que no se puede rendir.{% endcomment %}
-<div class="page-header">
-  <div>
-    <p class="eyebrow mb-1">{{ operator }}</p>
-    <h1 class="h3 mb-0">{% translate "Knowledge assessment" %}</h1>
-  </div>
+{% translate "Knowledge assessment" as page_title %}<div class="page-header">
+  {% with page_eyebrow=operator %}{% include "generic/_page_header.html" %}{% endwith %}
   {% if can_see_bank %}<a class="btn btn-outline-secondary" href="{% url 'assessment-bank' %}">{% translate "Question bank" %}</a>{% endif %}
 </div>
 
