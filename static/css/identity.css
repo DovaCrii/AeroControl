@@ -149,14 +149,6 @@
   margin: 0 auto 0.75rem;
 }
 
-/* Trazo técnico `tk-*` (LV-451): lo que el SVG no pinta con `currentColor` es acento y lo hereda
-   del `<use>`. `tech.css` define `.tk-art` sólo con trazo de línea; el acento va aquí, con más
-   especificidad, hasta que ese archivo lo absorba. */
-.tk-plate .tk-art {
-  stroke: var(--id-tk-accent);
-  fill: var(--id-tk-accent);
-}
-
 /* ── Ficha de una entidad: su ilustración junto al título ───────────────── */
 .entity-head {
   display: flex;
