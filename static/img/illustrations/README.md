@@ -32,6 +32,16 @@ autor y de licencia MIT. Se renombraron para decir **qué muestran** y no de dó
 Las nuevas llevan su movimiento (hélices, manga, baliza) **sólo** dentro de
 `@media (prefers-reduced-motion: no-preference)`; cargadas con `<img>` no ejecutan nada más.
 
+**Técnicas `tk-*`** (dibujos propios, 2026-11-16, `LV-451`; misma licencia del repo, sin logos ni texto de marca). A diferencia de los doodles, son
+**trazo de línea heredado**: no llevan colores propios, se dibujan en línea con
+`<svg class="tk-art"><use href="…svg#art"></use></svg>` sobre `.tk-plate` (`static/css/tech.css`) y toman línea y acento del tema,
+claro y oscuro. Las vigila `apps/core/test_tk_illustrations.py`.
+
+| Archivo | Muestra | Se usa en |
+|---|---|---|
+| `tk-operator.svg` (96×96) | radiocontrol con antenas y señal sobre retícula circular | listas vacías de operadores, asignaciones y habilitaciones |
+| `tk-quad-top.svg` (240×160) | cuadricóptero en planta con cotas y rumbo | lista genérica vacía |
+
 Las siluetas de equipos de `static/img/aircraft/` (`matrice-4`, `matrice-400`, `dock`, `gnss-base`) también son
 propias, dibujadas de la forma del equipo y **sin logos ni texto de marca**. Las fotos de internet viven aparte, en
 `static/img/photos/`, cada una con su licencia en `LICENSES.md`.

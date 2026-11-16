@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **Ilustraciones técnicas, lote 1 (`LV-451`, `codex/tk-illustrations-1`).** `tk-operator` y `tk-quad-top`: trazo de línea que toma el color del tema (claro y oscuro) en las listas vacías de operadores, asignaciones, habilitaciones y en la lista genérica. Sin migración; lleva `collectstatic`.
+
 ### Fixed
 
 - **La credencial DGAC real se lee al dar de alta un operador (`LV-448`, `codex/credencial-formato-dgac`).** El lector reconoce el formato numerado de la DGAC (número, titular, RUT, emisión y vencimiento) y el aviso ya no dice que completó el formulario cuando no reconoció nada. Sin migración ni estáticos; cambia el `.mo`.

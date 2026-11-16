@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" width="240" height="160" color="#44526a" stroke="#087f78" fill="#087f78">
+  <!-- AeroControl · line-art técnico (tk). Dron cuadricóptero en planta sobre retícula.
+       Tonos por herencia: stroke="currentColor" = línea; sin stroke/fill propio = acento
+       (lo hereda del <use> de la página). Los atributos de la raíz son el respaldo para
+       verlo suelto o con <img>. Sin texto, sin scripts, sin enlaces externos. -->
+  <symbol id="art" viewBox="0 0 240 160">
+    <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke-opacity=".22" stroke-width="1" d="M0 20H240M0 40H240M0 60H240M0 80H240M0 100H240M0 120H240M0 140H240M20 0V160M40 0V160M60 0V160M80 0V160M100 0V160M120 0V160M140 0V160M160 0V160M180 0V160M200 0V160M220 0V160"/>
+      <path stroke-width="1.5" d="M58 12V20M182 12V20M58 16H182M58 16l6-3M58 16l6 3M182 16l-6-3M182 16l-6 3"/>
+      <path stroke-width="1.5" d="M226 45h6M226 115h6M229 45v70M229 45l-3 6M229 45l3 6M229 115l-3-6M229 115l3-6"/>
+      <path stroke-width="2" d="M106 70 91 55M134 70l15-15M106 90 91 105M134 90l15 15"/>
+      <rect x="102" y="66" width="36" height="28" rx="5" stroke-width="2"/>
+      <circle cx="80" cy="45" r="22" stroke-width="2"/>
+      <circle cx="160" cy="45" r="22" stroke-width="2"/>
+      <circle cx="80" cy="115" r="22" stroke-width="2"/>
+      <circle cx="160" cy="115" r="22" stroke-width="2"/>
+      <path stroke-width="1.2" stroke-dasharray="3 4" d="M66 31l28 28M174 31l-28 28M66 129l28-28M174 129l-28-28"/>
+      <path stroke-width="1" stroke-opacity=".55" d="M120 56v8M120 96v8M96 80h4M140 80h4"/>
+    </g>
+    <g stroke="none">
+      <circle cx="80" cy="45" r="4"/>
+      <circle cx="160" cy="45" r="4"/>
+      <circle cx="80" cy="115" r="4"/>
+      <circle cx="160" cy="115" r="4"/>
+      <rect x="114" y="60" width="12" height="6" rx="2"/>
+    </g>
+    <g fill="none" stroke-width="2" stroke-linecap="round">
+      <path d="M120 40v-12M114 34l6-6 6 6"/>
+      <circle cx="120" cy="80" r="5"/>
+    </g>
+  </symbol>
+  <use href="#art"/>
+</svg>
