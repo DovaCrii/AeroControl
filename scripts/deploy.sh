@@ -5,11 +5,19 @@
 # Se corre EN la VM, como el usuario del servicio, y pide la contrasena de `sudo` UNA vez:
 #
 #   cd /opt/aerocontrol && bash scripts/deploy.sh [--dry-run] [--status] [--backup] [--allow-noop-sync]
+#   cd /opt/aerocontrol && bash scripts/deploy.sh --manage <comando> [args...]
 #
 #   --dry-run          pasos 0-5 y la clasificacion: solo LEE, imprime el plan y no ejecuta nada
 #   --status           solo `manage.py deploy_status` con el entorno de produccion
 #   --backup           respaldo aunque no haya migraciones
 #   --allow-noop-sync  no abortar si `uv sync` no instalo nada
+#   --manage CMD ...   corre `manage.py CMD ...` con el entorno de produccion (systemd-run, igual
+#                      que los timers) y sale: sin pull, migrate, collectstatic ni reinicio.
+#                      Ej.: bash scripts/deploy.sh --manage analyze_flight_logs --outdated
+#                      (`source /etc/aerocontrol.env` no sirve: es root 600).
+#
+# Tras `migrate` sincroniza los permisos de los roles con `bootstrap_roles --add-only`: solo
+# AGREGA los que falten, nunca quita uno dado a mano ni toca grupos propios de produccion.
 #
 # Nunca ejecuta un rollback: solo imprime el comando. Nunca lee ni guarda la contrasena
 # (`sudo -v` la pide por el TTY de sudo) y nunca imprime un valor del entorno: los comandos
@@ -32,14 +40,24 @@ DRY=0
 STATUS_ONLY=0
 FORCE_BACKUP=0
 ALLOW_NOOP=0
-for arg in "$@"; do
-  case "${arg}" in
+MANAGE_ONLY=0
+MANAGE_ARGS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
     --dry-run) DRY=1 ;;
     --status) STATUS_ONLY=1 ;;
     --backup) FORCE_BACKUP=1 ;;
     --allow-noop-sync) ALLOW_NOOP=1 ;;
-    *) echo "Opcion desconocida: ${arg}" >&2; exit 2 ;;
+    --manage)
+      shift
+      [[ $# -gt 0 ]] || { echo "--manage necesita un comando de manage.py" >&2; exit 2; }
+      MANAGE_ONLY=1
+      MANAGE_ARGS=("$@")
+      break
+      ;;
+    *) echo "Opcion desconocida: $1" >&2; exit 2 ;;
   esac
+  shift
 done
 
 STEP=0
@@ -126,6 +144,14 @@ paso 0 "Raiz del proyecto"
 cd "${ROOT}"
 UV="$(command -v uv || true)"
 [[ -n "${UV}" ]] || fail "uv no esta en el PATH"
+
+if [[ "${MANAGE_ONLY}" == "1" ]]; then
+  paso 4 "sudo"
+  sudo -v
+  paso 5 "manage.py ${MANAGE_ARGS[0]}"
+  manage "${MANAGE_ARGS[@]}"
+  exit 0
+fi
 
 if [[ "${STATUS_ONLY}" == "1" ]]; then
   paso 4 "sudo"
@@ -216,7 +242,7 @@ if [[ "${DRY}" == "1" ]]; then
   echo
   echo "=== RESUMEN"
   echo "DRY-RUN  ${OLD:0:7} -> ${NEW:0:7} (${NCOMMITS} commits); no se ejecuto nada"
-  echo "plan: respaldo=$([[ ${NEED_BACKUP} == 1 ]] && echo sí || echo no)  pull  uv-sync=$([[ ${N_DEPS} -gt 0 ]] && echo sí || echo no)  migrate=$([[ ${N_MIG} -gt 0 || ${PENDING0} -gt 0 ]] && echo sí || echo no)  collectstatic=$([[ ${N_STATIC} -gt 0 ]] && echo sí || echo no)"
+  echo "plan: respaldo=$([[ ${NEED_BACKUP} == 1 ]] && echo sí || echo no)  pull  uv-sync=$([[ ${N_DEPS} -gt 0 ]] && echo sí || echo no)  migrate=$([[ ${N_MIG} -gt 0 || ${PENDING0} -gt 0 ]] && echo sí || echo no)  roles-add-only=sí  collectstatic=$([[ ${N_STATIC} -gt 0 ]] && echo sí || echo no)"
   echo "      reinicio  health  hash final"
   exit 0
 fi
@@ -282,6 +308,16 @@ else
   echo "    sin migraciones pendientes"
 fi
 
+# ---------------------------------------------------------------- 9b
+# Un permiso nuevo (p. ej. view_flightloganalysis, LV-431) nunca llegaba a los grupos de
+# produccion. --add-only solo agrega: no quita permisos dados a mano ni toca otros grupos.
+paso "9b" "Permisos de roles (bootstrap_roles --add-only)"
+roles_out="$(manage bootstrap_roles --add-only)"
+printf '%s\n' "${roles_out}"
+roles_added="$(printf '%s\n' "${roles_out}" | sed -nE 's/^Total permissions added: ([0-9]+).*/\1/p' | head -n 1)"
+[[ -n "${roles_added}" ]] || fail "bootstrap_roles --add-only no informo el total de permisos agregados"
+ROLES_NOTE="permisos de roles: ${roles_added} agregados"
+
 # ---------------------------------------------------------------- 10
 STATIC_NOTE="collectstatic: no hacia falta"
 if [[ "${N_STATIC}" -gt 0 ]]; then
@@ -328,6 +364,7 @@ echo
 echo "=== RESUMEN"
 echo "DEPLOY OK  ${OLD:0:7} -> ${FINAL:0:7} (${NCOMMITS} commits)"
 echo "${MIG_NOTE}"
+echo "${ROLES_NOTE}"
 echo "${BACKUP_NOTE}"
 echo "${SYNC_NOTE}"
 echo "${STATIC_NOTE}"

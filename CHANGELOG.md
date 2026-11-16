@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Fixed
 
+- **Los permisos nuevos de los roles llegan solos a producción, y `deploy.sh --manage` corre comandos de `manage.py` con el entorno de la VM (`LV-438`, `codex/deploy-permisos`).** `deploy.sh` ahora corre `bootstrap_roles --add-only` tras `migrate` (sólo agrega permisos; nunca quita ni toca grupos propios como «Dirección»). Sin migración ni estáticos.
 - **La serie cortada del log DJI ya no da aviso de «no coincide», y la cronología no repite filas (`LV-434`, `codex/log-serie-cronologia`).** `analyze_flight_logs --outdated` rehace los análisis guardados.
 - **El mapa del análisis de vuelo y del reporte se dibuja (`LV-433`, `codex/mapa-log-vista`).** Con un log real mostraba «No se pudo dibujar el mapa»: las capas se agregaban antes de dar vista al mapa.
 
@@ -92,6 +93,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 - **Barra lateral fija y modo icono completo (`LV-381` F0, `codex/nav-fija-y-rail`).** El menú y la barra superior ya no se van con el scroll: la barra lateral cuelga de la altura real de la superior (medida en `app.js`, también con el aviso sin conexión), se desplaza sólo en la zona de grupos y deja Administración fija abajo. El modo icono muestra los 24 destinos (antes 7: la regla de `LV-170` perdía contra `[hidden]` de Bootstrap) con una línea entre grupos, y las burbujas con el nombre ya no las recorta el contenedor. Vuelve la línea que separa los títulos de grupo. Sin migración; lleva estáticos.
 ### Security
 
+- **Django 6.1.2 -> 6.1.3 (`codex/deps-django-6.1.3`, reemplaza el PR #249 de dependabot, que no actualizaba `uv.lock`).** Versión de parche; se cambia el pin de `pyproject.toml` y `uv.lock`. Sin migración ni estáticos; el despliegue sólo necesita el `uv sync` que ya hace `deploy.sh`.
 - **El prellenado del formulario de subida de documentos respeta la empresa y los tipos activos (LV-384, codex/doc-prefill-tenant-scope).** Un `object_id` de otra empresa en la URL ya no prellena el sujeto ni sus fechas, y un tipo de documento archivado en `doc_type` ya no queda elegible; la carga masiva y el enlace «Cancelar» siguen la misma regla. Sin migración ni estáticos.
 - **`pypdf` 6.21.2 -> 6.21.4 (CVE-2026-119203 a 119209).** `pip-audit` volvió a fallar en el CI por siete avisos de `pypdf`; se sube sólo ese paquete en `uv.lock` (el rango `>=6,<7` de `pyproject.toml` no cambia). Sin migración ni estáticos; lleva `uv sync` en el siguiente despliegue.
 - **`msgpack` 1.2.1 -> 1.2.4 (CVE-2026-114613).** `pip-audit` fallaba por esta dependencia transitiva de desarrollo (`pip-audit[filecache]` -> `cachecontrol` -> `msgpack`); se sube sólo ese paquete en `uv.lock` (corrección desde 1.2.3). Sin migración ni estáticos; no afecta a producción (grupo dev).

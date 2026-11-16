@@ -110,6 +110,7 @@ case "$sub" in
   migrate) echo "  Applying x.0001... OK" ;;
   collectstatic) cat "$STUB_DIR/cs" 2>/dev/null || echo "5 static files copied to 'x', 0 unmodified." ;;
   showmigrations) echo "[ ] 0001_x" ;;
+  bootstrap_roles) cat "$STUB_DIR/roles" 2>/dev/null || echo "Total permissions added: 3" ;;
 esac
 exit 0
 """,
@@ -334,7 +335,15 @@ def test_happy_path_with_migrations_static_and_deps(world):
     assert world.vm_git("rev-parse HEAD") == world.vm_git("rev-parse origin/main")
     calls = [c.split()[1] for c in world.calls().splitlines() if c.startswith("manage")]
     order = [c for c in calls if c != "deploy_status"]
-    assert order == ["backup", "verify_backup", "migrate", "collectstatic"]
+    assert order == [
+        "backup",
+        "verify_backup",
+        "migrate",
+        "bootstrap_roles",
+        "collectstatic",
+    ]
+    assert "manage bootstrap_roles --add-only" in world.calls()
+    assert "permisos de roles: 3 agregados" in lines
     assert "systemctl restart aerocontrol" in world.calls()
     # el respaldo va ANTES del pull: con el código viejo
     assert "uv sync --no-dev --locked" in world.calls()
@@ -366,7 +375,14 @@ def test_dry_run_reads_but_never_writes(world):
     assert rc == 0, out
     assert "DRY-RUN" in out
     calls = world.calls()
-    for forbidden in ("restart", "migrate", "backup", "collectstatic", "uv sync"):
+    for forbidden in (
+        "restart",
+        "migrate",
+        "backup",
+        "collectstatic",
+        "uv sync",
+        "bootstrap_roles",
+    ):
         assert forbidden not in calls
     assert "deploy_status" in calls
     assert world.vm_git("rev-parse HEAD") == before
@@ -383,3 +399,38 @@ def test_status_flag_only_wraps_deploy_status(world):
     assert rc == 0
     cmds = [c.split()[1] for c in world.calls().splitlines() if c.startswith("manage")]
     assert cmds == ["deploy_status"]
+
+
+def test_role_sync_runs_after_migrate_and_before_the_restart(world):
+    world.push({"b.txt": "b"})
+    rc, out = world.run()
+    assert rc == 0, out
+    calls = world.calls()
+    assert calls.index("manage bootstrap_roles") < calls.index("systemctl restart")
+    assert "permisos de roles: 3 agregados" in summary(world.stdout)
+
+
+def test_role_sync_failure_aborts_before_the_restart(world):
+    world.push({"b.txt": "b"})
+    (world.stub / "roles").write_text("algo inesperado")
+    rc, out = world.run()
+    assert rc != 0 and "FALLÓ en paso 9b" in out
+    assert "systemctl restart" not in world.calls()
+
+
+def test_manage_flag_runs_only_that_command(world):
+    world.push({"apps/registry/migrations/0099_x.py": "m"})
+    before = world.vm_git("rev-parse HEAD")
+    rc, out = world.run("--manage", "analyze_flight_logs", "--outdated")
+    assert rc == 0, out
+    cmds = [c.split()[1] for c in world.calls().splitlines() if c.startswith("manage")]
+    assert cmds == ["analyze_flight_logs"]
+    for forbidden in ("restart", "migrate", "backup", "collectstatic", "uv sync"):
+        assert forbidden not in world.calls()
+    assert "--outdated" in world.calls()
+    assert world.vm_git("rev-parse HEAD") == before
+
+
+def test_manage_flag_without_a_command_is_an_error(world):
+    rc, out = world.run("--manage")
+    assert rc == 2 and "necesita un comando" in out

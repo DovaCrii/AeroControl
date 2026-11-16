@@ -153,16 +153,21 @@ cd /opt/aerocontrol
 # `setdefault` y muere con `SECRET_KEY not found` -- que es como se descubrió.
 # Es el mismo `set -a` que ya usan los ejemplos de cron en
 # `docs/scheduled-operations.md`.
-set -a; source <(sudo cat /etc/aerocontrol.env); set +a
+#
+# (LV-438) Desde `scripts/deploy.sh` ya no hace falta cargar el entorno a mano:
+# `--manage` corre `manage.py` con el entorno de producción vía `systemd-run`,
+# como los timers, sin pasar los valores por la shell.
 
 # Verifica ANTES de migrar que el entorno es el correcto. Migrar con `dev` en
 # lugar de `prod` es el error más caro disponible acá: apuntaría a otra base.
-echo "settings=$DJANGO_SETTINGS_MODULE  db=$DB_PATH"   # debe decir config.settings.prod
+bash scripts/deploy.sh --manage deploy_status   # debe decir config.settings.prod
 
-uv run python manage.py migrate --no-input
-uv run python manage.py bootstrap_roles
-uv run python manage.py collectstatic --no-input
-uv run python manage.py createsuperuser
+bash scripts/deploy.sh --manage migrate --no-input
+# Primera instalación: crea los roles (reemplaza permisos). En despliegues
+# posteriores el script corre solo `bootstrap_roles --add-only`.
+bash scripts/deploy.sh --manage bootstrap_roles
+bash scripts/deploy.sh --manage collectstatic --no-input
+bash scripts/deploy.sh --manage createsuperuser
 ```
 
 > **`init_dgac_board` salió de este procedimiento (LV-78, 2026-08-13).** Estaba
@@ -410,6 +415,8 @@ Confirmar que la copia restaurada es una base real y legible, sin tocar la
 `.env` de producción — se apunta `DB_PATH` solo para este comando puntual:
 
 ```bash
+# Excepción a `deploy.sh --manage`: acá hay que pisar DB_PATH para un solo comando,
+# y `--manage` no pasa variables de la shell. Carga el entorno como antes.
 set -a && source <(sudo cat /etc/aerocontrol.env) && set +a
 DB_PATH=/srv/aerocontrol-data/restore-drill/aero_ops_drill.sqlite3 \
   uv run python manage.py shell -c "
@@ -459,10 +466,15 @@ Pasos: rama `main...origin/main` y árbol limpio → qué falta (migraciones, `s
 `sudo -v` (una contraseña) → `deploy_status` con el entorno cargado **por systemd**
 (`systemd-run -p EnvironmentFile=/etc/aerocontrol.env`, como los timers; el entorno no pasa por la
 shell ni por la pantalla) → respaldo **antes** del `pull` si hay migraciones → `pull --ff-only` →
-`uv sync --no-dev --locked` → `migrate` → `collectstatic` → reinicio → health 200 → hash final.
+`uv sync --no-dev --locked` → `migrate` → `bootstrap_roles --add-only` → `collectstatic` → reinicio → health 200 → hash final.
 Cada comprobación aborta con `DEPLOY FALLÓ en paso N` e imprime el rollback sugerido (`git checkout
 <hash viejo> && sudo systemctl restart aerocontrol`, más `sudo systemctl stop aerocontrol`, `restore_backup` y `sudo systemctl start aerocontrol` si hubo migraciones); **nunca lo
 ejecuta**. Opciones: `--status`, `--backup`, `--allow-noop-sync`. No instala timers (Parte G).
+Los permisos de los roles se sincronizan solos tras `migrate` (LV-438), **sólo agregando**: no quita un
+permiso dado a mano ni toca grupos propios de producción como «Dirección».
+Para correr cualquier comando de `manage.py` en la VM con el entorno de producción (sin `source`, que
+da *Permission denied* con el archivo en root 600): `bash scripts/deploy.sh --manage <comando> [args]`,
+p. ej. `--manage analyze_flight_logs --outdated`; no hace pull, migrate, collectstatic ni reinicio.
 Si el script no puede correr, el plan B manual son los cuatro bloques de la skill `desplegar-p340`.
 
 ## Apéndice — Apoyarte con Codex / opencode
