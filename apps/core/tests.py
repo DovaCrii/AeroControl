@@ -1,6 +1,7 @@
 import pytest
 from datetime import date, timedelta
 import json
+from io import StringIO
 from docx import Document as DocxDocument
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
@@ -1339,6 +1340,62 @@ def test_unprivileged_user_cannot_open_mutating_forms(client, db, url_name):
 
 
 class TestBootstrapRoles:
+    @pytest.mark.django_db
+    def test_add_only_adds_the_missing_and_never_removes(self):
+        """LV-438: `--add-only` agrega lo que falta y respeta lo dado a mano."""
+        call_command("bootstrap_roles")
+        ops = Group.objects.get(name="Operations")
+        missing = Permission.objects.get(codename="view_flightloganalysis")
+        extra = Permission.objects.get(codename="view_user")
+        ops.permissions.remove(missing)
+        ops.permissions.add(extra)
+
+        out = StringIO()
+        call_command("bootstrap_roles", "--add-only", stdout=out)
+
+        assert missing in ops.permissions.all()
+        assert extra in ops.permissions.all()
+        assert "Role Operations: 1 permissions added" in out.getvalue()
+        assert "Total permissions added: 1" in out.getvalue()
+
+    @pytest.mark.django_db
+    def test_add_only_leaves_foreign_groups_alone_and_creates_missing_roles(self):
+        own = Group.objects.create(name="Custom group")
+        perm = Permission.objects.get(codename="view_aircraft")
+        own.permissions.add(perm)
+
+        call_command("bootstrap_roles", "--add-only")
+
+        assert list(own.permissions.all()) == [perm]
+        assert Group.objects.filter(name="Operations").exists()
+        assert not Group.objects.filter(name=REPORT_RECIPIENTS).exists()
+
+    @pytest.mark.django_db
+    def test_add_only_gives_administrator_a_new_permission(self):
+        call_command("bootstrap_roles")
+        admin = Group.objects.get(name="Administrator")
+        perm = Permission.objects.get(codename="view_flightloganalysis")
+        admin.permissions.remove(perm)
+
+        call_command("bootstrap_roles", "--add-only")
+
+        assert perm in admin.permissions.all()
+
+    @pytest.mark.django_db
+    def test_add_only_is_idempotent(self):
+        call_command("bootstrap_roles", "--add-only")
+        out = StringIO()
+        call_command("bootstrap_roles", "--add-only", stdout=out)
+        assert "Total permissions added: 0" in out.getvalue()
+
+    @pytest.mark.django_db
+    def test_without_the_option_the_role_is_still_replaced(self):
+        call_command("bootstrap_roles")
+        ops = Group.objects.get(name="Operations")
+        ops.permissions.add(Permission.objects.get(codename="view_user"))
+        call_command("bootstrap_roles")
+        assert not ops.permissions.filter(codename="view_user").exists()
+
     @pytest.mark.django_db
     def test_creates_the_report_recipient_group_without_permissions(self):
         call_command("bootstrap_roles")
