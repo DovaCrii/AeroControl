@@ -8,6 +8,10 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Added
+
+- **JetBrains Mono servida desde la app (LV-449, codex/tech-mono-font, PR2 de la dirección visual técnica).** Subconjunto latino de JetBrains Mono Regular 2.304 (12,7 KB, SIL OFL 1.1) en static/fonts/ con su licencia; --id-mono la usa primero y .tk-code ya la toma. Sin migración; lleva collectstatic.
+
 ### Fixed
 
 - **La credencial DGAC también completa la dirección y las habilitaciones (`LV-452`, `codex/credencial-habilitaciones`).** Al cargarla en «Nuevo: operador» ahora llegan la dirección (campo V) y las habilitaciones (texto de observaciones, copiado tal cual). Sin migración ni estáticos.
