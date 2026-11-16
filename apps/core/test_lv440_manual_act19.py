@@ -58,3 +58,21 @@ def test_the_questionnaire_text_with_percentages_is_translated():
 
     assert "Parte A 75 por ciento, Parte B" in html
     assert "examen general (75 por ciento)" in html
+
+
+@pytest.mark.django_db
+def test_the_maintenance_levels_and_the_drone_inspection_are_shown():
+    html = _page("es")
+
+    for hours in ("200 h", "400 h", "600 h"):
+        assert hours in html, hours
+    assert "LVE-002" in html
+    assert html.index("LVE-002") - html.index("Cada 6 meses o 200 h") < 400
+
+
+@pytest.mark.django_db
+def test_the_retired_wording_is_gone_from_the_spanish_page():
+    html = _page("es").lower()
+
+    for phrase in ("bitácora", "informe mensual", "jefe de seguridad aérea"):
+        assert phrase not in html, phrase
