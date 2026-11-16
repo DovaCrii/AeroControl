@@ -48,6 +48,16 @@ python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/cs
   --pair sev-advisory-text:id-cx-track --pair sev-nominal-text:id-cx-track
 ```
 
+Pares de la capa «técnica» (`LV-446`, tokens `--id-tk-*` de `tech.css`; pasar los tres CSS). Texto ≥ 4.5; formas con `--min 3`. Medidos: label/surface 7.89 · 9.08, empty/surface 5.08 · 6.79, code-ink/code-bg 14.23 · 15.54, empty/head-bg 4.73 · 7.16, line/plate 7.07 · 9.51, accent/plate 4.36 · 9.47, plate-edge/plate 3.13 · 4.38 (claro · oscuro). La retícula `--id-tk-grid` es decorativa y queda a propósito bajo 3:1.
+
+```bash
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/tech.css \
+  --pair id-tk-label:ac-surface --pair id-tk-empty:ac-surface --pair id-tk-code-ink:id-tk-code-bg \
+  --pair id-tk-label:id-tk-head-bg --pair id-tk-empty:id-tk-head-bg --pair ac-text-secondary:id-tk-plate
+python .claude/skills/diseno-ui/scripts/contrast.py static/css/app.css static/css/identity.css static/css/tech.css --min 3 \
+  --pair id-tk-line:id-tk-plate --pair id-tk-accent:id-tk-plate --pair id-tk-plate-edge:ac-surface \
+  --pair id-tk-plate-edge:id-tk-plate --pair id-edge:id-tk-head-bg --pair sev-critical-text:id-tk-plate
+```
 Pares de «Cumplimiento v4» (`LV-376`, chips sólidos: letra `--ac-surface` sobre el relleno; tokens de espera `--id-cx-wait-*` de `compliance.css`):
 
 ```bash

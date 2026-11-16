@@ -1,0 +1,57 @@
+/* LV-446: capa «técnica» (`--id-tk-*`). Se carga después de identity.css. Sólo define `--id-*`; lee `--ac-*` y no los redefine. Sin animación. Guardián: `apps/core/test_tech_css.py`. */
+
+:root {
+  --id-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --id-tk-plate: #eef3f8;
+  --id-tk-plate-edge: #7d8aa0;
+  --id-tk-line: var(--ac-text-secondary);
+  --id-tk-accent: var(--ac-primary);
+  --id-tk-grid: #cfd9e5;
+  --id-tk-label: var(--ac-text-secondary);
+  --id-tk-empty: var(--ac-text-muted);
+  --id-tk-code-bg: #eef3f8;
+  --id-tk-code-ink: #172238;
+  --id-tk-head-bg: #f4f7fb;
+}
+
+[data-theme="dark"] {
+  --id-tk-plate: #0f1b2a;
+  --id-tk-plate-edge: #6c81a3;
+  --id-tk-grid: #22344b;
+  --id-tk-code-bg: #0f1b2a;
+  --id-tk-code-ink: #edf3fb;
+  --id-tk-head-bg: #121a27;
+}
+
+/* Códigos e identificadores (matrícula, serie, N.º de credencial). */
+.tk-code {
+  display: inline-block;
+  padding: 0.05em 0.5em;
+  border: 1px solid var(--id-tk-plate-edge);
+  border-radius: 6px;
+  background: var(--id-tk-code-bg);
+  color: var(--id-tk-code-ink);
+  font-family: var(--id-mono);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Placa de plano: lámina que cambia con el tema. */
+.tk-plate {
+  border: 1px solid var(--id-tk-plate-edge);
+  border-radius: var(--id-r-card);
+  background: var(--id-tk-plate);
+  color: var(--id-tk-line);
+}
+
+/* Ilustración de trazo técnico: toma el color del tema vía currentColor. */
+.tk-art {
+  color: var(--id-tk-line);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
