@@ -114,6 +114,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Added
 
+- **Capa de tokens técnicos `--id-tk-*` (`LV-446`, `codex/tech-tokens`).** Nuevas hojas `static/css/tech.css` (tokens claro/oscuro, `.tk-code`, `.tk-plate`, `.tk-art`) y `static/css/sheet.css` (vacía), enlazadas tras `identity.css`; guardián `test_tech_css.py` y pares de contraste en `diseno-ui`. Sin cambio visible. Sin migración; lleva `collectstatic`.
 - **Mapa de Espacio aéreo: capa «Permisos en trámite» (`LV-379`, `codex/mapa-permisos-en-tramite`).** Capa aparte, apagada por omisión, con los permisos de vuelo solicitados a la DGAC y aún sin aprobar (contorno punteado magenta con halo y reloj de arena). Mismo endpoint y permiso que «Permisos vigentes» (`?layer=pending`), acotada por empresa; los sin ubicación no se dibujan y se cuentan en la pista. Sin operadores ni matrículas. Sin migración; lleva estáticos.
 
 - **Cumplimiento v4: dos correcciones de la revisión (`LV-376`).** Un permiso vigente a 30 días o menos con la renovación ya solicitada no ofrece «Renovar» ni dice «renovar ya», sino que la renovación está solicitada; y la tarjeta «Faenas sin permiso» cuenta sólo las faenas sin solicitud ni permiso, así tarjeta, tira y tabla coinciden y cada faena cuenta en una sola tarjeta. Sin migración.
