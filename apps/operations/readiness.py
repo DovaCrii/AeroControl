@@ -45,6 +45,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext
@@ -193,9 +194,9 @@ def _check_aircraft(aircraft, today):
 aircraft_check = _check_aircraft
 
 
-def _check_operator(operator, today):
+def _check_operator(operator, today, aircraft=None):
     from apps.compliance.models import Document
-    from apps.registry.models import KnowledgeAssessment, Qualification
+    from apps.registry.models import Qualification
 
     check = Check(name=capfirst(operator._meta.verbose_name))
     url = reverse("operator-detail", args=[operator.pk])
@@ -225,32 +226,7 @@ def _check_operator(operator, today):
             ),
         )
 
-    # LV-439: la vigencia es la del último intento **aprobado**. Un reprobado
-    # también sella `expires_on`, pero no acredita nada, y uno posterior no
-    # anula un aprobado vigente. Los intentos anteriores son historial, y su
-    # vencimiento ya no es trabajo de nadie (mismo criterio que el panel).
-    attempts = KnowledgeAssessment.objects.filter(operator=operator, is_active=True)
-    latest_passed = attempts.filter(passed=True).order_by("-taken_at").first()
-    if latest_passed and latest_passed.expires_on:
-        _add(
-            check,
-            *_expiry_finding(
-                _("Knowledge assessment"), latest_passed.expires_on, today, url, ""
-            ),
-        )
-    elif latest_passed is None and attempts.exists():
-        # Se rindió y no se aprobó: no es lo mismo que no haber rendido, y
-        # callarlo daría por cumplido lo que la prueba dijo que no.
-        _add(
-            check,
-            "blocker",
-            Finding(
-                label=_("Knowledge assessment"),
-                detail=_("The last attempt was not passed."),
-                url=url,
-            ),
-        )
-
+    _check_evaluations(check, operator, aircraft, today, url)
     for document in _expiring_documents(Document, operator):
         _add(
             check,
@@ -263,6 +239,134 @@ def _check_operator(operator, today):
             ),
         )
     return check
+
+
+def _not_passed(check, label, url):
+    check.blockers.append(
+        Finding(label=label, detail=_("The last attempt was not passed."), url=url)
+    )
+
+
+def _missing(check, label, detail, url):
+    check.blockers.append(Finding(label=label, detail=detail, url=url))
+
+
+def _check_evaluations(check, operator, aircraft, today, url):
+    """LV-444 (Act. 19, REG-019): las evaluaciones teóricas del operador.
+
+    **Sin ningún intento cargado no se juzga nada** (como antes, LV-439): un
+    operador que aún no rindió no pasa a «no puede volar» el día del despliegue.
+
+    Con sólo intentos previos (`legacy`, la prueba única de LV-158) rige la regla
+    de siempre: la vigencia es la del último **aprobado**; un reprobado no acredita
+    nada y tampoco anula un aprobado vigente.
+
+    **Desde el primer intento de las evaluaciones del Manual** rige el conjunto
+    completo, y cada pata bloquea por separado:
+
+    1. examen **general** aprobado (o convalidación cargada como REG-018);
+    2. **limitaciones y emergencias** aprobadas para el modelo de **esta**
+       aeronave (se compara con el catálogo de modelos; si ninguno la cubre, no se
+       puede comprobar y se avisa, no se bloquea: es una heurística por palabras
+       clave, como la compatibilidad operador–aeronave);
+    3. **cuestionario anual** vigente (un `legacy` aprobado cuenta como anual
+       hasta su `expires_on`) **o** instrucción inicial —el examen general
+       aprobado— de menos de 12 meses.
+
+    Las partes sin fecha (general, limitaciones) no vencen por calendario.
+    """
+    from apps.compliance.models import Document
+    from apps.registry import assessments
+    from apps.registry.models import KnowledgeAssessment
+
+    attempts = KnowledgeAssessment.objects.filter(operator=operator, is_active=True)
+    if not attempts.exists():
+        return
+    passed = attempts.filter(passed=True).order_by("-taken_at")
+    annual_kinds = (KnowledgeAssessment.KIND_ANNUAL, KnowledgeAssessment.KIND_LEGACY)
+
+    if not attempts.exclude(kind=KnowledgeAssessment.KIND_LEGACY).exists():
+        label = _("Knowledge assessment")
+        latest = passed.first()
+        if latest and latest.expires_on:
+            _add(check, *_expiry_finding(label, latest.expires_on, today, url, ""))
+        elif latest is None:
+            _not_passed(check, label, url)
+        return
+
+    # 1. General (o convalidación REG-018).
+    label = _("General exam")
+    latest_general = passed.filter(kind=KnowledgeAssessment.KIND_GENERAL).first()
+    convalidated = Document.objects.filter(
+        is_active=True,
+        is_current_version=True,
+        doc_type__reference_code=assessments.CONVALIDATION_REFERENCE_CODE,
+        content_type__app_label="registry",
+        content_type__model="operator",
+        object_id=operator.pk,
+    ).exists()
+    if latest_general is None and not convalidated:
+        if attempts.filter(kind=KnowledgeAssessment.KIND_GENERAL).exists():
+            _not_passed(check, label, url)
+        else:
+            _missing(check, label, _("No general exam on file."), url)
+
+    # 2. Limitaciones y emergencias del modelo de esta aeronave.
+    label = _("Limitations and emergencies")
+    if aircraft is not None:
+        families = assessments.families_for_aircraft(aircraft)
+        if not families:
+            check.warnings.append(
+                Finding(
+                    label=label,
+                    detail=_(
+                        "No RPA model in the catalog matches this aircraft, so this exam cannot be checked."
+                    ),
+                    url=url,
+                )
+            )
+        else:
+            limitations = attempts.filter(
+                kind=KnowledgeAssessment.KIND_LIMITATIONS, aircraft_family__in=families
+            )
+            if not limitations.filter(passed=True).exists():
+                if limitations.exists():
+                    _not_passed(check, label, url)
+                else:
+                    _missing(
+                        check,
+                        label,
+                        _("Not taken for the model «%(model)s».")
+                        % {"model": families[0]},
+                        url,
+                    )
+
+    # 3. Cuestionario anual vigente, o instrucción inicial de menos de 12 meses.
+    label = _("Annual questionnaire")
+    expiries = []
+    latest_annual = passed.filter(
+        kind__in=annual_kinds, expires_on__isnull=False
+    ).first()
+    if latest_annual:
+        expiries.append(latest_annual.expires_on)
+    if latest_general:
+        expiries.append(
+            assessments.add_months(
+                timezone.localtime(latest_general.taken_at).date(),
+                assessments.INITIAL_INSTRUCTION_MONTHS,
+            )
+        )
+    if expiries:
+        _add(check, *_expiry_finding(label, max(expiries), today, url, ""))
+    elif attempts.filter(kind__in=annual_kinds).exists():
+        _not_passed(check, label, url)
+    else:
+        _missing(
+            check,
+            label,
+            _("No annual questionnaire or initial instruction on file."),
+            url,
+        )
 
 
 def _expiring_documents(Document, subject):
@@ -464,7 +568,7 @@ def can_fly(aircraft, operator, cost_center, today):
     return Verdict(
         checks=[
             _check_aircraft(aircraft, today),
-            _check_operator(operator, today),
+            _check_operator(operator, today, aircraft),
             _check_permission(aircraft, operator, cost_center, today),
             _check_pairing(aircraft, operator, cost_center, today),
         ]

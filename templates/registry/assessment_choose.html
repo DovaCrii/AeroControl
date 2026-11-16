@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-444: elegir qué evaluación rendir (Act. 19, REG-019). El examen
+general es la instrucción inicial; limitaciones y emergencias se rinden por modelo
+de RPA; el cuestionario anual lleva las dos partes. Sin banco cargado se dice, en
+vez de ofrecer algo que no se puede rendir.{% endcomment %}
+{% translate "Knowledge assessment" as page_title %}<div class="page-header">
+  {% with page_eyebrow=operator %}{% include "generic/_page_header.html" %}{% endwith %}
+  {% if can_see_bank %}<a class="btn btn-outline-secondary" href="{% url 'assessment-bank' %}">{% translate "Question bank" %}</a>{% endif %}
+</div>
+
+{% if not bank_loaded %}
+<div class="alert alert-warning" role="alert">{% translate "The question bank is not loaded." %}</div>
+{% endif %}
+
+<div class="row g-3">
+  {% for item in kinds %}
+  <div class="col-md-4">
+    <form method="get" class="card p-3 h-100" action="{% url 'assessment-take' %}">
+      <input type="hidden" name="kind" value="{{ item.kind }}">
+      <h2 class="h5">{{ item.label }}</h2>
+      <ul class="small text-body-secondary ps-3">
+        {% for plan in item.parts %}
+        <li>{% if item.parts|length > 1 %}{% translate "Part" %} {{ plan.part }} · {% endif %}{{ plan.threshold }}%</li>
+        {% endfor %}
+      </ul>
+      {% if item.needs_family %}
+      <label class="form-label small" for="family-{{ item.kind }}">{% translate "RPA model" %}</label>
+      <select class="form-select mb-3" id="family-{{ item.kind }}" name="family" required>
+        <option value="">---------</option>
+        {% for family in families %}<option value="{{ family.pk }}">{{ family }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <button type="submit" class="btn btn-primary mt-auto" {% if not bank_loaded %}disabled{% endif %}>{% translate "Take the assessment" %}</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

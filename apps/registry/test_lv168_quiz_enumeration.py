@@ -24,10 +24,12 @@ Las propiedades que estos tests sostienen, y por qué cada una:
 import re
 from pathlib import Path
 
+import pytest
 from django.conf import settings
 from django.template import Context, Template
 
 from apps.registry import assessments
+from apps.registry.assessment_testing import make_question
 
 CSS = Path(settings.BASE_DIR) / "static" / "css" / "app.css"
 TAKE = Path(settings.BASE_DIR) / "templates" / "registry" / "assessment_take.html"
@@ -96,10 +98,14 @@ def test_a_metar_is_never_mistaken_for_an_enumeration():
     assert assessments.enumerated_lines(text) == [text]
 
 
+@pytest.mark.django_db
 def test_every_question_in_the_bank_survives_the_split_unchanged():
-    """La propiedad, sobre el banco real y no sobre un ejemplo elegido."""
+    """La propiedad, sobre un banco inventado con una pregunta enumerada."""
+    make_question("general", 1, text=CODIGO_AERONAUTICO)
+    make_question("general", 2, text="¿QUÉ ES UN NOTAM?")
     split_questions = 0
-    for question in assessments.draw_questions(count=assessments.bank_size(), seed=1):
+    drawn = assessments.draw_questions("general", seed=1)["A"]
+    for question in drawn:
         lines = assessments.enumerated_lines(question["text"])
         assert " ".join(lines) == question["text"]
         if len(lines) > 1:

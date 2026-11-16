@@ -2931,14 +2931,6 @@ msgstr ""
 "no tiene dónde quedar. Solicite que se haga el vínculo en la ficha del "
 "operador."
 
-#: .\apps\registry\assessment_views.py:80
-msgid "The question bank is not available right now."
-msgstr "El banco de preguntas no está disponible por ahora."
-
-#: .\apps\registry\assessment_views.py:108
-msgid "The assessment expired. Here is a new set of questions."
-msgstr "La evaluación expiró. Acá va un juego nuevo de preguntas."
-
 #: .\apps\registry\assessment_views.py:180
 msgid "You do not have permission to take the assessment."
 msgstr "No tiene permiso para rendir la evaluación."
@@ -7295,11 +7287,6 @@ msgstr ""
 "No se borra nada: el intento queda en el historial, marcado como archivado, "
 "y se puede restaurar desde la ficha de la persona."
 
-#: .\templates\registry\assessment_detail.html:26
-#, python-format
-msgid "%(correct)s of %(total)s correct · %(percent)s%% required"
-msgstr "%(correct)s de %(total)s correctas · se exige %(percent)s%%"
-
 #: .\templates\registry\assessment_detail.html:29
 #, python-format
 msgid "Valid until %(date)s"
@@ -7343,14 +7330,6 @@ msgstr "Para aprobar"
 #: .\templates\registry\assessment_take.html:51
 msgid "Months of validity"
 msgstr "Meses de vigencia"
-
-#: .\templates\registry\assessment_take.html:53
-msgid ""
-"The result is filed on your record and feeds the same expiry warnings as "
-"your DGAC credential."
-msgstr ""
-"El resultado queda en su ficha y entra al mismo aviso de vencimientos que su"
-" credencial DGAC."
 
 #: .\templates\registry\assessment_take.html:102
 #, python-brace-format
@@ -15508,4 +15487,86 @@ msgstr "Mantención media (400 h o 12 meses) y avanzada (600 h o 18 meses) en se
 #~ "circle per request, and that is the smallest one covering the whole area."
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
+#~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+msgid "Previous assessment"
+msgstr "Evaluación anterior"
+
+msgid "General exam"
+msgstr "Examen general"
+
+msgid "Limitations and emergencies"
+msgstr "Limitaciones y emergencias"
+
+msgid "Annual questionnaire"
+msgstr "Cuestionario anual"
+
+msgid "Assessment type"
+msgstr "Tipo de evaluación"
+
+msgid "RPA model"
+msgstr "Modelo de RPA"
+
+msgid "Scores by part"
+msgstr "Puntajes por parte"
+
+msgid "This assessment is taken per RPA model."
+msgstr "Esta evaluación se rinde por modelo de RPA."
+
+msgid "assessment question"
+msgstr "pregunta de evaluación"
+
+msgid "assessment questions"
+msgstr "preguntas de evaluación"
+
+msgid "Question"
+msgstr "Pregunta"
+
+msgid "A question needs at least two distinct options."
+msgstr "Una pregunta necesita al menos dos opciones distintas."
+
+msgid "The correct answer must be one of the options."
+msgstr "La respuesta correcta debe ser una de las opciones."
+
+msgid "The question bank is not loaded."
+msgstr "El banco de preguntas no está cargado."
+
+msgid "Unknown assessment type."
+msgstr "Tipo de evaluación desconocido."
+
+msgid "Choose the RPA model for this assessment."
+msgstr "Elija el modelo de RPA de esta evaluación."
+
+msgid "The assessment expired. Choose it again."
+msgstr "La evaluación expiró. Vuelva a elegirla."
+
+msgid "Question bank"
+msgstr "Banco de preguntas"
+
+msgid "No general exam on file."
+msgstr "No hay examen general registrado."
+
+#, python-format
+msgid "Not taken for the model «%(model)s»."
+msgstr "No se ha rendido para el modelo «%(model)s»."
+
+msgid "No RPA model in the catalog matches this aircraft, so this exam cannot be checked."
+msgstr "Ningún modelo de RPA del catálogo corresponde a esta aeronave, así que no se puede comprobar este examen."
+
+msgid "No annual questionnaire or initial instruction on file."
+msgstr "No hay cuestionario anual ni instrucción inicial registrados."
+
+msgid "Part"
+msgstr "Parte"
+
+msgid "required"
+msgstr "exigido"
+
+#, python-format
+msgid "%(correct)s of %(total)s correct"
+msgstr "%(correct)s de %(total)s correctas"
+
+msgid "The result is filed on your record. Every part must reach its percentage to pass."
+msgstr "El resultado queda en su ficha. Cada parte debe alcanzar su porcentaje para aprobar."
+
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."

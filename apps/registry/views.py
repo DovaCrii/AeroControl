@@ -417,16 +417,23 @@ class KnowledgeAssessmentArchive(RegistryArchive):
         today = timezone.localdate()
         if obj.expires_on and obj.expires_on < today:
             return False
-        return not (
-            KnowledgeAssessment.objects.filter(
-                operator=obj.operator,
-                is_active=True,
-                passed=True,
-                expires_on__gte=today,
-            )
-            .exclude(pk=obj.pk)
-            .exists()
-        )
+        others = KnowledgeAssessment.objects.filter(
+            operator=obj.operator, is_active=True, passed=True
+        ).exclude(pk=obj.pk)
+        if obj.kind in (
+            KnowledgeAssessment.KIND_GENERAL,
+            KnowledgeAssessment.KIND_LIMITATIONS,
+        ):
+            # LV-444: no vencen por calendario; lo que se pierde es el único
+            # aprobado de ese tipo (y de ese modelo, en limitaciones).
+            return not others.filter(
+                kind=obj.kind, aircraft_family=obj.aircraft_family
+            ).exists()
+        # Anual y previos: cuentan los dos como cuestionario anual vigente.
+        return not others.filter(
+            kind__in=(KnowledgeAssessment.KIND_ANNUAL, KnowledgeAssessment.KIND_LEGACY),
+            expires_on__gte=today,
+        ).exists()
 
     def success_url(self, obj):
         return reverse("operator-detail", args=[obj.operator_id])

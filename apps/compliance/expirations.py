@@ -345,11 +345,19 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
     # que nadie ve venir no sirve para eso. Sólo la **última** de cada operador:
     # los intentos anteriores son historial, y su vencimiento ya no es trabajo.
     # LV-439: sólo cuentan los **aprobados**; un reprobado no acredita vigencia.
+    # LV-444: y sólo los que **vencen** (`expires_on` no nulo: cuestionario anual y
+    # los previos); el examen general y limitaciones y emergencias no vencen por
+    # calendario. La última de cada operador **se elige antes de mirar la fecha**:
+    # filtrar por ventana primero dejaba ver un aprobado viejo cuando ya había uno
+    # más nuevo fuera de ella.
     assessments = (
         tenant(
             without_departed(
                 KnowledgeAssessment.objects.filter(
-                    is_active=True, passed=True, expires_on__lte=cutoff
+                    is_active=True,
+                    passed=True,
+                    expires_on__isnull=False,
+                    kind__in=("annual", "legacy"),
                 )
             ),
             "operator__tenant_id",
@@ -364,6 +372,8 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
         if assessment.operator_id in seen_operators:
             continue
         seen_operators.add(assessment.operator_id)
+        if assessment.expires_on > cutoff:
+            continue
         add(
             KnowledgeAssessment,
             assessment.pk,
@@ -376,7 +386,6 @@ def upcoming_expirations(today, cutoff, cost_center=None, user=None):
                 "url": reverse("operator-detail", args=[assessment.operator_id]),
             },
         )
-
     document_qs = tenant(
         without_departed(
             Document.objects.filter(
