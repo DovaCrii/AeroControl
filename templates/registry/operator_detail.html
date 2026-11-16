@@ -36,7 +36,9 @@
     </div>
   </div>
   {% endif %}
-  {% include "generic/_fields_detail_table.html" with exclude="left_company_on,departure_reason,departure_note" %}
+  {% comment %}LV-450: tarjetas por tema en vez de la tabla clave/valor; mismo `exclude`
+  (LV-369): la salida de la empresa no se dibuja aquí.{% endcomment %}
+  {% include "generic/_sheet.html" with exclude="left_company_on,departure_reason,departure_note" %}
 </div>
 
 {% comment %}LV-175: el bloque de habilitaciones estructuradas se **oculta**, con

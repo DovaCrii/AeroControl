@@ -1,0 +1,35 @@
+{% load aero_tags i18n %}
+{% comment %}LV-450: ficha por tarjetas. Agrupación declarada en apps/core/detail_layout.py;
+los vacíos van al final en un <details>, salvo los obligatorios para operar.{% endcomment %}
+{% with sheet=object|fields_grouped:exclude %}
+<div class="tk-sheet">
+  {% for group in sheet.groups %}
+  <section class="tk-card tk-card--{{ group.key }}" aria-labelledby="sheet-{{ group.key }}">
+    <h2 class="tk-card__title" id="sheet-{{ group.key }}">{{ group.label }}</h2>
+    <dl class="tk-dl">
+      {% for field in group.fields %}
+      <div class="tk-dl__row">
+        <dt>{{ field.label }}</dt>
+        <dd>
+          {% if field.is_empty %}<span class="tk-empty">— {% translate "Not registered" %}</span>
+          {% elif field.is_boolean %}{% if field.value %}✓ {% translate "Yes" %}{% else %}✕ {% translate "No" %}{% endif %}
+          {% elif field.is_choice %}{{ field.choice_value }}
+          {% elif field.is_date %}<time datetime="{{ field.value|date:'Y-m-d' }}">{{ field.value|date:"d-m-Y" }}</time>
+          {% elif field.url %}<a href="{{ field.url }}">{{ field.value }}</a>
+          {% elif field.is_url %}<a href="{{ field.value }}" target="_blank" rel="noopener noreferrer">{{ field.value }}</a>
+          {% elif field.is_code %}<span class="tk-code">{{ field.value }}</span>
+          {% else %}{{ field.value|linebreaksbr }}{% endif %}
+        </dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </section>
+  {% endfor %}
+</div>
+{% if sheet.empty %}
+<details class="tk-empty-fields">
+  <summary>{% blocktranslate count n=sheet.empty|length %}{{ n }} field not recorded{% plural %}{{ n }} fields not recorded{% endblocktranslate %}</summary>
+  <p class="mb-0">{{ sheet.empty|join:", " }}</p>
+</details>
+{% endif %}
+{% endwith %}

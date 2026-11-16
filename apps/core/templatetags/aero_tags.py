@@ -4,6 +4,7 @@ from django import template
 from django.db import models
 from django.utils.translation import gettext as _
 
+from apps.core.detail_layout import ALWAYS_SHOWN, CODE_FIELDS, LAYOUTS, OTHER_GROUP
 from apps.core.forms import translate_field_label
 
 register = template.Library()
@@ -45,8 +46,15 @@ def fields_detail(obj, exclude=""):
         if is_choice and raw is not None:
             choice_value = dict(field.choices).get(raw, raw)
 
+        url = ""
+        if field.is_relation and raw is not None and hasattr(raw, "get_absolute_url"):
+            url = raw.get_absolute_url()
+
         result.append(
             {
+                "name": field.name,
+                "url": url,
+                "is_code": field.name in CODE_FIELDS,
                 # Same normalise-then-translate path AeroModelForm uses for its
                 # labels, so the detail page and the edit form agree instead of
                 # showing English here and Spanish there.
@@ -60,6 +68,41 @@ def fields_detail(obj, exclude=""):
             }
         )
     return result
+
+
+@register.filter
+def fields_grouped(obj, exclude=""):
+    """Group `fields_detail` into cards per `detail_layout.LAYOUTS` (LV-450).
+
+    Returns {"groups": [...], "empty": [labels]}. A field with a value appears
+    in its group; an empty one is listed once in `empty` -- unless it is in
+    ALWAYS_SHOWN, which stays in its card marked `is_empty`. A group with no
+    fields to show is not drawn. Models without a layout return no groups.
+    """
+    layout = LAYOUTS.get(obj._meta.label_lower) if obj else None
+    if layout is None:
+        return {"groups": [], "empty": []}
+    always = ALWAYS_SHOWN.get(obj._meta.label_lower, frozenset())
+    by_name = {f["name"]: f for f in fields_detail(obj, exclude)}
+    named = {name for _key, _label, names in layout for name in names}
+    spec = list(layout) + [
+        (OTHER_GROUP[0], OTHER_GROUP[1], tuple(n for n in by_name if n not in named))
+    ]
+    groups, empty = [], []
+    for key, label, names in spec:
+        shown = []
+        for name in names:
+            field = by_name.get(name)
+            if field is None:
+                continue
+            is_empty = field["value"] in ("", None)
+            if is_empty and name not in always:
+                empty.append(field["label"])
+                continue
+            shown.append({**field, "is_empty": is_empty})
+        if shown:
+            groups.append({"key": key, "label": label, "fields": shown})
+    return {"groups": groups, "empty": empty}
 
 
 @register.filter

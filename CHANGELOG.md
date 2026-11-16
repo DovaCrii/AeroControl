@@ -8,6 +8,9 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ## [Unreleased]
 
+### Changed
+
+- **Ficha del operador por tarjetas agrupadas (`LV-450`, `codex/detail-sheet`).** Identificación, contacto, credencial, habilitaciones, asignación y notas en tarjetas; los campos vacíos van al pie en un `<details>` (la credencial y su vencimiento se muestran como «Sin registrar»). Sin migración; lleva `collectstatic` y cambia el `.mo`.
 ### Added
 
 - **Ilustraciones técnicas, lote 1 (`LV-451`, `codex/tk-illustrations-1`).** `tk-operator` y `tk-quad-top`: trazo de línea que toma el color del tema (claro y oscuro) en las listas vacías de operadores, asignaciones, habilitaciones y en la lista genérica. Sin migración; lleva `collectstatic`.

@@ -1,1 +1,83 @@
-/* LV-446: hoja de la ficha técnica (tarjetas por tema, cabecera). Vacía hasta PR4. Sólo --id-*. Guardián: pps/core/test_tech_css.py. */
+/* LV-446/LV-450: hoja de la ficha técnica (tarjetas por tema). Sólo --id-*; lee --ac-*. Guardián: apps/core/test_tech_css.py. */
+
+.tk-sheet {
+  display: grid;
+  gap: var(--id-sp-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+
+.tk-card {
+  container-type: inline-size;
+  padding: var(--id-sp-2);
+  border: 1px solid var(--id-edge);
+  border-radius: var(--id-r-card);
+  background: var(--ac-surface);
+}
+
+.tk-card--qualifications,
+.tk-card--notes {
+  grid-column: 1 / -1;
+}
+
+.tk-card__title {
+  margin: 0 0 0.75rem;
+  font-size: var(--id-fs-md);
+  font-weight: 700;
+}
+
+.tk-dl {
+  margin: 0;
+}
+
+.tk-dl__row {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--ac-border);
+}
+
+.tk-dl__row:first-child {
+  border-top: 0;
+}
+
+@container (min-width: 30rem) {
+  .tk-dl__row {
+    grid-template-columns: minmax(8rem, 38%) 1fr;
+    gap: 1rem;
+    align-items: baseline;
+  }
+}
+
+.tk-dl dt {
+  color: var(--id-tk-label);
+  font-size: var(--id-fs-sm);
+  font-weight: 600;
+}
+
+.tk-dl dd {
+  margin: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.tk-empty {
+  color: var(--id-tk-empty);
+  font-weight: 400;
+}
+
+.tk-empty-fields {
+  margin-top: var(--id-sp-2);
+  color: var(--id-tk-empty);
+  font-size: var(--id-fs-sm);
+}
+
+.tk-empty-fields summary {
+  color: var(--id-tk-label);
+  cursor: pointer;
+}
+
+.tk-empty-fields summary:focus-visible {
+  outline: 2px solid var(--ac-focus-ring);
+  outline-offset: 2px;
+}
