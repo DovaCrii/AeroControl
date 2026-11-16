@@ -475,7 +475,7 @@ class TestWhatChangedSinceTheLastReport:
 
 
 def _run(note="", findings=()):
-    return SimpleNamespace(period_note=note, findings=list(findings))
+    return SimpleNamespace(period_note=note, manual_note="", findings=list(findings))
 
 
 def _figures(**centres):
@@ -554,6 +554,7 @@ class TestTheNarrativeDoesNotContradictTheFigures:
         payload = _figures(CC706=(0, 1))
         run = SimpleNamespace(
             period_note="Los permisos vigentes del CC 706 renovaron.",
+            manual_note="",
             findings=[{"title": "x", "text": "y"}],
             is_editable=True,
         )

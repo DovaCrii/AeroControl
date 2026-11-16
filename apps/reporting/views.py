@@ -127,7 +127,13 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         )
         # LV-378: la observación escrita ocupa lo que ocupa su texto; el diseño 2 lo
         # descuenta del techo de la última hoja de permisos.
-        context.update(self._sheets(payload, run.period_note if run else ""))
+        context.update(
+            self._sheets(
+                payload,
+                run.period_note if run else "",
+                run.manual_note if run else "",
+            )
+        )
         # LV-260: la hoja ejecutiva, calculada del payload y no de la base.
         context["summary"] = executive_summary(payload)
         # LV-378: la del diseño 2 (sólo se dibuja con `meta.layout == 2`).
@@ -157,7 +163,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         return self.request.user.has_perm("reporting.issue_early_reportrun")
 
     @staticmethod
-    def _sheets(payload, period_note=""):
+    def _sheets(payload, period_note="", manual_note=""):
         """El reparto de las tablas en hojas, y la numeración del documento.
 
         ⚠️ **La numeración se asigna acá, en un solo lugar.** Antes cada plantilla
@@ -230,7 +236,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         matrix_rows = len((plan.get("matrix") or {}).get("rows") or []) or 4
         if layout >= 2:
             return MonthlyReportView._tail_v2(
-                payload, permit_sheets, after, matrix_rows
+                payload, permit_sheets, after, matrix_rows, manual_note
             )
         plan_joins = plan_fits_with_coverage(
             len(payload.get("cost_centres") or []), matrix_rows
@@ -271,7 +277,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         }
 
     @staticmethod
-    def _tail_v2(payload, permit_sheets, after, matrix_rows):
+    def _tail_v2(payload, permit_sheets, after, matrix_rows, manual_note=""):
         """LV-378: la cobertura, el plan y el anexo del diseño 2.
 
         Misma lógica que la de siempre —el plan compacto comparte hoja con la cobertura
@@ -302,6 +308,52 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         plan_page = None if plan_joins else after + 1
         last_fixed = coverage_page if plan_joins else plan_page
 
+        # LV-445: la sección 5 (Manual, Act. 19) va después del plan y antes del anexo,
+        # y **sólo si el payload congelado trae la llave `manual`**: los informes
+        # emitidos antes no la traen y conservan su paginación y sus hojas.
+        manual_sheets = []
+        if payload.get("manual"):
+            from .pagination import (
+                FOOTER_TOP_PX,
+                V2_CONTINUATION_TOP_PX,
+                V2_MANUAL_FIRST_TOP_PX,
+                V2_MANUAL_ROW_PX,
+                manual_closing_px,
+            )
+
+            manual_rows = (payload["manual"].get("missions") or {}).get("rows") or []
+            # Primero sólo la tabla; después se mira si lo que la cierra cabe debajo
+            # de la última fila. Si no cabe, va a una hoja propia **sin filas**: es
+            # mejor que dejar una sola faena huérfana en una hoja de continuación
+            # sólo para arrastrar el cierre.
+            manual_sheets = sheets_for(
+                manual_rows,
+                closing_px=0,
+                estimate=lambda _row: V2_MANUAL_ROW_PX,
+                first_top=V2_MANUAL_FIRST_TOP_PX,
+                continuation_top=V2_CONTINUATION_TOP_PX,
+                safety=V2_SAFETY_PX,
+            )
+            gaps = len((payload["manual"].get("inspections") or {}).get("gaps") or [])
+            tail = manual_sheets[-1]
+            used = (
+                V2_MANUAL_FIRST_TOP_PX
+                if len(manual_sheets) == 1
+                else V2_CONTINUATION_TOP_PX
+            ) + V2_MANUAL_ROW_PX * len(tail["rows"])
+            if (
+                used + manual_closing_px(manual_note, gaps) + V2_SAFETY_PX
+                > FOOTER_TOP_PX
+            ):
+                tail["last"] = False
+                manual_sheets.append({"rows": [], "first": False, "last": True})
+            for offset, sheet in enumerate(manual_sheets):
+                sheet["page"] = last_fixed + 1 + offset
+                sheet["index"] = offset + 1
+                sheet["of"] = len(manual_sheets)
+                sheet["total"] = len(manual_rows)
+            last_fixed += len(manual_sheets)
+
         # El anexo lista **todos** los permisos (vigentes, en trámite y vencidos sin
         # cerrar), con o sin operadores: es el registro, y su total declarado es el de
         # la invariante I8.
@@ -325,6 +377,7 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             "plan_page": plan_page,
             "plan_joins_coverage": plan_joins,
             "coverage_section": "coverage_plan_v2" if plan_joins else "coverage_v2",
+            "manual_sheets": manual_sheets,
             "roster_sheets": roster_sheets if rows else [],
             "total_pages": last_fixed + (len(roster_sheets) if rows else 0),
         }
@@ -626,7 +679,15 @@ class ReportNarrativeUpdate(ModelPermissionRequiredMixin, View):
         # modelo justamente para que ningún camino la esquive, y la vista es un
         # camino más.
         run.full_clean()
-        run.save(update_fields=["period_note", "findings", "actions", "updated_at"])
+        run.save(
+            update_fields=[
+                "period_note",
+                "manual_note",
+                "findings",
+                "actions",
+                "updated_at",
+            ]
+        )
         set_audit_context(request, run, action="update")
         messages.success(request, _("Saved successfully."))
         return redirect(f"{reverse('monthly-report')}?period={run.period:%Y-%m}")

@@ -505,3 +505,41 @@ def roster_row_px_v2(row):
     chars = sum(len(name) for name in names) + 3 * max(len(names) - 1, 0)
     lines = max(1, -(-chars // V2_ROSTER_CHARS_PER_LINE))
     return V2_ROSTER_ROW_BASE_PX + V2_ROSTER_LINE_PX * (lines - 1)
+
+
+# -- LV-445 · La sección 5 (Manual de Operaciones, Act. 19) --------------------------
+#
+# Se reparten **las filas del REG-016 por centro de costo**; lo que va debajo de la
+# tabla (5.2 en renglones, 5.3 «qué cambió» y la observación escrita) cierra la última
+# hoja, y si no cabe debajo de la última fila va a una hoja propia, sin filas.
+#
+# **Medido el 2026-11-16** imprimiendo a PDF con Edge sin cabeza y leyendo la posición
+# de cada texto con `pypdf` (`test_lv445_manual_pdf.py`, con 3, 15 y 40 faenas, 20
+# aeronaves y una observación de 1200 caracteres). No salen del diseño:
+#
+# | | medido | usado |
+# |---|---|---|
+# | Primera fila de la tabla, hoja 1 (cabecera, recuadro, cinco cifras, rótulo) | 389 | 392 |
+# | Primera fila en una hoja de continuación | 212 | `V2_CONTINUATION_TOP_PX` (225) |
+# | Fila de la tabla (paso entre filas) | 25,5 | 26 |
+# | De la última fila al final de 5.3 (nota, 5.2 con un renglón de faltantes, 5.3) | 353 | 365 |
+# | Cada renglón de matrículas sin LVE-002 de más | 15,7 | 16 |
+# | Observación escrita de 1200 caracteres, con su rótulo | 259 | 305 (`observation_px`) |
+#
+# Redondeado hacia arriba: equivocarse por exceso deja un hueco; por defecto, el cuerpo
+# `overflow: hidden` recorta una fila sin avisar. Si se cambia el CSS o la plantilla de
+# `_page7_manual.html`, se vuelve a correr ese test y se ajustan.
+V2_MANUAL_FIRST_TOP_PX = 392
+V2_MANUAL_ROW_PX = 26
+V2_MANUAL_BLOCK_PX = 365
+V2_MANUAL_GAP_LINE_PX = 16
+V2_MANUAL_GAPS_PER_LINE = 9
+
+
+def manual_closing_px(note="", gaps=0):
+    """Lo que cierra la sección 5: la nota de la tabla, 5.2 y 5.3 y, si hay, la
+    observación escrita (que crece con el texto). `gaps` son las matrículas sin
+    LVE-002 vigente, que van en un renglón de 5.2 y envuelven de a nueve."""
+    extra_lines = max(0, -(-gaps // V2_MANUAL_GAPS_PER_LINE) - 1)
+    cost = V2_MANUAL_BLOCK_PX + V2_MANUAL_GAP_LINE_PX * extra_lines
+    return cost + (observation_px(note) if note else 0)

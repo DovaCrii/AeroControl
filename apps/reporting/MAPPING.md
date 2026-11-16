@@ -320,3 +320,19 @@ heredaba sumada y ahora trae `insurance_missing`/`insurance_lapsed` y
    proyecto. Generar, ver y aprobar el informe **no** depende de él; enviarlo sí.
 5. **Semáforo del CC = el peor de sus habilitantes**, no el promedio (§4.2). Un CC
    con cuatro verdes y un rojo es rojo.
+
+## Act. 19 del Manual de Operaciones (`payload["manual"]`, LV-445)
+
+Sección 5 del informe, sólo si el corte es del 2026-11-10 en adelante (`manual.ACT19_EFFECTIVE`); antes la llave no existe y los informes anteriores se dibujan como se emitieron. Todo número es una hoja `{value, source, cutoff}`; `None` = «Pendiente», nunca 0.
+
+| Ruta | Fuente | Regla |
+|---|---|---|
+| `manual.window` | corte | `[max(1.º del mes, 2026-11-10), corte]` |
+| `manual.missions.rows[]` / `kpis` | `compliance.Document` (`flight-log`, REG-016) por faena | en plazo = cargado a más tardar el día siguiente a `issue_date`; importado en lote o sin fecha = sin evaluar; cierre mensual de `MonthlyComplianceReview` |
+| `manual.missions.kpis.missions_flown` / `missions_without_record` | `operations.FlightRecord` | pares (faena, día); `None` si no hay vuelos digitales |
+| `manual.missions.kpis.reviewed_within_24h` | — | `None` hasta B5a |
+| `manual.inspections` | `Document` (`drone-inspection`, LVE-002) por aeronave de `operational_fleet()` | vigente / vencida / sin fecha / sin documento; `gaps` = matrículas no vigentes |
+| `manual.evaluations` | `registry.KnowledgeAssessment` (LV-439: sólo aprobados) y `Document` REG-018/019 | `format: "lv158"` hasta B6 |
+| `manual.maintenance` | `maintenance.MaintenanceRecord` activos | `due_by_level` `None` hasta B8 |
+
+Invariantes I9 e I10 en `invariants.py`; avisos en `checks.manual_warnings`. Paginación medida en `pagination.V2_MANUAL_*` (`test_lv445_manual_pdf.py`).

@@ -1,0 +1,146 @@
+{% load report_leaf %}
+{% comment %}LV-445 · Sección 5 v2 · Cumplimiento del Manual de Operaciones (Act. 19).
+
+Sólo se dibuja si el payload congelado trae la llave `manual` (`monthly_report.html` no
+incluye esta hoja si `manual_sheets` está vacío): los informes de octubre y anteriores
+no la traen y salen idénticos. **Todo número es una hoja `{% leaf %}`**: sin dato se
+dibuja «Pendiente» punteado y nunca cero (un tipo de documento que no existe todavía, la
+revisión en 24 h que aún no tiene fuente). La hoja publica sólo cifras y matrículas de
+RPA —ningún nombre de persona—.
+
+Paginada por las filas del REG-016 por centro de costo (`views._tail_v2`, alturas en
+`pagination.py`); la primera hoja trae el recuadro y la franja de cifras, y la última
+cierra con 5.2, 5.3 y la observación escrita. Texto en español y sin `{% translate %}`:
+es el documento.{% endcomment %}
+<div class="rpt-page rpt2-page">
+
+  {% include "reporting/_head.html" %}
+
+  <div class="rpt-body rpt2-body">
+    <div>
+      <div class="rpt-h2"><span class="rpt-h2-num">5</span><span class="rpt-h2-text">Cumplimiento del Manual de Operaciones (Act. 19){% if not sheet.first %} · continuación{% endif %}</span></div>
+      <div class="rpt-h2-rule"></div>
+    </div>
+
+    {% if sheet.first %}
+    <div class="rpt2-manual-box">
+      Act. 19 aprobada por la DGAC el {{ payload.manual.edition.approved_on|as_date|date:"d-m-Y" }}. Medido desde el {{ payload.manual.window.from|as_date|date:"d-m-Y" }} al corte.{% if payload.meta.internal_control_note %} {{ payload.meta.internal_control_note }}{% endif %}
+    </div>
+
+    <div class="rpt2-kpis rpt2-kpis-5">
+      <div class="rpt2-kpi">
+        <div class="rpt2-kpi-value">{% leaf payload.manual.missions.kpis.records_total %}</div>
+        <div class="rpt2-kpi-name">REG-016 cargados</div>
+        <div class="rpt2-kpi-note">Desde la vigencia</div>
+      </div>
+      <div class="rpt2-kpi">
+        <div class="rpt2-kpi-value">{% leaf payload.manual.missions.kpis.records_on_time %}<span class="rpt2-kpi-of"> / {% leaf payload.manual.missions.kpis.records_assessable %}</span></div>
+        <div class="rpt2-kpi-name">REG-016 en plazo</div>
+        <div class="rpt2-kpi-note">De los evaluables</div>
+      </div>
+      <div class="rpt2-kpi">
+        <div class="rpt2-kpi-value">{% leaf payload.manual.inspections.kpis.in_force %}<span class="rpt2-kpi-of"> / {% leaf payload.manual.inspections.kpis.fleet %}</span></div>
+        <div class="rpt2-kpi-name">LVE-002 vigentes</div>
+        <div class="rpt2-kpi-note">Aeronaves de la flota</div>
+      </div>
+      <div class="rpt2-kpi">
+        <div class="rpt2-kpi-value">{% leaf payload.manual.evaluations.kpis.in_force %}<span class="rpt2-kpi-of"> / {% leaf payload.manual.evaluations.kpis.roster %}</span></div>
+        <div class="rpt2-kpi-name">Evaluaciones vigentes</div>
+        <div class="rpt2-kpi-note">Operadores del padrón</div>
+      </div>
+      <div class="rpt2-kpi">
+        <div class="rpt2-kpi-value">{% leaf payload.manual.maintenance.kpis.completed_in_window %}</div>
+        <div class="rpt2-kpi-name">Mantenciones cerradas</div>
+        <div class="rpt2-kpi-note">En la ventana</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sheet.rows or sheet.first %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">5.1 REG-016 por Centro de Costo · {{ sheet.total }} faena{{ sheet.total|pluralize:"s" }}{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }}{% endif %}</div>
+      <div class="rpt2-table">
+        <div class="rpt2-man rpt2-man-head">
+          <div>Código</div>
+          <div>Faena</div>
+          <div class="rpt2-c">REG-016</div>
+          <div class="rpt2-c">En plazo</div>
+          <div class="rpt2-c">Fuera de plazo</div>
+          <div class="rpt2-c">Sin evaluar</div>
+          <div>Cierre mensual</div>
+        </div>
+        <div class="rpt2-man rpt2-man-body">
+          {% for row in sheet.rows %}
+          <div class="rpt2-cc-code">{{ row.code }}</div>
+          <div class="rpt2-cc-name">{{ row.name }}</div>
+          <div class="rpt2-c rpt2-strong">{% include "reporting/_leaf.html" with value=row.records suffix="" %}</div>
+          <div class="rpt2-c">{% include "reporting/_leaf.html" with value=row.on_time suffix="" %}</div>
+          <div class="rpt2-c">{% include "reporting/_leaf.html" with value=row.late suffix="" %}</div>
+          <div class="rpt2-c">{% include "reporting/_leaf.html" with value=row.not_assessable suffix="" %}</div>
+          <div>{% if row.review == "completed" %}Conforme{% elif row.review == "non_compliant" %}No conforme{% elif row.review == "pending" %}Pendiente{% else %}<span class="rpt2-dash">—</span>{% endif %}</div>
+          {% empty %}
+          <div class="rpt2-empty">Ninguna faena con operación RPA registrada al corte.</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% if sheet.last %}
+      <div class="rpt2-note-line">En plazo: cargado a más tardar el día siguiente a la misión. Sin evaluar: sin fecha de misión o importado en lote.</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if sheet.last %}
+    {% if not sheet.rows and not sheet.first %}
+    <div class="rpt2-note-line">REG-016 por Centro de Costo: en plazo es cargado a más tardar el día siguiente a la misión; sin evaluar, sin fecha de misión o importado en lote.</div>
+    {% endif %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">5.2 Otros indicadores del Manual</div>
+      <div class="rpt2-man-lines">
+        <div class="rpt2-man-line">
+          <div class="rpt2-man-line-name">LVE-002 por aeronave</div>
+          <div>{% leaf payload.manual.inspections.kpis.in_force %} de {% leaf payload.manual.inspections.kpis.fleet %} vigentes · {% leaf payload.manual.inspections.kpis.lapsed %} vencidas · {% leaf payload.manual.inspections.kpis.undated %} sin vencimiento · {% leaf payload.manual.inspections.kpis.missing %} sin inspección.{% if payload.manual.inspections.gaps %} Sin inspección vigente: {{ payload.manual.inspections.gaps|join:", " }}.{% endif %}</div>
+        </div>
+        <div class="rpt2-man-line">
+          <div class="rpt2-man-line-name">Evaluaciones teóricas</div>
+          <div>{% leaf payload.manual.evaluations.kpis.in_force %} de {% leaf payload.manual.evaluations.kpis.roster %} vigentes · {% leaf payload.manual.evaluations.kpis.lapsed %} vencidas · {% leaf payload.manual.evaluations.kpis.failed_only %} sólo reprobadas · {% leaf payload.manual.evaluations.kpis.never %} sin rendir. Prueba interna de conocimientos (formato previo a la Act. 19).</div>
+        </div>
+        <div class="rpt2-man-line">
+          <div class="rpt2-man-line-name">REG-018 · REG-019 · REG-020</div>
+          <div>REG-018: {% leaf payload.manual.evaluations.kpis.reg018_operators %} de {% leaf payload.manual.evaluations.kpis.roster %} operadores · REG-019: {% leaf payload.manual.evaluations.kpis.reg019_operators %} de {% leaf payload.manual.evaluations.kpis.roster %} · REG-020: {% leaf payload.manual.inspections.kpis.reg020_aircraft %} de {% leaf payload.manual.inspections.kpis.fleet %} aeronaves.</div>
+        </div>
+        <div class="rpt2-man-line">
+          <div class="rpt2-man-line-name">Misiones</div>
+          <div>{% leaf payload.manual.missions.kpis.missions_without_record %} de {% leaf payload.manual.missions.kpis.missions_flown %} misiones voladas sin REG-016 · {% leaf payload.manual.missions.kpis.reviewed_within_24h %} revisados en 24 h.</div>
+        </div>
+        <div class="rpt2-man-line">
+          <div class="rpt2-man-line-name">Mantenciones</div>
+          <div>{% leaf payload.manual.maintenance.kpis.completed_in_window %} cerradas · {% leaf payload.manual.maintenance.kpis.open_at_cutoff %} abiertas al corte · {% leaf payload.manual.maintenance.kpis.due_by_level %} vencidas por nivel (200 h/6 m · 400 h/12 m · 600 h/18 m).</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">5.3 Qué cambió con la Act. 19</div>
+      <div class="rpt2-man-changes">
+        <div class="rpt2-man-changes-head">Sale del Manual</div>
+        <div class="rpt2-man-changes-head">Nuevo</div>
+        <div class="rpt2-man-changes-head">Sin cambio</div>
+        <div>Informe mensual (pasa a control interno) · maestro REG-017 · reporte de eventos (va al SMS) · registro de baterías · check list LVE-003 y bitácora REG-015 (los reemplaza el REG-016).</div>
+        <div>REG-016 Rev. 2 · LVE-002 Rev. 1 semestral · REG-018, REG-019 y REG-020 (códigos provisorios) · mantención por niveles.</div>
+        <div>Trámite SIGO · 400 ft (120 m) · VLOS · sólo área no poblada.</div>
+      </div>
+    </div>
+
+    {% if run.manual_note %}
+    <div>
+      <div class="rpt2-label" style="margin-bottom: 8px;">Observación</div>
+      {% include "reporting/_written.html" with anchor="manual_note" %}
+      <div class="rpt2-note">{{ run.manual_note|linebreaksbr }}</div>
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+
+  {% include "reporting/_foot.html" with section="manual_v2" %}
+
+</div>

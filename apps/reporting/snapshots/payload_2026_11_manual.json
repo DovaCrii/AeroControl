@@ -1,0 +1,460 @@
+{
+  "meta": {
+    "period": "2026-11",
+    "code": "JEJ-GTE-CT-INF-RPA-2026-11",
+    "cutoff": "2026-11-30",
+    "covers": {
+      "from": "2026-11-01",
+      "to": "2026-11-30"
+    },
+    "in_progress": false,
+    "days_remaining": 0,
+    "layout": 2,
+    "issued_by": "Gerente de Operaciones Aéreas ante la DGAC",
+    "jointly_with": "Jefe Seguridad Aérea ante la DGAC",
+    "standard": "JEJ-GRI-SS-INS-096 Rev. 0",
+    "addressed_to": "Gerencia General · Gerencia de Riesgo · Gerencia de Ingeniería · Administradores de Contrato",
+    "scope": "Vigencia de permisos de vuelo y cumplimiento del Manual de Operaciones",
+    "sources": "AeroControl · SIGO — DGAC",
+    "manual_reference": "Manual de Operaciones AOC N° 1485 · Actualización N° 19 (aprobada DGAC 10-11-2026)",
+    "internal_control_note": "Desde la Act. 19 este informe no es exigencia del Manual de Operaciones: se emite como control interno (INS-096)."
+  },
+  "kpis": {
+    "cost_centres_with_operation": {
+      "value": 3,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "cost_centres_without_permit": {
+      "value": 3,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_in_force": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_awaiting": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_lapsed": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_expiring_30d": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_expiring_60d": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_in_force_operating": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_in_force_outside": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_expiring_30d_operating": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_expiring_60d_operating": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "incidents": {
+      "value": 0,
+      "source": "compliance",
+      "cutoff": "2026-11-30"
+    },
+    "incidents_open": {
+      "value": 0,
+      "source": "compliance",
+      "cutoff": "2026-11-30"
+    },
+    "fleet_total": {
+      "value": 3,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "fleet_flyable": {
+      "value": 3,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "insurance_up_to_date": {
+      "value": 0,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "insurance_missing": {
+      "value": 3,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "insurance_lapsed": {
+      "value": 0,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "operators_total": {
+      "value": 2,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "operators_credentialed": {
+      "value": 0,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "credentials_missing": {
+      "value": 2,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    },
+    "credentials_lapsed": {
+      "value": 0,
+      "source": "registry",
+      "cutoff": "2026-11-30"
+    }
+  },
+  "cost_centres": [
+    {
+      "code": "CC901",
+      "name": "Faena CC901",
+      "permits_in_force": 0,
+      "permits_awaiting": 0,
+      "permits_lapsed": 0,
+      "permits_expiring_30d": 0,
+      "next_expiry": null,
+      "days_remaining": null,
+      "band": "critical"
+    },
+    {
+      "code": "CC902",
+      "name": "Faena CC902",
+      "permits_in_force": 0,
+      "permits_awaiting": 0,
+      "permits_lapsed": 0,
+      "permits_expiring_30d": 0,
+      "next_expiry": null,
+      "days_remaining": null,
+      "band": "critical"
+    },
+    {
+      "code": "CC903",
+      "name": "Faena CC903",
+      "permits_in_force": 0,
+      "permits_awaiting": 0,
+      "permits_lapsed": 0,
+      "permits_expiring_30d": 0,
+      "next_expiry": null,
+      "days_remaining": null,
+      "band": "critical"
+    }
+  ],
+  "outside_centres": [],
+  "permits": [],
+  "concentration": {
+    "permits_in_force": 0,
+    "permits_with_one_operator": 0,
+    "cost_centres_on_one_person": [],
+    "permits_in_force_operating": 0,
+    "permits_with_one_operator_operating": 0,
+    "cost_centres_on_one_person_operating": []
+  },
+  "changes": null,
+  "incidents": [],
+  "plan": {
+    "phases": [
+      {
+        "number": 0,
+        "month": "Sep 2026",
+        "title": "Cierre de brechas de habilitación",
+        "text": "Renovar los permisos que vencen dentro del período. Definir cuáles de los Centros de Costo sin permiso tendrán operación aérea y tramitar su carta del mandante y su solicitud en SIGO.",
+        "close": "ningún CC con operación prevista opera sin permiso vigente.",
+        "state": "done"
+      },
+      {
+        "number": 1,
+        "month": "Oct 2026",
+        "title": "Calendario de renovación automático",
+        "text": "AeroControl calcula el vencimiento sobre la fecha real de cada resolución —no sobre un plazo supuesto— y dispara alertas a 45 y 30 días: a los 45 el ADC solicita la carta del mandante; a los 30 el Jefe Seguridad Aérea presenta en SIGO y, sin carta, escala al Gerente Operaciones Aéreas.",
+        "close": "ninguna renovación depende de que alguien la recuerde.",
+        "state": "done"
+      },
+      {
+        "number": 2,
+        "month": "Nov 2026",
+        "title": "Bitácora digital de vuelo",
+        "text": "Se habilita el registro por vuelo: bitácora (JEJ-GTE-CT-REG-015), check list pre-vuelo (LVE-003) e inspección (LVE-002). Cada vuelo se asocia al permiso que lo autoriza, de modo que el sistema no admita registrar un vuelo sin permiso vigente en esa fecha.",
+        "close": "completitud reportada como línea base, sin sanción interna.",
+        "state": "current"
+      },
+      {
+        "number": 3,
+        "month": "Dic 2026",
+        "title": "Exigibilidad plena y auditoría",
+        "text": "La completitud de bitácoras pasa a indicador exigible por Centro de Costo y se contrasta la coherencia entre vuelos ejecutados y vuelos autorizados. Auditoría interna regulatoria conforme al numeral 5.4.2 del INS-096.",
+        "close": "informe anual consolidado y plan de acción 2027.",
+        "state": "pending"
+      }
+    ],
+    "lede": "Cuatro fases de un mes. Ninguna exige lo que la anterior no dejó instalado: primero se cierra la habilitación vigente, luego se automatiza su renovación, después se instala el registro de vuelo y solo al final se exige completitud.",
+    "matrix": {
+      "columns": [
+        "SEP",
+        "OCT",
+        "NOV",
+        "DIC"
+      ],
+      "rows": [
+        {
+          "label": "Permisos de vuelo vigentes por CC",
+          "emphasis": false,
+          "cells": [
+            "due",
+            "due",
+            "due",
+            "due"
+          ]
+        },
+        {
+          "label": "Renovación anticipada (carta + solicitud)",
+          "emphasis": false,
+          "cells": [
+            "info",
+            "due",
+            "due",
+            "due"
+          ]
+        },
+        {
+          "label": "Bitácora, check list e inspección por vuelo",
+          "emphasis": true,
+          "cells": [
+            "na",
+            "na",
+            "info",
+            "due"
+          ]
+        },
+        {
+          "label": "Coherencia vuelos ejecutados vs. autorizados",
+          "emphasis": false,
+          "cells": [
+            "na",
+            "na",
+            "info",
+            "due"
+          ]
+        }
+      ]
+    },
+    "concluded": false,
+    "not_started": false
+  },
+  "manual": {
+    "edition": {
+      "code": "Act. 19",
+      "approved_on": "2026-11-10"
+    },
+    "window": {
+      "from": "2026-11-10",
+      "to": "2026-11-30"
+    },
+    "missions": {
+      "rows": [
+        {
+          "code": "CC901",
+          "name": "Faena CC901",
+          "records": 4,
+          "on_time": 2,
+          "late": 1,
+          "not_assessable": 1,
+          "review": "completed"
+        },
+        {
+          "code": "CC902",
+          "name": "Faena CC902",
+          "records": 1,
+          "on_time": 1,
+          "late": 0,
+          "not_assessable": 0,
+          "review": null
+        },
+        {
+          "code": "CC903",
+          "name": "Faena CC903",
+          "records": 0,
+          "on_time": 0,
+          "late": 0,
+          "not_assessable": 0,
+          "review": null
+        }
+      ],
+      "kpis": {
+        "records_total": {
+          "value": 5,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "records_on_time": {
+          "value": 3,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "records_late": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "records_assessable": {
+          "value": 4,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "records_not_assessable": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "centres_with_records": {
+          "value": 2,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "centres_operating": {
+          "value": 3,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "missions_flown": {
+          "value": null,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "missions_without_record": {
+          "value": null,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "reviewed_within_24h": {
+          "value": null,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        }
+      }
+    },
+    "inspections": {
+      "kpis": {
+        "fleet": {
+          "value": 3,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "in_force": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "lapsed": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "undated": {
+          "value": 0,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "missing": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "reg020_aircraft": {
+          "value": 1,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        }
+      },
+      "gaps": [
+        "RPA-9002",
+        "RPA-9003"
+      ]
+    },
+    "evaluations": {
+      "format": "lv158",
+      "kpis": {
+        "roster": {
+          "value": 2,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "in_force": {
+          "value": 1,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "lapsed": {
+          "value": 0,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "failed_only": {
+          "value": 1,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "never": {
+          "value": 0,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "reg018_operators": {
+          "value": 1,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        },
+        "reg019_operators": {
+          "value": 0,
+          "source": "registry",
+          "cutoff": "2026-11-30"
+        }
+      }
+    },
+    "maintenance": {
+      "kpis": {
+        "completed_in_window": {
+          "value": 0,
+          "source": "maintenance",
+          "cutoff": "2026-11-30"
+        },
+        "open_at_cutoff": {
+          "value": 0,
+          "source": "maintenance",
+          "cutoff": "2026-11-30"
+        },
+        "due_by_level": {
+          "value": null,
+          "source": "maintenance",
+          "cutoff": "2026-11-30"
+        }
+      }
+    }
+  }
+}

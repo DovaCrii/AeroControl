@@ -60,6 +60,14 @@ número, que es la garantía que lo hace firmable.{% endcomment %}
   <p class="form-text">{{ note_form.period_note.help_text }}</p>
   {{ note_form.period_note.errors }}
 
+  {% comment %}LV-445: la observación de la sección 5 (Manual de Operaciones, Act. 19).
+  Campo declarado en `PeriodNoteForm`, así que **tiene que dibujarse acá**: esta
+  plantilla va campo por campo y uno que falta se guarda vacío (lección LV-211).{% endcomment %}
+  <h2 class="h5 mt-4">{{ note_form.manual_note.label }}</h2>
+  {{ note_form.manual_note }}
+  <p class="form-text">{{ note_form.manual_note.help_text }}</p>
+  {{ note_form.manual_note.errors }}
+
   <hr>
 
   {% comment %}LV-235: las acciones del Dato Ejecutivo, en esta misma pantalla.

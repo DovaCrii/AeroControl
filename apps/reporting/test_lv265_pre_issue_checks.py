@@ -37,7 +37,10 @@ def _payload(centres=("CC1", "CC2"), permits=(), total=None):
 
 def _run(note="", findings=(), editable=True):
     return SimpleNamespace(
-        period_note=note, findings=list(findings), is_editable=editable
+        period_note=note,
+        manual_note="",
+        findings=list(findings),
+        is_editable=editable,
     )
 
 

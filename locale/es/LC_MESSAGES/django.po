@@ -15388,3 +15388,71 @@ msgstr "Vincular permiso"
 #~ msgstr ""
 #~ "La fila ↳ aparece cuando el área dibujada no es una circunferencia: SIGO "
 #~ "acepta una por solicitud, y ésa es la más chica que cubre toda el área."
+
+#: apps/reporting/models.py apps/reporting/forms.py
+#, python-format
+msgid "The Manual observation can have at most %(max)s characters."
+msgstr "La observación del Manual puede tener como máximo %(max)s caracteres."
+
+#: apps/reporting/models.py
+msgid "Regulatory framework"
+msgstr "Marco regulatorio"
+
+#: apps/reporting/models.py
+msgid "Internal-control note"
+msgstr "Nota de control interno"
+
+#: apps/reporting/forms.py
+msgid "Note on the Operations Manual"
+msgstr "Nota sobre el Manual de Operaciones"
+
+#: apps/reporting/forms.py
+msgid ""
+"Shown at the end of section 5 (Operations Manual, Act. 19), up to 1200 "
+"characters. Optional: leave it empty and nothing is printed."
+msgstr ""
+"Se muestra al final de la sección 5 (Manual de Operaciones, Act. 19), hasta "
+"1200 caracteres. Es opcional: si queda vacía, no se imprime nada."
+
+#: apps/reporting/invariants.py
+#, python-format
+msgid ""
+"The Operations Manual section does not add up: %(rows)s REG-016 in the rows "
+"and %(parts)s in on-time, late and not-assessable, against %(total)s in the "
+"figure."
+msgstr ""
+"La sección del Manual de Operaciones no cuadra: %(rows)s REG-016 en las "
+"filas y %(parts)s entre en plazo, fuera de plazo y sin evaluar, frente a "
+"%(total)s en la cifra."
+
+#: apps/reporting/invariants.py
+#, python-format
+msgid ""
+"The LVE-002 states add up to %(states)s aircraft and the list names %(gaps)s "
+"without a current inspection, against a fleet of %(fleet)s."
+msgstr ""
+"Los estados de la LVE-002 suman %(states)s aeronaves y la lista nombra "
+"%(gaps)s sin inspección vigente, frente a una flota de %(fleet)s."
+
+#: apps/reporting/checks.py
+#, python-format
+msgid ""
+"%(count)d REG-016 was filed after the deadline (the day after the mission)."
+msgid_plural ""
+"%(count)d REG-016 were filed after the deadline (the day after the mission)."
+msgstr[0] ""
+"%(count)d REG-016 se cargó fuera de plazo (después del día siguiente a la "
+"misión)."
+msgstr[1] ""
+"%(count)d REG-016 se cargaron fuera de plazo (después del día siguiente a la "
+"misión)."
+
+#: apps/reporting/checks.py
+#, python-format
+msgid "Section 5 has %(count)d pending indicator (no data source yet)."
+msgid_plural "Section 5 has %(count)d pending indicators (no data source yet)."
+msgstr[0] ""
+"La sección 5 tiene %(count)d indicador pendiente (aún sin fuente de datos)."
+msgstr[1] ""
+"La sección 5 tiene %(count)d indicadores pendientes (aún sin fuente de "
+"datos)."
