@@ -30,7 +30,12 @@ import pytest
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
-from apps.compliance.models import Document, DocumentType, MonthlyComplianceReview
+from apps.compliance.models import (
+    Document,
+    DocumentType,
+    MissionReview,
+    MonthlyComplianceReview,
+)
 from apps.compliance.reports import (
     ALERT_COST_CENTER_PATHS,
     build_compliance_report,
@@ -143,6 +148,19 @@ def _subject_factories():
             maintenance_type="preventive",
             description="Revisión de hélices",
             scheduled_date=TODAY,
+        ),
+        # LV-447: la revisión de 24 h nace con el REG-016 de la faena.
+        "compliance.missionreview": lambda cc: MissionReview.objects.get(
+            document=Document.objects.create(
+                title="REG-016",
+                doc_type=DocumentType.objects.get_or_create(
+                    code="flight-log", defaults={"name": "REG-016"}
+                )[0],
+                content_type=ContentType.objects.get_for_model(CostCenter),
+                object_id=cc.pk,
+                file_path="x.pdf",
+                issue_date=TODAY,
+            )
         ),
         "compliance.monthlycompliancereview": (
             lambda cc: MonthlyComplianceReview.objects.create(

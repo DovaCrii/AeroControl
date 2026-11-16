@@ -26,6 +26,7 @@ la no conformidad sola; la nota escrita pasa a ser su descripción.{% endcomment
     <a class="btn btn-outline-secondary" href="?month={{ next_month|date:'Y-m' }}">{% translate "Next month" %} →</a>
     <a class="btn btn-outline-secondary" href="?month={{ period|date:'Y-m' }}&amp;export=csv" hx-boost="false">{% translate "Export CSV" %}</a>
     <a class="btn btn-outline-secondary" href="{% url 'operational-records' %}?month={{ period|date:'Y-m' }}">{% translate "All records" %}</a>
+    {% if perms.compliance.view_missionreview %}<a class="btn btn-outline-secondary" href="{% url 'mission-review-list' %}">{% translate "Mission reviews" %}</a>{% endif %}
   </div>
 </div>
 

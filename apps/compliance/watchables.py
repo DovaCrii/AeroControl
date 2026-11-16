@@ -22,6 +22,8 @@ WATCHABLE_MODELS = {
     "compliance.document": _("Document"),
     # LV-30: a pending monthly review is a live alert (watched via `status`).
     "compliance.monthlycompliancereview": _("Monthly compliance review"),
+    # LV-447: la revisión de cada REG-016 en 24 h, vigilada por `due_on`.
+    "compliance.missionreview": _("Mission review"),
     "operations.flightpermission": _("Flight permission"),
     "maintenance.maintenancerecord": _("Maintenance record"),
     # LV-158: la prueba de conocimientos vence a los 12 meses, decisión del

@@ -210,6 +210,8 @@ class TestEveryWatchedModelHasDecidedItsTerminalStatuses:
 
     EXPECTED = {
         "compliance.monthlycompliancereview": {"completed", "non_compliant"},
+        # LV-447: revisada, o revisada con observaciones.
+        "compliance.missionreview": {"reviewed", "observed"},
         "maintenance.maintenancerecord": {"completed"},
         "operations.flightpermission": {"completed", "denied", "expired"},
         "operations.flightrequest": {"closed"},
