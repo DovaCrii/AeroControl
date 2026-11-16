@@ -19,6 +19,11 @@
     <dt class="col-sm-3">{% translate "Issue date" %}</dt><dd class="col-sm-9">{{ object.issue_date|default:"—" }}</dd>
     <dt class="col-sm-3">{% translate "Expiry date" %}</dt>
     <dd class="col-sm-9">{{ object.expiry_date|default:'—' }}{% if object.is_expired %} <span class="badge sev-critical">⚠ {% translate "Expired" %}</span>{% elif object.expiry_date %} <span class="id-chip id-chip--ok">{% translate "Current" %}</span>{% endif %}</dd>
+    {% comment %}LV-447: el REG-016 lleva su revisión de 24 h; el enlace abre la bandeja de esa faena.{% endcomment %}
+    {% if perms.compliance.view_missionreview and object.mission_review %}
+    <dt class="col-sm-3">{% translate "Mission review" %}</dt>
+    <dd class="col-sm-9"><a href="{% url 'mission-review-list' %}?cost_center={{ object.mission_review.cost_center_id }}">{{ object.mission_review.get_status_display }}</a> · {% translate "Review due on" %} {{ object.mission_review.due_on|date:"d-m-Y" }}</dd>
+    {% endif %}
   </dl>
 </div>
 

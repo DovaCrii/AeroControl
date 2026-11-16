@@ -200,9 +200,7 @@ class TestNoDataIsPendingNeverZero:
         assert manual["inspections"]["gaps"] == []
         assert "manual.inspections.kpis.in_force" in missing
 
-    def test_the_review_in_24_hours_and_the_levels_are_always_pending(
-        self, types, site
-    ):
+    def test_the_review_in_24_hours_is_pending_until_a_review_exists(self, types, site):
         manual, missing = _manual()
 
         assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) is None
@@ -442,8 +440,9 @@ class TestTheQueryBudget:
 
     # Medido el 2026-11-16: 10 (tipos, flota, documentos de aeronave, padrón,
     # documentos y pruebas de operadores, REG-016, cierres, vuelos y mantenciones).
-    # El diseño decía 8; no se afloja para que pase un cambio.
-    CEILING = 10
+    # El diseño decía 8; no se afloja para que pase un cambio. LV-447 sumó una fuente
+    # nueva (las revisiones de 24 h, una sola agregación): 11.
+    CEILING = 11
 
     @staticmethod
     def _count(centres):
@@ -471,3 +470,75 @@ class TestTheQueryBudget:
 
         print(f"\nMEDIDO consultas de la sección 5: {small} y {large}")
         assert small == large <= self.CEILING
+
+
+class TestTheReviewIn24HoursIsReal:
+    """LV-447: `reviewed_within_24h` deja de ser siempre «Pendiente»."""
+
+    @staticmethod
+    def _review(site, types, mission, reviewed):
+        from apps.compliance.models import MissionReview
+
+        document(types["flight-log"], site, issue=mission, loaded=at(mission))
+        review = MissionReview.objects.get(document__issue_date=mission)
+        if reviewed is not None:
+            review.mark("reviewed", None, when=reviewed)
+        return review
+
+    @staticmethod
+    def _local(day, hour, minute=0):
+        from datetime import datetime
+
+        from django.utils import timezone
+
+        return timezone.make_aware(datetime(day.year, day.month, day.day, hour, minute))
+
+    def test_it_counts_the_ones_reviewed_by_the_end_of_the_due_day(self, types, site):
+        self._review(
+            site, types, date(2026, 11, 12), self._local(date(2026, 11, 13), 23, 59)
+        )
+        self._review(
+            site, types, date(2026, 11, 16), self._local(date(2026, 11, 18), 0, 1)
+        )
+        self._review(site, types, date(2026, 11, 19), None)
+
+        manual, missing = _manual()
+
+        assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) == 1
+        assert "manual.missions.kpis.reviewed_within_24h" not in missing
+
+    def test_reviews_exist_but_none_on_time_is_zero_not_pending(self, types, site):
+        self._review(site, types, date(2026, 11, 12), None)
+
+        manual, _missing = _manual()
+
+        assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) == 0
+
+    def test_a_mission_before_the_effective_date_is_not_counted(self, types, site):
+        self._review(site, types, date(2026, 11, 5), self._local(date(2026, 11, 6), 9))
+
+        manual, _missing = _manual()
+
+        assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) is None
+
+    def test_an_early_cutoff_ignores_what_was_reviewed_after_it(self, types, site):
+        self._review(
+            site, types, date(2026, 11, 12), self._local(date(2026, 11, 13), 9)
+        )
+        self._review(
+            site, types, date(2026, 11, 16), self._local(date(2026, 11, 17), 9)
+        )
+
+        manual, _missing = _manual(early=True, cutoff=date(2026, 11, 14))
+
+        assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) == 1
+
+    def test_only_the_reviews_of_the_report_centres_count(self, types, site):
+        other = centre("CC902")
+        self._review(
+            other, types, date(2026, 11, 12), self._local(date(2026, 11, 13), 9)
+        )
+
+        manual = collect_manual(PERIOD, CUTOFF, [site])
+
+        assert _value(manual["missions"]["kpis"]["reviewed_within_24h"]) is None

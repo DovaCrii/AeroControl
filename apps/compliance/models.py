@@ -389,6 +389,175 @@ class MonthlyComplianceReview(BaseModel):
         )
 
 
+class MissionReviewQuerySet(models.QuerySet):
+    def on_time(self):
+        """Revisadas a más tardar el último día del plazo (`due_on`, hora local)."""
+        return self.filter(
+            status__in=MissionReview.TERMINAL_STATUSES,
+            reviewed_at__date__lte=models.F("due_on"),
+        )
+
+
+class MissionReview(BaseModel):
+    """LV-447 (Manual Act. 19): la revisión de **cada** REG-016 dentro de 24 h.
+
+    El Registro Único de Misión se carga por misión en el centro de costo dentro de
+    24 h y lo revisa el Gerente de Operaciones, o quien designe por escrito, dentro
+    de otras 24 h (con muestreo mensual). Una fila por registro: nace sola al cargar
+    el documento (`compliance.signals.open_mission_review`) o, cuando exista la
+    bitácora digital (B5b), al crear el `FlightRecord`.
+
+    **El plazo es por día calendario, hora local**: `due_on` es el día siguiente a la
+    misión y se revisó «en plazo» si `reviewed_at` cae a más tardar ese día
+    (23:59 sí, 00:01 del día siguiente no). Es la misma lectura de «24 h» del informe
+    de cargas (`reporting.manual._classify`), y se eligió por sobre las 24 horas
+    corridas desde la carga porque el REG-016 se evalúa por jornada.
+
+    Tenancy: por `cost_center` (siempre presente, también cuando el origen es un
+    documento o un vuelo), así que el camino de empresa es uno solo y el motor de
+    alertas lo puede vigilar (`FORM_CHOICE_TENANT_PATHS`).
+    """
+
+    STATUS_PENDING = "pending"
+    STATUS_REVIEWED = "reviewed"
+    STATUS_OBSERVED = "observed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, _("Pending review")),
+        (STATUS_REVIEWED, _("Reviewed")),
+        (STATUS_OBSERVED, _("Reviewed with observations")),
+    ]
+    TERMINAL_STATUSES = frozenset({STATUS_REVIEWED, STATUS_OBSERVED})
+    REVIEW_DAYS = 1
+
+    cost_center = models.ForeignKey(
+        "registry.CostCenter",
+        on_delete=models.PROTECT,
+        related_name="mission_reviews",
+    )
+    document = models.OneToOneField(
+        Document,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="mission_review",
+    )
+    flight_record = models.OneToOneField(
+        "operations.FlightRecord",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="mission_review",
+    )
+    mission_date = models.DateField(verbose_name=_("Mission date"))
+    due_on = models.DateField(verbose_name=_("Review due on"))
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    # SET_NULL a propósito (excepción a PROTECT): borrar a un usuario no puede
+    # bloquearse por revisiones que firmó, y la revisión conserva reviewed_at y el
+    # registro de auditoría (mission_review_*) como evidencia. Es el mismo criterio
+    # de MonthlyComplianceReview.reviewed_by.
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = MissionReviewQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = _("mission review")
+        verbose_name_plural = _("mission reviews")
+        ordering = ["due_on", "cost_center__code"]
+        # El permiso de revisar **no va a ningún rol** de `bootstrap_roles`: lo asigna
+        # a mano quien corresponde (el Gerente de Operaciones o su designado por
+        # escrito), igual que `issue_early_reportrun`. Administrator lo recibe todo.
+        permissions = [
+            ("review_missionreview", _("Can review a mission record (REG-016)")),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(document__isnull=False, flight_record__isnull=True)
+                    | models.Q(document__isnull=True, flight_record__isnull=False)
+                ),
+                name="compliance_missionreview_one_origin",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.cost_center} · {self.mission_date:%Y-%m-%d}"
+
+    def clean(self):
+        super().clean()
+        if (self.document_id is None) == (self.flight_record_id is None):
+            raise ValidationError(
+                _("A mission review comes from a document or from a flight record.")
+            )
+
+    @property
+    def is_terminal(self):
+        return self.status in self.TERMINAL_STATUSES
+
+    @property
+    def reviewed_on_time(self):
+        """`True`/`False` si ya se revisó; `None` mientras está pendiente."""
+        if not self.is_terminal or self.reviewed_at is None:
+            return None
+        return timezone.localtime(self.reviewed_at).date() <= self.due_on
+
+    def is_overdue(self, today=None):
+        """Pendiente y con el plazo ya pasado (el día de `due_on` aún está en plazo)."""
+        today = today or timezone.localdate()
+        return not self.is_terminal and self.due_on < today
+
+    @classmethod
+    def due_date_for(cls, mission_date):
+        return mission_date + timedelta(days=cls.REVIEW_DAYS)
+
+    @classmethod
+    def open_for_document(cls, document):
+        """La revisión de un REG-016 cargado como documento, creándola una sola vez."""
+        if document.issue_date is None:
+            return None
+        review, _created = cls.objects.get_or_create(
+            document=document,
+            defaults={
+                "cost_center_id": document.object_id,
+                "mission_date": document.issue_date,
+                "due_on": cls.due_date_for(document.issue_date),
+            },
+        )
+        return review
+
+    @transaction.atomic
+    def mark(self, status, user, notes="", when=None):
+        """Registra la decisión de quien revisa y cierra la alerta de plazo."""
+        from .alerts import resolve_open_alerts_for
+
+        if status not in self.TERMINAL_STATUSES:
+            raise ValueError(f"not a review outcome: {status}")
+        self.status = status
+        self.reviewed_by = user if getattr(user, "is_authenticated", False) else None
+        self.reviewed_at = when or timezone.now()
+        if notes:
+            self.notes = notes
+        self.save(
+            update_fields=[
+                "status",
+                "reviewed_by",
+                "reviewed_at",
+                "notes",
+                "updated_at",
+            ]
+        )
+        resolve_open_alerts_for(self)
+        return self
+
+
 class ComplianceSnapshot(BaseModel):
     """R7.7 (ISO 9.1.1): the documentary totals as they stood on one date.
 

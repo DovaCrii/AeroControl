@@ -94,6 +94,10 @@ OPTIONAL_RULES = [
         "status",
         0,
     ),
+    # LV-447: el REG-016 se revisa dentro de 24 h (Manual Act. 19). Vigila `due_on`
+    # de la revisión de cada misión; revisarla cierra el aviso. La migración
+    # `0031_lv447_mission_review` la agrega a las empresas que ya tenían reglas.
+    ("Revisión REG-016 en 24 h", "compliance.missionreview", "due_on", 0),
 ]
 
 
