@@ -5,11 +5,9 @@
 {% comment %}LV-443: hoja de vida del RPA (JEJ-GTE-CT-REG-020). Todo sale de `levels.level_statuses`
 y del historial de mantenciones completadas; la versión imprimible usa los mismos datos.{% endcomment %}
 <div class="card p-4">
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div>
-      <h1 class="h3 mb-1">{% translate "RPA service life" %} · {{ aircraft.registration }}</h1>
-      <p class="text-body-secondary mb-0">{{ aircraft.manufacturer }} {{ aircraft.model }} · REG-020</p>
-    </div>
+  {% translate "RPA service life" as page_eyebrow %}
+  <div class="page-header">
+    {% with page_title=aircraft.registration page_description=aircraft.manufacturer|add:" "|add:aircraft.model %}{% include "generic/_page_header.html" %}{% endwith %}
     <div class="d-flex gap-2 flex-wrap">
       <a href="{% url 'aircraft-detail' aircraft.pk %}" class="btn btn-outline-secondary">{% translate "Back to aircraft" %}</a>
       <a href="{% url 'aircraft-service-life-pdf' aircraft.pk %}" class="btn btn-outline-primary" hx-boost="false">{% translate "Print (PDF)" %}</a>
