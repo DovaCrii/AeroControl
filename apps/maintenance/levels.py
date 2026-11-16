@@ -28,8 +28,9 @@ from .models import (
 
 # Same horizon as the "Mantenimiento programado" alert rule (15 days).
 NOTICE_DAYS = 15
-# Decision (LV-443): warn on hours when 10 % of the interval is left (20 h of a
-# 200 h basic maintenance). Configurable here, in one place.
+# PROVISIONAL (LV-443): the Manual does not define an hours notice threshold; this
+# is a provisional 10 % of the interval (20 h of a 200 h basic maintenance) until
+# the user confirms it. Configurable here, in one place.
 HOURS_NOTICE_RATIO = Decimal("0.10")
 
 OVERDUE, SOON, OK, NO_DATA = "overdue", "soon", "ok", "no_data"

@@ -438,7 +438,9 @@ class MaintenanceComplete(StatusTransitionView):
 # aircraft: the drone inspection (LVE-002), maintenance certificates and any type
 # that carries the REG-020 form code.
 SERVICE_LIFE_DOC_CODES = ("drone-inspection", "maintenance-certificate")
-SERVICE_LIFE_REFERENCE = "REG-020"
+SERVICE_LIFE_CODE = "rpa-service-life"
+# The form code carries its revision ("REG-020 R0"), so match by prefix.
+SERVICE_LIFE_REFERENCE_PREFIX = "REG-020"
 
 
 class AircraftServiceLifeMixin(TenantScopedQuerysetMixin, ModelPermissionRequiredMixin):
@@ -489,7 +491,8 @@ class AircraftServiceLife(AircraftServiceLifeMixin, DetailView):
         if context["documents"] is not None:
             context["documents"] = context["documents"].filter(
                 Q(doc_type__code__in=SERVICE_LIFE_DOC_CODES)
-                | Q(doc_type__reference_code=SERVICE_LIFE_REFERENCE)
+                | Q(doc_type__code=SERVICE_LIFE_CODE)
+                | Q(doc_type__reference_code__startswith=SERVICE_LIFE_REFERENCE_PREFIX)
             )
         return context
 

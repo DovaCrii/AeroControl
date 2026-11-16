@@ -617,3 +617,48 @@ def test_overdue_by_level_counts_aircraft_per_level():
     )
 
     assert counts == {"basic": 1, "medium": 1, "advanced": 0}
+
+
+@pytest.mark.django_db
+def test_the_sheet_lists_only_its_own_aircrafts_service_life_documents(world):  # noqa: F811
+    from django.contrib.contenttypes.models import ContentType
+
+    from apps.compliance.models import Document, DocumentType
+
+    ct = ContentType.objects.get_for_model(Aircraft)
+
+    def doc(title, doc_type, aircraft, tenant):
+        return Document.objects.create(
+            title=title,
+            doc_type=doc_type,
+            content_type=ct,
+            object_id=aircraft.pk,
+            is_current_version=True,
+            tenant=tenant,
+        )
+
+    inspection, _ = DocumentType.objects.get_or_create(
+        code="drone-inspection", defaults={"name": "Inspection"}
+    )
+    life, _ = DocumentType.objects.get_or_create(
+        code="rpa-service-life",
+        defaults={"name": "Service life", "reference_code": "REG-020 R0"},
+    )
+    by_reference = DocumentType.objects.create(
+        code="t443-ref", name="Sheet", reference_code="REG-020 R0"
+    )
+    unrelated = DocumentType.objects.create(code="t443-other", name="Other")
+    a, b = world["a"], world["b"]
+    mine = [
+        doc("mine-inspection", inspection, a["aircraft"], a["tenant"]),
+        doc("mine-code", life, a["aircraft"], a["tenant"]),
+        doc("mine-reference", by_reference, a["aircraft"], a["tenant"]),
+    ]
+    doc("unrelated-type", unrelated, a["aircraft"], a["tenant"])
+    doc("other-company", inspection, b["aircraft"], b["tenant"])
+
+    client = _sheet_client(world, "view_document")
+    response = client.get(reverse("aircraft-service-life", args=[a["aircraft"].pk]))
+
+    titles = {d.title for d in response.context["documents"]}
+    assert titles == {d.title for d in mine}
