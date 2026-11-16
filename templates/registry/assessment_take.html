@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load i18n static assessment_extras %}
-{% block title %}{% translate "Knowledge assessment" %} - AeroControl{% endblock %}
+{% block title %}{{ kind_label }} - AeroControl{% endblock %}
 {% block content %}
 {% comment %}LV-158: la prueba en una sola página, un envío. Una pregunta por
 pantalla habría exigido guardar el avance a mitad de camino —el estado "en curso"
@@ -29,40 +29,47 @@ Lo que cambia, y ninguna de las tres es decoración:
 <div class="page-header">
   <div>
     <p class="eyebrow mb-1">{{ operator }}</p>
-    <h1 class="h3 mb-0">{% translate "Knowledge assessment" %}</h1>
+    <h1 class="h3 mb-0">{{ kind_label }}{% if family %} · {{ family }}{% endif %}</h1>
   </div>
 </div>
 
-{% comment %}Las tres reglas, cada una como un dato y no como una frase corrida:
-son lo que la persona quiere saber antes de empezar, y en un párrafo gris había
-que leerlas enteras para encontrar el 80%.{% endcomment %}
+{% comment %}LV-444: las reglas **por parte** (Act. 19, REG-019): cuántas preguntas
+y qué porcentaje exige cada una. Un intento aprueba sólo si todas las partes
+alcanzan su umbral, y esa frase es la que hace que 99 % en la parte B no se lea
+como "casi aprobado".{% endcomment %}
 <div class="quiz-rules mb-4">
   <div class="quiz-rule">
-    <span class="quiz-rule-value">{{ questions|length }}</span>
+    <span class="quiz-rule-value">{{ total }}</span>
     <span class="quiz-rule-label">{% translate "Questions" %}</span>
   </div>
+  {% for part in parts %}
   <div class="quiz-rule">
-    <span class="quiz-rule-value">{{ pass_percent }}%</span>
-    <span class="quiz-rule-label">{% translate "To pass" %}</span>
+    <span class="quiz-rule-value">{{ part.threshold }}%</span>
+    <span class="quiz-rule-label">{% if parts|length > 1 %}{% translate "Part" %} {{ part.part }} · {% endif %}{% translate "To pass" %}</span>
   </div>
+  {% endfor %}
+  {% if valid_months %}
   <div class="quiz-rule">
     <span class="quiz-rule-value">{{ valid_months }}</span>
     <span class="quiz-rule-label">{% translate "Months of validity" %}</span>
   </div>
-  <p class="quiz-rules-note mb-0">{% translate "The result is filed on your record and feeds the same expiry warnings as your DGAC credential." %}</p>
+  {% endif %}
+  <p class="quiz-rules-note mb-0">{% translate "The result is filed on your record. Every part must reach its percentage to pass." %}</p>
 </div>
 
 <form method="post" id="quiz-form">
   {% csrf_token %}
-  {% for question in questions %}
-  <fieldset class="card quiz-card mb-3" id="q-{{ forloop.counter }}">
+  {% for part in parts %}
+  {% if parts|length > 1 %}<h2 class="h5 mb-3">{% translate "Part" %} {{ part.part }}</h2>{% endif %}
+  {% for question in part.questions %}
+  <fieldset class="card quiz-card mb-3" id="q-{{ question.number }}">
     {% comment %}El envoltorio `quiz-question-row` no es decorativo: el flex va
     ahí y no en el `<legend>`, porque un legend sin flotar se monta sobre el
     borde del fieldset y deja el enunciado fuera del recuadro. Ver el comentario
     de `app.css` (LV-168b), con la medición.{% endcomment %}
     <legend class="quiz-question">
       <span class="quiz-question-row">
-        <span class="quiz-number" aria-hidden="true">{{ forloop.counter }}</span>
+        <span class="quiz-number" aria-hidden="true">{{ question.number }}</span>
         <span class="quiz-text">{% for line in question.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</span>
       </span>
     </legend>
@@ -72,8 +79,7 @@ que leerlas enteras para encontrar el 80%.{% endcomment %}
       envuelto por ella: así el estado se pinta con `input:checked + label`, que
       anda en navegadores anteriores a `:has()`. La etiqueta con `for` hace que
       la fila entera siga siendo el blanco del clic. Ver el comentario de
-      `app.css` para por qué no es `:has()` -- y para el fantasma que se
-      persiguió antes de entenderlo.{% endcomment %}
+      `app.css`.{% endcomment %}
       <div class="quiz-option-row">
         <input class="quiz-option-input" type="radio" name="q{{ question.id }}"
                id="q{{ question.id }}{{ option.key }}" value="{{ option.key }}">
@@ -86,7 +92,7 @@ que leerlas enteras para encontrar el 80%.{% endcomment %}
     </div>
   </fieldset>
   {% endfor %}
-
+  {% endfor %}
   {% comment %}El pie queda pegado abajo: con 25 preguntas el botón de enviar
   estaba a cinco pantallas de scroll del avance, así que las dos cosas que se
   necesitan al final vivían separadas.{% endcomment %}
@@ -95,11 +101,11 @@ que leerlas enteras para encontrar el 80%.{% endcomment %}
   búsqueda en el catálogo falla en tiempo de ejecución y la cadena sale en
   inglés. Es la trampa que este repo ya pagó dos veces.{% endcomment %}
   {% translate "Send with {count} unanswered? They count as incorrect." as label_remaining %}
-  <div class="quiz-footer" data-total="{{ questions|length }}"
+  <div class="quiz-footer" data-total="{{ total }}"
        data-label-remaining="{{ label_remaining }}">
     <div class="quiz-progress" role="status" aria-live="polite">
       <div class="quiz-progress-bar"><span class="quiz-progress-fill" style="width:0%"></span></div>
-      <span class="quiz-progress-text">0 / {{ questions|length }}</span>
+      <span class="quiz-progress-text">0 / {{ total }}</span>
     </div>
     <div class="d-flex gap-2">
       <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">{% translate "Cancel" %}</a>

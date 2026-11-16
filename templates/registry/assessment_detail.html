@@ -5,7 +5,7 @@
 <div class="page-header">
   <div>
     <p class="eyebrow mb-1">{{ assessment.operator }} · {{ assessment.taken_at|date:"d-m-Y H:i" }}</p>
-    <h1 class="h3 mb-0">{% translate "Knowledge assessment" %}</h1>
+    <h1 class="h3 mb-0">{{ assessment.get_kind_display }}{% if assessment.aircraft_family %} · {{ assessment.aircraft_family }}{% endif %}</h1>
   </div>
   <a class="btn btn-outline-secondary" href="{% url 'operator-detail' assessment.operator.pk %}">{% translate "Open the operator" %}</a>
 </div>
@@ -22,13 +22,29 @@ solo: "72%" no dice nada sin saber que el corte es 80.{% endcomment %}
     {% endif %}
     <strong class="h4 mb-0">{{ assessment.score_percent }}%</strong>
     <span class="text-body-secondary">
-      {% blocktranslate with correct=assessment.correct_count total=assessment.question_count percent=pass_percent %}{{ correct }} of {{ total }} correct · {{ percent }}% required{% endblocktranslate %}
+      {% blocktranslate with correct=assessment.correct_count total=assessment.question_count %}{{ correct }} of {{ total }} correct{% endblocktranslate %}
+      {% if pass_percent %}· {{ pass_percent }}%{% endif %}
     </span>
+    {% if assessment.expires_on %}
     <span class="text-body-secondary">
       {% blocktranslate with date=assessment.expires_on|date:"d-m-Y" %}Valid until {{ date }}{% endblocktranslate %}
       {% if assessment.is_expired %}<span class="badge sev-critical ms-1">⚠ {% translate "Overdue" %}</span>{% endif %}
     </span>
+    {% endif %}
   </div>
+  {% comment %}LV-444: el puntaje **por parte** contra su umbral. Aprueba quien
+  alcanza todos: 99 % en una parte de 100 % reprueba aunque el total sea alto.
+  Un intento previo sin partes (no debería haber) cae al puntaje general.{% endcomment %}
+  {% if part_rows %}
+  <div class="d-flex flex-wrap gap-3 mt-3">
+    {% for part in part_rows %}
+    <span class="small">
+      {% translate "Part" %} {{ part.part }}: <strong>{{ part.percent }}%</strong>
+      ({{ part.correct }}/{{ part.total }}) · {{ part.threshold }}% {% translate "required" %}
+    </span>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
 
 {% comment %}LV-158: **en qué se equivocó, qué reforzar** — la otra mitad del

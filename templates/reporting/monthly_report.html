@@ -141,6 +141,11 @@ documento termina con dos hojas numeradas igual.{% endcomment %}
   {% if not plan_joins_coverage %}
   {% include "reporting/_page5_plan.html" with page=plan_page pages=total_pages %}
   {% endif %}
+  {% comment %}LV-445: la sección 5 (Manual, Act. 19), sólo si el payload congelado trae
+  `manual`. `manual_sheets` viene vacío para los informes anteriores.{% endcomment %}
+  {% for sheet in manual_sheets %}
+  {% include "reporting/v2/_page7_manual.html" with sheet=sheet page=sheet.page pages=total_pages %}
+  {% endfor %}
   {% for sheet in roster_sheets %}
   {% include "reporting/v2/_page6_roster.html" with sheet=sheet page=sheet.page pages=total_pages %}
   {% endfor %}

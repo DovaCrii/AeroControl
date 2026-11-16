@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n assessment_extras %}
+{% block title %}{% translate "Question bank" %} - AeroControl{% endblock %}
+{% block content %}
+{% comment %}LV-444: el banco cargado con `load_assessment_bank`. La clave de
+respuestas se ve sólo con `view_assessment_answers` (LV-184): sin ese permiso
+la lista muestra enunciados y opciones, no cuál es la correcta.{% endcomment %}
+{% translate "Question bank" as page_title %}<div class="page-header">
+  {% include "generic/_page_header.html" %}
+</div>
+
+{% if not totals %}
+<div class="alert alert-warning" role="alert">{% translate "The question bank is not loaded." %}</div>
+{% else %}
+<table class="table table-sm mb-4">
+  <thead><tr>
+    <th scope="col">{% translate "Assessment type" %}</th>
+    <th scope="col">{% translate "RPA model" %}</th>
+    <th scope="col">{% translate "Questions" %}</th>
+  </tr></thead>
+  <tbody>
+    {% for row in totals %}
+    <tr><td>{{ row.kind }}</td><td>{{ row.family|default:"—" }}</td><td>{{ row.count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="card p-3">
+  {% for question in questions %}
+  <div class="border-bottom py-2">
+    <p class="mb-1"><strong>{{ question.get_kind_display }} #{{ question.number }}</strong>
+      {% if question.aircraft_family %}· {{ question.aircraft_family }}{% endif %}</p>
+    <p class="mb-1">{% for line in question.text|enumerated_lines %}<span class="quiz-text-line">{{ line }}</span>{% endfor %}</p>
+    <ul class="small mb-0 list-unstyled">
+      {% for option in question.options %}
+      <li>{{ option.key|upper }}) {{ option.text }}{% if show_answers and option.key == question.answer %} <span class="badge bg-success">{% translate "Correct answer" %}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% empty %}
+  <p class="text-muted mb-0">{% translate "The question bank is not loaded." %}</p>
+  {% endfor %}
+</div>
+{% include "generic/_pagination.html" %}
+{% endblock %}
+

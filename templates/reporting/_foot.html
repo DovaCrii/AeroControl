@@ -87,6 +87,8 @@ no es interfaz, es el papel que se firma ante la DGAC.{% endcomment %}
     Fuente: AeroControl — Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado {% if payload.meta.early_cutoff %}al corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}al cierre del período{% endif %}.
     {% elif section == "coverage_plan_v2" %}
     Fuente: AeroControl — Permisos, corte al {{ cutoff_date|date:"d-m-Y" }}; estado {% if payload.meta.early_cutoff %}al corte anticipado del {{ cutoff_date|date:"d-m" }}{% else %}al cierre del período{% endif %}. Informe: INS-096, 5.4.2 y 6.5.
+    {% elif section == "manual_v2" %}
+    Fuente: AeroControl — Documentos, corte al {{ cutoff_date|date:"d-m-Y" }}. En plazo: cargado a más tardar el día siguiente a la misión (Anexo B). Lo cargado después de congelar no se cuenta.
     {% elif section == "roster_v2" %}
     Registro de cada permiso al {{ cutoff_date|date:"d-m-Y" }}, como figura en el permiso. Detalle de la sección 2.
     {% endif %}

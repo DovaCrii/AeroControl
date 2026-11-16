@@ -1,0 +1,42 @@
+{
+  "source": {
+    "name": "Example bank (invented, 3 questions; not the REG-019 bank)",
+    "note": "Only illustrates the file format of load_assessment_bank."
+  },
+  "questions": [
+    {
+      "kind": "general",
+      "number": 1,
+      "text": "Which colour is the sky on a clear day?",
+      "options": [
+        {"key": "a", "text": "Blue"},
+        {"key": "b", "text": "Green"},
+        {"key": "c", "text": "Red"},
+        {"key": "d", "text": "Black"}
+      ],
+      "answer": "a",
+      "source_ref": "Example, 1"
+    },
+    {
+      "kind": "limitations",
+      "number": 1,
+      "text": "A common limitations question applies to every RPA model. True or false: water boils at 100 degrees Celsius at sea level.",
+      "options": [
+        {"key": "a", "text": "True"},
+        {"key": "b", "text": "False"}
+      ],
+      "answer": "a"
+    },
+    {
+      "kind": "annual",
+      "number": 1,
+      "text": "How many days are there in a week?",
+      "options": [
+        {"key": "a", "text": "Five"},
+        {"key": "b", "text": "Seven"},
+        {"key": "c", "text": "Ten"}
+      ],
+      "answer": "b"
+    }
+  ]
+}

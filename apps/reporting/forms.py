@@ -109,15 +109,37 @@ class PeriodNoteForm(forms.ModelForm):
 
     class Meta:
         model = ReportRun
-        fields = ["period_note"]
-        widgets = {"period_note": forms.Textarea(attrs={"rows": 4})}
-        labels = {"period_note": _("Note for the period")}
+        fields = ["period_note", "manual_note"]
+        widgets = {
+            "period_note": forms.Textarea(attrs={"rows": 4}),
+            "manual_note": forms.Textarea(
+                attrs={"rows": 4, "maxlength": ReportRun.MANUAL_NOTE_MAX}
+            ),
+        }
+        labels = {
+            "period_note": _("Note for the period"),
+            "manual_note": _("Note on the Operations Manual"),
+        }
         help_texts = {
             "period_note": _(
                 "Shown on the permits page. Leave it empty and the report says "
                 "the note is pending, never that there is nothing to say."
-            )
+            ),
+            "manual_note": _(
+                "Shown at the end of section 5 (Operations Manual, Act. 19), up to "
+                "1200 characters. Optional: leave it empty and nothing is printed."
+            ),
         }
+
+    def clean_manual_note(self):
+        """El mismo tope que el modelo: más largo no cabe en la hoja."""
+        note = self.cleaned_data.get("manual_note", "")
+        if len(note) > ReportRun.MANUAL_NOTE_MAX:
+            raise forms.ValidationError(
+                _("The Manual observation can have at most %(max)s characters.")
+                % {"max": ReportRun.MANUAL_NOTE_MAX}
+            )
+        return note
 
 
 class EarlyFreezeForm(forms.Form):
@@ -239,6 +261,8 @@ class ReportTemplateForm(forms.ModelForm):
             "addressed_to",
             "scope",
             "sources",
+            "manual_reference",
+            "internal_control_note",
             "plan_lede",
         ]
         widgets = {"plan_lede": forms.Textarea(attrs={"rows": 3})}

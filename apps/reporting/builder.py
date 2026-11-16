@@ -93,8 +93,19 @@ FACTORY_COVER = {
         "Gerencia General · Gerencia de Riesgo · "
         "Gerencia de Ingeniería · Administradores de Contrato"
     ),
-    "scope": "Vigencia de permisos de vuelo ante la DGAC",
+    # LV-445: desde la Act. 19 el ciclo incluye el cumplimiento del Manual.
+    "scope": "Vigencia de permisos de vuelo y cumplimiento del Manual de Operaciones",
     "sources": "AeroControl · SIGO — DGAC",
+    # LV-445: marco regulatorio y nota de control interno (editables). Los informes
+    # congelados antes no traen estas llaves y la portada las dibuja sólo si existen.
+    "manual_reference": (
+        "Manual de Operaciones AOC N° 1485 · Actualización N° 19 "
+        "(aprobada DGAC 10-11-2026)"
+    ),
+    "internal_control_note": (
+        "Desde la Act. 19 este informe no es exigencia del Manual de Operaciones: "
+        "se emite como control interno (INS-096)."
+    ),
 }
 
 
@@ -983,6 +994,8 @@ def build(period, cutoff=None, early=False, early_reason=""):
     centres = operating_centres()
     permits = collect_permits(cutoff, {centre.code for centre in centres})
     cost_centres = collect_cost_centres(cutoff, permits, centres)
+    from apps.reporting.manual import collect_manual
+
     payload = {
         "meta": collect_meta(period, cutoff, early, early_reason),
         "kpis": collect_kpis(cutoff, cost_centres, permits),
@@ -1002,4 +1015,9 @@ def build(period, cutoff=None, early=False, early_reason=""):
         # tiene que devolver la página que agosto vio.
         "plan": collect_plan(period),
     }
+    # LV-445: la sección 5 (Act. 19) sólo existe si el corte llega a la vigencia
+    # del Manual. Sin la llave los informes anteriores se dibujan como se emitieron.
+    manual = collect_manual(period, cutoff, centres, early)
+    if manual is not None:
+        payload["manual"] = manual
     return payload, find_missing(payload)
