@@ -32,7 +32,7 @@ dependencies = [
     # está escrito tres líneas más arriba al elegir `reportlab`. `pypdf` es puro
     # Python y cumple el mismo criterio, con `pip-audit` vigilándolo como exige
     # `SECURITY.md`.
-    "pypdf>=6,<7",
+    "pypdf>=6,<8",
     "pdfminer-six>=20260107",
 ]
 
