@@ -19,6 +19,39 @@ from .models import (
 )
 
 
+class CostCenterRosterWidget(forms.CheckboxSelectMultiple):
+    """LV-453: cada casilla dice a qué centros de costo pertenece su recurso.
+
+    `cost_centers` es `{pk: "id1 id2"}`; `roster-filter.js` lo lee de
+    `data-roster-cc` para mostrar primero los del centro de costo elegido. Sin JS
+    no cambia nada: se ven todas, como antes.
+    """
+
+    cost_centers = None
+
+    def create_option(self, name, value, *args, **kwargs):
+        option = super().create_option(name, value, *args, **kwargs)
+        key = str(getattr(value, "value", value))
+        if self.cost_centers is not None and key:
+            option["attrs"]["data-roster-cc"] = self.cost_centers.get(key, "")
+        return option
+
+
+def cost_centers_by_resource(queryset):
+    """`{str(pk): "cc"}`: el centro de costo de cada recurso del roster.
+
+    Se lee `cost_center` y nada más: es la única fuente, porque
+    `registry.signals._sync` lo mantiene al día con las asignaciones de
+    «Asignaciones de operador/aeronave» (y no se superponen dos activas).
+    """
+    return {
+        str(pk): str(cc)
+        for pk, cc in queryset.filter(cost_center__isnull=False).values_list(
+            "pk", "cost_center_id"
+        )
+    }
+
+
 class FlightPermissionForm(AeroModelForm):
     # LV-153: el alta pedía a mano las ocho casillas de geografía que el plan
     # geoespacial ya sabe. Textual del usuario: *"el permiso de vuelo: estos
@@ -144,8 +177,8 @@ class FlightPermissionForm(AeroModelForm):
         }
         widgets = {
             # A roster of several, not one pick from a dropdown (OPS-4).
-            "operators": forms.CheckboxSelectMultiple,
-            "aircraft_fleet": forms.CheckboxSelectMultiple,
+            "operators": CostCenterRosterWidget,
+            "aircraft_fleet": CostCenterRosterWidget,
         }
 
     # LV-166: los campos de ubicación que un plan geoespacial **provee de
@@ -249,6 +282,20 @@ class FlightPermissionForm(AeroModelForm):
             ),
             "aircraft_fleet",
         ).order_by("registration")
+        self._mark_roster_cost_centers()
+
+    def _mark_roster_cost_centers(self):
+        """LV-453: el centro de costo va primero y acota los dos rosters.
+
+        Pedido del usuario: *"primero se ponga el CC […] luego se filtren los
+        drones disponibles de ese centro de costo solamente y un botón […] para
+        continuar si es un equipo distinto"*. Filtrar es **mirar**: no se valida
+        en el servidor, porque llevar un equipo de otro centro de costo es un caso
+        real y el botón «Ver los de otros centros de costo» es su camino.
+        """
+        for name in ("operators", "aircraft_fleet"):
+            field = self.fields[name]
+            field.widget.cost_centers = cost_centers_by_resource(field.queryset)
 
     @staticmethod
     def _aircraft_label(aircraft):

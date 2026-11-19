@@ -24,7 +24,12 @@ búsqueda en tiempo de ejecución no la encontraría nunca y el rótulo saldría
 inglés sin que ningún test lo notara. Las llaves pasan intactas.{% endcomment %}
 <div class="roster mb-3" data-roster
      data-roster-count-label="{% translate '{selected} of {total} selected' %}"
-     data-roster-matches-label="{% translate '{matches} of {total} shown' %}">
+     data-roster-matches-label="{% translate '{matches} of {total} shown' %}"
+     {% if scope_from %}data-roster-scope-from="{{ scope_from }}"
+     data-roster-scope-more-label="{% translate 'Show other cost centers ({count})' %}"
+     data-roster-scope-less-label="{% translate 'Only this cost center' %}"
+     data-roster-scope-none-label="{% translate 'Nothing is assigned to this cost center yet: showing everything.' %}"
+     data-roster-scope-pick-label="{% translate 'Choose the cost center first to see only its own.' %}"{% endif %}>
   <div class="roster-head">
     <span class="form-label mb-0">{{ field.label }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}</span>
     <span class="roster-count" data-roster-count aria-live="polite"></span>
@@ -38,6 +43,12 @@ inglés sin que ningún test lo notara. Las llaves pasan intactas.{% endcomment 
       <label class="form-check-label" for="roster-only-{{ field.name }}">{% translate "Only the selected ones" %}</label>
     </div>
   </div>
+  {% if scope_from %}
+  <div class="roster-scope d-flex flex-wrap gap-2 align-items-center mb-2" data-roster-scope hidden>
+    <span class="roster-scope-note small text-body-secondary" data-roster-scope-note aria-live="polite"></span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-roster-scope-toggle hidden></button>
+  </div>
+  {% endif %}
   <div class="roster-options{% if field.errors %} is-invalid{% endif %}" data-roster-options>
     {% for option in field %}
     <div class="form-check roster-option" data-roster-item data-roster-text="{{ option.choice_label }}">
