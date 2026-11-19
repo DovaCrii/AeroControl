@@ -50,17 +50,21 @@ cada cosa.{% endcomment %}
       {{ form.permission_number|as_crispy_field }}
     </fieldset>
 
-    <fieldset class="cc-form-section mb-4">
-      <legend class="h6 section-title mb-3">{% translate "Who flies" %}</legend>
-      {% include "operations/_roster_field.html" with field=form.operators %}
-      {% include "operations/_roster_field.html" with field=form.aircraft_fleet %}
-    </fieldset>
-
+    {% comment %}LV-453: el contrato va **antes** de quién vuela, porque el centro de
+    costo acota los dos rosters: se ven primero los drones y operadores asignados a
+    esa faena, y un botón muestra los de otros centros de costo (`roster-filter.js`).
+    {% endcomment %}
     <fieldset class="cc-form-section mb-4">
       <legend class="h6 section-title mb-3">{% translate "Contract and purpose" %}</legend>
       {{ form.cost_center|as_crispy_field }}
       {{ form.purpose|as_crispy_field }}
       {{ form.purpose_detail|as_crispy_field }}
+    </fieldset>
+
+    <fieldset class="cc-form-section mb-4">
+      <legend class="h6 section-title mb-3">{% translate "Who flies" %}</legend>
+      {% include "operations/_roster_field.html" with field=form.aircraft_fleet scope_from="#id_cost_center" %}
+      {% include "operations/_roster_field.html" with field=form.operators scope_from="#id_cost_center" %}
     </fieldset>
 
     {% comment %}LV-368: la vigencia es **opcional hasta aprobar** (la fija la DGAC al responder,

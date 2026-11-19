@@ -15452,6 +15452,22 @@ msgid_plural "%(n)s fields not recorded"
 msgstr[0] "%(n)s campo sin registrar"
 msgstr[1] "%(n)s campos sin registrar"
 
+#: templates/operations/_roster_field.html
+msgid "Show other cost centers ({count})"
+msgstr "Ver otros centros de costo ({count})"
+
+#: templates/operations/_roster_field.html
+msgid "Only this cost center"
+msgstr "Sólo este centro de costo"
+
+#: templates/operations/_roster_field.html
+msgid "Nothing is assigned to this cost center yet: showing everything."
+msgstr "Este centro de costo aún no tiene nada asignado: se muestra todo."
+
+#: templates/operations/_roster_field.html
+msgid "Choose the cost center first to see only its own."
+msgstr "Elija primero el centro de costo para ver sólo lo suyo."
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
