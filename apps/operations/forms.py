@@ -1,14 +1,17 @@
+from datetime import timedelta
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.forms import AeroModelForm
 from apps.core.tenancy import scope_queryset_to_tenant
 from apps.geo.models import GeoPlan
-from apps.registry.models import Aircraft, Operator
+from apps.registry.models import Aircraft, CostCenter, Operator
 from .models import (
     FlightPermission,
     FlightRecord,
@@ -50,6 +53,48 @@ def cost_centers_by_resource(queryset):
             "pk", "cost_center_id"
         )
     }
+
+
+# LV-455: cuánto atrás mira el padrón de permisos para decir que un operador
+# «es de» una faena.
+OPERATOR_PERMIT_LOOKBACK_DAYS = 365
+
+
+def operator_cost_centers(queryset, today):
+    """`{str(pk): "cc1 cc2"}` para los operadores: la ficha no alcanza.
+
+    LV-455: con LV-453 desplegado el usuario vio que la flota se acotaba y los
+    operadores no — *"filtran la aeronave por CC pero no los operadores"*. Casi
+    ningún operador tiene `cost_center` en su ficha, así que el filtro caía en
+    «no tiene nada asignado: se muestra todo». Un operador es de una faena si
+    cualquiera de estas lo dice:
+
+    * su `cost_center` (y las asignaciones, que lo mantienen);
+    * es el responsable del centro de costo (`responsible_operator`);
+    * figura en un permiso de esa faena solicitado, aprobado o terminado cuya
+      vigencia no haya acabado hace más de un año (o que aún no la tenga).
+    """
+    found = {pk: {cc} for pk, cc in cost_centers_by_resource(queryset).items()}
+    pks = queryset.values("pk")
+    for pk, cc in CostCenter.objects.filter(
+        is_active=True, responsible_operator__in=pks
+    ).values_list("responsible_operator_id", "pk"):
+        found.setdefault(str(pk), set()).add(str(cc))
+    since = today - timedelta(days=OPERATOR_PERMIT_LOOKBACK_DAYS)
+    permits = FlightPermission.objects.filter(
+        is_active=True,
+        status__in=(
+            FlightPermission.STATUS_REQUESTED,
+            FlightPermission.STATUS_APPROVED,
+            FlightPermission.STATUS_COMPLETED,
+        ),
+    ).filter(Q(valid_until__isnull=True) | Q(valid_until__gte=since))
+    rows = FlightPermission.operators.through.objects.filter(
+        flightpermission__in=permits, operator__in=pks
+    ).values_list("operator_id", "flightpermission__cost_center_id")
+    for pk, cc in rows:
+        found.setdefault(str(pk), set()).add(str(cc))
+    return {pk: " ".join(sorted(ccs)) for pk, ccs in found.items()}
 
 
 class FlightPermissionForm(AeroModelForm):
@@ -293,9 +338,12 @@ class FlightPermissionForm(AeroModelForm):
         en el servidor, porque llevar un equipo de otro centro de costo es un caso
         real y el botón «Ver los de otros centros de costo» es su camino.
         """
-        for name in ("operators", "aircraft_fleet"):
-            field = self.fields[name]
-            field.widget.cost_centers = cost_centers_by_resource(field.queryset)
+        operators = self.fields["operators"]
+        operators.widget.cost_centers = operator_cost_centers(
+            operators.queryset, timezone.localdate()
+        )
+        fleet = self.fields["aircraft_fleet"]
+        fleet.widget.cost_centers = cost_centers_by_resource(fleet.queryset)
 
     @staticmethod
     def _aircraft_label(aircraft):

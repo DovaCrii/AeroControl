@@ -10,6 +10,7 @@ está en fase de estabilización (ver [MASTER_PLAN.md](MASTER_PLAN.md)).
 
 ### Changed
 
+- **Los operadores también se acotan por centro de costo en el permiso (`LV-455`).** Un operador es de una faena por su ficha, por ser su responsable o por figurar en un permiso de esa faena del último año. Sin migración ni estáticos.
 - **El permiso de vuelo pide primero el centro de costo (`LV-453`, `codex/permiso-cc-primero`).** «Contrato y propósito» pasa arriba de «Quién vuela», y al elegir el centro de costo los rosters muestran sólo los drones y operadores de esa faena; «Ver otros centros de costo (N)» abre el resto, la búsqueda recorre todo y lo marcado se ve siempre. No se bloquea guardar un equipo de otra faena. Sin migración; lleva `collectstatic` y cambia el `.mo`.
 - **Ficha del operador por tarjetas agrupadas (`LV-450`, `codex/detail-sheet`).** Identificación, contacto, credencial, habilitaciones, asignación y notas en tarjetas; los campos vacíos van al pie en un `<details>` (la credencial y su vencimiento se muestran como «Sin registrar»). Sin migración; lleva `collectstatic` y cambia el `.mo`.
 ### Added
