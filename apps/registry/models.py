@@ -599,6 +599,63 @@ class Aircraft(StatusHistoryMixin, BaseModel):
             }
         return steps
 
+    @property
+    def is_in_maintenance(self):
+        return self.status == "maintenance" or self.current_location == "maintenance"
+
+    def workshop_hold(self):
+        """LV-454: la mantención activa en taller que retiene a esta aeronave, o None."""
+        from apps.maintenance.models import MaintenanceRecord
+
+        return (
+            MaintenanceRecord.objects.filter(
+                aircraft_id=self.pk,
+                is_active=True,
+                status__in=MaintenanceRecord.WORKSHOP_STATUSES,
+            )
+            .order_by("-scheduled_date")
+            .first()
+        )
+
+    def return_to_service(self, user=None):
+        """LV-454: saca a la aeronave de «En mantenimiento» a mano.
+
+        Sólo la sacaban anular el ingreso a taller y cerrar la mantención; si el
+        ingreso ya se había quitado, el equipo quedaba en mantenimiento sin salida.
+        Se rechaza mientras una mantención activa en taller lo retenga (hay que
+        cerrarla o anularla en su ficha); sin eso la deja en la sede, activa, con la
+        misma arista que `MaintenanceRecord._release_aircraft`. Idempotente.
+        Devuelve True si cambió algo.
+        """
+        with transaction.atomic():
+            aircraft = type(self).objects.select_for_update().get(pk=self.pk)
+            if not aircraft.is_in_maintenance:
+                return False
+            hold = aircraft.workshop_hold()
+            if hold is not None:
+                raise ValidationError(
+                    _(
+                        "%(aircraft)s is still held by an open maintenance "
+                        "record (%(record)s). Close or void it first."
+                    )
+                    % {"aircraft": aircraft, "record": hold}
+                )
+            aircraft.current_location = "headquarters"
+            aircraft.current_site = None
+            aircraft.status = "active"
+            aircraft._changed_by_user = user
+            aircraft.save(
+                update_fields=[
+                    "current_location",
+                    "current_site",
+                    "status",
+                    "updated_at",
+                ]
+            )
+        for field in ("current_location", "current_site", "status", "updated_at"):
+            setattr(self, field, getattr(aircraft, field))
+        return True
+
     def save(self, *args, **kwargs):
         # X.1: the DJI serial never contains whitespace -- production has 2
         # aircraft with a stray internal space typed into this field

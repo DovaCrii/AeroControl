@@ -38,7 +38,10 @@
       <a href="{{ object.pk }}/edit/" hx-get="{{ object.pk }}/edit/" hx-target="#modal-content" data-bs-toggle="modal" data-bs-target="#generic-modal" class="btn btn-sm btn-outline-secondary">{% translate "Edit" %}</a>
       {% translate "Can it fly?" as fly_label %}{% translate "Archive" as archive_label %}{% translate "Restore" as restore_label %}
       {% url 'can-i-fly' as fly_url %}{% url 'aircraft-archive' object.pk as archive_url %}{% url 'aircraft-restore' object.pk as restore_url %}
-      {% with pk_text=object.pk|stringformat:"s" %}{% include "generic/_row_menu.html" with renew_href=fly_url|add:"?aircraft="|add:pk_text renew_label=fly_label show_renew=object.is_active is_active=object.is_active archive_action=archive_url archive_label=archive_label show_archive=perms.registry.delete_aircraft restore_action=restore_url restore_label=restore_label show_restore=perms.registry.change_aircraft %}{% endwith %}
+      {% comment %}LV-454: en mantenimiento, «Volver a servicio»; si una mantención activa en taller la retiene (anotado por la vista, una consulta por página), el enlace a esa mantención.{% endcomment %}
+      {% translate "Return to service" as return_label %}{% translate "Return this aircraft to service? It will be left active at headquarters." as return_confirm %}{% translate "View open maintenance" as hold_label %}
+      {% url 'aircraft-return-to-service' object.pk as return_url %}
+      {% with pk_text=object.pk|stringformat:"s" %}{% include "generic/_row_menu.html" with show_return=object.can_return_to_service return_action=return_url return_label=return_label return_confirm=return_confirm show_hold=object.workshop_hold_url hold_href=object.workshop_hold_url hold_label=hold_label renew_href=fly_url|add:"?aircraft="|add:pk_text renew_label=fly_label show_renew=object.is_active is_active=object.is_active archive_action=archive_url archive_label=archive_label show_archive=perms.registry.delete_aircraft restore_action=restore_url restore_label=restore_label show_restore=perms.registry.change_aircraft %}{% endwith %}
     </div>
   </td>
 </tr>

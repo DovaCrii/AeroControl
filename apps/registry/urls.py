@@ -137,6 +137,11 @@ urlpatterns += [
     # CRUD loop below because they advance `insurance_status`, a flow the
     # aircraft carries alongside its own condition, not the record's lifecycle.
     path(
+        "aircraft/<uuid:pk>/return-to-service/",
+        views.AircraftReturnToService.as_view(),
+        name="aircraft-return-to-service",
+    ),
+    path(
         "aircraft/<uuid:pk>/insurance/pending/",
         views.AircraftInsurancePending.as_view(),
         name="aircraft-insurance-pending",
