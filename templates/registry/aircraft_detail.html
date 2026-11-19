@@ -6,6 +6,14 @@
   {% aircraft_art object as art %}
   {% comment %}LV-423: la cabecera va **sin** `art`: la imagen sale una vez, en el héroe de abajo.{% endcomment %}
   {% include "generic/_entity_head.html" with art="" chip_label=object.get_status_display chip_tone=object.status|status_tone %}
+  {% comment %}LV-454: salida de «En mantenimiento» cuando ninguna mantención en taller retiene a la aeronave;
+  si una la retiene, el enlace a esa mantención (hay que cerrarla o anularla ahí).{% endcomment %}
+  {% if return_to_service_url %}
+  {% translate "Return this aircraft to service? It will be left active at headquarters." as return_confirm %}
+  <form method="post" action="{{ return_to_service_url }}" class="mb-3" data-confirm="{{ return_confirm }}" data-return-to-service>{% csrf_token %}<button class="btn btn-outline-primary" type="submit">{% translate "Return to service" %}</button></form>
+  {% elif workshop_hold %}
+  <p class="mb-3" data-workshop-hold><a class="btn btn-outline-secondary" href="{% url 'maintenance-detail' workshop_hold.pk %}">{% translate "View open maintenance" %}</a></p>
+  {% endif %}
   <nav class="entity-nav" aria-label="{% translate 'Sections' %}">
     <a href="#section-insurance">{% translate "JAC insurance" %}</a>
     <a href="#section-documents">{% translate "Documents" %}</a>
