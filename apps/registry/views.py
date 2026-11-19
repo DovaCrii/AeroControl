@@ -1399,6 +1399,46 @@ class AircraftList(RegistryList):
         self._base_queryset = queryset
         return self.apply_filters(queryset, self._filter_params())
 
+    def paginate_queryset(self, queryset, page_size):
+        paginator, page, object_list, has_other = super().paginate_queryset(
+            queryset, page_size
+        )
+        self._annotate_workshop_hold(object_list)
+        return paginator, page, object_list, has_other
+
+    def _annotate_workshop_hold(self, aircraft_list):
+        """LV-454: una sola consulta para saber, de las filas de la página que están en
+        mantenimiento, cuáles retiene una mantención activa en taller (sin N+1)."""
+        in_maintenance = [a for a in aircraft_list if a.is_in_maintenance]
+        user = self.request.user
+        can_change = user.has_perm("registry.change_aircraft")
+        can_open = user.has_perm("maintenance.view_maintenancerecord")
+        for aircraft in aircraft_list:
+            aircraft.can_return_to_service = False
+            aircraft.workshop_hold_url = ""
+        if not in_maintenance or not can_change:
+            return
+            return
+        from apps.maintenance.models import MaintenanceRecord
+
+        rows = (
+            MaintenanceRecord.objects.filter(
+                aircraft__in=in_maintenance,
+                is_active=True,
+                status__in=MaintenanceRecord.WORKSHOP_STATUSES,
+            )
+            .order_by("scheduled_date")
+            .values_list("aircraft_id", "pk")
+        )
+        holds = {aircraft_id: pk for aircraft_id, pk in rows}
+        for aircraft in in_maintenance:
+            hold_pk = holds.get(aircraft.pk)
+            aircraft.can_return_to_service = aircraft.is_active and hold_pk is None
+            if hold_pk and can_open and aircraft.is_active:
+                aircraft.workshop_hold_url = reverse(
+                    "maintenance-detail", args=[hold_pk]
+                )
+
 
 class AircraftDetail(RegistryDetail):
     """OPS-6/R5.4: the aircraft fiche as expediente -- documents, movement
@@ -1466,6 +1506,29 @@ class AircraftDetail(RegistryDetail):
         context.update(self._insurance_context())
         context.update(self._model_image_context())
         context["readiness"] = self._readiness_context()
+        context.update(self._return_to_service_context())
+        return context
+
+    def _return_to_service_context(self):
+        """LV-454: «Volver a servicio» sólo para una aeronave activa que está en
+        mantenimiento y a quien puede cambiarla; si una mantención en taller la retiene,
+        en vez del botón va el enlace a esa mantención."""
+        aircraft = self.object
+        user = self.request.user
+        context = {"return_to_service_url": "", "workshop_hold": None}
+        if (
+            not aircraft.is_active
+            or not aircraft.is_in_maintenance
+            or not user.has_perm("registry.change_aircraft")
+        ):
+            return context
+        hold = aircraft.workshop_hold()
+        if hold is None:
+            context["return_to_service_url"] = reverse(
+                "aircraft-return-to-service", args=[aircraft.pk]
+            )
+        elif user.has_perm("maintenance.view_maintenancerecord"):
+            context["workshop_hold"] = hold
         return context
 
     def _readiness_context(self):
@@ -1553,6 +1616,48 @@ class AircraftDetail(RegistryDetail):
             ).prefetch_related("changed_by_user__groups")[:20],
             "insurance_actions": actions,
         }
+
+
+class AircraftReturnToService(ModelPermissionRequiredMixin, View):
+    """LV-454: «Volver a servicio», el botón que faltaba para una aeronave que quedó
+    «En mantenimiento» sin una mantención en taller que la retenga. La regla vive en
+    `Aircraft.return_to_service`; esta vista sólo la invoca (POST, `change_aircraft`,
+    acotada a la empresa) y deja la huella de auditoría."""
+
+    model = Aircraft
+    permission_action = "change"
+    http_method_names = ["post", "options"]
+
+    def post(self, request, pk):
+        from apps.core.tenancy import scope_queryset_to_tenant
+        from apps.core.views import _safe_next
+
+        aircraft = get_object_or_404(
+            scope_queryset_to_tenant(
+                Aircraft.objects.all(), request.user, registry_tenant_path(Aircraft)
+            ),
+            pk=pk,
+            is_active=True,
+        )
+        try:
+            changed = aircraft.return_to_service(user=request.user)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            if changed:
+                set_audit_context(request, aircraft, action="returned_to_service")
+                messages.success(
+                    request,
+                    _("%(aircraft)s is back in service.") % {"aircraft": aircraft},
+                )
+            else:
+                messages.info(
+                    request,
+                    _("%(aircraft)s is not in maintenance.") % {"aircraft": aircraft},
+                )
+        return redirect(
+            _safe_next(request, fallback=reverse("aircraft-detail", args=[aircraft.pk]))
+        )
 
 
 class AircraftInsuranceTransition(StatusTransitionView):

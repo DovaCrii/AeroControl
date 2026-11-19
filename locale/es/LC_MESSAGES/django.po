@@ -15468,6 +15468,37 @@ msgstr "Este centro de costo aún no tiene nada asignado: se muestra todo."
 msgid "Choose the cost center first to see only its own."
 msgstr "Elija primero el centro de costo para ver sólo lo suyo."
 
+#: apps/registry/models.py
+#, python-format
+msgid ""
+"%(aircraft)s is still held by an open maintenance record (%(record)s). Close or "
+"void it first."
+msgstr ""
+"%(aircraft)s sigue retenida por una mantención abierta (%(record)s). Primero hay "
+"que cerrarla o anularla."
+
+#: apps/registry/views.py
+#, python-format
+msgid "%(aircraft)s is back in service."
+msgstr "%(aircraft)s volvió a servicio."
+
+#: apps/registry/views.py
+#, python-format
+msgid "%(aircraft)s is not in maintenance."
+msgstr "%(aircraft)s no está en mantenimiento."
+
+#: templates/registry/_aircraft_rows.html templates/registry/aircraft_detail.html
+msgid "Return to service"
+msgstr "Volver a servicio"
+
+#: templates/registry/_aircraft_rows.html templates/registry/aircraft_detail.html
+msgid "Return this aircraft to service? It will be left active at headquarters."
+msgstr "¿Volver esta aeronave a servicio? Quedará activa en la sede."
+
+#: templates/registry/_aircraft_rows.html templates/registry/aircraft_detail.html
+msgid "View open maintenance"
+msgstr "Ver mantención abierta"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 
