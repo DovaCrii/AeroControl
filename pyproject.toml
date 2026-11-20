@@ -23,7 +23,7 @@ dependencies = [
     "boto3>=1.35,<2",
     "gunicorn>=23,<27",
     "whitenoise>=6.9,<7",
-    "django-axes>=7,<9",
+    "django-axes>=7,<10",
     # LV-231: leer el número de la autorización DGAC desde su PDF, en vez de
     # teclearlo. `LV-156` había cerrado esta puerta con el argumento de que
     # "parsear el PDF exigiría una dependencia nueva que la política del repo no
