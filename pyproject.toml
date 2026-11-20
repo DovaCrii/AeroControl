@@ -45,7 +45,7 @@ dev = [
     # PYSEC-2026-3721. Pinnearlo acá es lo que hace reproducible el arreglo.
     "pip>=26.2",
     "pip-audit==2.10.1",
-    "pytest==9.1.1",
+    "pytest==9.2.0",
     "pytest-cov==7.1.0",
     "pytest-django==4.14.0",
     "polib>=1.2,<2",
