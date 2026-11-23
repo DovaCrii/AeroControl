@@ -1381,6 +1381,18 @@ class Operator(BaseModel):
         band, days = expiry_band(self.credential_expiry, timezone.localdate())
         return {"band": band, "days": days, "css": EXPIRY_BAND_CSS[band]}
 
+    def last_flight_on(self):
+        """B7: fecha del último vuelo en la bitácora digital, o `None`."""
+        from .recency import last_flight_on
+
+        return last_flight_on(self)
+
+    def inactivity(self, today, aircraft=None):
+        """B7: el estado de inactividad (`recency.Recency`) a la fecha `today`."""
+        from .recency import recency
+
+        return recency(self, today, aircraft)
+
     @property
     def authorization_items(self):
         """LV-413: las habilitaciones como piezas, tal como las escribe la DGAC."""
