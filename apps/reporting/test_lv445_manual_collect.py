@@ -353,7 +353,7 @@ class TestEvaluations:
             "reg018_operators": 0,
             "reg019_operators": 0,
         }
-        assert manual["evaluations"]["format"] == "lv158"
+        assert manual["evaluations"]["format"] == "lv158"  # sólo intentos previos
 
     def test_an_attempt_taken_after_the_cutoff_does_not_count(self, types, site):
         person = operator("P1", site)
@@ -443,6 +443,12 @@ class TestTheQueryBudget:
     # El diseño decía 8; no se afloja para que pase un cambio. LV-447 sumó una fuente
     # nueva (las revisiones de 24 h, una sola agregación): 11.
     CEILING = 11
+    # LV-456: los niveles de mantención llaman a `level_statuses` **una vez por
+    # aeronave** (programa aplicable y horas de la bitácora; con mantenciones hechas,
+    # una consulta más por nivel). Es el único costo que crece con la flota, y se
+    # declara en vez de esconderlo: la parte fija sube en 1 (la lista de aeronaves).
+    FIXED = CEILING + 1
+    PER_AIRCRAFT = 2
 
     @staticmethod
     def _count(centres):
@@ -469,7 +475,9 @@ class TestTheQueryBudget:
         large = self._count(12)
 
         print(f"\nMEDIDO consultas de la sección 5: {small} y {large}")
-        assert small == large <= self.CEILING
+        # 2 aeronaves en el caso chico, 12 en el grande.
+        assert small - 2 * self.PER_AIRCRAFT == large - 12 * self.PER_AIRCRAFT
+        assert large - 12 * self.PER_AIRCRAFT <= self.FIXED
 
 
 class TestTheReviewIn24HoursIsReal:
