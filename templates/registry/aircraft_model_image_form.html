@@ -1,0 +1,21 @@
+{% extends "generic/form.html" %}
+{% load i18n %}
+{% block form_top %}
+{% comment %}LV-457: las imágenes que la empresa ya cargó para otros modelos. Cada botón es un
+POST propio (fuera del formulario de carga) que apunta este modelo al mismo archivo.{% endcomment %}
+{% if reusable_images %}
+<section class="mb-4" data-reusable-images aria-labelledby="reusable-images-title">
+  <h2 class="h6" id="reusable-images-title">{% translate "Or use an image already loaded for another model" %}</h2>
+  <p class="text-muted small mb-2">{% translate "Similar models, such as Mavic 3 Enterprise and Mavic 3E, can share one photo without uploading it again." %}</p>
+  <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0">
+    {% for item in reusable_images %}
+    <li class="card p-2 fleet-reuse-card" data-reusable-image>
+      <div class="fleet-hero-frame mb-2"><img src="{{ item.url }}" alt="{{ item.image.model_name }}" class="is-photo" loading="lazy"></div>
+      <div class="small fw-bold mb-2 text-break">{{ item.image.model_name }}</div>
+      <form method="post" action="{{ item.reuse_url }}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-primary w-100">{% translate "Use this image" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

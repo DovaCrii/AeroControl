@@ -25,11 +25,21 @@ from apps.core.views import ModelPermissionRequiredMixin
 from .models import Aircraft, AircraftModelImage, normalize_model_key
 
 
+def _discard_if_unused(key):
+    """LV-457: borra el archivo reemplazado sólo si ninguna otra fila lo usa.
+
+    Dos modelos pueden compartir el mismo archivo (`AircraftModelImageReuse`): reemplazar la
+    imagen de uno no puede dejar al otro sin foto.
+    """
+    if key and not AircraftModelImage.objects.filter(storage_key=key).exists():
+        discard_image(key)
+
+
 class AircraftModelImageUpload(ModelPermissionRequiredMixin, FormView):
     model = Aircraft
     permission_action = "change"
     form_class = OfficialImageForm
-    template_name = "generic/form.html"
+    template_name = "registry/aircraft_model_image_form.html"
 
     @cached_property
     def aircraft(self):
@@ -57,7 +67,40 @@ class AircraftModelImageUpload(ModelPermissionRequiredMixin, FormView):
         context["title"] = _("Official image of the model %(model)s") % {
             "model": self.aircraft.model
         }
+        context["reusable_images"] = self.reusable_images()
         return context
+
+    def reusable_images(self):
+        """LV-457: las imágenes que la empresa ya cargó para OTROS modelos.
+
+        Una por archivo (dos modelos que ya comparten foto se ofrecen una vez) y sin la que
+        este modelo ya usa. No se adivina que dos nombres son el mismo modelo
+        (`normalize_model_key`): la persona lo decide, con un botón.
+        """
+        key = normalize_model_key(self.aircraft.model)
+        current = AircraftModelImage.for_aircraft(self.aircraft)
+        images, seen = [], {current.storage_key} if current else set()
+        candidates = scope_queryset_to_tenant(
+            AircraftModelImage.objects.filter(is_active=True), self.request.user
+        ).exclude(model_key=key)
+        for image in candidates.order_by("model_name", "pk"):
+            if image.storage_key in seen:
+                continue
+            seen.add(image.storage_key)
+            images.append(
+                {
+                    "image": image,
+                    "url": "{}?v={}".format(
+                        reverse("aircraft-model-image", args=[image.pk]),
+                        int(image.updated_at.timestamp()),
+                    ),
+                    "reuse_url": reverse(
+                        "aircraft-model-image-reuse",
+                        args=[self.aircraft.pk, image.pk],
+                    ),
+                }
+            )
+        return images
 
     def form_valid(self, form):
         key = normalize_model_key(self.aircraft.model)
@@ -88,7 +131,7 @@ class AircraftModelImageUpload(ModelPermissionRequiredMixin, FormView):
             },
         )
         if previous_key != storage_key:
-            discard_image(previous_key)
+            _discard_if_unused(previous_key)
         set_audit_context(
             self.request,
             image,
@@ -101,6 +144,77 @@ class AircraftModelImageUpload(ModelPermissionRequiredMixin, FormView):
         )
         messages.success(self.request, _("Official image saved for this model."))
         return redirect(reverse("aircraft-detail", args=[self.aircraft.pk]))
+
+
+class AircraftModelImageReuse(ModelPermissionRequiredMixin, View):
+    """LV-457: usar para este modelo la imagen que la empresa ya cargó para otro.
+
+    «Mavic 3 Enterprise» y «Mavic 3E» comparten foto sin volver a subirla: la fila de este
+    modelo apunta al mismo archivo (`storage_key`), sin copiar bytes. Sólo POST, con el
+    permiso de la carga y acotado por empresa: la imagen de otra empresa da 404.
+    """
+
+    model = Aircraft
+    permission_action = "change"
+    http_method_names = ["post", "options"]
+
+    def post(self, request, pk, image_pk):
+        aircraft = get_object_or_404(
+            scope_queryset_to_tenant(
+                Aircraft.objects.filter(is_active=True), request.user
+            ),
+            pk=pk,
+        )
+        source = get_object_or_404(
+            scope_queryset_to_tenant(
+                AircraftModelImage.objects.filter(
+                    is_active=True, tenant_id=aircraft.tenant_id
+                ),
+                request.user,
+            ),
+            pk=image_pk,
+        )
+        key = normalize_model_key(aircraft.model)
+        if not key:
+            messages.error(
+                request, _("The aircraft has no model to attach the image to.")
+            )
+            return redirect(reverse("aircraft-detail", args=[aircraft.pk]))
+        previous_key = (
+            AircraftModelImage.objects.filter(
+                tenant_id=aircraft.tenant_id, model_key=key
+            )
+            .values_list("storage_key", flat=True)
+            .first()
+        )
+        image, _created = AircraftModelImage.objects.update_or_create(
+            tenant_id=aircraft.tenant_id,
+            model_key=key,
+            defaults={
+                "model_name": aircraft.model.strip(),
+                "storage_key": source.storage_key,
+                "source_url": source.source_url,
+                "source_host": source.source_host,
+                "credit": source.credit,
+                "uploaded_by": request.user,
+                "is_active": True,
+            },
+        )
+        if previous_key != source.storage_key:
+            _discard_if_unused(previous_key)
+        set_audit_context(
+            request,
+            image,
+            action="official_image_reused",
+            metadata={
+                "model_key": key,
+                "source": "reuse",
+                "source_model_key": source.model_key,
+                "source_image": str(source.pk),
+            },
+        )
+        messages.success(request, _("Official image saved for this model."))
+        return redirect(reverse("aircraft-detail", args=[aircraft.pk]))
 
 
 class AircraftModelImageView(ModelPermissionRequiredMixin, View):

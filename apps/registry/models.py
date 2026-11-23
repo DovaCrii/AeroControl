@@ -333,10 +333,10 @@ class Aircraft(StatusHistoryMixin, BaseModel):
     # its denominator for exactly this reason.
     TERMINAL_STATUSES = frozenset({"retired"})
     registration = models.CharField(max_length=30, unique=True)
-    type = models.CharField(max_length=100)
+    type = models.CharField(max_length=100, verbose_name=_("Type"))
     model = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)
-    year = models.PositiveIntegerField(null=True, blank=True)
+    year = models.PositiveIntegerField(null=True, blank=True, verbose_name=_("Year"))
     # X.1: the only key present in all three worlds (DJI, the Z: folder
     # names, the DGAC registry) -- unique now that the 4 known production
     # discrepancies are resolved (see save() and migration 0028). `null=True`
@@ -344,14 +344,23 @@ class Aircraft(StatusHistoryMixin, BaseModel):
     # collide on the unique index, same pattern as
     # FlightPermission.permission_number.
     serial_number = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    # LV-457: con rótulo traducido; sin `verbose_name` la ficha mostraba «MAX TAKEOFF WEIGHT KG».
     max_takeoff_weight_kg = models.DecimalField(
-        max_digits=8, decimal_places=3, null=True, blank=True
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        verbose_name=_("Maximum takeoff weight (kg)"),
     )
     basic_weight_kg = models.DecimalField(
-        max_digits=8, decimal_places=3, null=True, blank=True
+        max_digits=8,
+        decimal_places=3,
+        null=True,
+        blank=True,
+        verbose_name=_("Basic weight (kg)"),
     )
     vlos = models.CharField(max_length=20, blank=True, verbose_name=_("VLOS"))
-    parachute = models.CharField(max_length=20, blank=True)
+    parachute = models.CharField(max_length=20, blank=True, verbose_name=_("Parachute"))
     # LV-29: the JAC insurance validity from the SIGO screen, as a first-class
     # field (the user enters it from the DGAC capture). This is the canonical
     # source for the list column and the alert/calendar/dashboard wiring; an
@@ -409,7 +418,9 @@ class Aircraft(StatusHistoryMixin, BaseModel):
         blank=True,
         verbose_name=_("Insurance status"),
     )
-    authorized_services = models.TextField(blank=True)
+    authorized_services = models.TextField(
+        blank=True, verbose_name=_("Authorized services")
+    )
     cost_center = models.ForeignKey(
         CostCenter,
         on_delete=models.PROTECT,

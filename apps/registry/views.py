@@ -1498,9 +1498,9 @@ class AircraftDetail(RegistryDetail):
                 total_flight_duration,
             )
 
-            context["total_flight_hours"] = format_duration(
-                total_flight_duration(self.object)
-            )
+            # LV-457: sin vuelos, «0 h» y no «0min» (se leía como un dato mal formateado).
+            total = total_flight_duration(self.object)
+            context["total_flight_hours"] = format_duration(total) if total else "0 h"
         else:
             context["total_flight_hours"] = None
         context.update(self._insurance_context())
