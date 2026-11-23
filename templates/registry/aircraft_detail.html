@@ -26,14 +26,17 @@
   <div class="fleet-hero">
     {% comment %}LV-399: con foto oficial del modelo (cargada por quien administra y servida desde el
     almacenamiento privado), la foto con su crédito; sin ella, la silueta de siempre.{% endcomment %}
-    {% if model_image %}
-    <figure class="fleet-hero-art fleet-hero-official mb-0" data-model-image>
-      <img src="{{ model_image_url }}" alt="{{ model_image.model_name|default:object.model }}" class="is-photo" loading="lazy">
+    {% comment %}LV-457: foto y silueta en el MISMO marco 4:3 (`fleet-hero-frame`, `contain`); el
+    crédito y la acción de cambiar la imagen van pegados bajo ella, dentro del figure.{% endcomment %}
+    <figure class="fleet-hero-art fleet-hero-official"{% if model_image %} data-model-image{% endif %}>
+      {% if model_image %}
+      <div class="fleet-hero-frame"><img src="{{ model_image_url }}" alt="{{ model_image.model_name|default:object.model }}" class="is-photo" loading="lazy"></div>
       {% if model_image.credit %}<figcaption class="fleet-hero-credit">{% blocktranslate with credit=model_image.credit %}Image: {{ credit }}{% endblocktranslate %}</figcaption>{% endif %}
+      {% else %}
+      <div class="fleet-hero-frame"><img src="{{ art.url }}" alt="{{ object.model|default:object.registration }}"{% if art.photo %} class="is-photo"{% endif %}></div>
+      {% endif %}
+      {% if model_image_upload_url %}<div class="fleet-hero-action"><a href="{{ model_image_upload_url }}" class="btn btn-sm btn-outline-secondary" data-model-image-action>{% if model_image %}{% translate "Replace the official image of the model" %}{% else %}{% translate "Load the official image of the model" %}{% endif %}</a></div>{% endif %}
     </figure>
-    {% else %}
-    <div class="fleet-hero-art"><img src="{{ art.url }}" alt="{{ object.model|default:object.registration }}"{% if art.photo %} class="is-photo"{% endif %}></div>
-    {% endif %}
     <dl class="fleet-hero-facts">
       <div><dt>{% translate "Model" %}</dt><dd>{{ object.model|default:"—" }}</dd></div>
       <div><dt>{% translate "Manufacturer" %}</dt><dd>{{ object.manufacturer|default:"—" }}</dd></div>
@@ -43,7 +46,6 @@
       <div><dt>{% translate "Cost Center" %}</dt><dd>{% if object.cost_center %}<span class="cc-chip" title="{{ object.cost_center }}">{{ object.cost_center.code }}</span>{% else %}<span class="cc-chip is-empty">{% translate "Unassigned" %}</span>{% endif %}</dd></div>
       <div><dt>{% translate "Current location" %}</dt><dd>{{ object.get_current_location_display }}{% if object.current_location == "on_site" and object.current_site %} <span class="cc-chip" title="{{ object.current_site }}">{{ object.current_site.code }}</span>{% endif %}</dd></div>
       {% if total_flight_hours is not None %}<div><dt>{% translate "Flight hours" %}</dt><dd>{{ total_flight_hours }}</dd></div>{% endif %}
-      {% if model_image_upload_url %}<div><dt class="visually-hidden">{% translate "Official image" %}</dt><dd><a href="{{ model_image_upload_url }}" class="small">{% if model_image %}{% translate "Replace the official image of the model" %}{% else %}{% translate "Load the official image of the model" %}{% endif %}</a></dd></div>{% endif %}
     </dl>
   </div>
 

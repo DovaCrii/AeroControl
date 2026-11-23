@@ -15499,6 +15499,18 @@ msgstr "¿Volver esta aeronave a servicio? Quedará activa en la sede."
 msgid "View open maintenance"
 msgstr "Ver mantención abierta"
 
+#: apps/registry/model_image_views.py templates/registry/aircraft_model_image_form.html
+msgid "Or use an image already loaded for another model"
+msgstr "O usar una imagen ya cargada para otro modelo"
+
+#: templates/registry/aircraft_model_image_form.html
+msgid "Similar models, such as Mavic 3 Enterprise and Mavic 3E, can share one photo without uploading it again."
+msgstr "Los modelos parecidos, como Mavic 3 Enterprise y Mavic 3E, pueden compartir una foto sin volver a subirla."
+
+#: templates/registry/aircraft_model_image_form.html
+msgid "Use this image"
+msgstr "Usar esta imagen"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

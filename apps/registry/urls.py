@@ -18,6 +18,11 @@ urlpatterns += [
         name="aircraft-model-image-upload",
     ),
     path(
+        "aircraft/<uuid:pk>/model-image/reuse/<uuid:image_pk>/",
+        model_image_views.AircraftModelImageReuse.as_view(),
+        name="aircraft-model-image-reuse",
+    ),
+    path(
         "aircraft-model-images/<uuid:pk>/",
         model_image_views.AircraftModelImageView.as_view(),
         name="aircraft-model-image",
