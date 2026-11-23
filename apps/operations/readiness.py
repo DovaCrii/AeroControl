@@ -44,6 +44,7 @@ pantalla, y no es una fórmula de cortesía: quien firma sigue siendo quien firm
 from dataclasses import dataclass, field
 from datetime import timedelta
 
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import capfirst
@@ -227,6 +228,8 @@ def _check_operator(operator, today, aircraft=None):
         )
 
     _check_evaluations(check, operator, aircraft, today, url)
+    if settings.INACTIVITY_RULE_ENABLED:
+        _check_inactivity(check, operator, aircraft, today, url)
     for document in _expiring_documents(Document, operator):
         _add(
             check,
@@ -239,6 +242,55 @@ def _check_operator(operator, today, aircraft=None):
             ),
         )
     return check
+
+
+def _check_inactivity(check, operator, aircraft, today, url):
+    """B7 (Act. 19, Anexo D, D-3 §I): 6 meses sin volar exigen el repaso.
+
+    Sólo corre con `INACTIVITY_RULE_ENABLED`. Inactivo o con 2 años sin volar
+    bloquea; el repaso por vencer avisa; **sin vuelos en la bitácora sólo avisa**:
+    sin dato no se bloquea.
+    """
+    from apps.registry import recency
+
+    label = _("Inactivity review")
+    result = recency.recency(operator, today, aircraft)
+    if result.state == recency.NO_DATA:
+        check.warnings.append(
+            Finding(
+                label=label,
+                detail=_(
+                    "No flight on record in the digital logbook, so inactivity "
+                    "cannot be checked."
+                ),
+                url=url,
+            )
+        )
+    elif result.state == recency.RETRAINING:
+        check.blockers.append(
+            Finding(
+                label=label,
+                detail=_(
+                    "More than two years without flying: repeat the general exam "
+                    "and the limitations exam."
+                ),
+                url=url,
+            )
+        )
+    elif result.state == recency.INACTIVE:
+        check.blockers.append(
+            Finding(
+                label=label,
+                detail=_(
+                    "No flight since %(date)s; the inactivity review is required "
+                    "before flying again."
+                )
+                % {"date": result.last_flight.strftime("%d-%m-%Y")},
+                url=url,
+            )
+        )
+    elif result.state == recency.DUE_SOON:
+        _add(check, *_expiry_finding(label, result.due_on, today, url, ""))
 
 
 def _not_passed(check, label, url):

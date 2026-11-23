@@ -15523,6 +15523,41 @@ msgstr "Los modelos parecidos, como Mavic 3 Enterprise y Mavic 3E, pueden compar
 msgid "Use this image"
 msgstr "Usar esta imagen"
 
+#: apps/operations/readiness.py templates/registry/operator_detail.html
+msgid "Inactivity review"
+msgstr "Repaso por inactividad"
+
+#: apps/operations/readiness.py
+msgid ""
+"No flight since %(date)s; the inactivity review is required before flying "
+"again."
+msgstr ""
+"Sin vuelos desde el %(date)s; se requiere el repaso por inactividad antes de "
+"volver a operar."
+
+#: apps/operations/readiness.py
+msgid ""
+"More than two years without flying: repeat the general exam and the "
+"limitations exam."
+msgstr ""
+"Más de dos años sin volar: corresponde repetir el examen general y el de "
+"limitaciones."
+
+#: templates/registry/operator_detail.html
+msgid "Last recorded flight"
+msgstr "Último vuelo registrado"
+
+#: templates/registry/operator_detail.html
+msgid "No flights in the digital logbook"
+msgstr "Sin vuelos en la bitácora digital"
+
+#: apps/operations/readiness.py
+msgid ""
+"No flight on record in the digital logbook, so inactivity cannot be checked."
+msgstr ""
+"No hay vuelos en la bitácora digital, así que no se puede comprobar la "
+"inactividad."
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

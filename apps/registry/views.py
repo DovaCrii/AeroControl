@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -1782,6 +1783,10 @@ class OperatorDetail(RegistryDetail):
             if self.request.user.has_perm("registry.delete_knowledgeassessment")
             else None
         )
+        # B7: la línea de inactividad existe en el contexto sólo con la regla
+        # encendida; apagada, la ficha y sus consultas quedan como estaban.
+        if settings.INACTIVITY_RULE_ENABLED:
+            context["inactivity"] = self.object.inactivity(context["today"])
         context.update(attached_documents_context(self.request.user, self.object))
         return context
 

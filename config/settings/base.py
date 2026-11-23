@@ -527,6 +527,18 @@ SERVICE_WORKER_VERSION = _service_worker_version()
 # guardados— no depende de esto y sigue funcionando.
 SERVICE_WORKER_ENABLED = config("SERVICE_WORKER_ENABLED", default=False, cast=bool)
 
+# B7 (Manual Act. 19, Anexo D, D-3 §I) — la regla de inactividad del operador:
+# 6 meses sin volar exigen el repaso (cuestionario anual del RPA) antes de volver
+# a operar; 2 años, repetir examen general y limitaciones.
+#
+# **Apagada por defecto**: depende del banco de preguntas REG-019, que aún no
+# está cargado en producción, y de la bitácora digital (`FlightRecord`), que casi
+# no se usa por persona; encendida hoy bloquearía a casi todos por falta de
+# dato. Condición para encenderla: banco REG-019 cargado **y** bitácora usada por
+# persona. Encenderla es poner `INACTIVITY_RULE_ENABLED=True` en el entorno
+# (`docs/compliance-setup.md`). Apagada no cambia ninguna pantalla.
+INACTIVITY_RULE_ENABLED = config("INACTIVITY_RULE_ENABLED", default=False, cast=bool)
+
 # T1.4 paso 2 — auditoría atómica con la mutación, **apagada por omisión**.
 #
 # Apagado: el `AuditEvent` se escribe después de la respuesta y, si falla, el

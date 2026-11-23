@@ -254,6 +254,25 @@ uv run python manage.py send_alert_digest --dry-run
 `--dry-run` imprime destinatarios y conteos sin enviar. Con datos cargados,
 `generate_alerts` debe reportar alertas > 0 y el digest, a quién llegaría.
 
+## Regla de inactividad del operador (Act. 19, B7, `LV-458`)
+
+Seis meses sin volar exigen el repaso teórico (cuestionario anual del RPA que se va
+a operar) antes de volver a operar; dos años, repetir el examen general y el de
+limitaciones. Se calcula desde la bitácora digital (`FlightRecord`). Viene
+**apagada**; sin vuelos en la bitácora sólo avisa, nunca bloquea.
+
+**Encenderla solo cuando** el banco de preguntas REG-019 esté cargado en producción
+y la bitácora digital se use por persona; si no, bloquearía por falta de dato.
+
+En la VM `p340`, agregar a `/etc/aerocontrol.env`:
+
+```
+INACTIVITY_RULE_ENABLED=True
+```
+
+y reiniciar el servicio (`sudo systemctl restart aerocontrol`). Para apagarla,
+quitar la línea (o ponerla en `False`) y reiniciar. Sin migración ni estáticos.
+
 ## Paso 6 — Correo real
 
 Sin `EMAIL_HOST` en el entorno se usa el backend de consola: el resumen se
