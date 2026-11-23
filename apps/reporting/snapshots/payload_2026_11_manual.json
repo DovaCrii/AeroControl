@@ -436,80 +436,7 @@
           "cutoff": "2026-11-30"
         }
       },
-      "by_kind": [
-        {
-          "kind": "general",
-          "label": "Examen general",
-          "in_force": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "lapsed": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "failed_only": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "never": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          }
-        },
-        {
-          "kind": "limitations",
-          "label": "Limitaciones y emergencias",
-          "in_force": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "lapsed": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "failed_only": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "never": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          }
-        },
-        {
-          "kind": "annual",
-          "label": "Cuestionario anual",
-          "in_force": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "lapsed": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "failed_only": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          },
-          "never": {
-            "value": null,
-            "source": "registry",
-            "cutoff": "2026-11-30"
-          }
-        }
-      ]
+      "by_kind": []
     },
     "maintenance": {
       "kpis": {
@@ -539,50 +466,7 @@
           "cutoff": "2026-11-30"
         }
       },
-      "levels": [
-        {
-          "level": "basic",
-          "label": "Básica",
-          "overdue": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          },
-          "soon": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          }
-        },
-        {
-          "level": "medium",
-          "label": "Media",
-          "overdue": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          },
-          "soon": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          }
-        },
-        {
-          "level": "advanced",
-          "label": "Avanzada",
-          "overdue": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          },
-          "soon": {
-            "value": null,
-            "source": "maintenance",
-            "cutoff": "2026-11-30"
-          }
-        }
-      ]
+      "levels": []
     }
   }
 }

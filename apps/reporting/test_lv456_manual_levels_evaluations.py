@@ -139,6 +139,8 @@ class TestMaintenanceByLevel:
         assert "manual.maintenance.levels[2].overdue" in missing
 
     def test_the_levels_come_in_programme_order(self, site, programmes):
+        _done(aircraft("RPA-9001", site), "basic", date(2026, 4, 1))
+
         manual, _missing = _manual()
 
         assert [row["level"] for row in manual["maintenance"]["levels"]] == [
@@ -155,8 +157,10 @@ class TestMaintenanceByLevel:
         assert _kpi(manual, "due_by_level") is None
         assert _kpi(manual, "due_soon_by_level") is None
         assert _kpi(manual, "level_without_data") == 1
-        assert set(_levels(manual).values()) == {(None, None)}
+        assert manual["maintenance"]["levels"] == []
         assert "manual.maintenance.kpis.due_soon_by_level" in missing
+        # El detalle por nivel no repite el hueco del total: no suma pendientes.
+        assert not [path for path in missing if "maintenance.levels" in path]
 
     def test_an_aircraft_without_a_programme_has_no_data(self, site, db):
         MaintenanceProgram.objects.all().delete()
@@ -172,7 +176,7 @@ class TestMaintenanceByLevel:
 
         assert _kpi(manual, "due_by_level") is None
         assert _kpi(manual, "due_soon_by_level") is None
-        assert set(_levels(manual).values()) == {(None, None)}
+        assert manual["maintenance"]["levels"] == []
 
     def test_only_the_report_fleet_is_measured(self, site, programmes):
         from apps.registry.models import Aircraft
@@ -218,7 +222,7 @@ def _by_kind(manual):
 
 
 class TestEvaluationsByKind:
-    def test_only_previous_attempts_keep_the_old_format_and_pending_by_kind(self, site):
+    def test_only_previous_attempts_keep_the_old_format_and_no_kind_lines(self, site):
         person = operator("P1", site)
         _attempt(
             person,
@@ -231,14 +235,32 @@ class TestEvaluationsByKind:
         manual, _missing = _manual()
 
         assert manual["evaluations"]["format"] == "lv158"
-        assert [row["kind"] for row in manual["evaluations"]["by_kind"]] == [
-            "general",
-            "limitations",
-            "annual",
+        # La hoja decide por `format`: sin tipos nuevos no hay líneas por tipo.
+        assert manual["evaluations"]["by_kind"] == []
+
+    def test_the_pending_count_does_not_grow_for_what_the_sheet_does_not_draw(
+        self, site, programmes
+    ):
+        from apps.reporting.builder import find_missing
+
+        person = operator("P1", site)
+        _attempt(
+            person,
+            "legacy",
+            passed=True,
+            taken=date(2026, 10, 5),
+            expires=date(2027, 10, 5),
+        )
+        aircraft("RPA-9001", site)  # sin nivel con dato
+
+        manual, missing = _manual()
+
+        assert missing == [f"manual.{path}" for path in find_missing(manual)]
+        assert not [
+            path
+            for path in missing
+            if "evaluations.by_kind" in path or "maintenance.levels" in path
         ]
-        assert set(sum((list(v.values()) for v in _by_kind(manual).values()), [])) == {
-            None
-        }
 
     def test_a_base_without_assessments_is_still_the_old_format(self, site):
         manual, _missing = _manual()

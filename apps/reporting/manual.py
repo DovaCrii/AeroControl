@@ -403,10 +403,13 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
         for own in attempts.values()
         for a in own
     )
-    by_kind = [
-        _kind_row(kind, roster, attempts, in_force, act19, kpi)
-        for kind in BY_KIND_ORDER
-    ]
+    # En `lv158` la hoja no dibuja nada por tipo: lista vacía, no doce hojas
+    # «Pendiente» que inflarían el aviso de indicadores pendientes.
+    by_kind = (
+        [_kind_row(kind, roster, attempts, in_force, kpi) for kind in BY_KIND_ORDER]
+        if act19
+        else []
+    )
 
     held = {}
     wanted = (reg018_id, reg019_id)
@@ -435,24 +438,18 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
     }
 
 
-def _kind_row(kind, roster, attempts, in_force, act19, kpi):
+def _kind_row(kind, roster, attempts, in_force, kpi):
     """Una línea por tipo de evaluación del Manual: vigentes, vencidas, sin rendir.
 
     Vigente: el último intento **aprobado** de ese tipo al corte sigue vigente. Para
     los tipos por familia de aeronave (limitaciones, anual) se mira el último aprobado
     **de cada familia**: vigente si alguna lo está, vencida si tiene aprobados pero
     ninguno vigente. `failed_only`: sólo reprobados de ese tipo. `never`: ningún
-    intento de ese tipo. En formato `lv158` todo va en `None` (Pendiente): la hoja no
-    tiene que preguntar.
+    intento de ese tipo. Sólo se llama en formato `act19`.
     """
     from apps.registry.models import KnowledgeAssessment
 
     row = {"kind": kind, "label": BY_KIND_LABELS[kind]}
-    if not act19:
-        row.update(
-            in_force=kpi(None), lapsed=kpi(None), failed_only=kpi(None), never=kpi(None)
-        )
-        return row
     per_family = kind in KnowledgeAssessment.FAMILY_KINDS
     counts = {"in_force": 0, "lapsed": 0, "failed_only": 0, "never": 0}
     for operator_id in roster:
@@ -506,7 +503,10 @@ def collect_maintenance(window, cutoff, fleet=()):
             "due_soon_by_level": kpi(levels["soon"]),
             "level_without_data": kpi(levels["without_data"]),
         },
-        "levels": [
+        # Sin nada que medir no hay detalle por nivel (el total ya es Pendiente).
+        "levels": []
+        if levels["overdue"] is None
+        else [
             {
                 "level": code,
                 "label": LEVEL_LABELS[code],
