@@ -119,10 +119,20 @@ def permit_groups(payload):
         for row in permits
         if not row.get("in_force") and row.get("status") == "approved"
     ]
+    # LV-459: lo que el panel cuenta aparte y el papel callaba. Las solicitudes SIGO
+    # presentadas (A8) y los aprobados que empiezan después del corte (A5) no
+    # habilitan: van en bloques propios, con su rótulo, igual que «en trámite».
+    filed = list(payload.get("filed_requests") or [])
+    upcoming = sorted(
+        payload.get("upcoming_permits") or [],
+        key=lambda row: (row.get("valid_from") or "", row.get("folio") or ""),
+    )
     return {
         "operating": operating,
         "outside": outside,
         "awaiting": awaiting,
+        "filed": filed,
+        "upcoming": upcoming,
         "lapsed": lapsed,
         "operating_in_force": sum(group["count"] for group in operating),
         "outside_in_force": sum(group["count"] for group in outside),
@@ -173,4 +183,6 @@ def register_rows(payload):
         for row in permits
         if not row.get("in_force") and row.get("status") == "approved"
     ]
-    return in_force + awaiting + lapsed
+    # LV-459 (A5): los aprobados que aún no empiezan, entre los trámites y los vencidos.
+    upcoming = list(payload.get("upcoming_permits") or [])
+    return in_force + awaiting + upcoming + lapsed

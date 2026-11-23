@@ -37,9 +37,12 @@ SMALL, LARGE = 2, 6
 # faena (ahora salen de las filas de permisos) y se sumó la del informe del mes
 # anterior para `payload.changes`; la reconstrucción de los vencidos tras el corte es
 # una subconsulta dentro de la consulta de permisos, no una más.
-BUILD_CEILING = {SMALL: 32, LARGE: 32}
-PREVIEW_CEILING = {SMALL: 42, LARGE: 42}
-BRIEF_CEILING = {SMALL: 42, LARGE: 42}
+# LV-459: +1, la lectura de las solicitudes SIGO presentadas (`FlightRequest`, A8): una
+# consulta que no crece con las faenas (el historial se pide sólo si hay solicitudes).
+# 33 build, 43 vista previa y Dato Ejecutivo.
+BUILD_CEILING = {SMALL: 33, LARGE: 33}
+PREVIEW_CEILING = {SMALL: 43, LARGE: 43}
+BRIEF_CEILING = {SMALL: 43, LARGE: 43}
 FROZEN_CEILING = 10
 
 

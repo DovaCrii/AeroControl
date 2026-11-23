@@ -118,7 +118,7 @@ def _cover_texts():
     return {field: getattr(template, field) for field in FACTORY_COVER}
 
 
-def collect_kpis(cutoff, cost_centres, permit_rows):
+def collect_kpis(cutoff, cost_centres, permit_rows, upcoming=(), filed=()):
     """Los indicadores de portada, cada uno de su función de siempre.
 
     `cost_centres` llega ya calculado en vez de volver a consultarlo: la faena
@@ -131,6 +131,10 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
     cuatro contadores del encabezado salían de `permit_counts`, que resuelve el
     estado de **hoy**, mientras la tabla de abajo se reconstruye **al corte**.
     Con eso el encabezado decía "0 en trámite" sobre una tabla que listaba tres.
+
+    LV-459: `upcoming` (aprobados que empiezan después del corte, A5) y `filed`
+    (solicitudes SIGO presentadas sin permiso vivo, A8) llegan por lo mismo. Las
+    segundas **suman al «en trámite»** y los primeros **nunca a «vigentes»**.
     """
     from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, PERMIT_WARNING_DAYS
     from apps.compliance.models import NonConformity
@@ -180,11 +184,29 @@ def collect_kpis(cutoff, cost_centres, permit_rows):
         "permits_in_force": leaf(
             sum(1 for row in permit_rows if row["in_force"]), "operations", cutoff
         ),
+        # LV-459 (A8): permisos solicitados **más** solicitudes SIGO presentadas sin
+        # permiso vivo vinculado. `permits_awaiting_requests` es la parte SIGO.
         "permits_awaiting": leaf(
-            sum(1 for row in permit_rows if row["status"] == "requested"),
+            sum(1 for row in permit_rows if row["status"] == "requested") + len(filed),
             "operations",
             cutoff,
         ),
+        "permits_awaiting_requests": leaf(len(filed), "operations", cutoff),
+        # LV-459 (A6): lo que suman las **filas visibles** de la cobertura (faenas
+        # con operación). El Total de la sección 3 imprime esto y el resto va en la
+        # línea «+ Sin operación»; `permits_awaiting` sigue siendo el total legal.
+        "permits_awaiting_operating": leaf(
+            sum(
+                1
+                for row in (*permit_rows, *filed)
+                if row["status"] == "requested" and row["in_operation"]
+            ),
+            "operations",
+            cutoff,
+        ),
+        # LV-459 (A5): aprobado, con vigencia que empieza después del corte. No
+        # habilita ni cuenta en «X de N con permiso vigente».
+        "permits_not_started": leaf(len(upcoming), "operations", cutoff),
         # Aprobado al corte y con la vigencia ya pasada: nadie lo cerró.
         # Normalmente cero, porque `expire_permissions` los cierra cada noche --
         # y por eso mismo vale mirarlo.
@@ -339,7 +361,7 @@ def operating_centres():
     return list(operating_cost_centers().order_by("code"))
 
 
-def collect_cost_centres(cutoff, permit_rows, centres=None):
+def collect_cost_centres(cutoff, permit_rows, centres=None, upcoming=(), filed=()):
     """Una fila por faena que vuela, **incluidas las que no tienen permiso**.
 
     Parte de las faenas y no de los permisos precisamente para eso: un `GROUP BY`
@@ -355,6 +377,11 @@ def collect_cost_centres(cutoff, permit_rows, centres=None):
     eso la fila Total de la sección 3 decía 15 mientras las filas sumaban 14. Con una
     sola fuente, la suma de las filas **es** el total por construcción
     (`invariants.py` lo comprueba igual).
+
+    LV-459: la solicitud SIGO presentada (`filed`, A8) suma al «en trámite» de su
+    faena; el aprobado que aún no empieza (`upcoming`, A5) va en
+    `permits_not_started`/`next_start`, y `renewal_in_progress` (A4) dice que **todos**
+    los permisos vigentes por vencer de la faena ya tienen su renovación en trámite.
     """
     from apps.compliance.kpis import PERMIT_CRITICAL_DAYS, permit_band
 
@@ -362,6 +389,12 @@ def collect_cost_centres(cutoff, permit_rows, centres=None):
     by_code = {}
     for row in permit_rows:
         by_code.setdefault(row["cost_centre"], []).append(row)
+    filed_by_code = {}
+    for row in filed:
+        filed_by_code.setdefault(row["cost_centre"], []).append(row)
+    upcoming_by_code = {}
+    for row in upcoming:
+        upcoming_by_code.setdefault(row["cost_centre"], []).append(row)
 
     rows = []
     for centre in centres:
@@ -369,6 +402,14 @@ def collect_cost_centres(cutoff, permit_rows, centres=None):
         in_force = [row for row in own if row["in_force"]]
         days = min((row["days_remaining"] for row in in_force), default=None)
         expiries = [row["valid_until"] for row in in_force]
+        waiting = filed_by_code.get(centre.code, [])
+        starting = upcoming_by_code.get(centre.code, [])
+        critical = [row for row in in_force if row["band"] == "critical"]
+        successors = {
+            row["renews"]
+            for row in own
+            if row["status"] == "requested" and row.get("renews")
+        }
         rows.append(
             {
                 "code": centre.code,
@@ -376,6 +417,14 @@ def collect_cost_centres(cutoff, permit_rows, centres=None):
                 "permits_in_force": len(in_force),
                 "permits_awaiting": sum(
                     1 for row in own if row["status"] == "requested"
+                )
+                + len(waiting),
+                "permits_not_started": len(starting),
+                "next_start": min(
+                    (row["valid_from"] for row in starting), default=None
+                ),
+                "renewal_in_progress": bool(
+                    critical and all(row["folio"] in successors for row in critical)
                 ),
                 "permits_lapsed": sum(
                     1
@@ -419,7 +468,7 @@ def outside_reason(centre):
     return "archived"
 
 
-def collect_outside_centres(permit_rows):
+def collect_outside_centres(permit_rows, upcoming=(), filed=()):
     """LV-378: las faenas **sin operación** que todavía tienen algún permiso vivo.
 
     Regla (a'): la cobertura y el «X de N» siguen siendo sólo de las faenas con
@@ -434,7 +483,7 @@ def collect_outside_centres(permit_rows):
     from apps.compliance.kpis import permit_band
 
     found = {}
-    for row in permit_rows:
+    for row in (*permit_rows, *upcoming, *filed):
         if row["in_operation"]:
             continue
         entry = found.setdefault(
@@ -446,13 +495,16 @@ def collect_outside_centres(permit_rows):
                 "permits_in_force": 0,
                 "permits_awaiting": 0,
                 "permits_lapsed": 0,
+                "permits_not_started": 0,
                 "next_expiry": None,
                 "days_remaining": None,
                 "band": None,
                 "folios": [],
             },
         )
-        if row["in_force"]:
+        if row.get("not_started"):
+            entry["permits_not_started"] += 1
+        elif row["in_force"]:
             entry["permits_in_force"] += 1
             entry["folios"].append(row["folio"])
             if (
@@ -518,7 +570,13 @@ def status_at_cutoff(permits, cutoff):
 
 
 def collect_permits(cutoff, operating_codes=None):
-    """R4: una fila por permiso vivo, como la tabla de la página 3.
+    """R4: una fila por permiso vivo (las filas de `_collect_all_permits`).
+
+    LV-459: los aprobados que **todavía no empiezan** al corte no son filas de esta
+    lista —no habilitan ni están en trámite— y salen aparte, en
+    `collect_upcoming_permits`; las dos comparten consulta en `build`.
+
+    R4, el original: una fila por permiso vivo, como la tabla de la página 3.
 
     **Vivos son los vigentes y los que esperan a la DGAC**, y van juntos en una
     consulta pero separados en la salida por `in_force`: el informe emitido los
@@ -546,6 +604,17 @@ def collect_permits(cutoff, operating_codes=None):
     permisos — y el payload se construye también desde un trabajo nocturno,
     donde nadie mira el reloj.
     """
+    return _collect_all_permits(cutoff, operating_codes)[0]
+
+
+def collect_upcoming_permits(cutoff, operating_codes=None):
+    """LV-459 (A5): los aprobados cuya vigencia **empieza después del corte**."""
+    return _collect_all_permits(cutoff, operating_codes)[1]
+
+
+def _collect_all_permits(cutoff, operating_codes=None):
+    """`(filas, próximos, pks)`: las filas vivas al corte, los aprobados aún no
+    vigentes y las claves de todo lo vivo al corte (para cruzar las solicitudes SIGO)."""
     from django.db import models
 
     from apps.compliance.kpis import permit_band
@@ -555,6 +624,15 @@ def collect_permits(cutoff, operating_codes=None):
         operating_codes = {centre.code for centre in operating_centres()}
 
     alive = (FlightPermission.STATUS_REQUESTED, FlightPermission.STATUS_APPROVED)
+    # LV-459 (A3): **cualquier** estado terminal con un movimiento posterior al corte
+    # vuelve a entrar, no sólo `expired`: un permiso en trámite al corte que la DGAC
+    # rechazó (`denied`) o que se cerró (`completed`) después también estaba vivo
+    # entonces. `status_at_cutoff` decide en qué bloque va, o si no va.
+    terminal = (
+        FlightPermission.STATUS_DENIED,
+        FlightPermission.STATUS_COMPLETED,
+        FlightPermission.STATUS_EXPIRED,
+    )
     moved_after_cutoff = models.Exists(
         PermissionHistory.objects.filter(
             permission=models.OuterRef("pk"), created_at__date__gt=cutoff
@@ -563,7 +641,7 @@ def collect_permits(cutoff, operating_codes=None):
     permits = (
         FlightPermission.objects.filter(
             models.Q(status__in=alive)
-            | models.Q(moved_after_cutoff, status=FlightPermission.STATUS_EXPIRED)
+            | models.Q(moved_after_cutoff, status__in=terminal)
         )
         # LV-233, tercera parte: **vivo al corte**, no vivo hoy. Un permiso
         # archivado *después* del corte estaba vivo entonces y tiene que
@@ -604,8 +682,13 @@ def collect_permits(cutoff, operating_codes=None):
         # `valid_from` nulo pasa: lo que lo hace pertenecer al corte es haber
         # existido, y su bloque en el informe ya dice que no habilita.
         .filter(created_at__date__lte=cutoff)
-        .filter(models.Q(valid_from__isnull=True) | models.Q(valid_from__lte=cutoff))
-        .select_related("cost_center")
+        # LV-459 (A1/A2): **la vigencia ya no filtra la consulta.** `valid_from <=
+        # corte` sólo tiene sentido para lo que al corte estaba *aprobado*; se
+        # aplicaba a todos los estados, y por eso una solicitud con fechas pedidas
+        # futuras, o una aprobada después del corte con vigencia futura, salían del
+        # informe aunque al corte estaban en trámite. Se decide abajo, con el estado
+        # **al corte**.
+        .select_related("cost_center", "renews")
         .prefetch_related("operators", "aircraft_fleet")
         .order_by("valid_until", "internal_folio")
     )
@@ -614,17 +697,31 @@ def collect_permits(cutoff, operating_codes=None):
     was = status_at_cutoff(permits, cutoff)
 
     rows = []
+    upcoming = []
+    alive_pks = set()
     for permit in permits:
         # LV-378: un caducado que entró por haberse movido después del corte sólo
         # se lista si al corte estaba vivo.
         if was[permit.pk] not in alive:
             continue
         approved = was[permit.pk] == FlightPermission.STATUS_APPROVED
+        alive_pks.add(permit.pk)
+        # LV-459 (A2/A3): la vigencia que hoy tiene el permiso **no existía** si al
+        # corte todavía estaba en trámite (se fijó al aprobarlo, después): no se
+        # dibuja una vigencia ni unos días que el corte no conocía.
+        hindsight = not approved and permit.status != was[permit.pk]
+        starts_later = bool(
+            approved and permit.valid_from and permit.valid_from > cutoff
+        )
         operating = permit.cost_center.code in operating_codes
         # Un permiso solicitado no tiene vigencia (`LV-219`), así que sus días
         # son `None` y no cero: cero afirmaría que vence hoy.
-        days = (permit.valid_until - cutoff).days if permit.valid_until else None
-        rows.append(
+        days = (
+            None
+            if hindsight or starts_later or not permit.valid_until
+            else (permit.valid_until - cutoff).days
+        )
+        (upcoming if starts_later else rows).append(
             {
                 "folio": permit.internal_folio,
                 # El número de la DGAC no existe hasta que la DGAC resuelve.
@@ -639,15 +736,23 @@ def collect_permits(cutoff, operating_codes=None):
                 "operators": [o.full_name for o in permit.operators.all()],
                 "aircraft": [a.registration for a in permit.aircraft_fleet.all()],
                 "valid_from": permit.valid_from.isoformat()
-                if permit.valid_from
+                if permit.valid_from and not hindsight
                 else None,
                 "valid_until": (
-                    permit.valid_until.isoformat() if permit.valid_until else None
+                    permit.valid_until.isoformat()
+                    if permit.valid_until and not hindsight
+                    else None
                 ),
                 "days_remaining": days,
                 "band": permit_band(days),
+                # LV-459 (A4): el folio del permiso que éste renueva. Con él el
+                # informe sabe que la solicitud en trámite **es** la renovación.
+                "renews": permit.renews.internal_folio if permit.renews_id else None,
                 "in_force": bool(
-                    approved and permit.valid_until and permit.valid_until >= cutoff
+                    approved
+                    and not starts_later
+                    and permit.valid_until
+                    and permit.valid_until >= cutoff
                 ),
                 # LV-378: ¿su faena está en la cobertura? Es el criterio que parte
                 # lo que mide renovación (sólo con operación) de lo que es un hecho
@@ -659,6 +764,82 @@ def collect_permits(cutoff, operating_codes=None):
                 "outside_reason": (
                     None if operating else outside_reason(permit.cost_center)
                 ),
+                **({"not_started": True} if starts_later else {}),
+            }
+        )
+    return rows, upcoming, alive_pks
+
+
+def _status_at(objects, history_model, link, cutoff):
+    """`{pk: estado al corte}` para cualquier modelo con `StatusHistoryMixin`.
+
+    Mismo criterio que `status_at_cutoff` (ver su docstring): el `new_status` del
+    último movimiento hasta el corte; si todos son posteriores, el
+    `previous_status` del primero; sin movimientos, el estado de hoy.
+    """
+    from django.utils import timezone
+
+    by_object = {}
+    for entry in history_model.objects.filter(
+        **{f"{link}__in": [obj.pk for obj in objects]}
+    ).order_by(f"{link}_id", "sequence"):
+        by_object.setdefault(getattr(entry, f"{link}_id"), []).append(entry)
+    resolved = {}
+    for obj in objects:
+        entries = by_object.get(obj.pk, [])
+        upto = [e for e in entries if timezone.localtime(e.created_at).date() <= cutoff]
+        if upto:
+            resolved[obj.pk] = upto[-1].new_status
+        elif entries:
+            resolved[obj.pk] = entries[0].previous_status
+        else:
+            resolved[obj.pk] = obj.status
+    return resolved
+
+
+def collect_filed_requests(cutoff, operating_codes, alive_permit_pks):
+    """LV-459 (A8): las solicitudes SIGO **presentadas** que cuentan como en trámite.
+
+    El informe sólo leía `FlightPermission`, así que una solicitud ya ingresada en
+    SIGO y todavía sin permiso (o sin un permiso vivo vinculado) no existía en el
+    papel, y el panel la cuenta como «presentada en SIGO sin respuesta». Cuenta como
+    en trámite de su faena **si al corte estaba `filed`** (`FlightRequestHistory`) y
+    no tiene vinculado un permiso vivo al corte: si lo tiene, ese permiso ya es la
+    fila (y la solicitud no se cuenta dos veces). Una **preparada** no cuenta: nadie
+    la ha presentado.
+
+    Límites declarados (`MAPPING.md`): sólo solicitudes activas hoy (no hay fecha de
+    archivo), y sin historial se usa el estado de hoy con `filed_on` y `created_at`
+    ≤ corte.
+    """
+    from apps.operations.models import FlightRequest, FlightRequestHistory
+
+    requests = list(
+        FlightRequest.objects.filter(is_active=True, created_at__date__lte=cutoff)
+        .select_related("cost_center", "flight_permission")
+        .order_by("created_at")
+    )
+    was = _status_at(requests, FlightRequestHistory, "request", cutoff)
+    rows = []
+    for item in requests:
+        if was[item.pk] != FlightRequest.STATUS_FILED:
+            continue
+        if item.filed_on and item.filed_on > cutoff:
+            continue
+        if item.flight_permission_id in alive_permit_pks:
+            continue
+        centre = item.cost_center
+        operating = centre.code in operating_codes
+        rows.append(
+            {
+                "title": item.title,
+                "cost_centre": centre.code,
+                "cost_centre_name": centre.name,
+                "filed_on": item.filed_on.isoformat() if item.filed_on else None,
+                "status": "requested",
+                "in_force": False,
+                "in_operation": operating,
+                "outside_reason": None if operating else outside_reason(centre),
             }
         )
     return rows
@@ -881,7 +1062,7 @@ def collect_concentration(permits):
     }
 
 
-def collect_changes(period, cutoff, cost_centres, permits):
+def collect_changes(period, cutoff, cost_centres, permits, filed=()):
     """LV-378: qué cambió desde el último informe del mes anterior, **congelado**.
 
     Lo comparable ya existe y está probado (`compare_permits`): se reutiliza **acá,
@@ -920,7 +1101,8 @@ def collect_changes(period, cutoff, cost_centres, permits):
 
     now_kpis = {
         "permits_in_force": sum(1 for row in permits if row["in_force"]),
-        "permits_awaiting": sum(1 for row in permits if row["status"] == "requested"),
+        "permits_awaiting": sum(1 for row in permits if row["status"] == "requested")
+        + len(filed),
         "cost_centres_without_permit": len(now_without),
     }
     return {
@@ -992,21 +1174,27 @@ def build(period, cutoff=None, early=False, early_reason=""):
     _start, end = month_bounds(period)
     cutoff = cutoff or min(end, timezone.localdate())
     centres = operating_centres()
-    permits = collect_permits(cutoff, {centre.code for centre in centres})
-    cost_centres = collect_cost_centres(cutoff, permits, centres)
+    operating_codes = {centre.code for centre in centres}
+    permits, upcoming, alive_pks = _collect_all_permits(cutoff, operating_codes)
+    filed = collect_filed_requests(cutoff, operating_codes, alive_pks)
+    cost_centres = collect_cost_centres(cutoff, permits, centres, upcoming, filed)
     from apps.reporting.manual import collect_manual
 
     payload = {
         "meta": collect_meta(period, cutoff, early, early_reason),
-        "kpis": collect_kpis(cutoff, cost_centres, permits),
+        "kpis": collect_kpis(cutoff, cost_centres, permits, upcoming, filed),
         "cost_centres": cost_centres,
         # LV-378: las faenas sin operación que conservan un permiso vivo, aparte de
         # la cobertura (regla a').
-        "outside_centres": collect_outside_centres(permits),
+        "outside_centres": collect_outside_centres(permits, upcoming, filed),
         "permits": permits,
+        # LV-459 (A5): aprobados que empiezan después del corte (no habilitan).
+        "upcoming_permits": upcoming,
+        # LV-459 (A8): solicitudes SIGO presentadas, sin permiso vivo vinculado.
+        "filed_requests": filed,
         "concentration": collect_concentration(permits),
         # LV-378: lo que cambió desde el informe anterior, congelado con el resto.
-        "changes": collect_changes(period, cutoff, cost_centres, permits),
+        "changes": collect_changes(period, cutoff, cost_centres, permits, filed),
         # LV-235: el detalle de los eventos del período, para la sección que la
         # plantilla del Dato Ejecutivo pedía escribir a mano.
         "incidents": collect_incidents(cutoff),

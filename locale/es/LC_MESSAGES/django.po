@@ -9141,6 +9141,18 @@ msgstr "Faenas sin permiso vigente"
 msgid "Permits awaiting the DGAC"
 msgstr "Permisos en trámite ante la DGAC"
 
+#: .\apps\reporting\compare.py
+msgid "Permits awaiting the DGAC, sites with operation"
+msgstr "Permisos en trámite ante la DGAC, faenas con operación"
+
+#: .\apps\reporting\compare.py
+msgid "Requests filed in SIGO without a permit"
+msgstr "Solicitudes presentadas en SIGO sin permiso"
+
+#: .\apps\reporting\compare.py
+msgid "Permits approved, not yet in force"
+msgstr "Permisos aprobados, aún no vigentes"
+
 #: .\apps\reporting\compare.py:44
 msgid "Permits lapsed and not closed"
 msgstr "Permisos vencidos sin cerrar"

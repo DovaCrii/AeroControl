@@ -40,6 +40,21 @@
       "source": "operations",
       "cutoff": "2026-11-30"
     },
+    "permits_awaiting_requests": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_awaiting_operating": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
+    "permits_not_started": {
+      "value": 0,
+      "source": "operations",
+      "cutoff": "2026-11-30"
+    },
     "permits_lapsed": {
       "value": 0,
       "source": "operations",
@@ -137,6 +152,9 @@
       "name": "Faena CC901",
       "permits_in_force": 0,
       "permits_awaiting": 0,
+      "permits_not_started": 0,
+      "next_start": null,
+      "renewal_in_progress": false,
       "permits_lapsed": 0,
       "permits_expiring_30d": 0,
       "next_expiry": null,
@@ -148,6 +166,9 @@
       "name": "Faena CC902",
       "permits_in_force": 0,
       "permits_awaiting": 0,
+      "permits_not_started": 0,
+      "next_start": null,
+      "renewal_in_progress": false,
       "permits_lapsed": 0,
       "permits_expiring_30d": 0,
       "next_expiry": null,
@@ -159,6 +180,9 @@
       "name": "Faena CC903",
       "permits_in_force": 0,
       "permits_awaiting": 0,
+      "permits_not_started": 0,
+      "next_start": null,
+      "renewal_in_progress": false,
       "permits_lapsed": 0,
       "permits_expiring_30d": 0,
       "next_expiry": null,
@@ -168,6 +192,8 @@
   ],
   "outside_centres": [],
   "permits": [],
+  "upcoming_permits": [],
+  "filed_requests": [],
   "concentration": {
     "permits_in_force": 0,
     "permits_with_one_operator": 0,
@@ -354,6 +380,11 @@
         },
         "reviewed_within_24h": {
           "value": 0,
+          "source": "compliance",
+          "cutoff": "2026-11-30"
+        },
+        "reviews_total": {
+          "value": 4,
           "source": "compliance",
           "cutoff": "2026-11-30"
         }

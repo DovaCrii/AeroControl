@@ -39,6 +39,13 @@ KPI_LABELS = [
     ("permits_in_force_operating", _("Permits in force at sites with operation")),
     ("permits_in_force_outside", _("Permits in force at sites without operation")),
     ("permits_awaiting", _("Permits awaiting the DGAC")),
+    # LV-459: las llaves del cruce con la app.
+    (
+        "permits_awaiting_operating",
+        _("Permits awaiting the DGAC, sites with operation"),
+    ),
+    ("permits_awaiting_requests", _("Requests filed in SIGO without a permit")),
+    ("permits_not_started", _("Permits approved, not yet in force")),
     ("permits_lapsed", _("Permits lapsed and not closed")),
     ("permits_expiring_30d", _("Permits expiring within 30 days")),
     (

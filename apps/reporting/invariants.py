@@ -46,6 +46,8 @@ def violations(payload):
     permits = payload.get("permits") or []
     in_force = _in_force(permits)
     awaiting = [row for row in permits if row.get("status") == "requested"]
+    filed = payload.get("filed_requests") or []
+    upcoming = payload.get("upcoming_permits") or []
     found = []
 
     def broken(name, **data):
@@ -76,12 +78,29 @@ def violations(payload):
     ):
         broken("I3", rows=by_rows, outside=by_outside, kpi=kpi, permits=len(in_force))
 
-    # I4: lo mismo para los permisos en trámite.
+    # I4: lo mismo para lo que está en trámite: los permisos solicitados más las
+    # solicitudes SIGO presentadas (LV-459, A8). LV-459 (A6): y el Total que la
+    # sección 3 imprime (`permits_awaiting_operating`) es lo que suman **las filas
+    # visibles**, no el total legal: lo de las faenas sin operación va en su línea.
     aw_rows = sum(row.get("permits_awaiting", 0) for row in centres)
     aw_out = sum(row.get("permits_awaiting", 0) for row in outside)
     aw_kpi = _value(payload, "permits_awaiting")
-    if not (aw_rows + aw_out == aw_kpi == len(awaiting)):
-        broken("I4", rows=aw_rows, outside=aw_out, kpi=aw_kpi, permits=len(awaiting))
+    aw_operating = _value(payload, "permits_awaiting_operating")
+    if (
+        not (aw_rows + aw_out == aw_kpi == len(awaiting) + len(filed))
+        or (aw_operating is not None and aw_operating != aw_rows)
+        or (
+            _value(payload, "permits_awaiting_requests") is not None
+            and _value(payload, "permits_awaiting_requests") != len(filed)
+        )
+    ):
+        broken(
+            "I4",
+            rows=aw_rows,
+            outside=aw_out,
+            kpi=aw_kpi,
+            permits=len(awaiting) + len(filed),
+        )
 
     # I5: todo permiso pertenece a la cobertura o a un centro sin operación, y su
     # marca `in_operation` dice cuál. Ninguno huérfano.
@@ -141,8 +160,23 @@ def violations(payload):
     folios = sum(len(group["folios"]) for group in grouped["operating"]) + sum(
         len(group["folios"]) for group in grouped["outside"]
     )
+    # LV-459 (A5): los aprobados que aún no empiezan son un bloque más: ninguno
+    # vigente, todos aprobados, y su total es la cifra y la suma de las faenas.
+    not_started = _value(payload, "permits_not_started")
+    started_rows = sum(row.get("permits_not_started", 0) for row in centres) + sum(
+        row.get("permits_not_started", 0) for row in outside
+    )
+    upcoming_broken = (
+        (not_started is not None and not_started != len(upcoming))
+        or (not_started is not None and started_rows != len(upcoming))
+        or any(
+            row.get("in_force") or row.get("status") != "approved" for row in upcoming
+        )
+        or len(grouped["upcoming"]) != len(upcoming)
+    )
     if (
-        len(in_force) + len(awaiting) + len(lapsed) != len(permits)
+        upcoming_broken
+        or len(in_force) + len(awaiting) + len(lapsed) != len(permits)
         or grouped["operating_in_force"] != operating
         or grouped["outside_in_force"] != len(in_force) - operating
         or folios != len(in_force)
