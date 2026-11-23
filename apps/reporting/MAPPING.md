@@ -239,6 +239,21 @@ payload**: el payload es dato, y un informe congelado se re-renderiza con la
 plantilla de hoy — con el formato guardado, un cambio de convención dejaría los
 informes viejos con el formato viejo y sin forma de saber cuál es cuál.
 
+## Trámites cruzados con la app (LV-459)
+
+Una auditoría cruzó el informe con lo que la app muestra y halló ocho divergencias; las
+reglas que quedaron (decididas por el usuario, «lo recomendado»):
+
+| Qué | Regla |
+|---|---|
+| Qué filas entran (`collect_permits`) | Vivo **al corte** es el estado reconstruido (`status_at_cutoff`), no el de hoy. La consulta ya no filtra por `valid_from`: entran `requested`/`approved` y **cualquier** terminal (`denied`, `completed`, `expired`) con un movimiento posterior al corte. Un `requested` al corte cuenta como en trámite tenga o no fechas pedidas; si hoy está aprobado, la vigencia de hoy no se dibuja (el corte no la conocía) (A1–A3) |
+| Aprobado que empieza después del corte | `payload["upcoming_permits"]` (+ `kpis.permits_not_started`, y `permits_not_started`/`next_start` por faena): **no habilita**, no cuenta en «X de N con permiso vigente», no es fila de `permits`. Rótulo «Aprobado, inicia dd-mm-aaaa». Equivale al `not_started` del panel (`permit_counts`). I8 comprueba cifra, filas y suma por faena (A5) |
+| Renovación | Cada fila de `permits` trae `renews` (folio del permiso que renueva, o `None`). La faena con permiso vigente en banda crítica cuyo sucesor (`renews` apuntándole) está en trámite al corte, para **todos** sus críticos, dice «Renovación en trámite» (`renewal_in_progress`) y no «Renovar ahora» (A4); es la misma idea que el panel (LV-320) |
+| Estado de la faena en la cobertura | `none` «Sin habilitación» = **nada pedido**; `awaiting` «En trámite»; `upcoming` «Aprobado, inicia dd-mm-aaaa»; ninguno habilita (M4) |
+| Total «En trámite» de la sección 3 | `kpis.permits_awaiting_operating` = lo que suman las filas visibles; el total legal `permits_awaiting` incluye las faenas sin operación, cuyos trámites se dibujan en la línea «+ Sin operación». I4 compara el Total contra las filas visibles (A6) |
+| Solicitudes SIGO (`FlightRequest`) | `payload["filed_requests"]` y `kpis.permits_awaiting_requests`: una solicitud **presentada** (`filed`) cuenta como en trámite de su faena si **al corte** estaba `filed` (historial `FlightRequestHistory`; sin historial, el estado de hoy con `filed_on` y `created_at` ≤ corte) y no tiene vinculado un permiso vivo al corte (con un `FlightPermission` vinculado en trámite no se cuenta doble). Una **preparada** no cuenta. Límites: sólo solicitudes activas hoy (no hay fecha de archivo) (A8) |
+| Guardián contra el panel (M6) | Con corte = hoy: `kpis.permits_awaiting` = `permit_counts["awaiting"]` + las solicitudes SIGO `filed` activas del panel (las que «esperan respuesta»), salvo las que tengan un permiso vivo vinculado, que el informe no cuenta dos veces; y `permits_not_started` = `permit_counts["not_started"]`. Prueba: `test_lv459_permits_cross_check.py` |
+
 ## El corte temporal, y hasta dónde llega
 
 **Hecho el 2026-09-02.** `panel_readiness` recibía la fecha de corte y la usaba
@@ -329,10 +344,10 @@ Sección 5 del informe, sólo si el corte es del 2026-11-10 en adelante (`manual
 |---|---|---|
 | `manual.window` | corte | `[max(1.º del mes, 2026-11-10), corte]` |
 | `manual.missions.rows[]` / `kpis` | `compliance.Document` (`flight-log`, REG-016) por faena | en plazo = cargado a más tardar el día siguiente a `issue_date`; importado en lote o sin fecha = sin evaluar; cierre mensual de `MonthlyComplianceReview` |
-| `manual.missions.kpis.missions_flown` / `missions_without_record` | `operations.FlightRecord` | pares (faena, día); `None` si no hay vuelos digitales |
-| `manual.missions.kpis.reviewed_within_24h` | `compliance.MissionReview` (LV-447) de las faenas del informe, por `mission_date` en la ventana | revisadas a más tardar el día de `due_on` (hora local); `None` si no hay ninguna revisión; en corte anticipado sólo lo revisado hasta el corte |
+| `manual.missions.kpis.missions_flown` / `missions_without_record` | `operations.FlightRecord` | pares (faena, día); la faena es la **del permiso con que se voló** (`permission__cost_center`, LV-459 A7), y sólo sin permiso cae a la de la aeronave; `None` si no hay vuelos digitales |
+| `manual.missions.kpis.reviewed_within_24h` / `reviews_total` | `compliance.MissionReview` (LV-447) de las faenas del informe, por `mission_date` en la ventana | revisadas a más tardar el día de `due_on` (hora local); `reviews_total` es el **denominador** («X de N revisados en 24 h», LV-459 M2); `None` en ambos si no hay ninguna revisión; en corte anticipado sólo lo revisado hasta el corte |
 | `manual.inspections` | `Document` (`drone-inspection`, LVE-002) por aeronave de `operational_fleet()` | vigente / vencida / sin fecha / sin documento; `gaps` = matrículas no vigentes |
 | `manual.evaluations` | `registry.KnowledgeAssessment` (LV-439: sólo aprobados) y `Document` REG-018/019 | `format`: `"act19"` si el padrón al corte tiene un intento activo de un tipo no `legacy`, si no `"lv158"`; `by_kind` (general, limitaciones, anual: vigentes / vencidas / sólo reprobadas / sin rendir; `None` en `lv158`): vigente = último aprobado de ese tipo con `expires_on` nulo o ≥ corte, y en los tipos por familia vigente si alguna familia lo está (LV-456) |
-| `manual.maintenance` | `maintenance.MaintenanceRecord` activos y `maintenance.levels.level_statuses(aeronave, today=corte)` sobre la flota del informe | `due_by_level` / `due_soon_by_level` por aeronave (vencida en dos niveles cuenta 1), `level_without_data`, `levels[]` por nivel; `None` si ninguna aeronave tiene un nivel con dato. Las horas son las de la bitácora al construir el informe (LV-456) |
+| `manual.maintenance` | `maintenance.MaintenanceRecord` activos **de la flota del informe** (`_fleet`; en corte anticipado, sólo los creados hasta el corte; LV-459 M3) y `maintenance.levels.level_statuses(aeronave, today=corte)` sobre la flota del informe | `due_by_level` / `due_soon_by_level` por aeronave (vencida en dos niveles cuenta 1), `level_without_data`, `levels[]` por nivel; `None` si ninguna aeronave tiene un nivel con dato. Las horas son las de la bitácora al construir el informe (LV-456) |
 
 Invariantes I9 e I10 en `invariants.py`; avisos en `checks.manual_warnings`. Paginación medida en `pagination.V2_MANUAL_*` (`test_lv445_manual_pdf.py`).

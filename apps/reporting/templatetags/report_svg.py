@@ -196,24 +196,44 @@ def expiry_strip(groups, uid):
 @register.filter
 def coverage_state(row):
     """El estado de una faena en la cobertura: `nominal`, `warning`, `renew` (permiso
-    a ≤30 días) o `none` (sin permiso vigente). El peor permiso manda, nunca el promedio."""
+    a ≤30 días), `renewing` (a ≤30 días pero con la renovación ya en trámite), `none`
+    (sin permiso vigente y nada pedido), `awaiting` (sin permiso vigente pero con una
+    solicitud en trámite) o `upcoming` (sin permiso vigente pero con un aprobado que
+    todavía no empieza). El peor permiso manda, nunca el promedio.
+
+    LV-459 (M4): «Sin habilitación» es **nada pedido**; una faena con un trámite en
+    curso lo dice. Ninguno de los tres habilita a volar. Un payload anterior no trae las
+    llaves y se dibuja como se emitió."""
     if not row.get("permits_in_force"):
+        if row.get("permits_awaiting"):
+            return "awaiting"
+        if row.get("permits_not_started"):
+            return "upcoming"
         return "none"
     band = row.get("band")
-    return "renew" if band == "critical" else (band or "nominal")
+    if band == "critical":
+        return "renewing" if row.get("renewal_in_progress") else "renew"
+    return band or "nominal"
 
 
 COVERAGE_WORDS = {
     "nominal": "Vigente",
     "warning": "Por vencer",
     "renew": "Renovar ahora",
+    # LV-459 (A4): la misma idea que el panel («la renovación ya está solicitada»).
+    "renewing": "Renovación en trámite",
     "none": "Sin habilitación",
+    "awaiting": "En trámite",
+    "upcoming": "Aprobado, aún no vigente",
 }
 COVERAGE_BANDS = {
     "nominal": "nominal",
     "warning": "warning",
     "renew": "critical",
+    "renewing": "warning",
     "none": "critical",
+    "awaiting": "warning",
+    "upcoming": "warning",
 }
 
 
@@ -238,14 +258,21 @@ def render_coverage_bar(rows, uid):
     rows = list(rows)
     states = [coverage_state(row) for row in rows]
     count = {key: states.count(key) for key in COVERAGE_WORDS}
-    critical = count["renew"] + count["none"]
+    # LV-459: los trámites y la renovación en curso siguen siendo críticos (no habilitan,
+    # o vencen en ≤30 días) y se nombran aparte en la leyenda.
+    soon = count["renew"] + count["renewing"]
+    pending = count["awaiting"] + count["upcoming"]
+    critical = soon + count["none"] + pending
     total = len(rows)
     height = 44
+    # Sin trámites la frase es la de siempre (los informes emitidos no cambian).
+    parts = f"{count['none']} sin habilitación"
+    if pending:
+        parts += f", {pending} en trámite o por iniciar"
     desc = (
         f"Cobertura de {total} Centros de Costo con operación: {count['nominal']} "
         f"vigentes, {count['warning']} por vencer, {critical} críticos "
-        f"({count['none']} sin habilitación y {count['renew']} con permiso a 30 "
-        "días o menos)."
+        f"({parts} y {soon} con permiso a 30 días o menos)."
     )
     uid = escape(uid)
     out = [
@@ -284,7 +311,12 @@ def render_coverage_bar(rows, uid):
         (
             "critical",
             f"{critical} crítico{'s' if critical != 1 else ''}: "
-            f"{count['none']} sin habilitación, {count['renew']} con permiso a ≤30 d",
+            f"{count['none']} sin habilitación, "
+            + (
+                f"{pending} en trámite, {soon} a ≤30 d"
+                if pending
+                else f"{soon} con permiso a ≤30 d"
+            ),
         ),
     )
     cursor = 0.0

@@ -440,6 +440,9 @@ def closing_px_v2(groups, note=""):
     for rows, per_row in (
         (groups["outside"], V2_OUTSIDE_ROW_PX),
         (groups["awaiting"], V2_AWAITING_ROW_PX),
+        # LV-459: dos bloques más con filas del mismo alto que las del «en trámite».
+        (groups.get("filed") or [], V2_AWAITING_ROW_PX),
+        (groups.get("upcoming") or [], V2_AWAITING_ROW_PX),
         (groups["lapsed"], V2_LAPSED_ROW_PX),
     ):
         if rows:

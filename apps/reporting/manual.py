@@ -74,7 +74,7 @@ def collect_manual(period, cutoff, centres, early=False):
         "evaluations": collect_evaluations(
             roster, cutoff, type_ids["reg018"], type_ids["reg019"], early
         ),
-        "maintenance": collect_maintenance(window, cutoff, fleet),
+        "maintenance": collect_maintenance(window, cutoff, fleet, early),
     }
 
 
@@ -150,7 +150,12 @@ def _classify(issue_date, created_at, source_reference):
 
 
 def _reviewed_within_24h(centre_ids, window, cutoff, early):
-    """REG-016 revisados dentro del plazo, o `None` si no hay revisiones que medir.
+    """`(revisados en plazo, total de revisiones)` o `(None, 0)` si no hay que medir.
+
+    LV-459 (M2): el total es el **denominador** de «revisados en 24 h»: sin él, «2»
+    no dice si de 2 o de 40.
+
+    REG-016 revisados dentro del plazo, o `None` si no hay revisiones que medir.
 
     Una revisión cuenta por su fecha de misión (la ventana del informe). En un corte
     anticipado lo revisado después del corte todavía no estaba revisado. Una sola
@@ -169,7 +174,7 @@ def _reviewed_within_24h(centre_ids, window, cutoff, early):
     totals = MissionReview.objects.filter(
         is_active=True, cost_center_id__in=centre_ids, mission_date__range=window
     ).aggregate(total=Count("pk"), on_time=Count("pk", filter=on_time))
-    return totals["on_time"] if totals["total"] else None
+    return (totals["on_time"] if totals["total"] else None), totals["total"]
 
 
 def collect_mission_records(period, window, centres, type_id, early):
@@ -189,13 +194,21 @@ def collect_mission_records(period, window, centres, type_id, early):
     # Misiones voladas: pares (faena, día) distintos de la bitácora digital. Si la
     # bitácora no se usa no hay ninguna fila, y «cero vuelos cargados» no es «cero
     # misiones»: queda pendiente.
+    # LV-459 (A7): la misión es de la **faena del permiso con que se voló**, no de la
+    # de la aeronave: una aeronave de otra faena que vuela con el permiso de ésta es
+    # una misión de ésta. Sin permiso (`permission` nulo) cae a la faena de la
+    # aeronave, que es lo único que se sabe.
+    from django.db.models.functions import Coalesce
+
+    mission_centre = Coalesce("permission__cost_center_id", "aircraft__cost_center_id")
     missions = set(
-        FlightRecord.objects.filter(
+        FlightRecord.objects.annotate(mission_centre=mission_centre)
+        .filter(
             is_active=True,
-            aircraft__cost_center_id__in=ids,
+            mission_centre__in=ids,
             actual_date__range=window,
         )
-        .values_list("aircraft__cost_center_id", "actual_date")
+        .values_list("mission_centre", "actual_date")
         .distinct()
     )
 
@@ -253,6 +266,7 @@ def collect_mission_records(period, window, centres, type_id, early):
         if type_id is not None
         else kpi(None)
     )
+    reviews = _reviewed_within_24h(ids, window, cutoff, early)
     kpis = {
         "records_total": records_total,
         "records_on_time": total("on_time"),
@@ -279,7 +293,9 @@ def collect_mission_records(period, window, centres, type_id, early):
         # El REG-016 se revisa dentro de 24 h (LV-447): las revisadas a más tardar el
         # día del plazo. Sin ninguna revisión abierta en la ventana no hay dato:
         # Pendiente, no cero. Sólo se recalcula al construir un informe nuevo.
-        "reviewed_within_24h": kpi(_reviewed_within_24h(ids, window, cutoff, early)),
+        "reviewed_within_24h": kpi(reviews[0]),
+        # LV-459 (M2): el denominador, aparte. Sin revisiones es Pendiente, no 0.
+        "reviews_total": kpi(reviews[1] or None),
     }
     return {"rows": rows, "kpis": kpis}
 
@@ -475,14 +491,24 @@ def _kind_row(kind, roster, attempts, in_force, kpi):
 # -- Mantenciones ------------------------------------------------------------------
 
 
-def collect_maintenance(window, cutoff, fleet=()):
+def collect_maintenance(window, cutoff, fleet=None, early=False):
     from django.db.models import Count, Q
 
     from apps.maintenance.models import LEVEL_RANK, MaintenanceRecord
 
     # `is_active=True` es el mismo criterio que `MaintenanceRecordList`: un registro
     # anulado queda archivado y no sale de la lista ni de acá.
-    counted = MaintenanceRecord.objects.filter(is_active=True).aggregate(
+    records = MaintenanceRecord.objects.filter(is_active=True)
+    # LV-459 (M3): las mantenciones son **de la flota del informe** (`_fleet`, el
+    # mismo universo que la LVE-002 y los niveles), no de toda la base: una aeronave
+    # dada de baja o creada después del corte no cuenta. Y en un corte anticipado,
+    # nada creado después del corte (lo cerrado después ya queda fuera por fecha).
+    # `fleet=None` es el llamado antiguo, sin flota que acotar.
+    if fleet is not None:
+        records = records.filter(aircraft_id__in=[pk for pk, _registration in fleet])
+    if early:
+        records = records.filter(created_at__date__lte=cutoff)
+    counted = records.aggregate(
         completed=Count("pk", filter=Q(completed_date__range=window)),
         open=Count(
             "pk",
@@ -494,7 +520,7 @@ def collect_maintenance(window, cutoff, fleet=()):
     def kpi(value):
         return leaf(value, "maintenance", cutoff)
 
-    levels = _level_counts(fleet, cutoff)
+    levels = _level_counts(fleet or (), cutoff)
     return {
         "kpis": {
             "completed_in_window": kpi(counted["completed"]),

@@ -28,7 +28,7 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
     </div>
 
     <div>
-      <div class="rpt2-label">Por centro de costo · {{ sheet.summary.operating_in_force }} vigente{{ sheet.summary.operating_in_force|pluralize:"s" }} en {{ sheet.summary.centres }} faena{{ sheet.summary.centres|pluralize:"s" }}{% if sheet.summary.outside_in_force %} · {{ sheet.summary.outside_in_force }} más sin operación{% endif %}{% if sheet.summary.awaiting|length %} · {{ sheet.summary.awaiting|length }} en trámite{% endif %}{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} de la sección{% endif %}</div>
+      <div class="rpt2-label">Por centro de costo · {{ sheet.summary.operating_in_force }} vigente{{ sheet.summary.operating_in_force|pluralize:"s" }} en {{ sheet.summary.centres }} faena{{ sheet.summary.centres|pluralize:"s" }}{% if sheet.summary.outside_in_force %} · {{ sheet.summary.outside_in_force }} más sin operación{% endif %}{% if sheet.summary.awaiting|length %} · {{ sheet.summary.awaiting|length }} en trámite{% endif %}{% if sheet.summary.filed|length %} · {{ sheet.summary.filed|length }} presentada{{ sheet.summary.filed|length|pluralize:"s" }} en SIGO{% endif %}{% if sheet.summary.upcoming|length %} · {{ sheet.summary.upcoming|length }} aprobada{{ sheet.summary.upcoming|length|pluralize:"s" }} por iniciar{% endif %}{% if sheet.of > 1 %} · hoja {{ sheet.index }} de {{ sheet.of }} de la sección{% endif %}</div>
       {% comment %}Los umbrales, declarados arriba y con símbolo: la banda no depende del
       color. Son los mismos 30/60 del panel (`apps/dashboard/compliance_permits.py`).{% endcomment %}
       <div class="rpt2-legend">
@@ -99,6 +99,36 @@ en el navegador, y la invariante I8 comprueba que la suma de los grupos da el to
         <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}</span>
         <span class="rpt2-row-main">{% for tail in permit.aircraft %}{{ tail }}{% if not forloop.last %} · {% endif %}{% empty %}<span class="rpt2-dash">sin aeronaves</span>{% endfor %} · {% with n=permit.operators|length %}{% if n %}{{ n }} operador{{ n|pluralize:"es" }}{% else %}<span class="rpt2-dash">sin operadores</span>{% endif %}{% endwith %}</span>
         <span class="rpt2-state-wait">En proceso</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% comment %}LV-459 (A8): lo ya presentado en SIGO que todavía no tiene permiso vivo. El
+    panel lo cuenta como «presentada en SIGO sin respuesta»; el papel lo callaba.{% endcomment %}
+    {% if sheet.filed %}
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Solicitudes presentadas en SIGO — sin permiso vinculado, sin habilitación hasta su aprobación</div>
+      {% for item in sheet.filed %}
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>{{ item.cost_centre }}</strong> SIGO</span>
+        <span class="rpt2-row-main">{{ item.title }}{% if item.filed_on %} · presentada el {{ item.filed_on|as_date|date:"d-m-Y" }}{% endif %}</span>
+        <span class="rpt2-state-wait">En proceso</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% comment %}LV-459 (A5): aprobado, pero la vigencia empieza después del corte: no habilita
+    todavía y no cuenta en «vigentes».{% endcomment %}
+    {% if sheet.upcoming %}
+    <div class="rpt2-block">
+      <div class="rpt2-block-title">Aprobados que aún no inician — sin habilitación hasta su fecha de inicio</div>
+      {% for permit in sheet.upcoming %}
+      <div class="rpt2-row">
+        <span class="rpt2-row-cc"><strong>{{ permit.cost_centre }}</strong> {{ permit.folio }}</span>
+        <span class="rpt2-row-main">Aprobado, inicia {{ permit.valid_from|as_date|date:"d-m-Y" }}{% if permit.valid_until %} → {{ permit.valid_until|as_date|date:"d-m-Y" }}{% endif %}</span>
+        <span class="rpt2-state-wait">Aún no vigente</span>
       </div>
       {% endfor %}
     </div>

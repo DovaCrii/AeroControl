@@ -315,7 +315,10 @@ class TestTheCoveragePage:
 
         assert "✕ Renovar ahora" in cover  # CC901, a 28 días
         assert "▲ Por vencer" in cover  # CC902, a 53
-        assert "✕ Sin habilitación" in cover  # CC903
+        # CC903 no tiene permiso vigente pero sí una solicitud en trámite: LV-459 (M4)
+        # ya no lo dice «Sin habilitación» (nada pedido) sino «En trámite».
+        assert "○ En trámite" in cover
+        assert "✕ Sin habilitación" not in cover
 
     def test_the_concentration_is_corrected(self, client, payload):
         cover = _text(_page(_html(client, payload), 4))
@@ -328,7 +331,8 @@ class TestTheCoveragePage:
         cover = _page(_html(client, payload), 4)
 
         assert 'class="rpt2-covbar"' in cover
-        assert "1 sin habilitación, 1 con permiso a ≤30 d" in cover
+        # LV-459: CC903 tiene una solicitud en trámite, así que ya no es «sin habilitación».
+        assert "0 sin habilitación, 1 en trámite, 1 a ≤30 d" in cover
 
     def test_the_old_per_permit_total_is_gone(self, client, payload):
         cover = _page(_html(client, payload), 4)

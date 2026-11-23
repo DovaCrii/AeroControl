@@ -299,7 +299,11 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
         outside = [
             row
             for row in payload.get("outside_centres") or []
+            # LV-459 (A6): también las que sólo tienen trámites o un aprobado que
+            # aún no empieza: la línea «+ Sin operación» las dibuja.
             if row.get("permits_in_force")
+            or row.get("permits_awaiting")
+            or row.get("permits_not_started")
         ]
         plan_joins = plan_fits_with_coverage_v2(
             len(payload.get("cost_centres") or []), matrix_rows, len(outside)
@@ -427,6 +431,8 @@ class MonthlyReportView(ModelViewPermissionRequiredMixin, TemplateView):
             last = sheet["last"]
             sheet["outside"] = groups["outside"] if last else []
             sheet["awaiting"] = groups["awaiting"] if last else []
+            sheet["filed"] = groups["filed"] if last else []
+            sheet["upcoming"] = groups["upcoming"] if last else []
             sheet["lapsed"] = groups["lapsed"] if last else []
         return sheets
 
