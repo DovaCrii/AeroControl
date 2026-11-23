@@ -42,6 +42,17 @@ TYPE_CODES = {
 }
 
 
+#: Evaluaciones del Manual por tipo (B6), en el orden en que la hoja las dibuja.
+BY_KIND_ORDER = ("general", "limitations", "annual")
+BY_KIND_LABELS = {
+    "general": "Examen general",
+    "limitations": "Limitaciones y emergencias",
+    "annual": "Cuestionario anual",
+}
+#: Niveles de mantención (Anexo F). Rótulo fijo en español: es el documento.
+LEVEL_LABELS = {"basic": "Básica", "medium": "Media", "advanced": "Avanzada"}
+
+
 def collect_manual(period, cutoff, centres, early=False):
     """La sección completa, o `None` si el corte es anterior a la vigencia."""
     if cutoff < ACT19_EFFECTIVE:
@@ -63,7 +74,7 @@ def collect_manual(period, cutoff, centres, early=False):
         "evaluations": collect_evaluations(
             roster, cutoff, type_ids["reg018"], type_ids["reg019"], early
         ),
-        "maintenance": collect_maintenance(window, cutoff),
+        "maintenance": collect_maintenance(window, cutoff, fleet),
     }
 
 
@@ -344,7 +355,8 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
         return leaf(value, "registry", cutoff)
 
     # Semántica LV-439: vigente es el último intento **aprobado** al corte; un
-    # reprobado posterior no lo anula.
+    # reprobado posterior no lo anula. `expires_on` nulo = no vence por calendario
+    # (examen general y limitaciones, LV-444): cuenta como vigente, nunca falla.
     attempts = {}
     if roster:
         for (
@@ -352,22 +364,52 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
             passed,
             expires_on,
             taken_at,
+            kind,
+            family_id,
         ) in KnowledgeAssessment.objects.filter(
             is_active=True, operator_id__in=roster
-        ).values_list("operator_id", "passed", "expires_on", "taken_at"):
+        ).values_list(
+            "operator_id",
+            "passed",
+            "expires_on",
+            "taken_at",
+            "kind",
+            "aircraft_family_id",
+        ):
             if timezone.localtime(taken_at).date() > cutoff:
                 continue
-            attempts.setdefault(operator_id, []).append((taken_at, passed, expires_on))
+            attempts.setdefault(operator_id, []).append(
+                (taken_at, passed, expires_on, kind, family_id)
+            )
+
+    def in_force(expires_on):
+        return expires_on is None or expires_on >= cutoff
+
     counts = {"in_force": 0, "lapsed": 0, "failed_only": 0, "never": 0}
     for operator_id in roster:
         own = attempts.get(operator_id, [])
         passed = sorted((a for a in own if a[1]), key=lambda a: a[0])
         if passed:
-            counts["in_force" if passed[-1][2] >= cutoff else "lapsed"] += 1
+            counts["in_force" if in_force(passed[-1][2]) else "lapsed"] += 1
         elif own:
             counts["failed_only"] += 1
         else:
             counts["never"] += 1
+
+    # Act. 19 (B6): con al menos un intento de un tipo nuevo en el padrón al corte, la
+    # hoja habla por tipo. Sin ninguno, el informe sigue rotulando la prueba previa.
+    act19 = any(
+        a[3] != KnowledgeAssessment.KIND_LEGACY
+        for own in attempts.values()
+        for a in own
+    )
+    # En `lv158` la hoja no dibuja nada por tipo: lista vacía, no doce hojas
+    # «Pendiente» que inflarían el aviso de indicadores pendientes.
+    by_kind = (
+        [_kind_row(kind, roster, attempts, in_force, kpi) for kind in BY_KIND_ORDER]
+        if act19
+        else []
+    )
 
     held = {}
     wanted = (reg018_id, reg019_id)
@@ -382,9 +424,7 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
         return kpi(None if type_pk is None else len(held.get(type_pk, ())))
 
     return {
-        # Hasta que la Act. 19 traiga su evaluación por tipo (bloque B6) la hoja
-        # rotula la prueba interna previa: es honesto sobre qué se está contando.
-        "format": "lv158",
+        "format": "act19" if act19 else "lv158",
         "kpis": {
             "roster": kpi(len(roster)),
             "in_force": kpi(counts["in_force"]),
@@ -394,16 +434,51 @@ def collect_evaluations(roster, cutoff, reg018_id, reg019_id, early):
             "reg018_operators": with_record(reg018_id),
             "reg019_operators": with_record(reg019_id),
         },
+        "by_kind": by_kind,
     }
+
+
+def _kind_row(kind, roster, attempts, in_force, kpi):
+    """Una línea por tipo de evaluación del Manual: vigentes, vencidas, sin rendir.
+
+    Vigente: el último intento **aprobado** de ese tipo al corte sigue vigente. Para
+    los tipos por familia de aeronave (limitaciones, anual) se mira el último aprobado
+    **de cada familia**: vigente si alguna lo está, vencida si tiene aprobados pero
+    ninguno vigente. `failed_only`: sólo reprobados de ese tipo. `never`: ningún
+    intento de ese tipo. Sólo se llama en formato `act19`.
+    """
+    from apps.registry.models import KnowledgeAssessment
+
+    row = {"kind": kind, "label": BY_KIND_LABELS[kind]}
+    per_family = kind in KnowledgeAssessment.FAMILY_KINDS
+    counts = {"in_force": 0, "lapsed": 0, "failed_only": 0, "never": 0}
+    for operator_id in roster:
+        own = [a for a in attempts.get(operator_id, []) if a[3] == kind]
+        if not own:
+            counts["never"] += 1
+            continue
+        latest = {}
+        for taken_at, passed, expires_on, _kind, family_id in sorted(
+            (a for a in own if a[1]), key=lambda a: a[0]
+        ):
+            latest[family_id if per_family else None] = expires_on
+        if not latest:
+            counts["failed_only"] += 1
+        elif any(in_force(expires_on) for expires_on in latest.values()):
+            counts["in_force"] += 1
+        else:
+            counts["lapsed"] += 1
+    row.update({key: kpi(value) for key, value in counts.items()})
+    return row
 
 
 # -- Mantenciones ------------------------------------------------------------------
 
 
-def collect_maintenance(window, cutoff):
+def collect_maintenance(window, cutoff, fleet=()):
     from django.db.models import Count, Q
 
-    from apps.maintenance.models import MaintenanceRecord
+    from apps.maintenance.models import LEVEL_RANK, MaintenanceRecord
 
     # `is_active=True` es el mismo criterio que `MaintenanceRecordList`: un registro
     # anulado queda archivado y no sale de la lista ni de acá.
@@ -415,12 +490,85 @@ def collect_maintenance(window, cutoff):
             & (Q(completed_date__isnull=True) | Q(completed_date__gt=cutoff)),
         ),
     )
+
+    def kpi(value):
+        return leaf(value, "maintenance", cutoff)
+
+    levels = _level_counts(fleet, cutoff)
     return {
         "kpis": {
-            "completed_in_window": leaf(counted["completed"], "maintenance", cutoff),
-            "open_at_cutoff": leaf(counted["open"], "maintenance", cutoff),
-            # La mantención por niveles (200 h/6 m · 400 h/12 m · 600 h/18 m) la
-            # conectará el bloque B8; hasta entonces es pendiente, no cero.
-            "due_by_level": leaf(None, "maintenance", cutoff),
-        }
+            "completed_in_window": kpi(counted["completed"]),
+            "open_at_cutoff": kpi(counted["open"]),
+            "due_by_level": kpi(levels["overdue"]),
+            "due_soon_by_level": kpi(levels["soon"]),
+            "level_without_data": kpi(levels["without_data"]),
+        },
+        # Sin nada que medir no hay detalle por nivel (el total ya es Pendiente).
+        "levels": []
+        if levels["overdue"] is None
+        else [
+            {
+                "level": code,
+                "label": LEVEL_LABELS[code],
+                "overdue": kpi(levels["by_level"][code]["overdue"]),
+                "soon": kpi(levels["by_level"][code]["soon"]),
+            }
+            for code in LEVEL_RANK
+        ],
+    }
+
+
+def _level_counts(fleet, cutoff):
+    """Aeronaves con algún nivel vencido o próximo al corte (Anexo F).
+
+    Una pasada, `level_statuses` una vez por aeronave. **Sin dato es `None`, nunca 0**:
+    si ninguna aeronave tiene un nivel con dato (flota vacía, sin programa, o sin
+    mantención de la cual contar) los totales van en `None`; lo mismo cada nivel que
+    ninguna aeronave puede medir. Una aeronave vencida en dos niveles cuenta 1 en el
+    total y 1 en cada nivel. «Próximas» son las que tienen algún nivel por vencer y
+    ninguno vencido.
+
+    ⚠️ Las horas son las **registradas al construir el informe** (`AircraftLogbook`):
+    la bitácora no guarda las horas de un día pasado. Las fechas sí son las del corte.
+    """
+    from apps.maintenance.levels import NO_DATA, OVERDUE, SOON, level_statuses
+    from apps.maintenance.models import LEVEL_RANK
+    from apps.registry.models import Aircraft
+
+    ids = [pk for pk, _registration in fleet]
+    by_level = {code: {"overdue": 0, "soon": 0, "data": 0} for code in LEVEL_RANK}
+    overdue = soon = without_data = with_data = 0
+    for aircraft in Aircraft.objects.filter(pk__in=ids) if ids else ():
+        statuses = level_statuses(aircraft, today=cutoff)
+        measured = [s for s in statuses if s.state != NO_DATA]
+        if not measured:
+            without_data += 1
+            continue
+        with_data += 1
+        for status in measured:
+            by_level[status.level]["data"] += 1
+            if status.state == OVERDUE:
+                by_level[status.level]["overdue"] += 1
+            elif status.state == SOON:
+                by_level[status.level]["soon"] += 1
+        states = {s.state for s in measured}
+        if OVERDUE in states:
+            overdue += 1
+        elif SOON in states:
+            soon += 1
+
+    def known(value, has_data):
+        return value if has_data else None
+
+    return {
+        "overdue": known(overdue, with_data),
+        "soon": known(soon, with_data),
+        "without_data": without_data,
+        "by_level": {
+            code: {
+                "overdue": known(own["overdue"], own["data"]),
+                "soon": known(own["soon"], own["data"]),
+            }
+            for code, own in by_level.items()
+        },
     }
