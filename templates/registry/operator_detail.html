@@ -83,6 +83,22 @@ persona. Va acá y no en una pantalla aparte porque la pregunta que responde —
 está la condición del profesional"*— se hace mirando a alguien, junto a su
 credencial y sus habilitaciones. Cada fila enlaza a su revisión, que es donde está
 lo que hay que reforzar.{% endcomment %}
+{% comment %}B7: sólo existe `inactivity` con la regla de inactividad encendida
+(`INACTIVITY_RULE_ENABLED`); apagada, esta línea no se dibuja.{% endcomment %}
+{% if inactivity %}
+<div class="card mt-3 p-4" id="inactivity-line">
+  <h2 class="h5 mb-2">{% translate "Inactivity review" %}</h2>
+  <p class="mb-0">
+    {% if inactivity.last_flight %}
+    {% translate "Last recorded flight" %}: {{ inactivity.last_flight|date:'d-m-Y' }}
+    {% if inactivity.due_on %}· {% translate "Inactivity review" %}: {{ inactivity.due_on|date:'d-m-Y' }}{% endif %}
+    {% else %}
+    <span class="text-muted">{% translate "No flights in the digital logbook" %}</span>
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
 {% if assessments is not None %}
 <div class="card mt-3 p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
