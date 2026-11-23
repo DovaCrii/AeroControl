@@ -102,7 +102,16 @@ es el documento.{% endcomment %}
         </div>
         <div class="rpt2-man-line">
           <div class="rpt2-man-line-name">Evaluaciones teóricas</div>
+          {% if payload.manual.evaluations.format == "act19" %}
+          <div>
+            {% for row in payload.manual.evaluations.by_kind %}
+            <div>{{ row.label }}: {% leaf row.in_force %} de {% leaf payload.manual.evaluations.kpis.roster %} vigentes · {% leaf row.lapsed %} vencidas · {% leaf row.failed_only %} sólo reprobadas · {% leaf row.never %} sin rendir.</div>
+            {% endfor %}
+            <div>Último intento aprobado al corte; limitaciones y cuestionario anual son por modelo de RPA (vigente si lo está en alguno).</div>
+          </div>
+          {% else %}
           <div>{% leaf payload.manual.evaluations.kpis.in_force %} de {% leaf payload.manual.evaluations.kpis.roster %} vigentes · {% leaf payload.manual.evaluations.kpis.lapsed %} vencidas · {% leaf payload.manual.evaluations.kpis.failed_only %} sólo reprobadas · {% leaf payload.manual.evaluations.kpis.never %} sin rendir. Prueba interna de conocimientos (formato previo a la Act. 19).</div>
+          {% endif %}
         </div>
         <div class="rpt2-man-line">
           <div class="rpt2-man-line-name">REG-018 · REG-019 · REG-020</div>
@@ -114,7 +123,11 @@ es el documento.{% endcomment %}
         </div>
         <div class="rpt2-man-line">
           <div class="rpt2-man-line-name">Mantenciones</div>
-          <div>{% leaf payload.manual.maintenance.kpis.completed_in_window %} cerradas · {% leaf payload.manual.maintenance.kpis.open_at_cutoff %} abiertas al corte · {% leaf payload.manual.maintenance.kpis.due_by_level %} vencidas por nivel (200 h/6 m · 400 h/12 m · 600 h/18 m).</div>
+          <div>
+            <div>{% leaf payload.manual.maintenance.kpis.completed_in_window %} cerradas · {% leaf payload.manual.maintenance.kpis.open_at_cutoff %} abiertas al corte · {% leaf payload.manual.maintenance.kpis.due_by_level %} aeronaves con algún nivel vencido · {% leaf payload.manual.maintenance.kpis.due_soon_by_level %} próximas a vencer · {% leaf payload.manual.maintenance.kpis.level_without_data %} sin ningún nivel con dato.</div>
+            {% if payload.manual.maintenance.levels %}<div>{% for row in payload.manual.maintenance.levels %}{{ row.label }}: {% leaf row.overdue %} vencidas · {% leaf row.soon %} próximas{% if not forloop.last %}; {% endif %}{% endfor %} (niveles 200 h/6 m · 400 h/12 m · 600 h/18 m, según el programa de cada modelo).</div>{% endif %}
+            <div>Los plazos en fechas son los del corte; las horas son las registradas al construir el informe.</div>
+          </div>
         </div>
       </div>
     </div>

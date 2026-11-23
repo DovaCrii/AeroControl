@@ -522,7 +522,7 @@ def roster_row_px_v2(row):
 # | Primera fila de la tabla, hoja 1 (cabecera, recuadro, cinco cifras, rótulo) | 389 | 392 |
 # | Primera fila en una hoja de continuación | 212 | `V2_CONTINUATION_TOP_PX` (225) |
 # | Fila de la tabla (paso entre filas) | 25,5 | 26 |
-# | De la última fila al final de 5.3 (nota, 5.2 con un renglón de faltantes, 5.3) | 353 | 365 |
+# | De la última fila al final de 5.3 (nota, 5.2 con un renglón de faltantes, 5.3) | 353 | 365 (LV-456: 445, +5 renglones estimados, sin re-medir) |
 # | Cada renglón de matrículas sin LVE-002 de más | 15,7 | 16 |
 # | Observación escrita de 1200 caracteres, con su rótulo | 259 | 305 (`observation_px`) |
 #
@@ -531,7 +531,7 @@ def roster_row_px_v2(row):
 # `_page7_manual.html`, se vuelve a correr ese test y se ajustan.
 V2_MANUAL_FIRST_TOP_PX = 392
 V2_MANUAL_ROW_PX = 26
-V2_MANUAL_BLOCK_PX = 365
+V2_MANUAL_BLOCK_PX = 445
 V2_MANUAL_GAP_LINE_PX = 16
 V2_MANUAL_GAPS_PER_LINE = 9
 
