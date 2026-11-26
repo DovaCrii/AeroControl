@@ -7,7 +7,7 @@ from django.utils.translation import pgettext_lazy
 
 from apps.core.forms import AeroModelForm
 from apps.core.tenancy import scope_form_choices, scope_queryset_to_tenant
-from apps.registry.models import Aircraft, CostCenter
+from apps.registry.models import Aircraft, CostCenter, normalize_serial
 from .models import (
     AircraftLogbook,
     MaintenanceHistory,
@@ -125,6 +125,123 @@ class MaintenanceCompletionForm(AeroModelForm):
         # and when, so both are required in this context.
         self.fields["completed_date"].required = True
         self.fields["performed_by"].required = True
+
+
+class MaintenanceCertificateForm(AeroModelForm):
+    """LV-460: review and confirm what was read from a maintenance certificate.
+
+    A `ModelForm` only for its labels, widgets and field validation: it is never
+    saved. The rule that closes or creates the record is
+    `MaintenanceRecord.register_certificate`; this form only collects its data.
+    """
+
+    aircraft = forms.ModelChoiceField(
+        queryset=Aircraft.objects.none(),
+        label=pgettext_lazy("workshop intake", "Aircraft"),
+        help_text=_(
+            "The serial is matched exactly. If none matches, choose the aircraft "
+            "yourself."
+        ),
+    )
+    serial_mismatch_confirmed = forms.BooleanField(
+        required=False,
+        label=_("Register it on this aircraft even though the serial is different"),
+    )
+
+    class Meta:
+        model = MaintenanceRecord
+        fields = [
+            "aircraft",
+            "completed_date",
+            "certificate_number",
+            "performed_by",
+            "hours_at",
+            "maintenance_type",
+            "level",
+            "notes",
+        ]
+        labels = {
+            "completed_date": _("Issue date"),
+            "certificate_number": _("Certificate number"),
+            "performed_by": _("Performed by"),
+            "hours_at": _("Aircraft hours"),
+            "maintenance_type": _("Maintenance type"),
+            "level": _("Level"),
+            "notes": _("Notes"),
+        }
+        help_texts = {
+            "completed_date": _(
+                "The date the certificate was issued; it becomes the completion "
+                "date of the maintenance."
+            ),
+            "certificate_number": _("The workshop's number for the job."),
+            "hours_at": _(
+                "Total flight hours of the aircraft when the maintenance was done."
+            ),
+            "maintenance_type": _(
+                "Only used when no open maintenance is found and a new one is recorded."
+            ),
+            "level": _(
+                "The level of the maintenance programme this work completes. Leave "
+                "it empty if it is not a programme level."
+            ),
+        }
+
+    def __init__(self, *args, user, serial="", initial_aircraft=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.read_serial = normalize_serial(serial)
+        for name in ("completed_date", "certificate_number", "performed_by"):
+            self.fields[name].required = True
+        self.fields["maintenance_type"].choices = [
+            choice for choice in MaintenanceRecord.TYPES if choice[0] != "to_be_defined"
+        ]
+        queryset = scope_queryset_to_tenant(
+            Aircraft.objects.filter(is_active=True), user
+        ).order_by("registration")
+        field = self.fields["aircraft"]
+        field.queryset = queryset
+        field.label_from_instance = lambda obj: obj.selector_label
+        if initial_aircraft is not None and not self.is_bound:
+            self.initial["aircraft"] = initial_aircraft.pk
+
+    def serial_mismatch(self, aircraft):
+        """True when a serial was read and `aircraft` does not carry it."""
+        return bool(
+            self.read_serial
+            and aircraft is not None
+            and aircraft.serial_number != self.read_serial
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        aircraft = cleaned.get("aircraft")
+        if self.serial_mismatch(aircraft) and not cleaned.get(
+            "serial_mismatch_confirmed"
+        ):
+            self.add_error(
+                "serial_mismatch_confirmed",
+                _(
+                    "The serial on the document (%(serial)s) is not this aircraft's "
+                    "(%(aircraft_serial)s). Check the aircraft, or confirm that the "
+                    "certificate belongs to it."
+                )
+                % {
+                    "serial": self.read_serial,
+                    "aircraft_serial": aircraft.serial_number or "—",
+                },
+            )
+        return cleaned
+
+    def certificate_data(self, workshop_name=""):
+        """The data for `MaintenanceRecord.register_certificate`."""
+        data = {
+            name: self.cleaned_data.get(name)
+            for name in self.Meta.fields
+            if name != "aircraft"
+        }
+        data["workshop_name"] = workshop_name or data.get("performed_by") or ""
+        return data
 
 
 # LV-383 (PR 3): the screen that registers a workshop intake from the workshop's PDF.

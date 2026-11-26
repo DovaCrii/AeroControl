@@ -15558,6 +15558,165 @@ msgstr ""
 "No hay vuelos en la bitácora digital, así que no se puede comprobar la "
 "inactividad."
 
+
+#: apps/maintenance/models.py
+msgid "The certificate number is required."
+msgstr "El número de certificado es obligatorio."
+
+#: apps/maintenance/models.py
+msgid "The issue date is required."
+msgstr "La fecha de emisión es obligatoria."
+
+#: apps/maintenance/models.py
+msgid "The issue date cannot be in the future."
+msgstr "La fecha de emisión no puede ser futura."
+
+#: apps/maintenance/models.py
+msgid "The aircraft hours cannot be negative."
+msgstr "Las horas de la aeronave no pueden ser negativas."
+
+#: apps/maintenance/models.py
+#, python-format
+msgid "Maintenance certified by %(workshop)s (certificate %(number)s)"
+msgstr "Mantención certificada por %(workshop)s (certificado %(number)s)"
+
+#: apps/maintenance/forms.py
+msgid "Register it on this aircraft even though the serial is different"
+msgstr "Registrarlo en esta aeronave aunque la serie sea distinta"
+
+#: apps/maintenance/forms.py
+msgid "The date the certificate was issued; it becomes the completion date of the maintenance."
+msgstr "Fecha en que se emitió el certificado; pasa a ser la fecha de término de la mantención."
+
+#: apps/maintenance/forms.py
+msgid "The workshop's number for the job."
+msgstr "El número que el taller le dio al trabajo."
+
+#: apps/maintenance/forms.py
+msgid "Only used when no open maintenance is found and a new one is recorded."
+msgstr "Sólo se usa si no hay una mantención abierta y se registra una nueva."
+
+#: apps/maintenance/forms.py
+msgid "The level of the maintenance programme this work completes. Leave it empty if it is not a programme level."
+msgstr "Nivel del programa de mantención que este trabajo cumple. Dejarlo vacío si no corresponde a un nivel del programa."
+
+#: apps/maintenance/forms.py
+#, python-format
+msgid "The serial on the document (%(serial)s) is not this aircraft's (%(aircraft_serial)s). Check the aircraft, or confirm that the certificate belongs to it."
+msgstr "La serie del documento (%(serial)s) no es la de esta aeronave (%(aircraft_serial)s). Revise la aeronave o confirme que el certificado le corresponde."
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Workshop verdict: %(verdict)s"
+msgstr "Veredicto del taller: %(verdict)s"
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Maintenance type on the document: %(kind)s"
+msgstr "Tipo de mantención según el documento: %(kind)s"
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Interval certified by the workshop: %(hours)s flight hours or %(months)s months"
+msgstr "Intervalo que certifica el taller: %(hours)s horas de vuelo o %(months)s meses"
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Received at the workshop on %(date)s"
+msgstr "Ingresó al taller el %(date)s"
+
+#: apps/maintenance/certificate_views.py
+msgid "Upload maintenance certificate"
+msgstr "Cargar certificado de mantención"
+
+#: apps/maintenance/certificate_views.py
+msgid "Review the maintenance certificate"
+msgstr "Revisar el certificado de mantención"
+
+#: apps/maintenance/certificate_views.py
+msgid "Choose the certificate and/or the technical report to upload."
+msgstr "Elija el certificado y/o el informe técnico que quiere cargar."
+
+#: apps/maintenance/certificate_views.py
+msgid "Upload at most two documents: the certificate and the report."
+msgstr "Se pueden cargar como máximo dos documentos: el certificado y el informe."
+
+#: apps/maintenance/certificate_views.py
+msgid "Certificate upload cancelled; nothing was saved."
+msgstr "Se canceló el ingreso del certificado; no se guardó nada."
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Certificate %(number)s was already registered on this aircraft; the maintenance was not changed."
+msgstr "El certificado %(number)s ya estaba registrado en esta aeronave; la mantención no se modificó."
+
+#: apps/maintenance/certificate_views.py
+msgid "The missing documents were attached."
+msgstr "Se adjuntaron los documentos que faltaban."
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Certificate %(number)s registered: the open maintenance was completed."
+msgstr "Certificado %(number)s registrado: se cerró la mantención abierta."
+
+#: apps/maintenance/certificate_views.py
+#, python-format
+msgid "Certificate %(number)s registered as a completed maintenance."
+msgstr "Certificado %(number)s registrado como una mantención completada."
+
+#: apps/maintenance/certificate_views.py
+msgid "Maintenance report"
+msgstr "Informe técnico de mantención"
+
+#: templates/maintenance/certificate_upload.html
+msgid "Upload the workshop's maintenance certificate and, if you have it, its technical report (one or two PDF files). They are read and shown for you to review; nothing is saved until you confirm."
+msgstr "Cargue el certificado de mantención del taller y, si lo tiene, su informe técnico (uno o dos PDF). Se leen y se muestran para revisarlos; no se guarda nada hasta confirmar."
+
+#: templates/maintenance/certificate_upload.html
+msgid "Certificate and technical report (PDF)"
+msgstr "Certificado e informe técnico (PDF)"
+
+#: templates/maintenance/certificate_preview.html
+msgid "The documents were read. Check each value against the paper before confirming. Nothing is saved until you confirm."
+msgstr "Los documentos se leyeron. Conviene revisar cada valor contra el papel antes de confirmar. No se guarda nada hasta confirmar."
+
+#: templates/maintenance/certificate_preview.html
+msgid "The documents could not be read; fill in the details by hand."
+msgstr "No se pudieron leer los documentos; complete los datos a mano."
+
+#: templates/maintenance/certificate_preview.html
+msgid "Maintenance certificate"
+msgstr "Certificado de mantención"
+
+#: templates/maintenance/certificate_preview.html
+msgid "Document not recognized; it is attached as it is."
+msgstr "Documento no reconocido; se adjunta tal cual."
+
+#: templates/maintenance/certificate_preview.html
+msgid "This certificate is already registered on this aircraft. Confirming will not change that maintenance; only the documents not yet on file are attached."
+msgstr "Este certificado ya está registrado en esta aeronave. Al confirmar no cambia esa mantención; sólo se adjuntan los documentos que aún no están archivados."
+
+#: templates/maintenance/certificate_preview.html
+msgid "Open the registered maintenance"
+msgstr "Abrir la mantención registrada"
+
+#: templates/maintenance/certificate_preview.html
+msgid "The serial on the document is not the serial of the chosen aircraft."
+msgstr "La serie del documento no es la de la aeronave elegida."
+
+#: templates/maintenance/certificate_preview.html
+msgid "Certificate"
+msgstr "Certificado"
+
+#: templates/maintenance/certificate_preview.html
+#, python-format
+msgid "Level proposed because the workshop certifies %(months)s months, the interval of this level in the programme. Confirm it."
+msgstr "Nivel propuesto porque el taller certifica %(months)s meses, el intervalo de este nivel en el programa. Conviene confirmarlo."
+
+#: templates/maintenance/certificate_preview.html
+msgid "Confirm certificate"
+msgstr "Confirmar certificado"
+
 #~ msgid "Credential file"
 #~ msgstr "Credencial adjunta"
 

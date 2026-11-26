@@ -1,5 +1,5 @@
 from django.urls import path
-from . import intake_views, views
+from . import certificate_views, intake_views, views
 
 urlpatterns = [
     # LV-383 (PR 3): register a workshop intake from the workshop's PDF.
@@ -17,6 +17,22 @@ urlpatterns = [
         "intake/cancel/",
         intake_views.WorkshopIntakeCancel.as_view(),
         name="maintenance-intake-cancel",
+    ),
+    # LV-460: close a maintenance from the workshop's certificate and report.
+    path(
+        "certificate/new/",
+        certificate_views.MaintenanceCertificateUpload.as_view(),
+        name="maintenance-certificate-new",
+    ),
+    path(
+        "certificate/confirm/",
+        certificate_views.MaintenanceCertificateConfirm.as_view(),
+        name="maintenance-certificate-confirm",
+    ),
+    path(
+        "certificate/cancel/",
+        certificate_views.MaintenanceCertificateCancel.as_view(),
+        name="maintenance-certificate-cancel",
     ),
     # LV-388 alias, kept so what is deployed does not break (LV-389).
     path(
