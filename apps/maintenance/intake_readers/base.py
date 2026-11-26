@@ -7,6 +7,7 @@ ever raises. The person confirms in the form (PR 3).
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Protocol
 
 
@@ -42,3 +43,27 @@ class IntakeReader(Protocol):
     def matches(self, text: str) -> bool: ...
 
     def read(self, text: str) -> IntakeProposal: ...
+
+
+# LV-460: the documents that CLOSE a maintenance (certificate, technical report).
+CERTIFICATE = "certificate"
+REPORT = "report"
+
+
+@dataclass
+class ClosureProposal:
+    """What a closure reader found. Every field is optional; `None` = not understood."""
+
+    document_kind: str | None = None  # CERTIFICATE or REPORT
+    workshop_name: str | None = None
+    workshop_order: str | None = None  # the workshop's number (Heliboss: NUI)
+    serial_number: str | None = None
+    equipment_label: str | None = None  # "DJI Mavic 3 Enterprise"
+    issued_on: date | None = None
+    received_on: date | None = None
+    hours: Decimal | None = None  # aircraft flight hours, 1 decimal
+    maintenance_kind: str | None = None  # as printed: "Mantención preventiva"
+    interval_hours: int | None = None
+    interval_months: int | None = None
+    verdict: str | None = None  # as printed: "APTO PARA VUELO"
+    reader: str | None = None

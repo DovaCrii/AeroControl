@@ -388,6 +388,155 @@ class MaintenanceRecord(StatusHistoryMixin, BaseModel):
                 record.save()
             return intake
 
+    # LV-460: outcomes of `register_certificate`.
+    CERTIFICATE_CLOSED = "closed"
+    CERTIFICATE_CREATED = "created"
+    CERTIFICATE_ALREADY = "already"
+
+    @classmethod
+    def find_certificate(cls, aircraft, certificate_number):
+        """The active record of `aircraft` that already carries this certificate."""
+        number = (certificate_number or "").strip()
+        if not number:
+            return None
+        return (
+            cls.objects.filter(
+                aircraft=aircraft, is_active=True, certificate_number__iexact=number
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+    @classmethod
+    def register_certificate(cls, aircraft, data, user=None):
+        """LV-460: record a workshop's maintenance certificate against `aircraft`.
+
+        Returns `(record, outcome)`, one of the `CERTIFICATE_*` values:
+
+        * `already`: an active record of this aircraft already carries the same
+          certificate number. Nothing is changed (the same certificate uploaded
+          twice must not complete two maintenances).
+        * `closed`: an open record was completed. Which one, in this order: the
+          one whose workshop intake has this (workshop, order) -- the workshop
+          prints the same number on the intake and on the certificate --; else
+          the aircraft's latest record in a workshop state; else, when `level`
+          is given, its open `pending`/`in_progress` record of that level (the
+          follow-up the programme scheduled, which this work fulfils). The record
+          is walked to `completed` **one state per `save()`**, like
+          `register_workshop_intake`: the signal only brings the aircraft back to
+          headquarters on the real `in_transit -> completed` edge, and the history
+          mixin writes one row per step.
+        * `created`: there was nothing open, so a new record is created already
+          completed. It does not move the aircraft (it never left on paper).
+
+        `data` holds `completed_date` (the certificate's issue date),
+        `certificate_number`, `performed_by`, `hours_at`, `level`,
+        `maintenance_type`, `notes` and `workshop_name`. A completed level then
+        schedules the next one (`schedule_next_in_level`) and the record's open
+        alerts are resolved, exactly as closing by hand does.
+        """
+        from apps.compliance.alerts import resolve_open_alerts_for
+
+        number = (data.get("certificate_number") or "").strip()
+        completed_date = data.get("completed_date")
+        if not number:
+            raise ValidationError(_("The certificate number is required."))
+        if completed_date is None:
+            raise ValidationError(_("The issue date is required."))
+        if completed_date > timezone.localdate():
+            raise ValidationError(_("The issue date cannot be in the future."))
+        hours = data.get("hours_at")
+        if hours is not None and hours < 0:
+            raise ValidationError(_("The aircraft hours cannot be negative."))
+
+        with transaction.atomic():
+            # Serializes two confirmations of the same certificate.
+            type(aircraft).objects.select_for_update().filter(pk=aircraft.pk).first()
+            existing = cls.find_certificate(aircraft, number)
+            if existing is not None:
+                return existing, cls.CERTIFICATE_ALREADY
+            record = cls._record_for_certificate(aircraft, data, number)
+            notes = (data.get("notes") or "").strip()
+            if record is None:
+                record = cls.objects.create(
+                    aircraft=aircraft,
+                    maintenance_type=data.get("maintenance_type") or "scheduled",
+                    description=gettext(
+                        "Maintenance certified by %(workshop)s (certificate %(number)s)"
+                    )
+                    % {
+                        "workshop": data.get("performed_by") or "—",
+                        "number": number,
+                    },
+                    status="completed",
+                    completed_date=completed_date,
+                    performed_by=data.get("performed_by") or "",
+                    level=data.get("level") or "",
+                    hours_at=hours,
+                    certificate_number=number,
+                    notes=notes,
+                )
+                outcome = cls.CERTIFICATE_CREATED
+            else:
+                record._complete_with_certificate(data, number, notes, user)
+                outcome = cls.CERTIFICATE_CLOSED
+            record.schedule_next_in_level()
+            resolve_open_alerts_for(record)
+        return record, outcome
+
+    @classmethod
+    def _record_for_certificate(cls, aircraft, data, number):
+        open_records = cls.objects.select_for_update().filter(
+            aircraft=aircraft, is_active=True
+        )
+        intake = WorkshopIntake.find_by_order(data.get("workshop_name", ""), number)
+        if intake is not None:
+            record = open_records.filter(pk=intake.record_id).first()
+            if record is not None and record.status not in cls.TERMINAL_STATUSES:
+                return record
+        record = (
+            open_records.filter(status__in=cls.WORKSHOP_STATUSES)
+            .order_by("-status_changed_at", "-created_at")
+            .first()
+        )
+        if record is not None:
+            return record
+        level = data.get("level")
+        if level in LEVEL_RANK:
+            return (
+                open_records.filter(level=level, status__in=["pending", "in_progress"])
+                .order_by("scheduled_date", "created_at")
+                .first()
+            )
+        return None
+
+    def _complete_with_certificate(self, data, number, notes, user):
+        flow = (
+            self.WORKSHOP_FLOW
+            if self.status in self.WORKSHOP_STATUSES
+            else self.IN_HOUSE_FLOW
+        )
+        remaining = flow[flow.index(self.status) + 1 :]
+        actor = user.get_username() if user is not None else "system"
+        for status in remaining:
+            self._changed_by = actor
+            self._changed_by_user = user
+            self._transition_notes = ""
+            self.status = status
+            if status == "completed":
+                self.completed_date = data["completed_date"]
+                self.performed_by = (data.get("performed_by") or "")[:150] or (
+                    self.performed_by
+                )
+                self.level = data.get("level") or self.level
+                self.hours_at = data.get("hours_at")
+                self.certificate_number = number
+                if notes:
+                    self.notes = (
+                        f"{self.notes}\n{notes}".strip() if self.notes else notes
+                    )
+            self.save()
+
     # Outcomes of `void_workshop_intake` for the aircraft's state.
     VOID_AIRCRAFT_RESTORED = "restored"
     VOID_AIRCRAFT_KEPT = "kept"
@@ -923,6 +1072,25 @@ class MaintenanceProgram(BaseModel):
             ):
                 chosen[program.level] = program
         return chosen
+
+    @classmethod
+    def level_for_interval(cls, aircraft, interval_months):
+        """LV-460: the programme level whose month interval is `interval_months`.
+
+        Only a **proposal** for a person to confirm: a workshop certifies its own
+        interval ("150 horas de vuelo o 6 meses") and that is not the Manual's
+        definition of a level, so the hours are deliberately not compared. Returns
+        the level only when exactly one of the aircraft's programmes has that
+        month interval; otherwise `None` -- never a guess between two.
+        """
+        if not interval_months:
+            return None
+        levels = [
+            level
+            for level, program in cls.for_aircraft(aircraft).items()
+            if program.interval_months == interval_months
+        ]
+        return levels[0] if len(levels) == 1 else None
 
 
 class AircraftLogbook(BaseModel):
